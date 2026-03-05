@@ -1,0 +1,30 @@
+﻿@inherits LayoutComponentBase
+
+<div class="relative flex flex-col sm:flex-row">
+    <div class="sm:w-62.5 sm:h-screen sm:sticky sm:top-0 bg-linear-to-t from-base-2 to-base-3">
+        <NavMenu />
+    </div>
+    <main class="flex-1">
+        <div class="px-4 bg-linear-to-r from-base-1 to-base-2 border-b border-[#d6d5d5] flex justify-between sm:justify-end items-center h-14 sm:sticky sm:top-0 z-1 sm:px-8">
+            <a
+                href="https://learn.microsoft.com/aspnet/core/"
+                target="_blank"
+                class="whitespace-nowrap ml-0 sm:ml-6 no-underline hover:underline overflow-hidden text-ellipsis text-white">
+                About
+            </a>
+        </div>
+        <article class="content px-4 sm:px-8">
+        @Body
+        </article>
+    </main>
+</div>
+<div
+    id="blazor-error-ui"
+    data-nosnippet
+    class="hidden fixed bottom-0 left-0 w-full z-1000 bg-yellow-50 shadow-[0_-1px_2px_rgba(0,0,0,0.2)] box-border px-5 py-2.5 scheme:light">
+    An unhandled error has occurred.
+    <a href="." class="reload">
+        Reload
+    </a>
+    <span class="dismiss absolute right-3 top-2 cursor-pointer">??</span>
+</div>

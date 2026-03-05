@@ -1,0 +1,94 @@
+﻿@import "tailwindcss";
+
+@theme {
+  --color-base-1: oklch(0.144 0.039 262.65);
+  --color-base-2: oklch(0.261 0.116 318.251);
+  --color-base-3: oklch(0.197 0.067 261.777);
+  --color-base-4: oklch(0.197 0.067 261.777);
+  --color-base-5: oklch(0.197 0.067 261.777);
+}
+
+:root {
+  box-sizing: border-box;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-synthesis: none;
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  /*dvh, svh, lvh, vh*/
+  height: 100dvh;
+  width: 100dvw;
+}
+
+h1 {
+  @apply text-4xl font-bold mb-4;
+}
+
+h2 {
+  @apply text-2xl font-semibold mb-3;
+}
+
+h3 {
+  @apply text-xl font-semibold mb-2;
+}
+
+h4 {
+  @apply text-lg font-semibold mb-1;
+}
+
+p {
+  @apply text-base mb-1;
+}
+
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animación suave */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
