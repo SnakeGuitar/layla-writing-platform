@@ -1,6 +1,15 @@
-@Layla.Api_HostAddress = http://localhost:5287
+@Api_HostAddress = http://localhost:5287
 
-GET {{Layla.Api_HostAddress}}/weatherforecast/
+### api/Projects/
+POST {{Api_HostAddress}}/api/Projects/
 Accept: application/json
+BodyRequest: 
+{
+    Title: string;
+    Synopsis: string;
+    LiteraryGenre: string;
+    CoverImageUrl: string; // Base64
+}
 
-###
+GET {{Api_HostAddress}}/api/Projects/
+Accept: application/json

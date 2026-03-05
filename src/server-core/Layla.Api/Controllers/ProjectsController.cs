@@ -22,7 +22,7 @@ public class ProjectsController : ControllerBase
     public async Task<IActionResult> CreateProject([FromBody] CreateProjectRequestDto request, CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
-        
+
         if (string.IsNullOrEmpty(userId))
         {
             return Unauthorized(new { Error = "User ID not found in token." });
@@ -43,14 +43,14 @@ public class ProjectsController : ControllerBase
     public async Task<IActionResult> GetProjects(CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
-        
+
         if (string.IsNullOrEmpty(userId))
         {
             return Unauthorized(new { Error = "User ID not found in token." });
         }
 
         var result = await _projectService.GetUserProjectsAsync(userId, cancellationToken);
-        
+
         if (!result.IsSuccess)
         {
             return BadRequest(new { Error = result.Error });
