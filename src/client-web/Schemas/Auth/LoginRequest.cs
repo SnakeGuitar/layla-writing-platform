@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace client_web.Schemas.Auth;
 
-public class LoginRequestDto
+public class LoginRequest
 {
     [Required]
     [EmailAddress]

@@ -1,11 +1,8 @@
-using System.Runtime.Intrinsics.Arm;
-using System.Security.Cryptography;
 using client_web.Helpers;
-using client_web.Schemas;
 using client_web.Schemas.Auth;
 using client_web.Services.Http;
 
-namespace client_web.Services.Auth;
+namespace client_web.Services;
 
 public class AuthService
 {

@@ -1,5 +1,5 @@
 using client_web.Components;
-using client_web.Services.Auth;
+using client_web.Services;
 using client_web.Services.Http;
 
 var builder = WebApplication.CreateBuilder(args);

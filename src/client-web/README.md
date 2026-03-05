@@ -3,6 +3,9 @@ dotnet run          // Para ejecutar
 dotner watch        // Monitorear cambios
 dotnet build        // Compilación
 
+
+// Instalar paquetes via pnpm
+pnpm install
 // Actualizar archivo estatico de estilos CSS 
 npx @tailwindcss/cli -i ./Styles/Styles.css -o ./wwwroot/styles/styles.css
 ```
