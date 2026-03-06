@@ -57,17 +57,10 @@ builder.Services.AddAuthentication(options =>
         {
             OnAuthenticationFailed = context =>
             {
-                Console.WriteLine("====== JWT AUTHENTICATION FAILED ======");
-                Console.WriteLine($"Exception: {context.Exception}");
-                Console.WriteLine("=======================================");
                 return Task.CompletedTask;
             },
             OnChallenge = context =>
             {
-                Console.WriteLine("====== JWT CHALLENGE ISSUED ======");
-                Console.WriteLine($"Error: {context.Error}");
-                Console.WriteLine($"ErrorDescription: {context.ErrorDescription}");
-                Console.WriteLine("==================================");
                 return Task.CompletedTask;
             },
             OnTokenValidated = async context =>
