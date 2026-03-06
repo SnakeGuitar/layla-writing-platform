@@ -1,7 +1,7 @@
 ## .env
 .env
-.env.local
-.env.*.local
+.env.*
+.env.*.*
 
 ## Visual Studio / .NET
 bin/
