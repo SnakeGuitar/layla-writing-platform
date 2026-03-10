@@ -173,4 +173,17 @@ public class ProjectService : IProjectService
             return Result<bool>.Failure("An error occurred while deleting the project.");
         }
     }
+
+    public async Task<Result<IEnumerable<Project>>> GetAllProjectsAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var projects = await _projectRepository.GetAllProjectsAsync(cancellationToken);
+            return Result<IEnumerable<Project>>.Success(projects);
+
+        } catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to retrieve all projects");
+            return Result<IEnumerable<Project>>.Failure("An error occurred while retrieving projects.");
+        }
 }

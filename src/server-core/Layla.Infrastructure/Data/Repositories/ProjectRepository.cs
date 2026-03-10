@@ -89,6 +89,11 @@ public class ProjectRepository : IProjectRepository
         return await _dbContext.Projects.FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
     }
 
+    public async Task<IEnumerable<Project>> GetAllProjectsAsync(CancellationToken cancellationToken = default)
+    {
+        return await _dbContext.Projects.AsNoTracking().ToListAsync(cancellationToken);
+    }
+
     public Task UpdateProjectAsync(Project project, CancellationToken cancellationToken = default)
     {
         _dbContext.Projects.Update(project);

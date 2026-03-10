@@ -59,6 +59,17 @@ public class ProjectsController : ControllerBase
         return Ok(result.Data);
     }
 
+    [HttpGet("all")]
+    public async Task<IActionResult> GetAllProjects(CancellationToken cancellationToken)
+    {
+        var result = await _projectService.GetAllProjectsAsync(cancellationToken);
+        if (!result.IsSuccess)
+        {
+            return BadRequest(new { Error = result.Error });
+        }
+        return Ok(result.Data);
+    }
+
     [HttpGet("{id}")]
     public IActionResult GetProjectById(Guid id)
     {
