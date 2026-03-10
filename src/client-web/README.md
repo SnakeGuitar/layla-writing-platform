@@ -10,6 +10,7 @@ pnpm install
 npx @tailwindcss/cli -i ./Styles/Styles.css -o ./wwwroot/styles/styles.css
 // Precompilar Typescript a Javascript
 npx tsc wwwroot/js/chartInterop.ts --target ES6 --outDir wwwroot/js
+npx tsc wwwroot/js/chartInterop.ts --target ES6 --module none --outDir wwwroot/js
 ```
 
 # Blazor - C#, Tailwind

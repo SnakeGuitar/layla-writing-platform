@@ -1,9 +1,71 @@
 @page "/projects/my-projects"
-    @* Header *@
-    <header class="max-w-5xl mx-auto mb-12">
-        <h2 class="text-amber-500 text-xs font-bold tracking-[0.3em] uppercase mb-3">Proyectos</h2>
-        <h1 class="text-stone-100 font-serif text-4xl md:text-5xl font-light tracking-tight">
-            Mis proyectos
-        </h1>
-        <div class="mt-4 w-16 h-px bg-amber-500"></div>
-    </header>
+@using client_web.Components.Components
+
+@* Header *@
+<header class="max-w-5xl mx-auto mb-12">
+    <h2 class="text-amber-500 text-xs font-bold tracking-[0.3em] uppercase mb-3">Proyectos</h2>
+    <h1 class="text-stone-100 font-serif text-4xl md:text-5xl font-light tracking-tight">
+        Mis proyectos
+    </h1>
+    <div class="mt-4 w-16 h-px bg-amber-500"></div>
+</header>
+
+@if (projects == null || !projects.Any())
+    {
+        <p class="text-stone-500 text-sm">No hay proyectos creado previamente.</p>
+    }
+    else
+    {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-stone-800">
+            @foreach (var project in projects)
+            {
+                <div class="bg-stone-950">
+                    <ProjectCard Id="@project.Id" Title="@project.Title"
+                                    Synopsis="@project.Synopsis"
+                                    LiteraryGenre="@project.LiteraryGenre"
+                                    CoverImageUrl="@project.CoverImageUrl"
+                                    UpdatedAt="@project.UpdatedAt"
+                                    OnCardClick="HandleCardClick" />
+                </div>
+            }
+        </div>
+    }
+
+@code {
+    private List<ProjectViewModel>? projects;
+
+    protected override void OnInitialized()
+    {
+        // Replace with your actual data service call, e.g.:
+        // projects = await ProjectService.GetAllAsync();
+
+        projects = new List<ProjectViewModel>
+        {
+            new() {
+                Id = Guid.NewGuid(),
+                Title = "El último jardín de los sueños",
+                Synopsis = "Una historia sobre la memoria, los sueños y los jardines secretos que guardamos en lo más profundo de nuestra mente.",
+                LiteraryGenre = "Fantasía",
+                CoverImageUrl = null,
+                UpdatedAt = DateTime.Now.AddDays(-3)
+            }
+        };
+    }
+
+    private void HandleCardClick(Guid projectId)
+    {
+        // Navigate to project detail, e.g.:
+        // NavigationManager.NavigateTo($"/projects/{projectId}");
+        Console.WriteLine($"Clicked project: {projectId}");
+    }
+
+    private class ProjectViewModel
+    {
+        public Guid Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Synopsis { get; set; } = string.Empty;
+        public string LiteraryGenre { get; set; } = string.Empty;
+        public string? CoverImageUrl { get; set; }
+        public DateTime UpdatedAt { get; set; }
+    }
+}

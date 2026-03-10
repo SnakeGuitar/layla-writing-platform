@@ -26,8 +26,8 @@ function createBarChart(canvasId, newUsersPerMonth) {
           {
             label: "New Users",
             data: newUsersPerMonth,
-            backgroundColor: "rgb(254, 154, 0)",
-            borderColor: "rgb(254, 154, 0)",
+            backgroundColor: "rgba(54, 162, 235, 0.5)",
+            borderColor: "rgba(54, 162, 235, 1)",
             borderWidth: 1,
           },
         ],

@@ -21,7 +21,7 @@
     else
     {
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-stone-800">
-            @foreach (var project in projects)
+            @foreach (ProjectViewModel project in projects)
             {
                 <div class="bg-stone-950">
                     <ProjectCard Id="@project.Id" Title="@project.Title"
@@ -46,7 +46,7 @@
 
         projects = new List<ProjectViewModel>
         {
-            new() {
+            new ProjectViewModel() {
                 Id = Guid.NewGuid(),
                 Title = "El último jardín de los sueños",
                 Synopsis = "Una historia sobre la memoria, los sueños y los jardines secretos que guardamos en lo más profundo de nuestra mente.",
@@ -54,7 +54,7 @@
                 CoverImageUrl = null,
                 UpdatedAt = DateTime.Now.AddDays(-3)
             },
-            new() {
+            new ProjectViewModel() {
                 Id = Guid.NewGuid(),
                 Title = "Cartas desde el fin del mundo",
                 Synopsis = "Un epistolario íntimo que recorre los últimos días de una civilización a través de las cartas de quienes la vivieron.",
@@ -62,7 +62,7 @@
                 CoverImageUrl = null,
                 UpdatedAt = DateTime.Now.AddDays(-10)
             },
-            new() {
+            new ProjectViewModel() {
                 Id = Guid.NewGuid(),
                 Title = "La ciudad de los espejos rotos",
                 Synopsis = "Un detective sin pasado investiga desapariciones en una ciudad donde los espejos muestran lo que pudo haber sido.",
