@@ -16,11 +16,11 @@
     }
     else
     {
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-stone-800">
-            @foreach (var project in projects)
+        <div class="grid md:grid-cols-2 sm:grid-cols-1 gap-1 bg-transparent">
+            @foreach (ProjectViewModel project in projects)
             {
-                <div class="bg-stone-950">
-                    <ProjectCard Id="@project.Id" Title="@project.Title"
+                <div>
+                    <ProjectCard2 Id="@project.Id" Title="@project.Title"
                                     Synopsis="@project.Synopsis"
                                     LiteraryGenre="@project.LiteraryGenre"
                                     CoverImageUrl="@project.CoverImageUrl"
@@ -41,7 +41,47 @@
 
         projects = new List<ProjectViewModel>
         {
-            new() {
+            new ProjectViewModel() {
+                Id = Guid.NewGuid(),
+                Title = "El último jardín de los sueños",
+                Synopsis = "Una historia sobre la memoria, los sueños y los jardines secretos que guardamos en lo más profundo de nuestra mente.",
+                LiteraryGenre = "Fantasía",
+                CoverImageUrl = null,
+                UpdatedAt = DateTime.Now.AddDays(-3)
+            },
+            new ProjectViewModel() {
+                Id = Guid.NewGuid(),
+                Title = "El último jardín de los sueños",
+                Synopsis = "Una historia sobre la memoria, los sueños y los jardines secretos que guardamos en lo más profundo de nuestra mente.",
+                LiteraryGenre = "Fantasía",
+                CoverImageUrl = null,
+                UpdatedAt = DateTime.Now.AddDays(-3)
+            },
+            new ProjectViewModel() {
+                Id = Guid.NewGuid(),
+                Title = "El último jardín de los sueños",
+                Synopsis = "Una historia sobre la memoria, los sueños y los jardines secretos que guardamos en lo más profundo de nuestra mente.",
+                LiteraryGenre = "Fantasía",
+                CoverImageUrl = null,
+                UpdatedAt = DateTime.Now.AddDays(-3)
+            },
+            new ProjectViewModel() {
+                Id = Guid.NewGuid(),
+                Title = "El último jardín de los sueños",
+                Synopsis = "Una historia sobre la memoria, los sueños y los jardines secretos que guardamos en lo más profundo de nuestra mente.",
+                LiteraryGenre = "Fantasía",
+                CoverImageUrl = null,
+                UpdatedAt = DateTime.Now.AddDays(-3)
+            },
+            new ProjectViewModel() {
+                Id = Guid.NewGuid(),
+                Title = "El último jardín de los sueños",
+                Synopsis = "Una historia sobre la memoria, los sueños y los jardines secretos que guardamos en lo más profundo de nuestra mente.",
+                LiteraryGenre = "Fantasía",
+                CoverImageUrl = null,
+                UpdatedAt = DateTime.Now.AddDays(-3)
+            },
+            new ProjectViewModel() {
                 Id = Guid.NewGuid(),
                 Title = "El último jardín de los sueños",
                 Synopsis = "Una historia sobre la memoria, los sueños y los jardines secretos que guardamos en lo más profundo de nuestra mente.",

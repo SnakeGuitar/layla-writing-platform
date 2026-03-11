@@ -13,28 +13,25 @@
 </header>
 
 @* Feed Grid *@
-<main class="max-w-5xl mx-auto">
-    @if (projects == null || !projects.Any())
-    {
-        <p class="text-stone-500 text-sm">No hay proyectos disponibles.</p>
-    }
-    else
-    {
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-stone-800">
-            @foreach (ProjectViewModel project in projects)
-            {
-                <div class="bg-stone-950">
-                    <ProjectCard Id="@project.Id" Title="@project.Title"
-                                    Synopsis="@project.Synopsis"
-                                    LiteraryGenre="@project.LiteraryGenre"
-                                    CoverImageUrl="@project.CoverImageUrl"
-                                    UpdatedAt="@project.UpdatedAt"
-                                    OnCardClick="HandleCardClick" />
-                </div>
-            }
-        </div>
-    }
-</main>
+@if (projects == null || !projects.Any()){
+    <p class="text-stone-500 text-sm">No hay proyectos disponibles.</p>
+}
+else
+{
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px">
+        @foreach (ProjectViewModel project in projects)
+        {
+            <div>
+                <ProjectCard Id="@project.Id" Title="@project.Title"
+                                Synopsis="@project.Synopsis"
+                                LiteraryGenre="@project.LiteraryGenre"
+                                CoverImageUrl="@project.CoverImageUrl"
+                                UpdatedAt="@project.UpdatedAt"
+                                OnCardClick="HandleCardClick" />
+            </div>
+        }
+    </div>
+}
 
 @code {
     private List<ProjectViewModel>? projects;

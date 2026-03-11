@@ -1,10 +1,10 @@
 @using client_web.Helpers;
 @namespace client_web.Components.Components
 
-<article class="group relative flex flex-row bg-stone-950 border border-stone-800 rounded-none overflow-hidden hover:border-amber-500/60 transition-all duration-500 cursor-pointer hover:shadow-[0_0_40px_-8px_rgba(245,158,11,0.2)]" @onclick="OnClick">
+<article class="group relative flex flex-row bg-stone-950 border border-stone-800 rounded-lg overflow-hidden hover:border-amber-500/60 transition-all duration-500 cursor-pointer hover:shadow-[0_0_40px_-8px_rgba(245,158,11,0.2)] w-auto" @onclick="OnClick">
 
     @* Cover Image *@
-    <div class="relative overflow-hidden aspect-3/2 bg-stone-900">
+    <div class="relative w-48 md:w-64 overflow-hidden bg-stone-900">
         @if (!string.IsNullOrEmpty(CoverImageUrl))
         {
             <img src="@CoverImageUrl"
@@ -13,7 +13,6 @@
         }
         else
         {
-            @* Placeholder when no cover image *@
             <div class="w-full h-full flex items-center justify-center bg-linear-to-br from-stone-900 to-stone-800">
                 <svg class="w-12 h-12 text-stone-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
@@ -22,30 +21,27 @@
             </div>
         }
 
-        @* Literary genre badge *@
         <span class="absolute top-3 left-3 px-2 py-0.5 bg-amber-500 text-stone-950 text-[10px] font-bold tracking-[0.15em] uppercase">
             @LiteraryGenre
         </span>
     </div>
 
     @* Content *@
-    <div class="flex flex-col flex-1 p-5 gap-3">
+    <div class="flex flex-col flex-1 p-5 gap-3 justify-between">
 
-        @* Decorative line *@
-        <div class="w-8 h-px bg-amber-500/50 group-hover:w-16 group-hover:bg-amber-500 transition-all duration-500"></div>
+        <div class="space-y-3">
+            <div class="w-8 h-px bg-amber-500/50 group-hover:w-16 group-hover:bg-amber-500 transition-all duration-500"></div>
 
-        @* Title *@
-        <h2 class="text-stone-100 font-serif text-xl leading-tight tracking-tight line-clamp-2
-                   group-hover:text-amber-50 transition-colors duration-300">
-            @Title
-        </h2>
+            <h2 class="text-stone-100 font-serif text-xl leading-tight tracking-tight line-clamp-2
+                       group-hover:text-amber-50 transition-colors duration-300">
+                @Title
+            </h2>
 
-        @* Synopsis *@
-        <p class="text-stone-400 text-sm leading-relaxed line-clamp-3 flex-1">
-            @Synopsis
-        </p>
+            <p class="text-stone-400 text-sm leading-relaxed line-clamp-3">
+                @Synopsis
+            </p>
+        </div>
 
-        @* Footer *@
         <div class="flex items-center justify-between pt-3 border-t border-stone-800">
             <time class="text-stone-600 text-xs tracking-wide font-mono" datetime="@UpdatedAt.ToString("yyyy-MM-dd")">
                 @FormatData.FormatDateToString(UpdatedAt)
