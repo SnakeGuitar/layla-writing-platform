@@ -2,51 +2,128 @@
 @inject IJSRuntime JS
 
 <header class="max-w-5xl mx-auto mb-12">
-    <h2 class="text-amber-500 text-xs font-bold tracking-[0.3em] uppercase mb-3">Administración</h2>
+    <h2 class="text-amber-500 text-xs font-bold tracking-[0.3em] uppercase mb-3">
+        Administración
+    </h2>
     <h1 class="text-stone-100 font-serif text-4xl md:text-5xl font-light tracking-tight">
         Gestión de usuario
     </h1>
     <div class="mt-4 w-16 h-px bg-amber-500"></div>
 </header>
 
-<section>
-    <div>
-        <input type="search"
+<section class="max-w-5xl mx-auto mb-8">
+    <div class="bg-stone-950 border border-stone-800 rounded-lg p-6 shadow">
+        <h3 class="text-stone-200 font-semibold mb-4">Filtros de búsqueda</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            @* Búsqueda por nombre/ID *@
+            <div class="col-span-1 md:col-span-2 flex items-center gap-2">
+                <input type="search"
+                       placeholder="Buscar usuario por nombre o ID..."
+                       class="flex-1 px-4 py-2 rounded-md bg-stone-900 border border-stone-700 text-stone-200 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-500 transition" />
+                <button class="px-4 py-2 bg-amber-500 text-stone-950 font-semibold rounded-md hover:bg-amber-400 transition">
+                    Buscar
+                </button>
+            </div>
+
+            @* Género *@
+            <div>
+                <label class="block text-xs text-stone-400 mb-1">Género</label>
+                <select class="w-full px-3 py-2 rounded-md bg-stone-900 border border-stone-700 text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
+                    <option value="">Todos</option>
+                    <option value="M">Masculino</option>
+                    <option value="F">Femenino</option>
+                </select>
+            </div>
+
+            @* Actividad este mes *@
+            <div>
+                <label class="block text-xs text-stone-400 mb-1">Actividad este mes</label>
+                <select class="w-full px-3 py-2 rounded-md bg-stone-900 border border-stone-700 text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
+                    <option value="">Todos</option>
+                    <option value="true">Con actividad</option>
+                    <option value="false">Sin actividad</option>
+                </select>
+            </div>
+
+            @* Rango de fechas *@
+            <div class="md:col-span-2 flex gap-3">
+                <div class="flex-1">
+                    <label class="block text-xs text-stone-400 mb-1">Fecha registro desde</label>
+                    <input type="date"
+                           class="w-full px-3 py-2 rounded-md bg-stone-900 border border-stone-700 text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition" />
+                </div>
+                <div class="flex-1">
+                    <label class="block text-xs text-stone-400 mb-1">Hasta</label>
+                    <input type="date"
+                           class="w-full px-3 py-2 rounded-md bg-stone-900 border border-stone-700 text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition" />
+                </div>
+            </div>
+        </div>
+
+        @* Botones de acción *@
+        <div class="mt-6 flex justify-end gap-3">
+            <button class="px-4 py-2 bg-stone-800 text-stone-300 rounded-md hover:bg-stone-700 transition">
+                Limpiar filtros
+            </button>
+            <button class="px-4 py-2 bg-amber-500 text-stone-950 font-semibold rounded-md hover:bg-amber-400 transition">
+                Aplicar filtros
+            </button>
+        </div>
     </div>
 </section>
 
-<main>
-    <div>
-        @if ( users == null || !users.Any()) {
-            <div>Use la sección de filtros</div>
-        }else{
-            <table>
-                <thead>
-                    <tr>
-                        <th>UID</th>
-                        <th>Nombre completo</th>
-                        <th>Género</th>
-                        <th>Fecha última actividad</th>
-                        <th>Con actividad este mes</th>
-                        <th>Fecha de registro</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (UserViewModel user in users) {
-                        <tr>
-                            <td>@user.UserId</td>
-                            <td>@user.FullName</td>
-                            <td>@user.Genre</td>
-                            <td>@user.LastActivity</td>
-                            <td>@user.WithActivityThisMonth</td>
-                            <td>@user.RegisteredAt</td>>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+
+<main class="max-w-5xl mx-auto">
+    <div class="bg-stone-950 border border-stone-800 rounded-lg overflow-hidden shadow">
+        @if (users == null || !users.Any())
+        {
+            <div class="p-6 text-center text-stone-400">
+                Use la sección de filtros
+            </div>
         }
-    </div
+        else
+        {
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-stone-300">
+                    <thead class="bg-stone-900 text-stone-400 uppercase text-xs tracking-wide">
+                        <tr>
+                            <th class="px-4 py-3">UID</th>
+                            <th class="px-4 py-3">Nombre completo</th>
+                            <th class="px-4 py-3">Género</th>
+                            <th class="px-4 py-3">Última actividad</th>
+                            <th class="px-4 py-3">Actividad este mes</th>
+                            <th class="px-4 py-3">Registro</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-stone-800">
+                        @foreach (UserViewModel user in users)
+                        {
+                            <tr class="hover:bg-stone-900 transition">
+                                <td class="px-4 py-3 font-mono text-xs">@user.UserId</td>
+                                <td class="px-4 py-3">@user.FullName</td>
+                                <td class="px-4 py-3">@user.Genre</td>
+                                <td class="px-4 py-3">@user.LastActivity</td>
+                                <td class="px-4 py-3">
+                                    @if (user.WithActivityThisMonth)
+                                    {
+                                        <span class="text-amber-500 font-semibold">Sí</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-stone-500">No</span>
+                                    }
+                                </td>
+                                <td class="px-4 py-3">@user.RegisteredAt</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
 </main>
+
 
 
 @code {
