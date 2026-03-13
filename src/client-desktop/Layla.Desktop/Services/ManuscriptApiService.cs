@@ -11,13 +11,11 @@ namespace Layla.Desktop.Services
     public class ManuscriptApiService : IManuscriptApiService
     {
         private readonly HttpClient _httpClient;
-        private const string BaseUrl = "https://localhost:7165";
-
         public ManuscriptApiService()
         {
             _httpClient = new HttpClient
             {
-                BaseAddress = new Uri(BaseUrl)
+                BaseAddress = new Uri(ConfigurationService.WorldbuildingApiUrl)
             };
         }
 
@@ -33,30 +31,85 @@ namespace Layla.Desktop.Services
             }
         }
 
-        public async Task<IEnumerable<Manuscript>> GetManuscriptsByProjectIdAsync(Guid projectId)
+        public async Task<Manuscript> GetManuscriptAsync(Guid projectId)
         {
             AddAuthorizationHeader();
-            
             try
             {
-                var response = await _httpClient.GetAsync($"/api/manuscripts/project/{projectId}");
+                var response = await _httpClient.GetAsync($"/api/manuscripts/{projectId}");
                 if (response.IsSuccessStatusCode)
                 {
-                    var manuscripts = await response.Content.ReadFromJsonAsync<IEnumerable<Manuscript>>();
-                    if (manuscripts != null)
-                    {
-                        return manuscripts;
-                    }
+                    return await response.Content.ReadFromJsonAsync<Manuscript>();
                 }
-                
-                System.Diagnostics.Debug.WriteLine($"Failed to retrieve manuscripts: {response.StatusCode}");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error retrieving manuscripts: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Error retrieving manuscript: {ex.Message}");
             }
+            return null;
+        }
 
-            return new List<Manuscript>();
+        public async Task<Chapter> GetChapterAsync(Guid projectId, Guid chapterId)
+        {
+            AddAuthorizationHeader();
+            try
+            {
+                var response = await _httpClient.GetAsync($"/api/manuscripts/{projectId}/chapters/{chapterId}");
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<Chapter>();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error retrieving chapter: {ex.Message}");
+            }
+            return null;
+        }
+
+        public async Task<Chapter> CreateChapterAsync(Guid projectId, string title, string content, int order)
+        {
+            AddAuthorizationHeader();
+            try
+            {
+                var payload = new { title, content, order };
+                var response = await _httpClient.PostAsJsonAsync($"/api/manuscripts/{projectId}/chapters", payload);
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<Chapter>();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error creating chapter: {ex.Message}");
+            }
+            return null;
+        }
+
+        public async Task<Chapter> UpdateChapterAsync(Guid projectId, Guid chapterId, string title, string content, int order, DateTime? clientTimestamp = null)
+        {
+            AddAuthorizationHeader();
+            try
+            {
+                var payload = new
+                {
+                    title,
+                    content,
+                    order,
+                    clientTimestamp = clientTimestamp?.ToString("o")
+                };
+
+                var response = await _httpClient.PutAsJsonAsync($"/api/manuscripts/{projectId}/chapters/{chapterId}", payload);
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadFromJsonAsync<Chapter>();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error updating chapter: {ex.Message}");
+            }
+            return null;
         }
     }
 }

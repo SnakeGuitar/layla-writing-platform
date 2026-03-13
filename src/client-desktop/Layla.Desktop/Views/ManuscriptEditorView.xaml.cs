@@ -6,23 +6,30 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Threading.Tasks;
+using System.Linq;
+using System.Diagnostics;
 
 namespace Layla.Desktop.Views
 {
     public partial class ManuscriptEditorView : Page
     {
-        private readonly LocalCacheManager _cacheManager;
-        private readonly string _currentManuscriptId = "temp-manuscript-id";
+        private readonly IManuscriptApiService _apiService;
+        private readonly Guid _projectId;
+        private Guid? _currentChapterId;
         private bool _isLoaded = false;
+        private bool _isSaving = false;
+        private System.Threading.Timer _debounceTimer;
 
         private AdornerLayer _adornerLayer;
         private ImageResizerAdorner _currentAdorner;
         private Image _selectedImage;
 
-        public ManuscriptEditorView()
+        public ManuscriptEditorView(Guid projectId)
         {
             InitializeComponent();
-            _cacheManager = new LocalCacheManager();
+            _projectId = projectId;
+            _apiService = new ManuscriptApiService();
             this.Loaded += OnLoaded;
         }
 
@@ -30,20 +37,36 @@ namespace Layla.Desktop.Views
         {
             try
             {
-                string cachedContent = await _cacheManager.LoadManuscriptAsync(_currentManuscriptId);
-                if (!string.IsNullOrEmpty(cachedContent))
+                var manuscript = await _apiService.GetManuscriptAsync(_projectId);
+                Models.Chapter targetChapter = null;
+
+                if (manuscript != null && manuscript.Chapters.Any())
                 {
-                    EditorRichTextBox.Document.Blocks.Clear();
-                    TextRange textRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
-                    using (MemoryStream ms = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(cachedContent)))
+                    targetChapter = await _apiService.GetChapterAsync(_projectId, manuscript.Chapters.OrderBy(c => c.Order).First().ChapterId);
+                }
+                else
+                {
+                    targetChapter = await _apiService.CreateChapterAsync(_projectId, "Chapter 1", string.Empty, 0);
+                }
+
+                if (targetChapter != null)
+                {
+                    _currentChapterId = targetChapter.ChapterId;
+                    
+                    if (!string.IsNullOrEmpty(targetChapter.Content))
                     {
-                        textRange.Load(ms, DataFormats.Rtf);
+                        EditorRichTextBox.Document.Blocks.Clear();
+                        TextRange textRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
+                        using (MemoryStream ms = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(targetChapter.Content)))
+                        {
+                            textRange.Load(ms, DataFormats.Rtf);
+                        }
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Failed to load standard cache: {ex.Message}");
+                MessageBox.Show($"Failed to load manuscript: {ex.Message}");
             }
             finally
             {
@@ -51,7 +74,7 @@ namespace Layla.Desktop.Views
             }
         }
 
-        private async void EditorRichTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        private void EditorRichTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (WordCountTextBlock != null)
             {
@@ -60,18 +83,51 @@ namespace Layla.Desktop.Views
                 WordCountTextBlock.Text = $"{wordCount} word{(wordCount != 1 ? "s" : "")}";
             }
 
-            if (!_isLoaded) return;
+            if (!_isLoaded || _currentChapterId == null) return;
 
-            TextRange textRange = new TextRange(
-                EditorRichTextBox.Document.ContentStart,
-                EditorRichTextBox.Document.ContentEnd
-            );
+            _debounceTimer?.Change(System.Threading.Timeout.Infinite, 0);
+            _debounceTimer = new System.Threading.Timer(async _ => await SaveContentAsync(), null, 1000, System.Threading.Timeout.Infinite);
+        }
 
-            using (MemoryStream ms = new MemoryStream())
+        private async Task SaveContentAsync()
+        {
+            if (_isSaving || _currentChapterId == null) return;
+            _isSaving = true;
+
+            try
             {
-                textRange.Save(ms, DataFormats.Rtf);
-                string rtfContent = System.Text.Encoding.UTF8.GetString(ms.ToArray());
-                await _cacheManager.SaveManuscriptAsync(_currentManuscriptId, rtfContent);
+                string rtfContent = string.Empty;
+
+                await Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    TextRange textRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
+                    using (MemoryStream ms = new MemoryStream())
+                    {
+                        textRange.Save(ms, DataFormats.Rtf);
+                        rtfContent = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+                    }
+                });
+
+                var currentChapter = await _apiService.GetChapterAsync(_projectId, _currentChapterId.Value);
+                if (currentChapter != null)
+                {
+                    await _apiService.UpdateChapterAsync(
+                        _projectId, 
+                        _currentChapterId.Value, 
+                        currentChapter.Title, 
+                        rtfContent, 
+                        currentChapter.Order
+                    );
+                    Debug.WriteLine("Saved to API.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Auto-save failed: {ex.Message}");
+            }
+            finally
+            {
+                _isSaving = false;
             }
         }
 

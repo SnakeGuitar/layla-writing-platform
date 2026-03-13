@@ -20,7 +20,7 @@ namespace Layla.Desktop.Views
         {
             ProjectTitleText.Text = _currentProject.Title;
             
-            EditorFrame.Navigate(new ManuscriptEditorView());
+            EditorFrame.Navigate(new ManuscriptEditorView(_currentProject.Id));
 
             try 
             {
