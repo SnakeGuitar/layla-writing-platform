@@ -8,10 +8,12 @@ WORKDIR /app
 
 # Copy only manifest files first for better layer caching
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
+RUN pnpm add -D tsc-alias
 
 COPY . .
 RUN pnpm run build
+RUN pnpm exec tsc-alias -p tsconfig.json
 
 # ---------- Stage 2: Production ----------
 FROM node:22-alpine AS production

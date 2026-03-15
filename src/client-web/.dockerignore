@@ -1,0 +1,11 @@
+**/.vs
+**/bin
+**/obj
+**/.vscode
+**/.git
+**/.gitignore
+Dockerfile
+docker-compose*
+README.md
+wwwroot/service-worker.js
+.env
