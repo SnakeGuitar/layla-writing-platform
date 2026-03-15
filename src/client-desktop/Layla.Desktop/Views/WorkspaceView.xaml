@@ -27,7 +27,7 @@
                     <RowDefinition Height="50"/>
                 </Grid.RowDefinitions>
 
-                <TextBlock x:Name="ProjectTitleText" Grid.Row="0" Text="Project Title" FontWeight="Bold" FontSize="16" 
+                <TextBlock Grid.Row="0" Text="{Binding CurrentProject.Title}" FontWeight="Bold" FontSize="16" 
                            VerticalAlignment="Center" Margin="15,0" TextTrimming="CharacterEllipsis"
                            Foreground="{DynamicResource AccentColor}"/>
 
@@ -35,19 +35,19 @@
                     <Button Content="← Back to Projects" Background="Transparent" BorderThickness="0" 
                             HorizontalAlignment="Left" Padding="10,5"
                             Foreground="{DynamicResource SecondaryText}" Cursor="Hand"
-                            Click="BackToProjects_Click"/>
+                            Command="{Binding BackToProjectsCommand}"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="2" Orientation="Vertical" VerticalAlignment="Center" Margin="15,0">
                     <Button Content="⚙ Settings" Background="Transparent" BorderThickness="0" 
                             HorizontalAlignment="Left" Padding="0,5"
                             Foreground="{DynamicResource SecondaryText}" Cursor="Hand"
-                            Click="SettingsButton_Click"/>
+                            Command="{Binding OpenSettingsCommand}"/>
                     
                     <Button Content="🚪 Logout" Background="Transparent" BorderThickness="0" 
                             HorizontalAlignment="Left" Padding="0,5" Margin="0,5,0,0"
                             Foreground="IndianRed" Cursor="Hand"
-                            Click="LogoutButton_Click"/>
+                            Command="{Binding LogoutCommand}"/>
                 </StackPanel>
             </Grid>
         </Border>

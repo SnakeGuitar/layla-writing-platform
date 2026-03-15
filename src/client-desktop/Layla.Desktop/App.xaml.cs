@@ -1,7 +1,9 @@
-﻿using System.Configuration;
+using System.Configuration;
 using System.Data;
 using System.Windows;
 using MaterialDesignThemes.Wpf;
+using Microsoft.Extensions.DependencyInjection;
+using Layla.Desktop.Services;
 
 namespace Layla.Desktop
 {
@@ -29,6 +31,12 @@ namespace Layla.Desktop
             }
 
             base.OnStartup(e);
+
+            var services = new ServiceCollection();
+            ConfigureServices(services);
+            var provider = services.BuildServiceProvider();
+            ServiceLocator.Initialize(provider);
+
             string theme = "SpaceTheme";
             try 
             {
@@ -121,6 +129,24 @@ namespace Layla.Desktop
                 materialTheme.SetBaseTheme(BaseTheme.Dark);
             }
             paletteHelper.SetTheme(materialTheme);
+        }
+
+        private void ConfigureServices(IServiceCollection services)
+        {
+            services.AddSingleton<IManuscriptApiService, ManuscriptApiService>();
+            services.AddSingleton<IProjectApiService, ProjectApiService>();
+            services.AddSingleton<IAuthService, AuthService>();
+
+            // ViewModels
+            services.AddTransient<ViewModels.ManuscriptEditorViewModel>();
+            services.AddTransient<ViewModels.ProjectListViewModel>();
+            services.AddTransient<ViewModels.LoginViewModel>();
+            services.AddTransient<ViewModels.WorkspaceViewModel>();
+            services.AddTransient<ViewModels.SettingsViewModel>();
+            services.AddTransient<ViewModels.SignUpViewModel>();
+            services.AddTransient<ViewModels.WikiEntityEditorViewModel>();
+            services.AddTransient<ViewModels.VoicePanelViewModel>();
+            services.AddTransient<ViewModels.NarrativeGraphViewModel>();
         }
 
         protected override void OnExit(ExitEventArgs e)

@@ -1,56 +1,38 @@
-﻿using Layla.Desktop.Models.Authentication;
+using Layla.Desktop.ViewModels;
 using System.Windows.Controls;
 using System.Windows;
-using Layla.Desktop.Services;
+using System;
 
 namespace Layla.Desktop.Views
 {
-    /// <summary>
-    /// Interaction logic for LoginView.xaml
-    /// </summary>
     public partial class LoginView : Page
     {
-        private readonly IAuthService _authService;
+        private readonly LoginViewModel _viewModel;
 
         public LoginView()
         {
             InitializeComponent();
-            _authService = new AuthService();
+            _viewModel = Services.ServiceLocator.GetService<LoginViewModel>() ?? throw new InvalidOperationException("ViewModel not found");
+            DataContext = _viewModel;
+            _viewModel.OnLoginSuccess += OnLoginSuccess;
         }
 
-        private async void LoginButton_Click(object sender, System.Windows.RoutedEventArgs e)
+        private void OnLoginSuccess(object? sender, EventArgs e)
         {
-            ErrorText.Visibility = System.Windows.Visibility.Collapsed;
-            LoginButton.IsEnabled = false;
-            LoginButton.Content = "Signing in...";
-
-            var request = new LoginRequest
-            {
-                Email = EmailTextBox.Text,
-                Password = PasswordBox.Password
-            };
-
-            var response = await _authService.LoginAsync(request);
-
-            if (response.IsSuccess && response.Response != null)
-            {
-                SessionManager.CurrentToken = response.Response.Token;
-                SessionManager.CurrentEmail = response.Response.Email;
-                SessionManager.CurrentDisplayName = response.Response.DisplayName;
-                NavigationService.Navigate(new ProjectListView());
-            }
-            else
-            {
-                ErrorText.Text = response.ErrorMessage ?? "Login failed.";
-                ErrorText.Visibility = Visibility.Visible;
-                LoginButton.IsEnabled = true;
-                LoginButton.Content = "Login";
-            }
+            NavigationService.Navigate(new ProjectListView());
         }
 
         private void NavigateToSignUp_Click(object sender, System.Windows.RoutedEventArgs e)
         {
             NavigationService.Navigate(new SignUpView());
+        }
+
+        private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is LoginViewModel viewModel)
+            {
+                viewModel.Password = ((PasswordBox)sender).Password;
+            }
         }
     }
 }

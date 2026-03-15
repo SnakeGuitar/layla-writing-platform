@@ -1,4 +1,5 @@
 using Layla.Desktop.Services;
+using Layla.Desktop.ViewModels;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
@@ -9,16 +10,14 @@ using System.Windows.Media.Imaging;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Diagnostics;
+using System;
 
 namespace Layla.Desktop.Views
 {
     public partial class ManuscriptEditorView : Page
     {
-        private readonly IManuscriptApiService _apiService;
-        private readonly Guid _projectId;
-        private Guid? _currentChapterId;
+        private readonly ManuscriptEditorViewModel _viewModel;
         private bool _isLoaded = false;
-        private bool _isSaving = false;
         private System.Threading.Timer? _debounceTimer;
 
         private AdornerLayer? _adornerLayer;
@@ -28,113 +27,57 @@ namespace Layla.Desktop.Views
         public ManuscriptEditorView(Guid projectId)
         {
             InitializeComponent();
-            _projectId = projectId;
-            _apiService = new ManuscriptApiService();
+            _viewModel = ServiceLocator.GetService<ManuscriptEditorViewModel>() ?? throw new InvalidOperationException("ViewModel not found");
+            DataContext = _viewModel;
+            _viewModel.Initialize(projectId);
             this.Loaded += OnLoaded;
         }
 
         private async void OnLoaded(object sender, RoutedEventArgs e)
         {
-            try
+            await _viewModel.LoadManuscriptCommand.ExecuteAsync(null);
+            
+            if (_viewModel.CurrentChapter != null && !string.IsNullOrEmpty(_viewModel.CurrentChapter.Content))
             {
-                var manuscript = await _apiService.GetManuscriptAsync(_projectId);
-                Models.Chapter? targetChapter = null;
-
-                if (manuscript != null && manuscript.Chapters.Any())
+                EditorRichTextBox.Document.Blocks.Clear();
+                TextRange textRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
+                using (MemoryStream ms = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(_viewModel.CurrentChapter.Content)))
                 {
-                    targetChapter = await _apiService.GetChapterAsync(_projectId, manuscript.Chapters.OrderBy(c => c.Order).First().ChapterId);
-                }
-                else
-                {
-                    targetChapter = await _apiService.CreateChapterAsync(_projectId, "Chapter 1", string.Empty, 0);
-                }
-
-                if (targetChapter != null)
-                {
-                    _currentChapterId = targetChapter.ChapterId;
-                    
-                    if (!string.IsNullOrEmpty(targetChapter.Content))
-                    {
-                        EditorRichTextBox.Document.Blocks.Clear();
-                        TextRange textRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
-                        using (MemoryStream ms = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(targetChapter.Content)))
-                        {
-                            textRange.Load(ms, DataFormats.Rtf);
-                        }
-                    }
+                    textRange.Load(ms, DataFormats.Rtf);
                 }
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Failed to load manuscript: {ex.Message}");
-            }
-            finally
-            {
-                _isLoaded = true;
-            }
+            _isLoaded = true;
         }
 
         private void EditorRichTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (WordCountTextBlock != null)
-            {
-                TextRange countRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
-                int wordCount = countRange.Text.Split(new char[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
-                WordCountTextBlock.Text = $"{wordCount} word{(wordCount != 1 ? "s" : "")}";
-            }
+            TextRange countRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
+            int wordCount = countRange.Text.Split(new char[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
+            _viewModel.UpdateWordCount(wordCount);
 
-            if (!_isLoaded || _currentChapterId == null) return;
+            if (!_isLoaded || _viewModel.CurrentChapter == null) return;
 
             _debounceTimer?.Change(System.Threading.Timeout.Infinite, 0);
-            _debounceTimer = new System.Threading.Timer(async _ => await SaveContentAsync(), null, 1000, System.Threading.Timeout.Infinite);
+            _debounceTimer = new System.Threading.Timer(async _ => await SaveContentInternalAsync(), null, 1000, System.Threading.Timeout.Infinite);
         }
 
-        private async Task SaveContentAsync()
+        private async Task SaveContentInternalAsync()
         {
-            if (_isSaving || _currentChapterId == null) return;
-            _isSaving = true;
+            string rtfContent = string.Empty;
 
-            try
+            await Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                string rtfContent = string.Empty;
-
-                await Application.Current.Dispatcher.InvokeAsync(() =>
+                TextRange textRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
+                using (MemoryStream ms = new MemoryStream())
                 {
-                    TextRange textRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
-                    using (MemoryStream ms = new MemoryStream())
-                    {
-                        textRange.Save(ms, DataFormats.Rtf);
-                        rtfContent = System.Text.Encoding.UTF8.GetString(ms.ToArray());
-                    }
-                });
-
-                var currentChapter = await _apiService.GetChapterAsync(_projectId, _currentChapterId.Value);
-                if (currentChapter != null)
-                {
-                    await _apiService.UpdateChapterAsync(
-                        _projectId, 
-                        _currentChapterId.Value, 
-                        currentChapter.Title, 
-                        rtfContent, 
-                        currentChapter.Order
-                    );
-                    Debug.WriteLine("Saved to API.");
+                    textRange.Save(ms, DataFormats.Rtf);
+                    rtfContent = System.Text.Encoding.UTF8.GetString(ms.ToArray());
                 }
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Auto-save failed: {ex.Message}");
-            }
-            finally
-            {
-                _isSaving = false;
-            }
+            });
+
+            await _viewModel.SaveContentCommand.ExecuteAsync(rtfContent);
         }
 
-        /// <summary>
-        /// Handles the insertion of an image. Wraps the image in a Figure to allow
-        /// text to wrap around it naturally.
-        /// </summary>
         private void InsertImageButton_Click(object sender, RoutedEventArgs e)
         {
             Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog
@@ -230,8 +173,8 @@ namespace Layla.Desktop.Views
             _adornerLayer = AdornerLayer.GetAdornerLayer(_selectedImage);
             if (_adornerLayer != null)
             {
-            _currentAdorner = new ImageResizerAdorner(_selectedImage);
-            _adornerLayer?.Add(_currentAdorner);
+                _currentAdorner = new ImageResizerAdorner(_selectedImage);
+                _adornerLayer?.Add(_currentAdorner);
             }
         }
 

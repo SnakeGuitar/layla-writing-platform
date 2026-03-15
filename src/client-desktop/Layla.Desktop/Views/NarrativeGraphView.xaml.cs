@@ -1,40 +1,42 @@
 using System;
-using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using Layla.Desktop.Models;
+using Layla.Desktop.ViewModels;
+using Layla.Desktop.Services;
+using System.Collections.Specialized;
+using System.Collections.Generic;
 
 namespace Layla.Desktop.Views
 {
     public partial class NarrativeGraphView : Page
     {
-        private readonly List<GraphNode> _mockNodes = new();
-        private readonly List<GraphEdge> _mockEdges = new();
+        private readonly NarrativeGraphViewModel _viewModel;
 
         public NarrativeGraphView()
         {
             InitializeComponent();
-            InitializeMockData();
+            _viewModel = ServiceLocator.GetService<NarrativeGraphViewModel>() ?? throw new InvalidOperationException("ViewModel not found");
+            DataContext = _viewModel;
+            
             DrawGraph();
-        }
-
-        private void InitializeMockData()
-        {
-            // TODO-Integration: Load real nodes and edges from the service
+            
+            ((INotifyCollectionChanged)_viewModel.Nodes).CollectionChanged += (s, e) => DrawGraph();
+            ((INotifyCollectionChanged)_viewModel.Edges).CollectionChanged += (s, e) => DrawGraph();
         }
 
         private void DrawGraph()
         {
             GraphCanvas.Children.Clear();
 
-            foreach (var edge in _mockEdges)
+            foreach (var edge in _viewModel.Edges)
             {
                 DrawEdge(edge);
             }
 
-            foreach (var node in _mockNodes)
+            foreach (var node in _viewModel.Nodes)
             {
                 DrawNode(node);
             }

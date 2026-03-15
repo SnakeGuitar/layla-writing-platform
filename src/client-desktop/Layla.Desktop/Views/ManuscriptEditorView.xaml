@@ -74,6 +74,6 @@
 
         <TextBlock x:Name="WordCountTextBlock" Grid.Row="3" Margin="20,0,20,20" 
                    HorizontalAlignment="Right" Foreground="{DynamicResource SecondaryText}" 
-                   FontSize="12" FontFamily="Segoe UI" Text="0 words"/>
+                   FontSize="12" FontFamily="Segoe UI" Text="{Binding WordCountText}"/>
     </Grid>
 </Page>

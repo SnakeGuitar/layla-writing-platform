@@ -9,6 +9,10 @@
       Background="{DynamicResource WindowBackground}"
       Foreground="{DynamicResource PrimaryText}">
 
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Page.Resources>
+
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -18,18 +22,20 @@
 
         <!-- Header: Connection status -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,15">
-            <Ellipse x:Name="StatusIndicator" Width="12" Height="12" Fill="Gray"
+            <Ellipse Width="12" Height="12" Fill="{Binding StatusIndicatorFill}"
                      VerticalAlignment="Center" Margin="0,0,8,0"/>
-            <TextBlock x:Name="StatusText" Text="Disconnected" FontSize="14"
+            <TextBlock Text="{Binding StatusText}" FontSize="14"
                        VerticalAlignment="Center" Foreground="{DynamicResource SecondaryText}"/>
-            <Button x:Name="ConnectButton" Content="Connect" Margin="15,0,0,0"
+            <Button Content="{Binding ConnectButtonContent}" Margin="15,0,0,0"
                     Padding="12,6" Background="{DynamicResource AccentColor}"
                     Foreground="White" BorderThickness="0" Cursor="Hand"
-                    Click="ConnectButton_Click"/>
-            <Button x:Name="LeaveButton" Content="Leave Room" Margin="10,0,0,0"
+                    Command="{Binding ConnectCommand}"
+                    Visibility="{Binding IsConnectVisible, Converter={StaticResource BoolToVis}}"/>
+            <Button Content="Leave Room" Margin="10,0,0,0"
                     Padding="12,6" Background="IndianRed"
                     Foreground="White" BorderThickness="0" Cursor="Hand"
-                    Visibility="Collapsed" Click="LeaveButton_Click"/>
+                    Command="{Binding LeaveCommand}"
+                    Visibility="{Binding IsLeaveVisible, Converter={StaticResource BoolToVis}}"/>
         </StackPanel>
 
         <!-- Participant list -->
@@ -37,10 +43,11 @@
                 CornerRadius="8" Padding="10" Margin="0,0,0,15"
                 BorderBrush="{DynamicResource BorderColor}" BorderThickness="1">
             <Grid>
-                <TextBlock x:Name="EmptyRoomText" Text="No participants in voice room"
+                <TextBlock Visibility="{Binding IsEmptyRoomVisible, Converter={StaticResource BoolToVis}}" Text="No participants in voice room"
                            Foreground="{DynamicResource SecondaryText}"
                            HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 <ListBox x:Name="ParticipantList" Background="Transparent" BorderThickness="0"
+                         ItemsSource="{Binding Participants}"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
@@ -72,7 +79,7 @@
         <!-- PTT Button -->
         <StackPanel Grid.Row="2" HorizontalAlignment="Center">
             <Button x:Name="PttButton" Width="160" Height="160"
-                    IsEnabled="False" Cursor="Hand"
+                    IsEnabled="{Binding IsPttEnabled}" Cursor="Hand"
                     PreviewMouseDown="PttButton_MouseDown"
                     PreviewMouseUp="PttButton_MouseUp">
                 <Button.Template>
@@ -99,7 +106,7 @@
                     </ControlTemplate>
                 </Button.Template>
             </Button>
-            <TextBlock x:Name="PttStatusText" Text="" FontSize="12"
+            <TextBlock Text="{Binding PttStatusText}" FontSize="12"
                        HorizontalAlignment="Center" Margin="0,8,0,0"
                        Foreground="{DynamicResource SecondaryText}"/>
         </StackPanel>

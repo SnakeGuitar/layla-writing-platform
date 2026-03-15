@@ -1,31 +1,37 @@
+using System;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Navigation;
 using Layla.Desktop.Models;
+using Layla.Desktop.ViewModels;
 using Layla.Desktop.Services;
-using System.Collections.Generic;
 
 namespace Layla.Desktop.Views
 {
     public partial class WorkspaceView : Page
     {
-        private readonly Project _currentProject;
-        private readonly IProjectApiService _projectApiService;
+        private readonly WorkspaceViewModel _viewModel;
 
         public WorkspaceView(Project currentProject)
         {
             InitializeComponent();
-            _currentProject = currentProject;
-            _projectApiService = new ProjectApiService();
+            _viewModel = ServiceLocator.GetService<WorkspaceViewModel>() ?? throw new InvalidOperationException("ViewModel not found");
+            DataContext = _viewModel;
+            _viewModel.Initialize(currentProject);
+
+            _viewModel.OnLogout += (s, e) => NavigationService.Navigate(new LoginView());
+            _viewModel.OnBackToProjects += (s, e) => NavigationService.Navigate(new ProjectListView());
+            _viewModel.OnSettings += (s, e) => NavigationService.Navigate(new SettingsView());
+
             this.Loaded += WorkspaceView_Loaded;
         }
 
         private void WorkspaceView_Loaded(object sender, RoutedEventArgs e)
         {
-            ProjectTitleText.Text = _currentProject.Title;
-            
-            EditorFrame.Navigate(new ManuscriptEditorView(_currentProject.Id));
-            VoiceFrame.Navigate(new VoicePanelView(_currentProject.Id));
+            if (_viewModel.CurrentProject != null)
+            {
+                EditorFrame.Navigate(new ManuscriptEditorView(_viewModel.CurrentProject.Id));
+                VoiceFrame.Navigate(new VoicePanelView(_viewModel.CurrentProject.Id));
+            }
 
             try 
             {
@@ -35,22 +41,6 @@ namespace Layla.Desktop.Views
                 }
             } 
             catch { }
-        }
-        
-        private void BackToProjects_Click(object sender, RoutedEventArgs e)
-        {
-            NavigationService.Navigate(new ProjectListView());
-        }
-
-        private void SettingsButton_Click(object sender, RoutedEventArgs e)
-        {
-            NavigationService.Navigate(new SettingsView());
-        }
-
-        private void LogoutButton_Click(object sender, RoutedEventArgs e)
-        {
-            Services.SessionManager.ClearSession();
-            NavigationService.Navigate(new LoginView());
         }
     }
 }
