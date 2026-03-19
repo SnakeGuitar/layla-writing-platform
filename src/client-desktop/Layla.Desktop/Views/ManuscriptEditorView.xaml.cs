@@ -51,11 +51,11 @@ namespace Layla.Desktop.Views
 
         private void EditorRichTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
+            if (_viewModel == null || !_isLoaded || _viewModel.CurrentChapter == null) return;
+
             TextRange countRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
             int wordCount = countRange.Text.Split(new char[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
             _viewModel.UpdateWordCount(wordCount);
-
-            if (!_isLoaded || _viewModel.CurrentChapter == null) return;
 
             _debounceTimer?.Change(System.Threading.Timeout.Infinite, 0);
             _debounceTimer = new System.Threading.Timer(async _ => await SaveContentInternalAsync(), null, 1000, System.Threading.Timeout.Infinite);
