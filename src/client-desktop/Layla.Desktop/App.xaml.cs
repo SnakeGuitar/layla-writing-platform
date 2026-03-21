@@ -12,23 +12,12 @@ namespace Layla.Desktop
     /// </summary>
     public partial class App : Application
     {
-        private static System.Threading.Mutex? _mutex = null;
+
         private string ConfigPath => System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Layla", "theme.txt");
         public string CurrentTheme { get; private set; } = "SpaceTheme";
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            const string appName = "LaylaDesktopAppMutex_80cd04d3";
-            bool createdNew;
-
-            _mutex = new System.Threading.Mutex(true, appName, out createdNew);
-
-            if (!createdNew)
-            {
-                MessageBox.Show("Layla Desktop is already running. You can only open one instance at a time.", "Already Running", MessageBoxButton.OK, MessageBoxImage.Information);
-                Application.Current.Shutdown();
-                return;
-            }
 
             base.OnStartup(e);
 
@@ -153,15 +142,6 @@ namespace Layla.Desktop
 
         protected override void OnExit(ExitEventArgs e)
         {
-            if (_mutex != null)
-            {
-                try 
-                { 
-                    _mutex.ReleaseMutex(); 
-                    _mutex.Dispose();
-                } 
-                catch {}
-            }
             base.OnExit(e);
         }
     }
