@@ -4,10 +4,8 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace Layla.Api.Hubs;
 
-/// <summary>
-/// Tracks "Author Working" presence for public projects.
-/// Anonymous clients can watch projects; authenticated authors send heartbeats.
-/// </summary>
+public record ParticipantPresenceDto(string UserId, string DisplayName, string Role);
+
 public class PresenceHub : Hub
 {
     private readonly IPresenceTracker _presenceTracker;
@@ -19,15 +17,31 @@ public class PresenceHub : Hub
         _logger = logger;
     }
 
-    /// <summary>
-    /// Subscribe to presence updates for a project.
-    /// The caller immediately receives the current active state.
-    /// </summary>
     public async Task WatchProject(Guid projectId)
     {
         await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(projectId));
+        
+        if (Context.User?.Identity?.IsAuthenticated == true)
+        {
+            var userId = Context.User?.GetUserId() ?? "Unknown";
+            var displayName = Context.User?.FindFirst("name")?.Value ?? "Unknown";
+            
+            var existingConnectionId = _presenceTracker.GetUserConnection(userId);
+            if (existingConnectionId != null && existingConnectionId != Context.ConnectionId)
+            {
+                await Clients.Client(existingConnectionId).SendAsync("MultipleSessionsDetected");
+                _logger.LogWarning("User {UserId} logged in from a new instance. Old connection {OldConn} notified.", userId, existingConnectionId);
+            }
+
+            _presenceTracker.MarkActive(projectId, userId, Context.ConnectionId, displayName, "Watcher");
+            await BroadcastParticipants(projectId);
+        }
+
         var isActive = _presenceTracker.IsProjectActive(projectId);
         await Clients.Caller.SendAsync("AuthorStatusChanged", projectId, isActive);
+        
+        var participants = _presenceTracker.GetActiveParticipants(projectId);
+        await Clients.Caller.SendAsync("ParticipantsUpdated", projectId, participants);
     }
 
     public async Task UnwatchProject(Guid projectId)
@@ -35,23 +49,28 @@ public class PresenceHub : Hub
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, GroupName(projectId));
     }
 
-    /// <summary>
-    /// Called by authenticated editors/writers to signal active presence.
-    /// Broadcasts AuthorStatusChanged to all project watchers when first author joins.
-    /// </summary>
     [Authorize]
-    public async Task AuthorHeartbeat(Guid projectId)
+    public async Task AuthorHeartbeat(Guid projectId, string role = "Author")
     {
         var userId = Context.User!.GetUserId()
             ?? throw new HubException("Invalid user identity.");
 
-        var isFirstAuthor = _presenceTracker.MarkActive(projectId, userId, Context.ConnectionId);
+        var displayName = Context.User?.FindFirst("name")?.Value ?? "Unknown";
+
+        var isFirstAuthor = _presenceTracker.MarkActive(projectId, userId, Context.ConnectionId, displayName, role);
+
+        await BroadcastParticipants(projectId);
 
         if (isFirstAuthor)
         {
             await Clients.Group(GroupName(projectId)).SendAsync("AuthorStatusChanged", projectId, true);
-            _logger.LogInformation("Author {UserId} became active on project {ProjectId}", userId, projectId);
         }
+    }
+
+    private async Task BroadcastParticipants(Guid projectId)
+    {
+        var participants = _presenceTracker.GetActiveParticipants(projectId);
+        await Clients.Group(GroupName(projectId)).SendAsync("ParticipantsUpdated", projectId, participants);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
@@ -59,10 +78,14 @@ public class PresenceHub : Hub
         var becameInactive = _presenceTracker.MarkInactive(
             Context.ConnectionId, out var projectId, out var userId);
 
+        if (projectId != default)
+        {
+            await BroadcastParticipants(projectId);
+        }
+
         if (becameInactive)
         {
             await Clients.Group(GroupName(projectId)).SendAsync("AuthorStatusChanged", projectId, false);
-            _logger.LogInformation("Project {ProjectId} became inactive (author {UserId} disconnected)", projectId, userId);
         }
 
         await base.OnDisconnectedAsync(exception);

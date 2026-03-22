@@ -38,43 +38,77 @@
                     Visibility="{Binding IsLeaveVisible, Converter={StaticResource BoolToVis}}"/>
         </StackPanel>
 
-        <!-- Participant list -->
-        <Border Grid.Row="1" Background="{DynamicResource ControlBackground}"
-                CornerRadius="8" Padding="10" Margin="0,0,0,15"
-                BorderBrush="{DynamicResource BorderColor}" BorderThickness="1">
-            <Grid>
-                <TextBlock Visibility="{Binding IsEmptyRoomVisible, Converter={StaticResource BoolToVis}}" Text="No participants in voice room"
-                           Foreground="{DynamicResource SecondaryText}"
-                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                <ListBox x:Name="ParticipantList" Background="Transparent" BorderThickness="0"
-                         ItemsSource="{Binding Participants}"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                    <ListBox.ItemTemplate>
+        <!-- Main Content Area -->
+        <Grid Grid.Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Online Now (Presence) -->
+            <StackPanel Grid.Row="0" Margin="0,0,0,10" 
+                        Visibility="{Binding IsOnlineParticipantsVisible, Converter={StaticResource BoolToVis}}">
+                <TextBlock Text="Online Now" FontSize="12" FontWeight="Bold" 
+                           Foreground="{DynamicResource SecondaryText}" Margin="0,0,0,5"/>
+                <ItemsControl ItemsSource="{Binding OnlineParticipants}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel Orientation="Horizontal" Margin="5,4">
-                                <Ellipse Width="8" Height="8" VerticalAlignment="Center" Margin="0,0,8,0">
-                                    <Ellipse.Style>
-                                        <Style TargetType="Ellipse">
-                                            <Setter Property="Fill" Value="Gray"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding IsSpeaking}" Value="True">
-                                                    <Setter Property="Fill" Value="LimeGreen"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </Ellipse.Style>
-                                </Ellipse>
-                                <TextBlock Text="{Binding DisplayName}" FontSize="14"
-                                           VerticalAlignment="Center" Foreground="{DynamicResource PrimaryText}"/>
-                                <TextBlock Text="{Binding RoleLabel}" FontSize="11"
-                                           VerticalAlignment="Center" Margin="8,0,0,0"
-                                           Foreground="{DynamicResource SecondaryText}"/>
-                            </StackPanel>
+                            <Border Background="{DynamicResource ControlBackground}" 
+                                    CornerRadius="4" Padding="6,3" Margin="0,0,5,5"
+                                    BorderBrush="{DynamicResource BorderColor}" BorderThickness="1">
+                                <StackPanel Orientation="Horizontal">
+                                    <Ellipse Width="6" Height="6" Fill="LimeGreen" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding DisplayName}" FontSize="11" Foreground="{DynamicResource PrimaryText}"/>
+                                </StackPanel>
+                            </Border>
                         </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </Grid>
-        </Border>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+
+            <!-- Participant list (Voice) -->
+            <Border Grid.Row="1" Background="{DynamicResource ControlBackground}"
+                    CornerRadius="8" Padding="10" Margin="0,0,0,15"
+                    BorderBrush="{DynamicResource BorderColor}" BorderThickness="1">
+                <Grid>
+                    <TextBlock Visibility="{Binding IsEmptyRoomVisible, Converter={StaticResource BoolToVis}}" Text="No participants in voice room"
+                               Foreground="{DynamicResource SecondaryText}"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    <ListBox x:Name="ParticipantList" Background="Transparent" BorderThickness="0"
+                             ItemsSource="{Binding Participants}"
+                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" Margin="5,4">
+                                    <Ellipse Width="8" Height="8" VerticalAlignment="Center" Margin="0,0,8,0">
+                                        <Ellipse.Style>
+                                            <Style TargetType="Ellipse">
+                                                <Setter Property="Fill" Value="Gray"/>
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsSpeaking}" Value="True">
+                                                        <Setter Property="Fill" Value="LimeGreen"/>
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Ellipse.Style>
+                                    </Ellipse>
+                                    <TextBlock Text="{Binding DisplayName}" FontSize="14"
+                                               VerticalAlignment="Center" Foreground="{DynamicResource PrimaryText}"/>
+                                    <TextBlock Text="{Binding RoleLabel}" FontSize="11"
+                                               VerticalAlignment="Center" Margin="8,0,0,0"
+                                               Foreground="{DynamicResource SecondaryText}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+        </Grid>
 
         <!-- PTT Button -->
         <StackPanel Grid.Row="2" HorizontalAlignment="Center">

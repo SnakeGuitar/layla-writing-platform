@@ -29,14 +29,25 @@ public class VoiceHub : Hub
             ?? throw new HubException("Invalid user identity.");
 
         var hasAccess = await _projectRepository.UserHasAnyRoleInProjectAsync(projectId, userId);
-        if (!hasAccess)
+        var project = await _projectRepository.GetProjectByIdAsync(projectId);
+        
+        if (!hasAccess && (project == null || !project.IsPublic))
             throw new HubException("You are not a member of this project.");
 
-        var displayName = Context.User.FindFirst("name")?.Value ?? "Unknown";
+        var displayName = Context.User?.FindFirst("name")?.Value ?? "Unknown";
 
         // Determine role for speaker/listener distinction
-        var isReader = await _projectRepository.UserHasRoleInProjectAsync(projectId, userId, "Reader");
-        var role = isReader ? "Reader" : "Speaker";
+        string role;
+        if (hasAccess)
+        {
+            var isReader = await _projectRepository.UserHasRoleInProjectAsync(projectId, userId, "Reader");
+            role = isReader ? "Reader" : "Speaker";
+        }
+        else
+        {
+            // Public project watcher
+            role = "Reader";
+        }
 
         var participant = _roomManager.AddParticipant(projectId, userId, displayName, Context.ConnectionId, role);
         var groupName = $"voice:{projectId}";
