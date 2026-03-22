@@ -1,10 +1,10 @@
 using Layla.Api.Extensions;
+using Layla.Core.Contracts;
+using Layla.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Layla.Api.Hubs;
-
-public record ParticipantPresenceDto(string UserId, string DisplayName, string Role);
 
 public class PresenceHub : Hub
 {

@@ -1,5 +1,6 @@
 using Layla.Api.Extensions;
 using Layla.Core.Contracts.Voice;
+using Layla.Core.Interfaces;
 using Layla.Core.Interfaces.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;

@@ -1,6 +1,8 @@
+using System;
+using System.Collections.Generic;
 using Layla.Core.Contracts.Voice;
 
-namespace Layla.Api.Hubs;
+namespace Layla.Core.Interfaces;
 
 public interface IVoiceRoomManager
 {

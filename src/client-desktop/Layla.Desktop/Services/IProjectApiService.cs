@@ -19,17 +19,14 @@ namespace Layla.Desktop.Services
         Task<IEnumerable<Collaborator>?> GetCollaboratorsAsync(Guid projectId);
         Task<bool> RemoveCollaboratorAsync(Guid projectId, string collaboratorUserId);
 
-        event Action<Guid, bool> AuthorStatusChanged;
-        event Action<Guid, IEnumerable<ParticipantPresence>> ParticipantsUpdated;
-        event Action<Guid, IEnumerable<VoiceParticipant>> VoiceParticipantsUpdated;
-        event Action SessionDisplaced;
+        event Action<Guid, bool>? AuthorStatusChanged;
+        event Action<Guid, IEnumerable<ParticipantPresence>>? ParticipantsUpdated;
+        event Action<Guid, IEnumerable<VoiceParticipant>>? VoiceParticipantsUpdated;
+        event Action? SessionDisplaced;
 
         Task ConnectPresenceHubAsync();
         Task ConnectVoiceHubAsync(Guid projectId);
         Task AuthorHeartbeatAsync(Guid projectId, string role = "Author");
         Task WatchProjectAsync(Guid projectId);
     }
-
-    public record ParticipantPresence(string UserId, string DisplayName, string Role);
-    public record VoiceParticipant(string UserId, string DisplayName, bool IsSpeaking, string Role);
 }
