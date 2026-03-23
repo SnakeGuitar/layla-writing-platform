@@ -1,5 +1,6 @@
 using Layla.Core.Interfaces.Messaging;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
@@ -8,11 +9,13 @@ namespace Layla.Infrastructure.Messaging;
 
 public class EventBus : IEventBus, IDisposable, IEventPublisher
 {
-    private readonly IConnection _connection;
-    private readonly IModel _channel;
+    private IConnection? _connection;
+    private IModel? _channel;
+    private readonly ILogger<EventBus> _logger;
 
-    public EventBus(IConfiguration configuration)
+    public EventBus(IConfiguration configuration, ILogger<EventBus> logger)
     {
+        _logger = logger;
         var factory = new ConnectionFactory
         {
             HostName = configuration["RabbitMQ:HostName"] ?? "localhost",
@@ -25,10 +28,11 @@ public class EventBus : IEventBus, IDisposable, IEventPublisher
         {
             _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
+            _logger.LogInformation("EventBus connected to RabbitMQ at {HostName}:{Port}", factory.HostName, factory.Port);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[EventBus] Error connecting to RabbitMQ: {ex.Message}");
+            _logger.LogError(ex, "Failed to connect to RabbitMQ at {HostName}:{Port}", factory.HostName, factory.Port);
         }
     }
 
@@ -36,32 +40,48 @@ public class EventBus : IEventBus, IDisposable, IEventPublisher
     {
         const string exchangeName = "worldbuilding.events";
         var routingKey = @event.GetType().Name.ToLower().Replace("event", "");
-        
+
         await Task.Run(() => Publish(@event, exchangeName, routingKey), cancellationToken);
     }
 
     public void Publish<T>(T @event, string exchangeName, string routingKey = "") where T : class
     {
-        if (_channel == null) return;
-
-        _channel.ExchangeDeclare(exchange: exchangeName, type: ExchangeType.Topic, durable: true);
-
-        var options = new JsonSerializerOptions
+        if (_channel == null)
         {
-            PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-        };
+            _logger.LogWarning("Event not published: RabbitMQ channel is unavailable. EventType={EventType}, Exchange={Exchange}, RoutingKey={RoutingKey}",
+                typeof(T).Name, exchangeName, routingKey);
+            return;
+        }
 
-        var message = JsonSerializer.Serialize(@event, options);
-        var body = Encoding.UTF8.GetBytes(message);
+        try
+        {
+            _channel.ExchangeDeclare(exchange: exchangeName, type: ExchangeType.Topic, durable: true);
 
-        var properties = _channel.CreateBasicProperties();
-        properties.ContentType = "application/json";
-        properties.DeliveryMode = 2;
+            var options = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+            };
 
-        _channel.BasicPublish(exchange: exchangeName,
-                             routingKey: routingKey,
-                             basicProperties: properties,
-                             body: body);
+            var message = JsonSerializer.Serialize(@event, options);
+            var body = Encoding.UTF8.GetBytes(message);
+
+            var properties = _channel.CreateBasicProperties();
+            properties.ContentType = "application/json";
+            properties.DeliveryMode = 2;
+
+            _channel.BasicPublish(exchange: exchangeName,
+                                 routingKey: routingKey,
+                                 basicProperties: properties,
+                                 body: body);
+
+            _logger.LogDebug("Event published successfully. EventType={EventType}, Exchange={Exchange}, RoutingKey={RoutingKey}",
+                typeof(T).Name, exchangeName, routingKey);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to publish event. EventType={EventType}, Exchange={Exchange}, RoutingKey={RoutingKey}",
+                typeof(T).Name, exchangeName, routingKey);
+        }
     }
 
     public void Dispose()
