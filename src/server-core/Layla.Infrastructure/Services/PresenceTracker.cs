@@ -39,6 +39,8 @@ public class PresenceTracker : IPresenceTracker
 
     private static string UpgradeRoleIfNeeded(string existingRole, string newRole)
     {
+        if (!ProjectRoles.IsValid(newRole)) return existingRole;
+
         if (newRole == ProjectRoles.Owner) return ProjectRoles.Owner;
         if (newRole == ProjectRoles.Editor && existingRole != ProjectRoles.Owner) return ProjectRoles.Editor;
         return existingRole;

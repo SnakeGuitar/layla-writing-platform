@@ -24,7 +24,7 @@ public class PresenceHub : Hub
         if (Context.User?.Identity?.IsAuthenticated == true)
         {
             var userId = Context.User?.GetUserId() ?? "Unknown";
-            var displayName = Context.User?.FindFirst("name")?.Value ?? "Unknown";
+            var displayName = Context.User?.GetDisplayName() ?? "Unknown";
             
             var existingConnectionId = _presenceTracker.GetUserConnection(userId);
             if (existingConnectionId != null && existingConnectionId != Context.ConnectionId)
@@ -55,7 +55,7 @@ public class PresenceHub : Hub
         var userId = Context.User!.GetUserId()
             ?? throw new HubException("Invalid user identity.");
 
-        var displayName = Context.User?.FindFirst("name")?.Value ?? "Unknown";
+        var displayName = Context.User?.GetDisplayName() ?? "Unknown";
 
         var isFirstAuthor = _presenceTracker.MarkActive(projectId, userId, Context.ConnectionId, displayName, role);
 

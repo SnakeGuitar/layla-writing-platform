@@ -36,7 +36,7 @@ public class VoiceHub : Hub
         if (userRole == null && (project == null || !project.IsPublic))
             throw new HubException("You are not a member of this project.");
 
-        var displayName = Context.User?.FindFirst("name")?.Value ?? "Unknown";
+        var displayName = Context.User?.GetDisplayName() ?? "Unknown";
         var participantRole = DetermineParticipantRole(userRole?.Role);
 
         var participant = _roomManager.AddParticipant(projectId, userId, displayName, Context.ConnectionId, participantRole);
@@ -97,8 +97,10 @@ public class VoiceHub : Hub
 
     public async Task SendAudio(Guid projectId, byte[] audioData)
     {
-        var userId = Context.User!.GetUserId();
-        var participant = _roomManager.GetParticipant(projectId, userId!);
+        var userId = Context.User!.GetUserId()
+            ?? throw new HubException("Invalid user identity.");
+
+        var participant = _roomManager.GetParticipant(projectId, userId);
 
         if (participant == null || participant.Role == ProjectRoles.Reader)
             return; // Silently drop audio from non-members or listeners

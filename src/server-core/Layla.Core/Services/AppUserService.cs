@@ -23,15 +23,16 @@ public class AppUserService : IAppUserService
         try
         {
             var result = await _appUserRepository.GetAllAppUsersAsync(cancellationToken);
-            if (!result.IsSuccess) return Result<IEnumerable<UserResponseDto>>.Failure(result.Error);
-            
+            if (!result.IsSuccess)
+                return Result<IEnumerable<UserResponseDto>>.Failure(result.ErrorCode ?? ErrorCode.InternalError);
+
             var dtos = result.Data!.Select(MapToResponseDto);
             return Result<IEnumerable<UserResponseDto>>.Success(dtos);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve all users");
-            return Result<IEnumerable<UserResponseDto>>.Failure("An error occurred while retrieving users.");
+            return Result<IEnumerable<UserResponseDto>>.Failure(ErrorCode.InternalError);
         }
     }
 

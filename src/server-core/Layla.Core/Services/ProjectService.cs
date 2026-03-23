@@ -297,7 +297,11 @@ public class ProjectService : IProjectService
             if (alreadyMember)
                 return Result<CollaboratorResponseDto>.Failure(ErrorCode.AlreadyMember);
 
-            var role = request.Role == ProjectRoles.Editor ? ProjectRoles.Editor : ProjectRoles.Reader;
+            var normalizedRole = ProjectRoles.Normalize(request.Role);
+            if (normalizedRole == null || normalizedRole == ProjectRoles.Owner)
+                return Result<CollaboratorResponseDto>.Failure(ErrorCode.InvalidRole);
+
+            var role = normalizedRole;
 
             var projectRole = new ProjectRole
             {
