@@ -73,7 +73,7 @@ public class ProjectService : IProjectService
         {
             await _projectRepository.RollbackTransactionAsync(cancellationToken);
             _logger.LogError(ex, "Failed to create project for user {UserId}", userId);
-            return Result<ProjectResponseDto>.Failure("An error occurred while creating the project.");
+            return Result<ProjectResponseDto>.Failure(ErrorCode.InternalError);
         }
     }
 
@@ -111,7 +111,7 @@ public class ProjectService : IProjectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve projects for user {UserId}", userId);
-            return Result<IEnumerable<ProjectResponseDto>>.Failure("An error occurred while retrieving projects.");
+            return Result<IEnumerable<ProjectResponseDto>>.Failure(ErrorCode.InternalError);
         }
     }
 
@@ -178,14 +178,14 @@ public class ProjectService : IProjectService
         {
             var project = await _projectRepository.GetProjectByIdAsync(projectId, cancellationToken);
             if (project == null)
-                return Result<ProjectResponseDto>.Failure("Project not found.");
+                return Result<ProjectResponseDto>.Failure(ErrorCode.ProjectNotFound);
 
             return Result<ProjectResponseDto>.Success(MapToResponseDto(project));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve project {ProjectId}", projectId);
-            return Result<ProjectResponseDto>.Failure("An error occurred while retrieving the project.");
+            return Result<ProjectResponseDto>.Failure(ErrorCode.InternalError);
         }
     }
 
@@ -206,7 +206,7 @@ public class ProjectService : IProjectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve all projects");
-            return Result<IEnumerable<ProjectResponseDto>>.Failure("An error occurred while retrieving projects.");
+            return Result<IEnumerable<ProjectResponseDto>>.Failure(ErrorCode.InternalError);
         }
     }
 
@@ -221,7 +221,7 @@ public class ProjectService : IProjectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve public projects");
-            return Result<IEnumerable<ProjectResponseDto>>.Failure("An error occurred while retrieving public projects.");
+            return Result<IEnumerable<ProjectResponseDto>>.Failure(ErrorCode.InternalError);
         }
     }
 
@@ -326,7 +326,7 @@ public class ProjectService : IProjectService
         {
             var hasAccess = await _projectRepository.UserHasAnyRoleInProjectAsync(projectId, userId, cancellationToken);
             if (!hasAccess)
-                return Result<IEnumerable<CollaboratorResponseDto>>.Failure("Unauthorized.");
+                return Result<IEnumerable<CollaboratorResponseDto>>.Failure(ErrorCode.Unauthorized);
 
             var roles = await _projectRepository.GetProjectCollaboratorsAsync(projectId, cancellationToken);
             var dtos = roles.Select(r => new CollaboratorResponseDto
@@ -343,7 +343,7 @@ public class ProjectService : IProjectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get collaborators for project {ProjectId}", projectId);
-            return Result<IEnumerable<CollaboratorResponseDto>>.Failure("An error occurred while retrieving collaborators.");
+            return Result<IEnumerable<CollaboratorResponseDto>>.Failure(ErrorCode.InternalError);
         }
     }
 

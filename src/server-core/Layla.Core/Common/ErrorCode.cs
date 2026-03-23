@@ -6,37 +6,37 @@ namespace Layla.Core.Common;
 /// </summary>
 public enum ErrorCode
 {
-    // Validation errors (400)
-    ValidationFailed = 400,
-    InvalidInput = 401,
-    DuplicateEmail = 409,
-    InvalidRole = 402,
+    // Validation errors → HTTP 400
+    ValidationFailed = 1,
+    InvalidInput = 2,
+    InvalidRole = 3,
 
-    // Authentication errors (401)
-    Unauthorized = 1001,
-    InvalidCredentials = 1002,
-    AccountLocked = 1003,
-    SessionExpired = 1004,
-    InvalidToken = 1005,
+    // Conflict errors → HTTP 409
+    DuplicateEmail = 4,
+    AlreadyExists = 5,
+    AlreadyMember = 6,
 
-    // Authorization errors (403)
-    Forbidden = 2001,
-    InsufficientPermissions = 2002,
+    // Authentication errors → HTTP 401
+    Unauthorized = 101,
+    InvalidCredentials = 102,
+    AccountLocked = 103,
+    SessionExpired = 104,
+    InvalidToken = 105,
 
-    // Not found errors (404)
-    NotFound = 3001,
-    ProjectNotFound = 3002,
-    UserNotFound = 3003,
-    CollaboratorNotFound = 3004,
+    // Authorization errors → HTTP 403
+    Forbidden = 201,
+    InsufficientPermissions = 202,
 
-    // Conflict errors (409)
-    AlreadyExists = 4001,
-    AlreadyMember = 4002,
+    // Not found errors → HTTP 404
+    NotFound = 301,
+    ProjectNotFound = 302,
+    UserNotFound = 303,
+    CollaboratorNotFound = 304,
 
-    // Server errors (500)
-    InternalError = 5001,
-    DatabaseError = 5002,
-    MessagingError = 5003,
+    // Server errors → HTTP 500
+    InternalError = 501,
+    DatabaseError = 502,
+    MessagingError = 503,
 }
 
 /// <summary>
@@ -45,27 +45,31 @@ public enum ErrorCode
 public static class ErrorCodeExtensions
 {
     /// <summary>Gets the HTTP status code for an error code.</summary>
-    public static int GetStatusCode(this ErrorCode code) => (int)code switch
+    public static int GetStatusCode(this ErrorCode code) => code switch
     {
-        >= 400 and < 500 => (int)code,
-        _ => code switch
-        {
-            ErrorCode.Unauthorized or ErrorCode.InvalidCredentials or
-            ErrorCode.AccountLocked or ErrorCode.SessionExpired or
-            ErrorCode.InvalidToken => 401,
+        // Validation → 400
+        ErrorCode.ValidationFailed or ErrorCode.InvalidInput or ErrorCode.InvalidRole => 400,
 
-            ErrorCode.Forbidden or ErrorCode.InsufficientPermissions => 403,
+        // Conflict → 409
+        ErrorCode.DuplicateEmail or ErrorCode.AlreadyExists or ErrorCode.AlreadyMember => 409,
 
-            ErrorCode.ProjectNotFound or ErrorCode.UserNotFound or
-            ErrorCode.CollaboratorNotFound => 404,
+        // Authentication → 401
+        ErrorCode.Unauthorized or ErrorCode.InvalidCredentials or
+        ErrorCode.AccountLocked or ErrorCode.SessionExpired or
+        ErrorCode.InvalidToken => 401,
 
-            ErrorCode.AlreadyExists or ErrorCode.AlreadyMember => 409,
+        // Authorization → 403
+        ErrorCode.Forbidden or ErrorCode.InsufficientPermissions => 403,
 
-            ErrorCode.InternalError or ErrorCode.DatabaseError or
-            ErrorCode.MessagingError => 500,
+        // Not found → 404
+        ErrorCode.NotFound or ErrorCode.ProjectNotFound or
+        ErrorCode.UserNotFound or ErrorCode.CollaboratorNotFound => 404,
 
-            _ => 400,
-        }
+        // Server → 500
+        ErrorCode.InternalError or ErrorCode.DatabaseError or
+        ErrorCode.MessagingError => 500,
+
+        _ => 500,
     };
 
     /// <summary>Gets a user-friendly error message.</summary>

@@ -74,7 +74,7 @@ public class AppUserRepository : IAppUserRepository
     {
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
-            return Result<AppUser>.Failure("User not found.");
+            return Result<AppUser>.Failure(ErrorCode.UserNotFound);
 
         return Result<AppUser>.Success(user);
     }
@@ -83,7 +83,7 @@ public class AppUserRepository : IAppUserRepository
     {
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
-            return Result<AppUser>.Failure("User not found.");
+            return Result<AppUser>.Failure(ErrorCode.UserNotFound);
 
         user.DisplayName = request.DisplayName ?? user.DisplayName;
         user.Bio = request.Bio ?? user.Bio;
@@ -92,7 +92,7 @@ public class AppUserRepository : IAppUserRepository
         if (!result.Succeeded)
         {
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            return Result<AppUser>.Failure(errors);
+            return Result<AppUser>.Failure(ErrorCode.ValidationFailed, errors);
         }
 
         return Result<AppUser>.Success(user);
@@ -102,13 +102,13 @@ public class AppUserRepository : IAppUserRepository
     {
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
-            return Result<bool>.Failure("User not found.");
+            return Result<bool>.Failure(ErrorCode.UserNotFound);
 
         var result = await _userManager.DeleteAsync(user);
         if (!result.Succeeded)
         {
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            return Result<bool>.Failure(errors);
+            return Result<bool>.Failure(ErrorCode.ValidationFailed, errors);
         }
 
         return Result<bool>.Success(true);
@@ -118,7 +118,7 @@ public class AppUserRepository : IAppUserRepository
     {
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
-            return Result<bool>.Failure("User not found.");
+            return Result<bool>.Failure(ErrorCode.UserNotFound);
 
         user.TokenVersion++;
 
@@ -126,7 +126,7 @@ public class AppUserRepository : IAppUserRepository
         if (!lockoutResult.Succeeded)
         {
             var errors = string.Join(", ", lockoutResult.Errors.Select(e => e.Description));
-            return Result<bool>.Failure(errors);
+            return Result<bool>.Failure(ErrorCode.ValidationFailed, errors);
         }
 
         await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
@@ -139,7 +139,7 @@ public class AppUserRepository : IAppUserRepository
     {
         var user = await _userManager.FindByEmailAsync(email);
         if (user == null)
-            return Result<AppUser>.Failure("User not found.");
+            return Result<AppUser>.Failure(ErrorCode.UserNotFound);
 
         return Result<AppUser>.Success(user);
     }
