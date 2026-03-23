@@ -2,6 +2,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using Layla.Core.Constants;
 using Layla.Core.Contracts;
 using Layla.Core.Interfaces;
 
@@ -24,23 +25,48 @@ public class PresenceTracker : IPresenceTracker
         lock (_lock)
         {
             var participants = _projectParticipants.GetOrAdd(projectId, _ => new ConcurrentDictionary<string, InternalParticipant>());
-            
+
             bool wasActive = IsProjectActive(projectId);
-            
-            participants.AddOrUpdate(userId, 
+
+            participants.AddOrUpdate(userId,
                 _ => new InternalParticipant(userId, displayName, role, 1),
-                (_, existing) => {
-                    string finalRole = existing.Role;
-                    if (role == "Owner" || role == "Author" || role == "Editor") finalRole = role;
-                    return existing with { ConnectionCount = existing.ConnectionCount + 1, Role = finalRole };
-                });
-            
+                (_, existing) => existing with { ConnectionCount = existing.ConnectionCount + 1, Role = UpgradeRoleIfNeeded(existing.Role, role) });
+
             bool isNowActive = IsProjectActive(projectId);
             return !wasActive && isNowActive;
         }
     }
 
+    private static string UpgradeRoleIfNeeded(string existingRole, string newRole)
+    {
+        // Upgrade to higher privilege roles: OWNER > EDITOR > READER
+        if (newRole == ProjectRoles.Owner) return ProjectRoles.Owner;
+        if (newRole == ProjectRoles.Editor && existingRole != ProjectRoles.Owner) return ProjectRoles.Editor;
+        return existingRole;
+    }
+
     public bool MarkInactive(string connectionId, out Guid projectId, out string userId)
+    {
+        if (!RemoveConnectionMapping(connectionId, out projectId, out userId))
+            return false;
+
+        lock (_lock)
+        {
+            if (!_projectParticipants.TryGetValue(projectId, out var participants))
+                return false;
+
+            bool wasActive = IsProjectActive(projectId);
+            DecrementParticipant(participants, userId);
+
+            if (participants.IsEmpty)
+                _projectParticipants.TryRemove(projectId, out _);
+
+            bool isNowActive = IsProjectActive(projectId);
+            return wasActive && !isNowActive;
+        }
+    }
+
+    private bool RemoveConnectionMapping(string connectionId, out Guid projectId, out string userId)
     {
         if (!_connections.TryRemove(connectionId, out var info))
         {
@@ -53,40 +79,20 @@ public class PresenceTracker : IPresenceTracker
         userId = info.UserId;
 
         if (_userConnections.TryGetValue(userId, out var activeConnId) && activeConnId == connectionId)
-        {
             _userConnections.TryRemove(userId, out _);
-        }
 
-        lock (_lock)
-        {
-            if (_projectParticipants.TryGetValue(projectId, out var participants))
-            {
-                bool wasActive = IsProjectActive(projectId);
+        return true;
+    }
 
-                if (participants.TryGetValue(userId, out var existing))
-                {
-                    if (existing.ConnectionCount <= 1)
-                    {
-                        participants.TryRemove(userId, out _);
-                    }
-                    else
-                    {
-                        participants[userId] = existing with { ConnectionCount = existing.ConnectionCount - 1 };
-                    }
-                }
+    private static void DecrementParticipant(ConcurrentDictionary<string, InternalParticipant> participants, string userId)
+    {
+        if (!participants.TryGetValue(userId, out var existing))
+            return;
 
-                if (participants.IsEmpty)
-                {
-                    _projectParticipants.TryRemove(projectId, out _);
-                    return wasActive;
-                }
-
-                bool isNowActive = IsProjectActive(projectId);
-                return wasActive && !isNowActive;
-            }
-        }
-
-        return false;
+        if (existing.ConnectionCount <= 1)
+            participants.TryRemove(userId, out _);
+        else
+            participants[userId] = existing with { ConnectionCount = existing.ConnectionCount - 1 };
     }
 
     public bool IsProjectActive(Guid projectId)
@@ -94,8 +100,7 @@ public class PresenceTracker : IPresenceTracker
         if (!_projectParticipants.TryGetValue(projectId, out var participants))
             return false;
 
-        return participants.Values.Any(p => 
-            p.Role == "Owner" || p.Role == "Author" || p.Role == "Editor" || p.Role == "WRITER");
+        return participants.Values.Any(p => p.Role == ProjectRoles.Owner || p.Role == ProjectRoles.Editor);
     }
 
     public IEnumerable<ParticipantPresenceDto> GetActiveParticipants(Guid projectId)
