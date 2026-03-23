@@ -1,4 +1,5 @@
 using Layla.Api.Extensions;
+using Layla.Core.Constants;
 using Layla.Core.Contracts.Voice;
 using Layla.Core.Interfaces;
 using Layla.Core.Interfaces.Data;
@@ -29,41 +30,28 @@ public class VoiceHub : Hub
         var userId = Context.User!.GetUserId()
             ?? throw new HubException("Invalid user identity.");
 
-        var hasAccess = await _projectRepository.UserHasAnyRoleInProjectAsync(projectId, userId);
         var project = await _projectRepository.GetProjectByIdAsync(projectId);
-        
-        if (!hasAccess && (project == null || !project.IsPublic))
+        var userRole = await _projectRepository.GetProjectRoleAsync(projectId, userId);
+
+        if (userRole == null && (project == null || !project.IsPublic))
             throw new HubException("You are not a member of this project.");
 
         var displayName = Context.User?.FindFirst("name")?.Value ?? "Unknown";
+        var participantRole = DetermineParticipantRole(userRole?.Role);
 
-        // Determine role for speaker/listener distinction
-        string role;
-        if (hasAccess)
-        {
-            var isReader = await _projectRepository.UserHasRoleInProjectAsync(projectId, userId, "Reader");
-            role = isReader ? "Reader" : "Speaker";
-        }
-        else
-        {
-            // Public project watcher
-            role = "Reader";
-        }
-
-        var participant = _roomManager.AddParticipant(projectId, userId, displayName, Context.ConnectionId, role);
+        var participant = _roomManager.AddParticipant(projectId, userId, displayName, Context.ConnectionId, participantRole);
         var groupName = $"voice:{projectId}";
 
         await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
-
-        // Send current room state to the joining user
         var participants = _roomManager.GetParticipants(projectId);
         await Clients.Caller.SendAsync("RoomState", new VoiceRoomStateDto(projectId, participants));
-
-        // Notify others
         await Clients.OthersInGroup(groupName).SendAsync("UserJoined", participant);
 
         _logger.LogInformation("User {UserId} joined voice room for project {ProjectId}", userId, projectId);
     }
+
+    private static string DetermineParticipantRole(string? projectRole) =>
+        projectRole == ProjectRoles.Reader || projectRole == null ? ProjectRoles.Reader : "Speaker";
 
     public async Task LeaveRoom(Guid projectId)
     {
@@ -87,7 +75,7 @@ public class VoiceHub : Hub
         var participant = _roomManager.GetParticipant(projectId, userId)
             ?? throw new HubException("You are not in this voice room.");
 
-        if (participant.Role == "Reader")
+        if (participant.Role == ProjectRoles.Reader)
             throw new HubException("Listeners cannot speak. You have a Reader role in this project.");
 
         _roomManager.SetSpeaking(projectId, userId, true);
@@ -112,7 +100,7 @@ public class VoiceHub : Hub
         var userId = Context.User!.GetUserId();
         var participant = _roomManager.GetParticipant(projectId, userId!);
 
-        if (participant == null || participant.Role == "Reader")
+        if (participant == null || participant.Role == ProjectRoles.Reader)
             return; // Silently drop audio from non-members or listeners
 
         var groupName = $"voice:{projectId}";
