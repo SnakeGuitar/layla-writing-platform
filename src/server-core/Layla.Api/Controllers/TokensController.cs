@@ -1,3 +1,4 @@
+using Layla.Core.Common;
 using Layla.Core.Contracts.Auth;
 using Layla.Core.Interfaces.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -42,7 +43,7 @@ namespace Layla.Api.Controllers
 
             if (!result.IsSuccess)
             {
-                if (result.Error == "Account is locked out due to multiple failed attempts.")
+                if (result.ErrorCode == ErrorCode.AccountLocked)
                     return StatusCode(StatusCodes.Status423Locked, new { message = result.Error });
 
                 return Unauthorized(new { message = result.Error });
