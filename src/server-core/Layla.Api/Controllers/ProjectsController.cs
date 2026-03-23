@@ -49,7 +49,7 @@ public class ProjectsController : ControllerBase
         var result = await _projectService.CreateProjectAsync(request, userId, cancellationToken);
 
         if (!result.IsSuccess)
-            return BadRequest(new { Error = result.Error });
+            return RespondWithError(result.ErrorCode);
 
         var project = result.Data!;
         return CreatedAtAction(nameof(GetProjectById), new { id = project.Id }, project);
@@ -74,7 +74,7 @@ public class ProjectsController : ControllerBase
         var result = await _projectService.GetUserProjectsAsync(userId, cancellationToken);
 
         if (!result.IsSuccess)
-            return BadRequest(new { Error = result.Error });
+            return RespondWithError(result.ErrorCode);
 
         return Ok(result.Data);
     }
@@ -91,7 +91,7 @@ public class ProjectsController : ControllerBase
     {
         var result = await _projectService.GetPublicProjectsAsync(cancellationToken);
         if (!result.IsSuccess)
-            return BadRequest(new { Error = result.Error });
+            return RespondWithError(result.ErrorCode);
 
         return Ok(result.Data);
     }
@@ -112,7 +112,7 @@ public class ProjectsController : ControllerBase
     {
         var result = await _projectService.GetAllProjectsAsync(cancellationToken);
         if (!result.IsSuccess)
-            return BadRequest(new { Error = result.Error });
+            return RespondWithError(result.ErrorCode);
 
         return Ok(result.Data);
     }
@@ -142,7 +142,7 @@ public class ProjectsController : ControllerBase
 
         var result = await _projectService.GetProjectByIdAsync(id, cancellationToken);
         if (!result.IsSuccess)
-            return NotFound(new { Error = result.Error });
+            return RespondWithError(result.ErrorCode);
 
         if (!result.Data!.IsPublic)
         {
@@ -234,7 +234,7 @@ public class ProjectsController : ControllerBase
         var result = await _projectService.JoinPublicProjectAsync(id, userId, cancellationToken);
 
         if (!result.IsSuccess)
-            return BadRequest(new { Error = result.Error });
+            return RespondWithError(result.ErrorCode);
 
         return Ok(result.Data);
     }
@@ -291,7 +291,7 @@ public class ProjectsController : ControllerBase
         var result = await _projectService.GetCollaboratorsAsync(id, userId, cancellationToken);
 
         if (!result.IsSuccess)
-            return BadRequest(new { Error = result.Error });
+            return RespondWithError(result.ErrorCode);
 
         return Ok(result.Data);
     }
@@ -327,11 +327,13 @@ public class ProjectsController : ControllerBase
     }
 
     private IActionResult RespondWithError(ErrorCode? errorCode) =>
-        (errorCode?.GetStatusCode() ?? 400) switch
+        (errorCode?.GetStatusCode() ?? 500) switch
         {
             401 => Unauthorized(new { Error = errorCode?.GetMessage() }),
             403 => Forbid(),
             404 => NotFound(new { Error = errorCode?.GetMessage() }),
+            409 => Conflict(new { Error = errorCode?.GetMessage() }),
+            500 => StatusCode(StatusCodes.Status500InternalServerError, new { Error = errorCode?.GetMessage() }),
             _ => BadRequest(new { Error = errorCode?.GetMessage() })
         };
 }

@@ -6,6 +6,7 @@ using Layla.Core.Events;
 using Layla.Core.Interfaces.Data;
 using Layla.Core.Interfaces.Messaging;
 using Layla.Core.Interfaces.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Layla.Core.Services;
@@ -72,7 +73,7 @@ public class ProjectService : IProjectService
         {
             await _projectRepository.RollbackTransactionAsync(cancellationToken);
             _logger.LogError(ex, "Failed to create project for user {UserId}", userId);
-            return Result<ProjectResponseDto>.Failure(ErrorCode.InternalError);
+            return Result<ProjectResponseDto>.Failure(MapException(ex));
         }
     }
 
@@ -114,7 +115,7 @@ public class ProjectService : IProjectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve projects for user {UserId}", userId);
-            return Result<IEnumerable<ProjectResponseDto>>.Failure(ErrorCode.InternalError);
+            return Result<IEnumerable<ProjectResponseDto>>.Failure(MapException(ex));
         }
     }
 
@@ -146,7 +147,7 @@ public class ProjectService : IProjectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to update project {ProjectId} for user {UserId}", projectId, userId);
-            return Result<ProjectResponseDto>.Failure(ErrorCode.InternalError);
+            return Result<ProjectResponseDto>.Failure(MapException(ex));
         }
     }
 
@@ -171,7 +172,7 @@ public class ProjectService : IProjectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to delete project {ProjectId} for user {UserId}", projectId, userId);
-            return Result<bool>.Failure(ErrorCode.InternalError);
+            return Result<bool>.Failure(MapException(ex));
         }
     }
 
@@ -188,7 +189,7 @@ public class ProjectService : IProjectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve project {ProjectId}", projectId);
-            return Result<ProjectResponseDto>.Failure(ErrorCode.InternalError);
+            return Result<ProjectResponseDto>.Failure(MapException(ex));
         }
     }
 
@@ -209,7 +210,7 @@ public class ProjectService : IProjectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve all projects");
-            return Result<IEnumerable<ProjectResponseDto>>.Failure(ErrorCode.InternalError);
+            return Result<IEnumerable<ProjectResponseDto>>.Failure(MapException(ex));
         }
     }
 
@@ -224,7 +225,7 @@ public class ProjectService : IProjectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to retrieve public projects");
-            return Result<IEnumerable<ProjectResponseDto>>.Failure(ErrorCode.InternalError);
+            return Result<IEnumerable<ProjectResponseDto>>.Failure(MapException(ex));
         }
     }
 
@@ -275,7 +276,7 @@ public class ProjectService : IProjectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to join public project {ProjectId} for user {UserId}", projectId, userId);
-            return Result<CollaboratorResponseDto>.Failure(ErrorCode.InternalError);
+            return Result<CollaboratorResponseDto>.Failure(MapException(ex));
         }
     }
 
@@ -326,7 +327,7 @@ public class ProjectService : IProjectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to invite collaborator to project {ProjectId}", projectId);
-            return Result<CollaboratorResponseDto>.Failure(ErrorCode.InternalError);
+            return Result<CollaboratorResponseDto>.Failure(MapException(ex));
         }
     }
 
@@ -353,7 +354,7 @@ public class ProjectService : IProjectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to get collaborators for project {ProjectId}", projectId);
-            return Result<IEnumerable<CollaboratorResponseDto>>.Failure(ErrorCode.InternalError);
+            return Result<IEnumerable<CollaboratorResponseDto>>.Failure(MapException(ex));
         }
     }
 
@@ -380,9 +381,17 @@ public class ProjectService : IProjectService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to remove collaborator from project {ProjectId}", projectId);
-            return Result<bool>.Failure(ErrorCode.InternalError);
+            return Result<bool>.Failure(MapException(ex));
         }
     }
+
+    /// <summary>Maps a caught exception to the appropriate ErrorCode.</summary>
+    private static ErrorCode MapException(Exception ex) => ex switch
+    {
+        DbUpdateException => ErrorCode.DatabaseError,
+        OperationCanceledException => ErrorCode.InternalError,
+        _ => ErrorCode.InternalError
+    };
 
     private static ProjectResponseDto MapToResponseDto(Project project, string userRole = "")
     {

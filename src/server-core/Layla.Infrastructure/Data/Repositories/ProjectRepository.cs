@@ -19,9 +19,8 @@ public class ProjectRepository : IProjectRepository
     public async Task BeginTransactionAsync(CancellationToken cancellationToken = default)
     {
         if (_currentTransaction != null)
-        {
-            return;
-        }
+            throw new InvalidOperationException(
+                "A transaction is already in progress. Nested transactions are not supported.");
 
         _currentTransaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
     }

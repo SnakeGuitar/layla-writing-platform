@@ -52,7 +52,7 @@ public class UsersController : ControllerBase
         var result = await _appUserService.GetAllAppUsersAsync(cancellationToken);
 
         if (!result.IsSuccess)
-            return BadRequest(new { Error = result.Error });
+            return RespondWithError(result.ErrorCode);
 
         return Ok(result.Data);
     }
@@ -68,7 +68,7 @@ public class UsersController : ControllerBase
         var result = await _appUserService.GetAppUserByIdAsync(id, cancellationToken);
 
         if (!result.IsSuccess)
-            return NotFound(new { Error = result.Error });
+            return RespondWithError(result.ErrorCode);
 
         return Ok(result.Data);
     }
@@ -137,12 +137,13 @@ public class UsersController : ControllerBase
     }
 
     private IActionResult RespondWithError(ErrorCode? errorCode) =>
-        (errorCode?.GetStatusCode() ?? 400) switch
+        (errorCode?.GetStatusCode() ?? 500) switch
         {
             401 => Unauthorized(new { Error = errorCode?.GetMessage() }),
             403 => Forbid(),
             404 => NotFound(new { Error = errorCode?.GetMessage() }),
             409 => Conflict(new { Error = errorCode?.GetMessage() }),
+            500 => StatusCode(StatusCodes.Status500InternalServerError, new { Error = errorCode?.GetMessage() }),
             _ => BadRequest(new { Error = errorCode?.GetMessage() })
         };
 }

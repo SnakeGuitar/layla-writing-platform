@@ -23,12 +23,14 @@ namespace Layla.Infrastructure.Data
             builder.Entity<ProjectRole>()
                 .HasOne(pr => pr.Project)
                 .WithMany(p => p.Roles)
-                .HasForeignKey(pr => pr.ProjectId);
+                .HasForeignKey(pr => pr.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade); // Deleting a project removes all its roles
 
             builder.Entity<ProjectRole>()
                 .HasOne(pr => pr.AppUser)
                 .WithMany()
-                .HasForeignKey(pr => pr.AppUserId);
+                .HasForeignKey(pr => pr.AppUserId)
+                .OnDelete(DeleteBehavior.Cascade); // Deleting a user removes their project memberships
 
             builder.Entity<Project>()
                 .HasIndex(p => p.IsPublic);

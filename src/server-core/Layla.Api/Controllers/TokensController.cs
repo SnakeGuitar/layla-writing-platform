@@ -44,9 +44,9 @@ namespace Layla.Api.Controllers
             if (!result.IsSuccess)
             {
                 if (result.ErrorCode == ErrorCode.AccountLocked)
-                    return StatusCode(StatusCodes.Status423Locked, new { message = result.Error });
+                    return StatusCode(StatusCodes.Status423Locked, new { Error = result.Error });
 
-                return Unauthorized(new { message = result.Error });
+                return Unauthorized(new { Error = result.Error });
             }
 
             return Ok(result.Data);

@@ -17,8 +17,10 @@ public static class ServiceCollectionExtensions
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
+        var commandTimeout = configuration.GetValue<int>("Database:CommandTimeoutSeconds", defaultValue: 30);
         services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+            options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
+                sqlOptions => sqlOptions.CommandTimeout(commandTimeout)));
 
         services.AddIdentity<AppUser, IdentityRole>(options =>
         {
