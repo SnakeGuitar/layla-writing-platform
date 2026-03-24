@@ -2,12 +2,11 @@ using Layla.Core.Entities;
 
 namespace Layla.Core.Interfaces.Data;
 
-public interface IProjectRepository
+/// <summary>
+/// Repository for project and project role management with transaction support.
+/// </summary>
+public interface IProjectRepository : ITransactionalRepository
 {
-    Task BeginTransactionAsync(CancellationToken cancellationToken = default);
-    Task CommitTransactionAsync(CancellationToken cancellationToken = default);
-    Task RollbackTransactionAsync(CancellationToken cancellationToken = default);
-
     Task AddProjectAsync(Project project, CancellationToken cancellationToken = default);
     Task AddProjectRoleAsync(ProjectRole projectRole, CancellationToken cancellationToken = default);
     Task<IEnumerable<Project>> GetProjectsByUserIdAsync(string userId, CancellationToken cancellationToken = default);
