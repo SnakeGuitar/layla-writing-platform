@@ -129,7 +129,13 @@ public class AppUserRepository : IAppUserRepository
             return Result<bool>.Failure(ErrorCode.ValidationFailed, errors);
         }
 
-        await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+        var lockoutEndResult = await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+        if (!lockoutEndResult.Succeeded)
+        {
+            var errors = string.Join(", ", lockoutEndResult.Errors.Select(e => e.Description));
+            return Result<bool>.Failure(ErrorCode.ValidationFailed, errors);
+        }
+
         await _userManager.UpdateAsync(user);
 
         return Result<bool>.Success(true);
