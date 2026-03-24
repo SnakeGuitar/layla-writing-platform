@@ -7,9 +7,10 @@
 
     // Environment Settings
     "module": "commonjs",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "target": "es2022",
     "types": ["node"],
+    "lib": ["ES2021", "DOM", "DOM.Iterable"],
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
@@ -39,14 +40,16 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-    "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "forceConsistentCasingInFileNames": true,
 
     // Standarize root/src
     "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    }
+    "paths": { "@/*": ["src/*"] },
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "esModuleInterop": true,
   },
+  "include": ["src", "vite-env.d.ts"],
   "exclude": ["node_modules", "dist", "eslint.config.mts"]
 }
