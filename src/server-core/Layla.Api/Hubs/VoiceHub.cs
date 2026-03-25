@@ -29,8 +29,9 @@ public class VoiceHub : Hub
 
     public async Task JoinRoom(Guid projectId)
     {
-        var userId = Context.User!.GetUserId()
-            ?? throw new HubException("Invalid user identity.");
+        var userId = ExtractUserId();
+        if (userId == null)
+            return;
 
         var project = await _projectRepository.GetProjectByIdAsync(projectId);
         var userRole = await _projectRepository.GetProjectRoleAsync(projectId, userId);
@@ -52,6 +53,17 @@ public class VoiceHub : Hub
         _logger.LogInformation("User {UserId} joined voice room for project {ProjectId}", userId, projectId);
     }
 
+    private string? ExtractUserId()
+    {
+        var userId = Context.User!.GetUserId();
+        if (string.IsNullOrEmpty(userId))
+        {
+            _logger.LogWarning("VoiceHub method called but user identity could not be extracted.");
+            return null;
+        }
+        return userId;
+    }
+
     private static string DetermineParticipantRole(string? projectRole) =>
         projectRole == ProjectRoles.Reader || projectRole == null ? ProjectRoles.Reader : VoiceEvents.ParticipantRole;
 
@@ -59,8 +71,9 @@ public class VoiceHub : Hub
 
     public async Task LeaveRoom(Guid projectId)
     {
-        var userId = Context.User!.GetUserId()
-            ?? throw new HubException("Invalid user identity.");
+        var userId = ExtractUserId();
+        if (userId == null)
+            return;
 
         var groupName = GroupName(projectId);
         _roomManager.RemoveParticipant(projectId, userId);
@@ -73,8 +86,9 @@ public class VoiceHub : Hub
 
     public async Task StartSpeaking(Guid projectId)
     {
-        var userId = Context.User!.GetUserId()
-            ?? throw new HubException("Invalid user identity.");
+        var userId = ExtractUserId();
+        if (userId == null)
+            return;
 
         var participant = _roomManager.GetParticipant(projectId, userId)
             ?? throw new HubException("You are not in this voice room.");
@@ -90,8 +104,9 @@ public class VoiceHub : Hub
 
     public async Task StopSpeaking(Guid projectId)
     {
-        var userId = Context.User!.GetUserId()
-            ?? throw new HubException("Invalid user identity.");
+        var userId = ExtractUserId();
+        if (userId == null)
+            return;
 
         _roomManager.SetSpeaking(projectId, userId, false);
 
@@ -101,8 +116,9 @@ public class VoiceHub : Hub
 
     public async Task SendAudio(Guid projectId, byte[] audioData)
     {
-        var userId = Context.User!.GetUserId()
-            ?? throw new HubException("Invalid user identity.");
+        var userId = ExtractUserId();
+        if (userId == null)
+            return;
 
         var participant = _roomManager.GetParticipant(projectId, userId);
 

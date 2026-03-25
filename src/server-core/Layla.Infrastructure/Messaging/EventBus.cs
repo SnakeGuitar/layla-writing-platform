@@ -31,6 +31,8 @@ public class EventBus : IEventBus, IDisposable, IEventPublisher
 
     private void TryConnect()
     {
+        DisposeCurrentConnection();
+
         try
         {
             _connection = _factory.CreateConnection();
@@ -40,6 +42,24 @@ public class EventBus : IEventBus, IDisposable, IEventPublisher
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to connect to RabbitMQ at {HostName}:{Port}", _factory.HostName, _factory.Port);
+        }
+    }
+
+    private void DisposeCurrentConnection()
+    {
+        try
+        {
+            _channel?.Dispose();
+            _connection?.Dispose();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error disposing current RabbitMQ connection.");
+        }
+        finally
+        {
+            _channel = null;
+            _connection = null;
         }
     }
 
@@ -101,7 +121,6 @@ public class EventBus : IEventBus, IDisposable, IEventPublisher
 
     public void Dispose()
     {
-        _channel?.Dispose();
-        _connection?.Dispose();
+        DisposeCurrentConnection();
     }
 }

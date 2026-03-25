@@ -94,8 +94,8 @@ builder.Services.AddAuthentication(options =>
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
             ValidAudience = builder.Configuration["JwtSettings:Audience"],
-            NameClaimType = "name",
-            RoleClaimType = "role",
+            NameClaimType = ClaimNames.Name,
+            RoleClaimType = ClaimNames.Role,
             IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
                 System.Text.Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]!))
         };

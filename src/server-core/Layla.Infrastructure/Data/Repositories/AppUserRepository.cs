@@ -9,12 +9,10 @@ namespace Layla.Infrastructure.Data.Repositories;
 
 public class AppUserRepository : IAppUserRepository
 {
-    private readonly ApplicationDbContext _dbContext;
     private readonly UserManager<AppUser> _userManager;
 
     public AppUserRepository(ApplicationDbContext dbContext, UserManager<AppUser> userManager)
     {
-        _dbContext = dbContext;
         _userManager = userManager;
     }
 
