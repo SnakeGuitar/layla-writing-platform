@@ -92,7 +92,12 @@ public class AuthService(
         var roles = await userManager.GetRolesAsync(user);
 
         user.TokenVersion++;
-        await userManager.UpdateAsync(user);
+        var updateResult = await userManager.UpdateAsync(user);
+        if (!updateResult.Succeeded)
+        {
+            var errors = FormatIdentityErrors(updateResult.Errors);
+            return Result<AuthResponseDto>.Failure(ErrorCode.InternalError, $"Failed to update user token version: {errors}");
+        }
 
         var token = tokenService.GenerateToken(user, roles);
 
