@@ -45,7 +45,7 @@ public class UsersController : ApiControllerBase
     /// Get all users (Admin only).
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = AppRoles.Admin)]
     [ProducesResponseType(typeof(IEnumerable<UserResponseDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllUsers(CancellationToken cancellationToken)
     {
@@ -121,7 +121,7 @@ public class UsersController : ApiControllerBase
     /// Ban a user (Admin only). Invalidates all sessions and locks the account.
     /// </summary>
     [HttpPost("{id:guid}/ban")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = AppRoles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> BanUser(Guid id, CancellationToken cancellationToken)

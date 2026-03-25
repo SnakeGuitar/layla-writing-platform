@@ -8,9 +8,8 @@ namespace Layla.Api.Controllers
     /// <summary>
     /// Issues JWT access tokens in exchange for valid credentials.
     /// </summary>
-    [ApiController]
     [Route("api/[controller]")]
-    public class TokensController : ControllerBase
+    public class TokensController : ApiControllerBase
     {
         private readonly IAuthService _authService;
 

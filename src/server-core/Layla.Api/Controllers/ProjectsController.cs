@@ -1,3 +1,4 @@
+using Layla.Core.Constants;
 using Layla.Core.Contracts.Project;
 using Layla.Core.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -90,7 +91,7 @@ public class ProjectsController : ApiControllerBase
     /// <response code="401">Missing or invalid JWT.</response>
     /// <response code="403">Caller does not have the Admin role.</response>
     [HttpGet("all")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = AppRoles.Admin)]
     [ProducesResponseType(typeof(IEnumerable<ProjectResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

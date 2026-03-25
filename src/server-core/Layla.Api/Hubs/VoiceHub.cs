@@ -6,6 +6,8 @@ using Layla.Core.Interfaces.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
+using VoiceEvents = Layla.Core.Constants.HubConstants.Voice;
+
 namespace Layla.Api.Hubs;
 
 [Authorize]
@@ -40,29 +42,31 @@ public class VoiceHub : Hub
         var participantRole = DetermineParticipantRole(userRole?.Role);
 
         var participant = _roomManager.AddParticipant(projectId, userId, displayName, Context.ConnectionId, participantRole);
-        var groupName = $"voice:{projectId}";
+        var groupName = GroupName(projectId);
 
         await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
         var participants = _roomManager.GetParticipants(projectId);
-        await Clients.Caller.SendAsync("RoomState", new VoiceRoomStateDto(projectId, participants));
-        await Clients.OthersInGroup(groupName).SendAsync("UserJoined", participant);
+        await Clients.Caller.SendAsync(VoiceEvents.RoomState, new VoiceRoomStateDto(projectId, participants));
+        await Clients.OthersInGroup(groupName).SendAsync(VoiceEvents.UserJoined, participant);
 
         _logger.LogInformation("User {UserId} joined voice room for project {ProjectId}", userId, projectId);
     }
 
     private static string DetermineParticipantRole(string? projectRole) =>
-        projectRole == ProjectRoles.Reader || projectRole == null ? ProjectRoles.Reader : "Speaker";
+        projectRole == ProjectRoles.Reader || projectRole == null ? ProjectRoles.Reader : VoiceEvents.ParticipantRole;
+
+    private static string GroupName(Guid projectId) => $"voice:{projectId}";
 
     public async Task LeaveRoom(Guid projectId)
     {
         var userId = Context.User!.GetUserId()
             ?? throw new HubException("Invalid user identity.");
 
-        var groupName = $"voice:{projectId}";
+        var groupName = GroupName(projectId);
         _roomManager.RemoveParticipant(projectId, userId);
 
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
-        await Clients.OthersInGroup(groupName).SendAsync("UserLeft", userId);
+        await Clients.OthersInGroup(groupName).SendAsync(VoiceEvents.UserLeft, userId);
 
         _logger.LogInformation("User {UserId} left voice room for project {ProjectId}", userId, projectId);
     }
@@ -80,8 +84,8 @@ public class VoiceHub : Hub
 
         _roomManager.SetSpeaking(projectId, userId, true);
 
-        var groupName = $"voice:{projectId}";
-        await Clients.OthersInGroup(groupName).SendAsync("UserStartedSpeaking", userId, participant.DisplayName);
+        var groupName = GroupName(projectId);
+        await Clients.OthersInGroup(groupName).SendAsync(VoiceEvents.UserStartedSpeaking, userId, participant.DisplayName);
     }
 
     public async Task StopSpeaking(Guid projectId)
@@ -91,8 +95,8 @@ public class VoiceHub : Hub
 
         _roomManager.SetSpeaking(projectId, userId, false);
 
-        var groupName = $"voice:{projectId}";
-        await Clients.OthersInGroup(groupName).SendAsync("UserStoppedSpeaking", userId);
+        var groupName = GroupName(projectId);
+        await Clients.OthersInGroup(groupName).SendAsync(VoiceEvents.UserStoppedSpeaking, userId);
     }
 
     public async Task SendAudio(Guid projectId, byte[] audioData)
@@ -105,8 +109,8 @@ public class VoiceHub : Hub
         if (participant == null || participant.Role == ProjectRoles.Reader)
             return; // Silently drop audio from non-members or listeners
 
-        var groupName = $"voice:{projectId}";
-        await Clients.OthersInGroup(groupName).SendAsync("ReceiveAudio", userId, audioData);
+        var groupName = GroupName(projectId);
+        await Clients.OthersInGroup(groupName).SendAsync(VoiceEvents.ReceiveAudio, userId, audioData);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
@@ -115,8 +119,8 @@ public class VoiceHub : Hub
 
         if (projectId.HasValue && userId != null)
         {
-            var groupName = $"voice:{projectId.Value}";
-            await Clients.OthersInGroup(groupName).SendAsync("UserLeft", userId);
+            var groupName = GroupName(projectId.Value);
+            await Clients.OthersInGroup(groupName).SendAsync(VoiceEvents.UserLeft, userId);
             _logger.LogInformation("User {UserId} disconnected from voice room {ProjectId}", userId, projectId.Value);
         }
 

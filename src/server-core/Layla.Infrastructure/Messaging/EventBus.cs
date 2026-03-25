@@ -1,3 +1,4 @@
+using Layla.Core.Constants;
 using Layla.Core.Interfaces.Messaging;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -38,7 +39,7 @@ public class EventBus : IEventBus, IDisposable, IEventPublisher
 
     public async Task<bool> PublishAsync<T>(T @event, CancellationToken cancellationToken = default) where T : class
     {
-        const string exchangeName = "worldbuilding.events";
+        const string exchangeName = MessagingConstants.WorldbuildingExchange;
         var routingKey = @event.GetType().Name.ToLower().Replace("event", "");
 
         return await Task.Run(() => Publish(@event, exchangeName, routingKey), cancellationToken);

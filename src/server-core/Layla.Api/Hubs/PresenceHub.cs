@@ -1,8 +1,11 @@
 using Layla.Api.Extensions;
+using Layla.Core.Constants;
 using Layla.Core.Contracts;
 using Layla.Core.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+
+using PresenceEvents = Layla.Core.Constants.HubConstants.Presence;
 
 namespace Layla.Api.Hubs;
 
@@ -29,19 +32,19 @@ public class PresenceHub : Hub
             var existingConnectionId = _presenceTracker.GetUserConnection(userId);
             if (existingConnectionId != null && existingConnectionId != Context.ConnectionId)
             {
-                await Clients.Client(existingConnectionId).SendAsync("MultipleSessionsDetected");
+                await Clients.Client(existingConnectionId).SendAsync(PresenceEvents.MultipleSessionsDetected);
                 _logger.LogWarning("User {UserId} logged in from a new instance. Old connection {OldConn} notified.", userId, existingConnectionId);
             }
 
-            _presenceTracker.MarkActive(projectId, userId, Context.ConnectionId, displayName, "Watcher");
+            _presenceTracker.MarkActive(projectId, userId, Context.ConnectionId, displayName, PresenceEvents.RoleWatcher);
             await BroadcastParticipants(projectId);
         }
 
         var isActive = _presenceTracker.IsProjectActive(projectId);
-        await Clients.Caller.SendAsync("AuthorStatusChanged", projectId, isActive);
-        
+        await Clients.Caller.SendAsync(PresenceEvents.AuthorStatusChanged, projectId, isActive);
+
         var participants = _presenceTracker.GetActiveParticipants(projectId);
-        await Clients.Caller.SendAsync("ParticipantsUpdated", projectId, participants);
+        await Clients.Caller.SendAsync(PresenceEvents.ParticipantsUpdated, projectId, participants);
     }
 
     public async Task UnwatchProject(Guid projectId)
@@ -50,7 +53,7 @@ public class PresenceHub : Hub
     }
 
     [Authorize]
-    public async Task AuthorHeartbeat(Guid projectId, string role = "Author")
+    public async Task AuthorHeartbeat(Guid projectId, string role = PresenceEvents.RoleAuthor)
     {
         var userId = Context.User!.GetUserId()
             ?? throw new HubException("Invalid user identity.");
@@ -63,14 +66,14 @@ public class PresenceHub : Hub
 
         if (isFirstAuthor)
         {
-            await Clients.Group(GroupName(projectId)).SendAsync("AuthorStatusChanged", projectId, true);
+            await Clients.Group(GroupName(projectId)).SendAsync(PresenceEvents.AuthorStatusChanged, projectId, true);
         }
     }
 
     private async Task BroadcastParticipants(Guid projectId)
     {
         var participants = _presenceTracker.GetActiveParticipants(projectId);
-        await Clients.Group(GroupName(projectId)).SendAsync("ParticipantsUpdated", projectId, participants);
+        await Clients.Group(GroupName(projectId)).SendAsync(PresenceEvents.ParticipantsUpdated, projectId, participants);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
@@ -85,7 +88,7 @@ public class PresenceHub : Hub
 
         if (becameInactive)
         {
-            await Clients.Group(GroupName(projectId)).SendAsync("AuthorStatusChanged", projectId, false);
+            await Clients.Group(GroupName(projectId)).SendAsync(PresenceEvents.AuthorStatusChanged, projectId, false);
         }
 
         await base.OnDisconnectedAsync(exception);

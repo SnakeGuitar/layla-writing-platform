@@ -12,8 +12,8 @@ namespace Layla.Core.Services;
 
 public class ProjectService : BaseService<ProjectService>, IProjectService
 {
-    private const string ExchangeName = "worldbuilding.events";
-    private const string ProjectCreatedRoutingKey = "project.created";
+    private const string ExchangeName = MessagingConstants.WorldbuildingExchange;
+    private const string ProjectCreatedRoutingKey = MessagingConstants.RoutingKeys.ProjectCreated;
 
     private readonly IProjectRepository _projectRepository;
     private readonly IAppUserRepository _appUserRepository;

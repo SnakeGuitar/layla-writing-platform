@@ -68,12 +68,8 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("LaylaCors", policy =>
     {
-        policy.WithOrigins(
-                "https://0.0.0.0:7165",
-                "http://0.0.0.0:5287",
-                "https://0.0.0.0:3000",
-                "http://0.0.0.0:3000"
-            )
+        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+        policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
