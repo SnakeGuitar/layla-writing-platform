@@ -12,13 +12,36 @@ using Microsoft.Extensions.Options;
 namespace Layla.Infrastructure.Services;
 
 /// <summary>
-/// Provides authentication and registration services for users.
+/// Provides authentication and registration services (login and signup) for users.
+///
+/// Responsibilities:
+/// - Login: Validates email/password, checks account lockout, increments TokenVersion, returns JWT
+/// - Register: Creates new user account, assigns Writer role, returns JWT
+/// - Token versioning: Each successful login increments the user's TokenVersion claim,
+///   invalidating all previous tokens (single-device enforcement)
+///
+/// Architecture:
+/// - Uses ASP.NET Core Identity (UserManager, SignInManager) for user management
+/// - Uses ITokenService to generate JWT tokens with embedded TokenVersion
+/// - Uses TokenVersionValidator (in middleware) to reject tokens with stale TokenVersion
+/// - Inherits from BaseService&lt;AuthService&gt; for centralized exception handling
+/// - All public methods return Result&lt;AuthResponseDto&gt; to encapsulate success/failure
+///
+/// Account Lockout:
+/// - After 5 failed password attempts, the account is locked for 15 minutes (ASP.NET Identity default)
+/// - Locked accounts receive ErrorCode.AccountLocked (HTTP 423)
+/// - Admins can manually ban users via UsersController.BanUser, which also increments TokenVersion
+///
+/// Token Expiration:
+/// - Tokens are valid for 24 hours (configured in JwtSettings:ExpirationInMinutes)
+/// - Expired tokens are rejected by TokenVersionValidator during authentication
+/// - Each login issues a new token, rendering all previous tokens invalid (via TokenVersion increment)
 /// </summary>
 /// <param name="userManager">The ASP.NET Core Identity user manager.</param>
 /// <param name="signInManager">The ASP.NET Core Identity sign-in manager.</param>
 /// <param name="tokenService">Service responsible for generating JWT tokens.</param>
-/// <param name="jwtSettings">JWT settings for token expiration.</param>
-/// <param name="logger">Logger for authentication events.</param>
+/// <param name="jwtSettings">JWT settings for token expiration and issuer/audience.</param>
+/// <param name="logger">Logger for authentication events and errors.</param>
 public class AuthService(
     UserManager<AppUser> userManager,
     SignInManager<AppUser> signInManager,

@@ -10,6 +10,26 @@ using Microsoft.Extensions.Logging;
 
 namespace Layla.Core.Services;
 
+/// <summary>
+/// Business logic for project (manuscript) management in the Layla collaborative writing platform.
+///
+/// Responsibilities:
+/// - CRUD operations for projects and project roles (collaborators)
+/// - Access control: verifies user ownership/membership before mutations
+/// - Event publishing: notifies the worldbuilding service (Node.js) when projects are created
+/// - Transactional consistency: ensures projects and their initial owner role are created atomically
+/// - Public project discovery: lists all public projects for the reading feed
+///
+/// Architecture:
+/// - Uses IProjectRepository for SQL queries (via EF Core)
+/// - Uses IAppUserRepository to resolve user details (email → ID) for invitations
+/// - Uses IEventBus (RabbitMQ) to publish ProjectCreatedEvent to the worldbuilding service asynchronously
+/// - Uses IEventPublisher for domain event logging (local event store, optional)
+/// - Inherits from BaseService&lt;ProjectService&gt; for centralized exception handling and logging
+///
+/// All public methods return Result&lt;T&gt; to encapsulate success/failure without throwing exceptions.
+/// Exception handling is delegated to BaseService.ExecuteAsync() which logs and maps errors to ErrorCode.
+/// </summary>
 public class ProjectService : BaseService<ProjectService>, IProjectService
 {
     private const string ExchangeName = MessagingConstants.WorldbuildingExchange;
@@ -34,6 +54,29 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
         _eventBus = eventBus;
     }
 
+    /// <summary>
+    /// Creates a new project owned by the authenticated user.
+    ///
+    /// This operation is transactional:
+    /// 1. Inserts a new Project row
+    /// 2. Inserts a ProjectRole row with role=OWNER and the creator's user ID
+    /// 3. Commits the transaction atomically
+    /// 4. Publishes ProjectCreatedEvent to RabbitMQ (asynchronously, after commit)
+    ///
+    /// The creator is automatically assigned the OWNER role and can invite other collaborators.
+    /// The OWNER is the only user who can delete the project or remove collaborators.
+    ///
+    /// If the transaction fails, all changes are rolled back. If event publishing fails,
+    /// a warning is logged but the operation is still considered successful (eventual consistency).
+    /// </summary>
+    /// <param name="request">Project metadata (title, synopsis, genre, cover image, privacy setting).</param>
+    /// <param name="userId">The ID of the user creating the project (extracted from JWT claim).</param>
+    /// <param name="cancellationToken">Cancellation token for the async operation.</param>
+    /// <returns>
+    /// Success result with ProjectResponseDto if the project was created.
+    /// Failure result with DatabaseError if a database constraint violated or connection failed.
+    /// Failure result with InternalError for unexpected exceptions.
+    /// </returns>
     public async Task<Result<ProjectResponseDto>> CreateProjectAsync(CreateProjectRequestDto request, string userId, CancellationToken cancellationToken = default)
     {
         await _projectRepository.BeginTransactionAsync(cancellationToken);
