@@ -1,11 +1,19 @@
+using Layla.Api.Filters;
 using Layla.Core.Common;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Layla.Api.Controllers;
 
 [ApiController]
+[ServiceFilter(typeof(RequireUserIdFilter))]
 public abstract class ApiControllerBase : ControllerBase
 {
+    /// <summary>
+    /// Returns the authenticated user's ID, pre-validated by <see cref="RequireUserIdFilter"/>.
+    /// Only safe to call inside actions decorated with [Authorize] (filter skips anonymous endpoints).
+    /// </summary>
+    protected string CurrentUserId => HttpContext.Items["UserId"] as string ?? string.Empty;
+
     protected IActionResult RespondWithError(ErrorCode? errorCode) =>
         (errorCode?.GetStatusCode() ?? 500) switch
         {

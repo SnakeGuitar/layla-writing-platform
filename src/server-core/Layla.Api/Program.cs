@@ -1,4 +1,5 @@
 using Layla.Api.Extensions;
+using Layla.Api.Filters;
 using Layla.Api.Hubs;
 using Layla.Api.Middleware;
 using Layla.Core.Constants;
@@ -81,6 +82,7 @@ builder.Services.AddCors(options =>
 
 System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 builder.Services.AddScoped<TokenVersionValidator>();
+builder.Services.AddScoped<RequireUserIdFilter>();
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = "Bearer";
