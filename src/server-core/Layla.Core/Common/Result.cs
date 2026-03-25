@@ -6,10 +6,10 @@
 /// </summary>
 public class Result<T>
 {
-    public bool IsSuccess { get; set; }
-    public T? Data { get; set; }
-    public string? Error { get; set; }
-    public ErrorCode? ErrorCode { get; set; }
+    public bool IsSuccess { get; init; }
+    public T? Data { get; init; }
+    public string? Error { get; init; }
+    public ErrorCode? ErrorCode { get; init; }
 
     /// <summary>Creates a successful result with data.</summary>
     public static Result<T> Success(T data) => new() { IsSuccess = true, Data = data };

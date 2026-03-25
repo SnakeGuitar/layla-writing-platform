@@ -12,12 +12,13 @@ public class EventBus : IEventBus, IDisposable, IEventPublisher
 {
     private IConnection? _connection;
     private IModel? _channel;
+    private readonly ConnectionFactory _factory;
     private readonly ILogger<EventBus> _logger;
 
     public EventBus(IConfiguration configuration, ILogger<EventBus> logger)
     {
         _logger = logger;
-        var factory = new ConnectionFactory
+        _factory = new ConnectionFactory
         {
             HostName = configuration["RabbitMQ:HostName"] ?? "localhost",
             Port = int.TryParse(configuration["RabbitMQ:Port"], out var port) ? port : 5672,
@@ -25,15 +26,20 @@ public class EventBus : IEventBus, IDisposable, IEventPublisher
             Password = configuration["RabbitMQ:Password"] ?? "guest"
         };
 
+        TryConnect();
+    }
+
+    private void TryConnect()
+    {
         try
         {
-            _connection = factory.CreateConnection();
+            _connection = _factory.CreateConnection();
             _channel = _connection.CreateModel();
-            _logger.LogInformation("EventBus connected to RabbitMQ at {HostName}:{Port}", factory.HostName, factory.Port);
+            _logger.LogInformation("EventBus connected to RabbitMQ at {HostName}:{Port}", _factory.HostName, _factory.Port);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to connect to RabbitMQ at {HostName}:{Port}", factory.HostName, factory.Port);
+            _logger.LogError(ex, "Failed to connect to RabbitMQ at {HostName}:{Port}", _factory.HostName, _factory.Port);
         }
     }
 
@@ -47,6 +53,12 @@ public class EventBus : IEventBus, IDisposable, IEventPublisher
 
     public bool Publish<T>(T @event, string exchangeName, string routingKey = "") where T : class
     {
+        if (_channel == null || !_channel.IsOpen)
+        {
+            _logger.LogWarning("RabbitMQ channel unavailable, attempting reconnect. EventType={EventType}", typeof(T).Name);
+            TryConnect();
+        }
+
         if (_channel == null)
         {
             _logger.LogWarning("Event not published: RabbitMQ channel is unavailable. EventType={EventType}, Exchange={Exchange}, RoutingKey={RoutingKey}",
