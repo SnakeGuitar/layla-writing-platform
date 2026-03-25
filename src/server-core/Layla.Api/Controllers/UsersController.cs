@@ -82,10 +82,9 @@ public class UsersController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateAppUserRequestDto request, CancellationToken cancellationToken)
     {
-        var callerId = User.GetUserId();
         var isAdmin = User.IsInRole(AppRoles.Admin);
 
-        if (!isAdmin && callerId != id.ToString())
+        if (!isAdmin && CurrentUserId != id.ToString())
             return Forbid();
 
         var result = await _appUserService.UpdateAppUserAsync(id, request, cancellationToken);
@@ -105,10 +104,9 @@ public class UsersController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteUser(Guid id, CancellationToken cancellationToken)
     {
-        var callerId = User.GetUserId();
         var isAdmin = User.IsInRole(AppRoles.Admin);
 
-        if (!isAdmin && callerId != id.ToString())
+        if (!isAdmin && CurrentUserId != id.ToString())
             return Forbid();
 
         var result = await _appUserService.DeleteAppUserAsync(id, cancellationToken);
