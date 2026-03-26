@@ -259,7 +259,7 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
             var dtos = roles.Select(r => new CollaboratorResponseDto
             {
                 UserId = r.AppUserId,
-                DisplayName = r.AppUser?.DisplayName,
+                DisplayName = r.AppUser?.DisplayName ?? "Unknown User",
                 Email = r.AppUser?.Email,
                 Role = r.Role,
                 AssignedAt = r.AssignedAt

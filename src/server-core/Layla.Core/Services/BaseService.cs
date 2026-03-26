@@ -63,6 +63,16 @@ public abstract class BaseService<TService> where TService : class
         {
             return await action();
         }
+        catch (OutOfMemoryException)
+        {
+            // Non-recoverable exceptions should crash the application
+            throw;
+        }
+        catch (StackOverflowException)
+        {
+            // Non-recoverable exceptions should crash the application
+            throw;
+        }
         catch (Exception ex)
         {
             Logger.LogError(ex, logMessage, args);

@@ -23,7 +23,7 @@ public class PresenceHub : Hub
     [Authorize]
     public async Task WatchProject(Guid projectId)
     {
-        await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(projectId));
+        await Groups.AddToGroupAsync(Context.ConnectionId, HubConstants.GroupNames.PresenceGroup(projectId));
 
         if (Context.User?.Identity?.IsAuthenticated == true)
         {
@@ -56,7 +56,7 @@ public class PresenceHub : Hub
 
     public async Task UnwatchProject(Guid projectId)
     {
-        await Groups.RemoveFromGroupAsync(Context.ConnectionId, GroupName(projectId));
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, HubConstants.GroupNames.PresenceGroup(projectId));
 
         var becameInactive = _presenceTracker.MarkInactive(Context.ConnectionId, out var actualProjectId, out var userId);
 
@@ -85,14 +85,14 @@ public class PresenceHub : Hub
 
         if (isFirstAuthor)
         {
-            await Clients.Group(GroupName(projectId)).SendAsync(PresenceEvents.AuthorStatusChanged, projectId, true);
+            await Clients.Group(HubConstants.GroupNames.PresenceGroup(projectId)).SendAsync(PresenceEvents.AuthorStatusChanged, projectId, true);
         }
     }
 
     private async Task BroadcastParticipants(Guid projectId)
     {
         var participants = _presenceTracker.GetActiveParticipants(projectId);
-        await Clients.Group(GroupName(projectId)).SendAsync(PresenceEvents.ParticipantsUpdated, projectId, participants);
+        await Clients.Group(HubConstants.GroupNames.PresenceGroup(projectId)).SendAsync(PresenceEvents.ParticipantsUpdated, projectId, participants);
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
@@ -107,11 +107,10 @@ public class PresenceHub : Hub
 
         if (becameInactive)
         {
-            await Clients.Group(GroupName(projectId)).SendAsync(PresenceEvents.AuthorStatusChanged, projectId, false);
+            await Clients.Group(HubConstants.GroupNames.PresenceGroup(projectId)).SendAsync(PresenceEvents.AuthorStatusChanged, projectId, false);
         }
 
         await base.OnDisconnectedAsync(exception);
     }
 
-    private static string GroupName(Guid projectId) => $"presence:{projectId}";
 }

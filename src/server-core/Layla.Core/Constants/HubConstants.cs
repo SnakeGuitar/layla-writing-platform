@@ -26,4 +26,13 @@ public static class HubConstants
         public const string RoleWatcher = "Watcher";
         public const string RoleAuthor = "Author";
     }
+
+    /// <summary>
+    /// SignalR group name helpers. Group names must be consistent across hubs.
+    /// </summary>
+    public static class GroupNames
+    {
+        public static string PresenceGroup(Guid projectId) => $"presence:{projectId}";
+        public static string VoiceGroup(Guid projectId) => $"voice:{projectId}";
+    }
 }

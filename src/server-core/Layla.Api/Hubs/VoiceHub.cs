@@ -46,7 +46,7 @@ public class VoiceHub : Hub
         var participantRole = DetermineParticipantRole(userRole?.Role);
 
         var participant = _roomManager.AddParticipant(projectId, userId, displayName, Context.ConnectionId, participantRole);
-        var groupName = GroupName(projectId);
+        var groupName = HubConstants.GroupNames.VoiceGroup(projectId);
 
         await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
         var participants = _roomManager.GetParticipants(projectId);
@@ -74,7 +74,6 @@ public class VoiceHub : Hub
     private static string DetermineParticipantRole(string? projectRole) =>
         projectRole == null || projectRole == ProjectRoles.Reader ? ProjectRoles.Reader : projectRole;
 
-    private static string GroupName(Guid projectId) => $"voice:{projectId}";
 
     public async Task LeaveRoom(Guid projectId)
     {
@@ -82,7 +81,7 @@ public class VoiceHub : Hub
         if (userId == null)
             return;
 
-        var groupName = GroupName(projectId);
+        var groupName = HubConstants.GroupNames.VoiceGroup(projectId);
         _roomManager.RemoveParticipant(projectId, userId);
 
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
@@ -105,7 +104,7 @@ public class VoiceHub : Hub
 
         _roomManager.SetSpeaking(projectId, userId, true);
 
-        var groupName = GroupName(projectId);
+        var groupName = HubConstants.GroupNames.VoiceGroup(projectId);
         await Clients.OthersInGroup(groupName).SendAsync(VoiceEvents.UserStartedSpeaking, userId, participant.DisplayName);
     }
 
@@ -117,7 +116,7 @@ public class VoiceHub : Hub
 
         _roomManager.SetSpeaking(projectId, userId, false);
 
-        var groupName = GroupName(projectId);
+        var groupName = HubConstants.GroupNames.VoiceGroup(projectId);
         await Clients.OthersInGroup(groupName).SendAsync(VoiceEvents.UserStoppedSpeaking, userId);
     }
 
@@ -140,7 +139,7 @@ public class VoiceHub : Hub
         if (participant.Role == ProjectRoles.Reader)
             throw new HubException("Listeners cannot send audio. You have a Reader role in this project.");
 
-        var groupName = GroupName(projectId);
+        var groupName = HubConstants.GroupNames.VoiceGroup(projectId);
         await Clients.OthersInGroup(groupName).SendAsync(VoiceEvents.ReceiveAudio, userId, audioData);
     }
 
