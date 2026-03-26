@@ -153,7 +153,6 @@ public class PresenceTracker : IPresenceTracker
             if (!_userConnections.TryGetValue(userId, out var connList))
                 return null;
 
-            // Return the last connection that is still actively tracked
             return connList.LastOrDefault(id => _connections.ContainsKey(id));
         }
     }

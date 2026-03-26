@@ -67,7 +67,7 @@ public class PresenceHub : Hub
 
         if (becameInactive)
         {
-            await Clients.Group(GroupName(actualProjectId)).SendAsync(PresenceEvents.AuthorStatusChanged, actualProjectId, false);
+            await Clients.Group(HubConstants.GroupNames.PresenceGroup(actualProjectId)).SendAsync(PresenceEvents.AuthorStatusChanged, actualProjectId, false);
         }
     }
 

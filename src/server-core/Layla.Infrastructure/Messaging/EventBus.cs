@@ -10,6 +10,11 @@ namespace Layla.Infrastructure.Messaging;
 
 public class EventBus : IEventBus, IDisposable, IEventPublisher
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
     private IConnection? _connection;
     private IModel? _channel;
     private readonly ConnectionFactory _factory;
@@ -101,12 +106,7 @@ public class EventBus : IEventBus, IDisposable, IEventPublisher
             {
                 _channel.ExchangeDeclare(exchange: exchangeName, type: ExchangeType.Topic, durable: true);
 
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-                };
-
-                var message = JsonSerializer.Serialize(@event, options);
+                var message = JsonSerializer.Serialize(@event, JsonOptions);
                 var body = Encoding.UTF8.GetBytes(message);
 
                 var properties = _channel.CreateBasicProperties();

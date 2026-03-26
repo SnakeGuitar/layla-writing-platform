@@ -139,6 +139,9 @@ public class VoiceHub : Hub
         if (participant.Role == ProjectRoles.Reader)
             throw new HubException("Listeners cannot send audio. You have a Reader role in this project.");
 
+        if (!_roomManager.TryConsumeAudioSlot(projectId, userId))
+            return;
+
         var groupName = HubConstants.GroupNames.VoiceGroup(projectId);
         await Clients.OthersInGroup(groupName).SendAsync(VoiceEvents.ReceiveAudio, userId, audioData);
     }
@@ -149,7 +152,7 @@ public class VoiceHub : Hub
 
         if (projectId.HasValue && userId != null)
         {
-            var groupName = GroupName(projectId.Value);
+            var groupName = HubConstants.GroupNames.VoiceGroup(projectId.Value);
             await Clients.OthersInGroup(groupName).SendAsync(VoiceEvents.UserLeft, userId);
             _logger.LogInformation("User {UserId} disconnected from voice room {ProjectId}", userId, projectId.Value);
         }

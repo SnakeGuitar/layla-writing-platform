@@ -11,13 +11,16 @@ public class VoiceRoomManager : IVoiceRoomManager
 {
     private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<string, ParticipantState>> _rooms = new();
 
+    private static readonly TimeSpan AudioMinInterval = TimeSpan.FromMilliseconds(20);
+
     private record ParticipantState(
         string UserId,
         string DisplayName,
         string ConnectionId,
         string Role,
         DateTime JoinedAt,
-        bool IsSpeaking
+        bool IsSpeaking,
+        DateTime LastAudioSent = default
     );
 
     public VoiceParticipantDto AddParticipant(Guid projectId, string userId, string displayName, string connectionId, string role)
@@ -47,7 +50,6 @@ public class VoiceRoomManager : IVoiceRoomManager
         projectId = null;
         userId = null;
 
-        // Snapshot to prevent concurrent modification issues
         var roomsSnapshot = _rooms.ToList();
 
         foreach (var (pid, room) in roomsSnapshot)
@@ -96,6 +98,22 @@ public class VoiceRoomManager : IVoiceRoomManager
             return null;
 
         return room.TryGetValue(userId, out var state) ? ToDto(state) : null;
+    }
+
+    public bool TryConsumeAudioSlot(Guid projectId, string userId)
+    {
+        if (!_rooms.TryGetValue(projectId, out var room))
+            return false;
+
+        if (!room.TryGetValue(userId, out var state))
+            return false;
+
+        var now = DateTime.UtcNow;
+        if (now - state.LastAudioSent < AudioMinInterval)
+            return false;
+
+        room[userId] = state with { LastAudioSent = now };
+        return true;
     }
 
     private static VoiceParticipantDto ToDto(ParticipantState s) =>

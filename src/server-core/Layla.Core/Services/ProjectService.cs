@@ -253,7 +253,7 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
         {
             var hasAccess = await _projectRepository.UserHasAnyRoleInProjectAsync(projectId, userId, cancellationToken);
             if (!hasAccess)
-                return Result<IEnumerable<CollaboratorResponseDto>>.Failure(ErrorCode.Unauthorized);
+                return Result<IEnumerable<CollaboratorResponseDto>>.Failure(ErrorCode.Forbidden);
 
             var roles = await _projectRepository.GetProjectCollaboratorsAsync(projectId, cancellationToken);
             var dtos = roles.Select(r => new CollaboratorResponseDto
