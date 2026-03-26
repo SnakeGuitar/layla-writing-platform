@@ -1,6 +1,7 @@
 using Layla.Core.Common;
 using Layla.Core.Contracts.Auth;
 using Layla.Core.Interfaces.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -34,12 +35,13 @@ namespace Layla.Api.Controllers
         /// <response code="401">Invalid credentials.</response>
         /// <response code="423">Account is locked after too many failed login attempts.</response>
         [HttpPost]
+        [AllowAnonymous]
         [EnableRateLimiting("login")]
         [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status423Locked)]
         [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
-        public async Task<ActionResult<AuthResponseDto>> CreateToken(LoginRequestDto request)
+        public async Task<IActionResult> CreateToken(LoginRequestDto request)
         {
             var result = await _authService.LoginAsync(request);
 

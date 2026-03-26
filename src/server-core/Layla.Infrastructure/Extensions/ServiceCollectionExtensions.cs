@@ -8,6 +8,7 @@ using Layla.Infrastructure.Messaging;
 using Layla.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -19,8 +20,12 @@ public static class ServiceCollectionExtensions
     {
         var commandTimeout = configuration.GetValue<int>("Database:CommandTimeoutSeconds", defaultValue: 30);
         services.AddDbContext<ApplicationDbContext>(options =>
+        {
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
-                sqlOptions => sqlOptions.CommandTimeout(commandTimeout)));
+                sqlOptions => sqlOptions.CommandTimeout(commandTimeout));
+            options.ConfigureWarnings(w =>
+                w.Log(RelationalEventId.PendingModelChangesWarning));
+        });
 
         services.AddIdentity<AppUser, IdentityRole>(options =>
         {
