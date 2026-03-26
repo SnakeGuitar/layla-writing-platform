@@ -47,9 +47,13 @@ public class VoiceRoomManager : IVoiceRoomManager
         projectId = null;
         userId = null;
 
-        foreach (var (pid, room) in _rooms)
+        // Snapshot to prevent concurrent modification issues
+        var roomsSnapshot = _rooms.ToList();
+
+        foreach (var (pid, room) in roomsSnapshot)
         {
-            foreach (var (uid, state) in room)
+            var participantsSnapshot = room.ToList();
+            foreach (var (uid, state) in participantsSnapshot)
             {
                 if (state.ConnectionId == connectionId)
                 {
