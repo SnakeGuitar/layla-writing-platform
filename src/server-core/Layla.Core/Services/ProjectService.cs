@@ -75,11 +75,7 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
     /// </returns>
     public async Task<Result<ProjectResponseDto>> CreateProjectAsync(CreateProjectRequestDto request, string userId, CancellationToken cancellationToken = default)
     {
-        // Transactional block: project + owner role are committed atomically.
-        // Event publishing is intentionally outside the transaction (best-effort, eventual consistency).
-        // If the commit fails, nothing is persisted. If publishing fails after commit,
-        // the project is safely persisted and the warning is logged for manual recovery.
-        Project project;
+        Project? project = null;
         try
         {
             await _projectRepository.BeginTransactionAsync(cancellationToken);
@@ -97,11 +93,10 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
             return Result<ProjectResponseDto>.Failure(MapException(ex));
         }
 
-        // Post-commit: publish events. Failures here are non-fatal — project is already persisted.
-        await PublishProjectCreatedEventsAsync(project, userId, cancellationToken);
+        await PublishProjectCreatedEventsAsync(project!, userId, cancellationToken);
 
-        Logger.LogInformation("Project {ProjectId} created successfully by user {UserId}", project.Id, userId);
-        return Result<ProjectResponseDto>.Success(MapToResponseDto(project, ProjectRoles.Owner));
+        Logger.LogInformation("Project {ProjectId} created successfully by user {UserId}", project!.Id, userId);
+        return Result<ProjectResponseDto>.Success(MapToResponseDto(project!, ProjectRoles.Owner));
     }
 
     public Task<Result<IEnumerable<ProjectResponseDto>>> GetUserProjectsAsync(string userId, CancellationToken cancellationToken = default) =>
@@ -169,7 +164,7 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
         ExecuteAsync(async () =>
         {
             var projects = await _projectRepository.GetAllProjectsAsync(cancellationToken);
-            var dtos = projects.Select(MapToResponseDto).ToList();
+            var dtos = projects.Select(p => MapToResponseDto(p)).ToList();
             return Result<IEnumerable<ProjectResponseDto>>.Success(dtos);
         }, "Failed to retrieve all projects");
 
@@ -177,7 +172,7 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
         ExecuteAsync(async () =>
         {
             var projects = await _projectRepository.GetPublicProjectsAsync(cancellationToken);
-            var dtos = projects.Select(MapToResponseDto).ToList();
+            var dtos = projects.Select(p => MapToResponseDto(p)).ToList();
             return Result<IEnumerable<ProjectResponseDto>>.Success(dtos);
         }, "Failed to retrieve public projects");
 

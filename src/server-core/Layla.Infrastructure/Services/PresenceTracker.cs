@@ -17,7 +17,6 @@ public class PresenceTracker : IPresenceTracker
 {
     private readonly ConcurrentDictionary<string, (Guid ProjectId, string UserId)> _connections = new();
     private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<string, InternalParticipant>> _projectParticipants = new();
-    // Tracks all active connection IDs per user (multi-device support)
     private readonly ConcurrentDictionary<string, List<string>> _userConnections = new();
     private readonly object _lock = new();
 
