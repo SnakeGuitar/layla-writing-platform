@@ -57,7 +57,6 @@ public class PresenceHub : Hub
     {
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, GroupName(projectId));
 
-        // Mark the user as inactive and broadcast updated participants if they became inactive
         var becameInactive = _presenceTracker.MarkInactive(Context.ConnectionId, out var actualProjectId, out var userId);
 
         if (actualProjectId != default)

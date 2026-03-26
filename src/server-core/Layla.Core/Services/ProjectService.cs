@@ -75,20 +75,20 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
     /// </returns>
     public async Task<Result<ProjectResponseDto>> CreateProjectAsync(CreateProjectRequestDto request, string userId, CancellationToken cancellationToken = default)
     {
-        await _projectRepository.BeginTransactionAsync(cancellationToken);
+        // Transactional block: project + owner role are committed atomically.
+        // Event publishing is intentionally outside the transaction (best-effort, eventual consistency).
+        // If the commit fails, nothing is persisted. If publishing fails after commit,
+        // the project is safely persisted and the warning is logged for manual recovery.
+        Project project;
         try
         {
-            var project = BuildProject(request);
+            await _projectRepository.BeginTransactionAsync(cancellationToken);
+            project = BuildProject(request);
             var projectRole = BuildOwnerRole(project.Id, userId);
 
             await _projectRepository.AddProjectAsync(project, cancellationToken);
             await _projectRepository.AddProjectRoleAsync(projectRole, cancellationToken);
             await _projectRepository.CommitTransactionAsync(cancellationToken);
-
-            await PublishProjectCreatedEventsAsync(project, userId, cancellationToken);
-
-            Logger.LogInformation("Project {ProjectId} created successfully by user {UserId}", project.Id, userId);
-            return Result<ProjectResponseDto>.Success(MapToResponseDto(project, ProjectRoles.Owner));
         }
         catch (Exception ex)
         {
@@ -96,6 +96,12 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
             Logger.LogError(ex, "Failed to create project for user {UserId}", userId);
             return Result<ProjectResponseDto>.Failure(MapException(ex));
         }
+
+        // Post-commit: publish events. Failures here are non-fatal — project is already persisted.
+        await PublishProjectCreatedEventsAsync(project, userId, cancellationToken);
+
+        Logger.LogInformation("Project {ProjectId} created successfully by user {UserId}", project.Id, userId);
+        return Result<ProjectResponseDto>.Success(MapToResponseDto(project, ProjectRoles.Owner));
     }
 
     public Task<Result<IEnumerable<ProjectResponseDto>>> GetUserProjectsAsync(string userId, CancellationToken cancellationToken = default) =>

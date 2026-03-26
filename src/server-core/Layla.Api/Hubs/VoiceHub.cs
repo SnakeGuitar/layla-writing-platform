@@ -34,9 +34,12 @@ public class VoiceHub : Hub
             return;
 
         var project = await _projectRepository.GetProjectByIdAsync(projectId);
+        if (project == null)
+            throw new HubException("Project not found.");
+
         var userRole = await _projectRepository.GetProjectRoleAsync(projectId, userId);
 
-        if (userRole == null && (project == null || !project.IsPublic))
+        if (userRole == null && !project.IsPublic)
             throw new HubException("You are not a member of this project.");
 
         var displayName = Context.User?.GetDisplayName() ?? "Unknown";
@@ -127,7 +130,7 @@ public class VoiceHub : Hub
         var participant = _roomManager.GetParticipant(projectId, userId);
 
         if (participant == null || participant.Role == ProjectRoles.Reader)
-            return; // Silently drop audio from non-members or listeners
+            return;
 
         var groupName = GroupName(projectId);
         await Clients.OthersInGroup(groupName).SendAsync(VoiceEvents.ReceiveAudio, userId, audioData);

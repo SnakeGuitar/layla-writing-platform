@@ -88,38 +88,38 @@ public class EventBus : IEventBus, IDisposable, IEventPublisher
                     typeof(T).Name, exchangeName, routingKey);
                 return false;
             }
-        }
 
-        try
-        {
-            _channel.ExchangeDeclare(exchange: exchangeName, type: ExchangeType.Topic, durable: true);
-
-            var options = new JsonSerializerOptions
+            try
             {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            };
+                _channel.ExchangeDeclare(exchange: exchangeName, type: ExchangeType.Topic, durable: true);
 
-            var message = JsonSerializer.Serialize(@event, options);
-            var body = Encoding.UTF8.GetBytes(message);
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                };
 
-            var properties = _channel.CreateBasicProperties();
-            properties.ContentType = "application/json";
-            properties.DeliveryMode = 2;
+                var message = JsonSerializer.Serialize(@event, options);
+                var body = Encoding.UTF8.GetBytes(message);
 
-            _channel.BasicPublish(exchange: exchangeName,
-                                 routingKey: routingKey,
-                                 basicProperties: properties,
-                                 body: body);
+                var properties = _channel.CreateBasicProperties();
+                properties.ContentType = "application/json";
+                properties.DeliveryMode = 2;
 
-            _logger.LogDebug("Event published successfully. EventType={EventType}, Exchange={Exchange}, RoutingKey={RoutingKey}",
-                typeof(T).Name, exchangeName, routingKey);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to publish event. EventType={EventType}, Exchange={Exchange}, RoutingKey={RoutingKey}",
-                typeof(T).Name, exchangeName, routingKey);
-            return false;
+                _channel.BasicPublish(exchange: exchangeName,
+                                     routingKey: routingKey,
+                                     basicProperties: properties,
+                                     body: body);
+
+                _logger.LogDebug("Event published successfully. EventType={EventType}, Exchange={Exchange}, RoutingKey={RoutingKey}",
+                    typeof(T).Name, exchangeName, routingKey);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to publish event. EventType={EventType}, Exchange={Exchange}, RoutingKey={RoutingKey}",
+                    typeof(T).Name, exchangeName, routingKey);
+                return false;
+            }
         }
     }
 

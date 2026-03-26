@@ -17,7 +17,8 @@ public class PresenceTracker : IPresenceTracker
 {
     private readonly ConcurrentDictionary<string, (Guid ProjectId, string UserId)> _connections = new();
     private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<string, InternalParticipant>> _projectParticipants = new();
-    private readonly ConcurrentDictionary<string, string> _userConnections = new();
+    // Tracks all active connection IDs per user (multi-device support)
+    private readonly ConcurrentDictionary<string, List<string>> _userConnections = new();
     private readonly object _lock = new();
 
     private record InternalParticipant(string UserId, string DisplayName, string Role, int ConnectionCount);
@@ -27,7 +28,9 @@ public class PresenceTracker : IPresenceTracker
         lock (_lock)
         {
             _connections[connectionId] = (projectId, userId);
-            _userConnections[userId] = connectionId;
+            _userConnections.AddOrUpdate(userId,
+                _ => [connectionId],
+                (_, list) => { if (!list.Contains(connectionId)) list.Add(connectionId); return list; });
 
             var participants = _projectParticipants.GetOrAdd(projectId, _ => new ConcurrentDictionary<string, InternalParticipant>());
 
@@ -84,8 +87,12 @@ public class PresenceTracker : IPresenceTracker
         projectId = info.ProjectId;
         userId = info.UserId;
 
-        if (_userConnections.TryGetValue(userId, out var activeConnId) && activeConnId == connectionId)
-            _userConnections.TryRemove(userId, out _);
+        if (_userConnections.TryGetValue(userId, out var connList))
+        {
+            connList.Remove(connectionId);
+            if (connList.Count == 0)
+                _userConnections.TryRemove(userId, out _);
+        }
 
         return true;
     }
@@ -136,11 +143,19 @@ public class PresenceTracker : IPresenceTracker
         }
     }
 
+    /// <summary>
+    /// Returns the most recent active connection ID for the user, or null if none.
+    /// Stale IDs (connections that no longer exist) are filtered out automatically.
+    /// </summary>
     public string? GetUserConnection(string userId)
     {
         lock (_lock)
         {
-            return _userConnections.TryGetValue(userId, out var connId) ? connId : null;
+            if (!_userConnections.TryGetValue(userId, out var connList))
+                return null;
+
+            // Return the last connection that is still actively tracked
+            return connList.LastOrDefault(id => _connections.ContainsKey(id));
         }
     }
 }
