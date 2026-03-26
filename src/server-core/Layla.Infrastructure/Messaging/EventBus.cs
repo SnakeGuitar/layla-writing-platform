@@ -14,6 +14,7 @@ public class EventBus : IEventBus, IDisposable, IEventPublisher
     private IModel? _channel;
     private readonly ConnectionFactory _factory;
     private readonly ILogger<EventBus> _logger;
+    private readonly object _connectionLock = new();
 
     public EventBus(IConfiguration configuration, ILogger<EventBus> logger)
     {
@@ -65,7 +66,7 @@ public class EventBus : IEventBus, IDisposable, IEventPublisher
 
     public async Task<bool> PublishAsync<T>(T @event, CancellationToken cancellationToken = default) where T : class
     {
-        const string exchangeName = MessagingConstants.WorldbuildingExchange;
+        var exchangeName = MessagingConstants.WorldbuildingExchange;
         var routingKey = @event.GetType().Name.ToLower().Replace("event", "");
 
         return await Task.Run(() => Publish(@event, exchangeName, routingKey), cancellationToken);
@@ -73,17 +74,20 @@ public class EventBus : IEventBus, IDisposable, IEventPublisher
 
     public bool Publish<T>(T @event, string exchangeName, string routingKey = "") where T : class
     {
-        if (_channel == null || !_channel.IsOpen)
+        lock (_connectionLock)
         {
-            _logger.LogWarning("RabbitMQ channel unavailable, attempting reconnect. EventType={EventType}", typeof(T).Name);
-            TryConnect();
-        }
+            if (_channel == null || !_channel.IsOpen)
+            {
+                _logger.LogWarning("RabbitMQ channel unavailable, attempting reconnect. EventType={EventType}", typeof(T).Name);
+                TryConnect();
+            }
 
-        if (_channel == null)
-        {
-            _logger.LogWarning("Event not published: RabbitMQ channel is unavailable. EventType={EventType}, Exchange={Exchange}, RoutingKey={RoutingKey}",
-                typeof(T).Name, exchangeName, routingKey);
-            return false;
+            if (_channel == null)
+            {
+                _logger.LogWarning("Event not published: RabbitMQ channel is unavailable. EventType={EventType}, Exchange={Exchange}, RoutingKey={RoutingKey}",
+                    typeof(T).Name, exchangeName, routingKey);
+                return false;
+            }
         }
 
         try
