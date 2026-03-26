@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using RabbitMQ.Client;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace Layla.Infrastructure.Messaging;
 
@@ -72,7 +73,10 @@ public class EventBus : IEventBus, IDisposable, IEventPublisher
     public async Task<bool> PublishAsync<T>(T @event, CancellationToken cancellationToken = default) where T : class
     {
         var exchangeName = MessagingConstants.WorldbuildingExchange;
-        var routingKey = @event.GetType().Name.ToLower().Replace("event", "");
+        var typeName = @event.GetType().Name;
+        if (typeName.EndsWith("Event", StringComparison.OrdinalIgnoreCase))
+            typeName = typeName[..^"Event".Length];
+        var routingKey = Regex.Replace(typeName, "(?<!^)([A-Z])", ".$1").ToLower();
 
         try
         {

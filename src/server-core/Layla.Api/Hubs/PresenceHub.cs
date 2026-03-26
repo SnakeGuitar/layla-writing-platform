@@ -2,6 +2,7 @@ using Layla.Api.Extensions;
 using Layla.Core.Constants;
 using Layla.Core.Contracts;
 using Layla.Core.Interfaces;
+using Layla.Core.Interfaces.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
@@ -12,11 +13,13 @@ namespace Layla.Api.Hubs;
 public class PresenceHub : Hub
 {
     private readonly IPresenceTracker _presenceTracker;
+    private readonly IProjectRepository _projectRepository;
     private readonly ILogger<PresenceHub> _logger;
 
-    public PresenceHub(IPresenceTracker presenceTracker, ILogger<PresenceHub> logger)
+    public PresenceHub(IPresenceTracker presenceTracker, IProjectRepository projectRepository, ILogger<PresenceHub> logger)
     {
         _presenceTracker = presenceTracker;
+        _projectRepository = projectRepository;
         _logger = logger;
     }
 
@@ -33,6 +36,10 @@ public class PresenceHub : Hub
                 _logger.LogWarning("WatchProject called but user identity could not be extracted.");
                 return;
             }
+
+            var isMember = await _projectRepository.UserHasAnyRoleInProjectAsync(projectId, userId);
+            if (!isMember)
+                throw new HubException("You are not a member of this project.");
 
             var displayName = Context.User?.GetDisplayName() ?? "Unknown";
 

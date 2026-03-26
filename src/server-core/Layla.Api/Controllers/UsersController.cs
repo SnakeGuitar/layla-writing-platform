@@ -62,9 +62,15 @@ public class UsersController : ApiControllerBase
     /// </summary>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(UserResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetUserById(Guid id, CancellationToken cancellationToken)
     {
+        var isAdmin = User.IsInRole(AppRoles.Admin);
+
+        if (!isAdmin && CurrentUserId != id.ToString())
+            return Forbid();
+
         var result = await _appUserService.GetAppUserByIdAsync(id, cancellationToken);
 
         if (!result.IsSuccess)
