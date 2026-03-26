@@ -19,9 +19,11 @@ public enum ErrorCode
     // Authentication errors → HTTP 401
     Unauthorized = 101,
     InvalidCredentials = 102,
-    AccountLocked = 103,
-    SessionExpired = 104,
-    InvalidToken = 105,
+    SessionExpired = 103,
+    InvalidToken = 104,
+
+    // Account locked → HTTP 423
+    AccountLocked = 105,
 
     // Authorization errors → HTTP 403
     Forbidden = 201,
