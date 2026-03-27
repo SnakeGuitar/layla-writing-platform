@@ -2,7 +2,7 @@ import jwt from "jsonwebtoken";
 import type { SignOptions, VerifyOptions } from "jsonwebtoken";
 import type JwtPayloadCustom from "@/interfaces/auth/JwtPayloadCustom";
 import type TokenPair from "@/interfaces/auth/TokenPair";
-import process from "node:process";
+import { config } from "@/config/env";
 
 /**
  * Generates both an access token and a refresh token for the given payload.
@@ -11,17 +11,13 @@ import process from "node:process";
  * (ultimately from environment variables).
  */
 export const generatejwtTokens = (payload: JwtPayloadCustom): TokenPair => {
-  const accessToken = jwt.sign(payload, process.env.JWT_SECRET!, {
-    expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRY,
+  const accessToken = jwt.sign(payload, config.jwt.secret, {
+    expiresIn: config.jwt.refreshExpiry,
   } as SignOptions);
 
-  const refreshToken = jwt.sign(
-    { id: payload.id },
-    process.env.JWT_SECRET_REFRESH!,
-    {
-      expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRY,
-    } as SignOptions,
-  );
+  const refreshToken = jwt.sign({ id: payload.id }, config.jwt.refreshExpiry, {
+    expiresIn: config.jwt.accessExpiry,
+  } as SignOptions);
 
   return { accessToken, refreshToken };
 };
@@ -30,8 +26,8 @@ export const generatejwtTokens = (payload: JwtPayloadCustom): TokenPair => {
  * Generates only a short-lived access token.
  */
 export const generateAccessJWTToken = (payload: JwtPayloadCustom): string => {
-  return jwt.sign(payload, process.env.JWT_SECRET!, {
-    expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRY,
+  return jwt.sign(payload, config.jwt.secret, {
+    expiresIn: config.jwt.accessExpiry,
   } as SignOptions);
 };
 
@@ -43,7 +39,7 @@ export const generateVerificationJWTToken = (
   payload: JwtPayloadCustom,
   expiresIn: string = "1h",
 ): string => {
-  return jwt.sign(payload, process.env.JWT_SECRET!, {
+  return jwt.sign(payload, config.jwt.secret, {
     expiresIn,
   } as SignOptions);
 };
@@ -53,7 +49,7 @@ export const generateVerificationJWTToken = (
  * Throws an error (e.g., `TokenExpiredError`, `JsonWebTokenError`) if invalid.
  */
 export const verifyAccessJWTToken = (token: string): JwtPayloadCustom => {
-  return jwt.verify(token, process.env.JWT_SECRET!, {
+  return jwt.verify(token, config.jwt.secret, {
     algorithms: ["HS256"],
   } as VerifyOptions) as JwtPayloadCustom;
 };
@@ -63,7 +59,7 @@ export const verifyAccessJWTToken = (token: string): JwtPayloadCustom => {
  * Returns an object containing only the user `id`.
  */
 export const verifyRefreshToken = (token: string): { id: string } => {
-  return jwt.verify(token, process.env.JWT_SECRET_REFRESH!, {
+  return jwt.verify(token, config.jwt.secretRefresh, {
     algorithms: ["HS256"],
   } as VerifyOptions) as { id: string };
 };
@@ -73,7 +69,7 @@ export const verifyRefreshToken = (token: string): { id: string } => {
  * Throws if the token is invalid or expired.
  */
 export const verifyVerificationJWTToken = (token: string): JwtPayloadCustom => {
-  return jwt.verify(token, process.env.JWT_SECRET!, {
+  return jwt.verify(token, config.jwt.secret, {
     algorithms: ["HS256"],
   } as VerifyOptions) as JwtPayloadCustom;
 };
