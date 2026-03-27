@@ -11,17 +11,18 @@ const graphRepo = new Neo4jGraphRepository();
  * Used for entity name matching against chapter content.
  */
 export const stripRtf = (rtf: string): string => {
-  if (!rtf || !rtf.startsWith("{\\rtf")) return rtf ?? "";
+  if (!rtf) return "";
 
-  const text: string = rtf
-    .replace(/\\[a-z]+[-]?\d*\s?/gi, " ")
-    .replace(/[{}]/g, "")
-    .replace(/\\\*/g, "")
-    .replace(/\\/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
+  // Si no es RTF, aplica limpieza básica de whitespace igualmente.
+  const source: string = rtf.startsWith("{\\rtf")
+    ? rtf
+        .replace(/\\[a-z]+[-]?\d*\s?/gi, " ")
+        .replace(/[{}]/g, "")
+        .replace(/\\\*/g, "")
+        .replace(/\\/g, "")
+    : rtf;
 
-  return text;
+  return source.replace(/\s+/g, " ").trim();
 };
 
 /**
@@ -33,14 +34,13 @@ export const extractMentions = (
   entries: IWikiEntry[],
 ): IMention[] => {
   const found = new Map<string, IMention>();
-  const lowerText = plainText.toLowerCase();
 
   for (const entry of entries) {
     if (found.has(entry.entityId)) continue;
 
-    const pattern = new RegExp(`\\b${escapeRegex(entry.name)}\\b`, "i");
+    const pattern: RegExp = new RegExp(`\\b${escapeRegex(entry.name)}\\b`, "i");
 
-    if (pattern.test(lowerText)) {
+    if (pattern.test(plainText)) {
       found.set(entry.entityId, {
         entityId: entry.entityId,
         name: entry.name,
@@ -68,28 +68,41 @@ export const syncChapterMentions = async (data: {
   const plainText = stripRtf(data.content);
   const mentions = extractMentions(plainText, entries);
 
-  await graphRepo.clearChapterAppearances({
-    projectId: data.projectId,
-    chapterId: data.chapterId,
-  });
+  try {
+    await graphRepo.clearChapterAppearances({
+      projectId: data.projectId,
+      chapterId: data.chapterId,
+    });
+  } catch (err) {
+    throw new Error(
+      `[Mention.service] Failed to clear APPEARS_IN edges for chapter ${data.chapterId}`,
+      { cause: err },
+    );
+  }
 
-  for (const mention of mentions) {
-    try {
-      await graphRepo.mergeAppearance({
+  // Sincroniza todas las apariciones en paralelo; los fallos individuales
+  // se loguean sin abortar el resto del lote.
+  const results = await Promise.allSettled(
+    mentions.map((mention) =>
+      graphRepo.mergeAppearance({
         projectId: data.projectId,
         entityId: mention.entityId,
         manuscriptId: data.manuscriptId,
         manuscriptTitle: data.manuscriptTitle,
         chapterId: data.chapterId,
         chapterTitle: data.chapterTitle,
-      });
-    } catch (err) {
+      }),
+    ),
+  );
+
+  results.forEach((result, i) => {
+    if (result.status === "rejected") {
       console.warn(
-        `[Mention.service] Failed to sync APPEARS_IN for entity ${mention.entityId} in chapter ${data.chapterId}`,
-        err,
+        `[Mention.service] Failed to sync APPEARS_IN for entity ${mentions[i].entityId} in chapter ${data.chapterId}`,
+        result.reason,
       );
     }
-  }
+  });
 
   return mentions;
 };
