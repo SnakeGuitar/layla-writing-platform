@@ -1,7 +1,8 @@
-import jwt, { SignOptions, VerifyOptions } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
+import type { SignOptions, VerifyOptions } from "jsonwebtoken";
+import type JwtPayloadCustom from "@/interfaces/auth/JwtPayloadCustom";
+import type TokenPair from "@/interfaces/auth/TokenPair";
 import process from "node:process";
-import JwtPayloadCustom from "@/interfaces/auth/JwtPayloadCustom";
-import TokenPair from "@/interfaces/auth/TokenPair";
 
 /**
  * Generates both an access token and a refresh token for the given payload.

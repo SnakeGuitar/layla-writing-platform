@@ -1,5 +1,5 @@
-import { IGraphResult } from "@/interfaces/graph/IGraphResult";
-import { IAppearanceRecord } from "@/interfaces/repositories/IGraphRepository";
+import type { IGraphResult } from "@/interfaces/graph/IGraphResult";
+import type { IAppearanceRecord } from "@/interfaces/repositories/IGraphRepository";
 import { Neo4jGraphRepository } from "@/repositories/Neo4jGraphRepository";
 
 const graphRepo = new Neo4jGraphRepository();

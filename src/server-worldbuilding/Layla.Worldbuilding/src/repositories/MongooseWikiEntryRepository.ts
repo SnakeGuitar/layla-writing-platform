@@ -1,16 +1,23 @@
 import { WikiEntryModel } from "../models/WikiEntry.model";
-import { IWikiEntry, WikiEntityType } from "../interfaces/wiki/IWikiEntry";
-import { IWikiEntryRepository } from "../interfaces/repositories/IWikiEntryRepository";
+import type { IWikiEntry, WikiEntityType } from "../interfaces/wiki/IWikiEntry";
+import type { IWikiEntryRepository } from "../interfaces/repositories/IWikiEntryRepository";
 
 export class MongooseWikiEntryRepository implements IWikiEntryRepository {
-  async listEntries(projectId: string, entityType?: WikiEntityType): Promise<IWikiEntry[]> {
+  async listEntries(
+    projectId: string,
+    entityType?: WikiEntityType,
+  ): Promise<IWikiEntry[]> {
     const filter: Record<string, any> = { projectId };
     if (entityType) filter.entityType = entityType;
-    return WikiEntryModel.find(filter).select("-description -__v").lean() as unknown as IWikiEntry[];
+    return WikiEntryModel.find(filter)
+      .select("-description -__v")
+      .lean() as unknown as IWikiEntry[];
   }
 
   async getEntry(entityId: string): Promise<IWikiEntry | null> {
-    return WikiEntryModel.findOne({ entityId }).lean() as unknown as IWikiEntry | null;
+    return WikiEntryModel.findOne({
+      entityId,
+    }).lean() as unknown as IWikiEntry | null;
   }
 
   async createEntry(data: Partial<IWikiEntry>): Promise<IWikiEntry> {
@@ -18,11 +25,14 @@ export class MongooseWikiEntryRepository implements IWikiEntryRepository {
     return entry.toObject() as unknown as IWikiEntry;
   }
 
-  async updateEntry(entityId: string, data: Partial<IWikiEntry>): Promise<IWikiEntry | null> {
+  async updateEntry(
+    entityId: string,
+    data: Partial<IWikiEntry>,
+  ): Promise<IWikiEntry | null> {
     return WikiEntryModel.findOneAndUpdate(
       { entityId },
       { $set: data },
-      { new: true }
+      { new: true },
     ).lean() as unknown as IWikiEntry | null;
   }
 

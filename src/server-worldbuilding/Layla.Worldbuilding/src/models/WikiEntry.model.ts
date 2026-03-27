@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import { IWikiEntry } from "@/interfaces/wiki/IWikiEntry";
+import type { IWikiEntry } from "@/interfaces/wiki/IWikiEntry";
 
 /**
  * Mongoose schema for wiki entries.

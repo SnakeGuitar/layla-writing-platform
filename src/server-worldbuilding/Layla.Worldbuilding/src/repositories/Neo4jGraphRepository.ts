@@ -1,9 +1,19 @@
 import { getNeo4jDriver } from "../db/neo4j";
-import { IGraphResult, GraphNode, GraphEdge } from "../interfaces/graph/IGraphResult";
-import { IGraphRepository, IAppearanceRecord } from "../interfaces/repositories/IGraphRepository";
+import type {
+  IGraphResult,
+  GraphNode,
+  GraphEdge,
+} from "../interfaces/graph/IGraphResult";
+import type {
+  IGraphRepository,
+  IAppearanceRecord,
+} from "../interfaces/repositories/IGraphRepository";
 
 export class Neo4jGraphRepository implements IGraphRepository {
-  async getGraph(projectId: string, entityType?: string): Promise<IGraphResult> {
+  async getGraph(
+    projectId: string,
+    entityType?: string,
+  ): Promise<IGraphResult> {
     const driver = getNeo4jDriver();
     const session = driver.session();
 
@@ -84,7 +94,7 @@ export class Neo4jGraphRepository implements IGraphRepository {
         `MERGE (e:Entity { entityId: $entityId })
          ON CREATE SET e.projectId = $projectId, e.name = $name, e.entityType = $entityType
          ON MATCH  SET e.name = $name, e.entityType = $entityType`,
-        data
+        data,
       );
     } finally {
       await session.close();
@@ -97,7 +107,7 @@ export class Neo4jGraphRepository implements IGraphRepository {
     try {
       await session.run(
         "MATCH (e:Entity { entityId: $entityId }) DETACH DELETE e",
-        { entityId }
+        { entityId },
       );
     } finally {
       await session.close();
@@ -124,7 +134,7 @@ export class Neo4jGraphRepository implements IGraphRepository {
           targetId: data.targetEntityId,
           projectId: data.projectId,
           label: data.label ?? data.type,
-        }
+        },
       );
     } finally {
       await session.close();
@@ -147,7 +157,7 @@ export class Neo4jGraphRepository implements IGraphRepository {
           sourceId: data.sourceEntityId,
           targetId: data.targetEntityId,
           projectId: data.projectId,
-        }
+        },
       );
     } finally {
       await session.close();
@@ -180,7 +190,7 @@ export class Neo4jGraphRepository implements IGraphRepository {
           manuscriptTitle: data.manuscriptTitle,
           chapterId: data.chapterId,
           chapterTitle: data.chapterTitle,
-        }
+        },
       );
     } finally {
       await session.close();
@@ -198,7 +208,7 @@ export class Neo4jGraphRepository implements IGraphRepository {
       await session.run(
         `MATCH (e:Entity)-[r:APPEARS_IN]->(ch:Chapter { chapterId: $chapterId, projectId: $projectId })
          DELETE r`,
-        { chapterId: data.chapterId, projectId: data.projectId }
+        { chapterId: data.chapterId, projectId: data.projectId },
       );
     } finally {
       await session.close();
@@ -218,7 +228,7 @@ export class Neo4jGraphRepository implements IGraphRepository {
          RETURN ch.manuscriptId AS manuscriptId, ch.manuscriptTitle AS manuscriptTitle,
                 ch.chapterId AS chapterId, ch.chapterTitle AS chapterTitle
          ORDER BY ch.manuscriptId, ch.chapterId`,
-        { entityId: data.entityId, projectId: data.projectId }
+        { entityId: data.entityId, projectId: data.projectId },
       );
 
       return result.records.map((r) => ({

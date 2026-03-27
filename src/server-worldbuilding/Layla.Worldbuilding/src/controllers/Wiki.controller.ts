@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
+import type { WikiEntityType } from "@/interfaces/wiki/IWikiEntry";
 import * as WikiService from "@/services/WikiEntry.service";
 import * as GraphService from "@/services/Graph.service";
-import type { WikiEntityType } from "@/interfaces/wiki/IWikiEntry";
 
 /**
  * GET /api/wiki/:projectId/entries

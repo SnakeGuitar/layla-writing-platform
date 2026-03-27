@@ -1,5 +1,5 @@
 import { Schema, model } from "mongoose";
-import { IManuscript } from "@/interfaces/manuscript/IManuscript";
+import type { IManuscript } from "@/interfaces/manuscript/IManuscript";
 
 /**
  * Embedded sub-document schema for an individual chapter.
@@ -48,4 +48,7 @@ const ManuscriptSchema = new Schema<IManuscript>(
 
 ManuscriptSchema.index({ projectId: 1, manuscriptId: 1 }, { unique: true });
 
-export const ManuscriptModel = model<IManuscript>("Manuscript", ManuscriptSchema);
+export const ManuscriptModel = model<IManuscript>(
+  "Manuscript",
+  ManuscriptSchema,
+);

@@ -1,4 +1,4 @@
-import { IWikiEntry } from "@/interfaces/wiki/IWikiEntry";
+import type { IWikiEntry } from "@/interfaces/wiki/IWikiEntry";
 import { MongooseWikiEntryRepository } from "@/repositories/MongooseWikiEntryRepository";
 import { Neo4jGraphRepository } from "@/repositories/Neo4jGraphRepository";
 
@@ -25,7 +25,10 @@ const retrySyncEntry = async (entry: IWikiEntry): Promise<void> => {
 
     console.log(`[neo4jSyncWorker] Synced entry ${entry.entityId}`);
   } catch (err) {
-    console.error(`[neo4jSyncWorker] Failed to sync entry ${entry.entityId}:`, err);
+    console.error(
+      `[neo4jSyncWorker] Failed to sync entry ${entry.entityId}:`,
+      err,
+    );
   }
 };
 

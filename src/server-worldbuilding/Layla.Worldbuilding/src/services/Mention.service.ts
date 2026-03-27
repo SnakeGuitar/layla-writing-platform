@@ -1,5 +1,5 @@
-import { IMention } from "@/interfaces/manuscript/IManuscript";
-import { IWikiEntry } from "@/interfaces/wiki/IWikiEntry";
+import type { IMention } from "@/interfaces/manuscript/IManuscript";
+import type { IWikiEntry } from "@/interfaces/wiki/IWikiEntry";
 import { MongooseWikiEntryRepository } from "@/repositories/MongooseWikiEntryRepository";
 import { Neo4jGraphRepository } from "@/repositories/Neo4jGraphRepository";
 
@@ -13,7 +13,7 @@ const graphRepo = new Neo4jGraphRepository();
 export const stripRtf = (rtf: string): string => {
   if (!rtf || !rtf.startsWith("{\\rtf")) return rtf ?? "";
 
-  let text = rtf
+  const text: string = rtf
     .replace(/\\[a-z]+[-]?\d*\s?/gi, " ")
     .replace(/[{}]/g, "")
     .replace(/\\\*/g, "")
@@ -38,10 +38,7 @@ export const extractMentions = (
   for (const entry of entries) {
     if (found.has(entry.entityId)) continue;
 
-    const pattern = new RegExp(
-      `\\b${escapeRegex(entry.name)}\\b`,
-      "i",
-    );
+    const pattern = new RegExp(`\\b${escapeRegex(entry.name)}\\b`, "i");
 
     if (pattern.test(lowerText)) {
       found.set(entry.entityId, {

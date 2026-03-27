@@ -14,10 +14,14 @@ const required = [
   "RABBITMQ_URL",
 ] as const;
 
-for (const key of required) {
-  if (!process.env[key]) {
-    throw new Error(`Missing required environment variable: ${key}`);
-  }
+/**
+ * Verify if some secret ir empty or missing
+ */
+const missing = required.filter((key) => !process.env[key]?.trim());
+if (missing.length > 0) {
+  throw new Error(
+    `Missing or empty required environment variables: ${missing.join(", ")}`,
+  );
 }
 
 /**
@@ -56,4 +60,4 @@ export const config = {
     /** Default: `"worldbuilding.node.queue"`. */
     queue: process.env.RABBITMQ_QUEUE ?? "worldbuilding.node.queue",
   },
-};
+} as const;

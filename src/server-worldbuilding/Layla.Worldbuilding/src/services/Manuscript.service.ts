@@ -1,5 +1,8 @@
 import { v4 as uuidv4 } from "uuid";
-import { IChapter, IManuscript } from "@/interfaces/manuscript/IManuscript";
+import type {
+  IChapter,
+  IManuscript,
+} from "@/interfaces/manuscript/IManuscript";
 import { MongooseManuscriptRepository } from "@/repositories/MongooseManuscriptRepository";
 import { syncChapterMentions } from "@/services/Mention.service";
 
@@ -16,13 +19,15 @@ export const getManuscriptsByProject = async (projectId: string) => {
     projectId: m.projectId,
     title: m.title,
     order: m.order,
-    chapters: m.chapters.map(({ chapterId, title, order, updatedAt, createdAt }) => ({
-      chapterId,
-      title,
-      order,
-      updatedAt,
-      createdAt,
-    })),
+    chapters: m.chapters.map(
+      ({ chapterId, title, order, updatedAt, createdAt }) => ({
+        chapterId,
+        title,
+        order,
+        updatedAt,
+        createdAt,
+      }),
+    ),
     createdAt: m.createdAt,
     updatedAt: m.updatedAt,
   }));
@@ -33,8 +38,14 @@ export const getManuscriptsByProject = async (projectId: string) => {
  * an index object — chapter metadata without `content`.
  * Returns `null` when not found.
  */
-export const getManuscript = async (projectId: string, manuscriptId: string) => {
-  const manuscript = await manuscriptRepo.getManuscript(projectId, manuscriptId);
+export const getManuscript = async (
+  projectId: string,
+  manuscriptId: string,
+) => {
+  const manuscript = await manuscriptRepo.getManuscript(
+    projectId,
+    manuscriptId,
+  );
   if (!manuscript) return null;
 
   return {
@@ -42,13 +53,15 @@ export const getManuscript = async (projectId: string, manuscriptId: string) => 
     projectId: manuscript.projectId,
     title: manuscript.title,
     order: manuscript.order,
-    chapters: manuscript.chapters.map(({ chapterId, title, order, updatedAt, createdAt }) => ({
-      chapterId,
-      title,
-      order,
-      updatedAt,
-      createdAt,
-    })),
+    chapters: manuscript.chapters.map(
+      ({ chapterId, title, order, updatedAt, createdAt }) => ({
+        chapterId,
+        title,
+        order,
+        updatedAt,
+        createdAt,
+      }),
+    ),
     createdAt: manuscript.createdAt,
     updatedAt: manuscript.updatedAt,
   };
@@ -101,7 +114,7 @@ export const updateManuscriptMeta = async (
   manuscriptId: string,
   data: UpdateManuscriptData,
 ) => {
-  const updateData: any = {};
+  const updateData: UpdateManuscriptData = {};
   if (data.title !== undefined) updateData.title = data.title;
   if (data.order !== undefined) updateData.order = data.order;
 
@@ -112,7 +125,10 @@ export const updateManuscriptMeta = async (
  * Permanently deletes the manuscript and all of its embedded chapters.
  * Returns `true` on success, `false` if the manuscript was not found.
  */
-export const deleteManuscript = async (projectId: string, manuscriptId: string) => {
+export const deleteManuscript = async (
+  projectId: string,
+  manuscriptId: string,
+) => {
   return manuscriptRepo.deleteManuscript(projectId, manuscriptId);
 };
 
@@ -120,7 +136,11 @@ export const deleteManuscript = async (projectId: string, manuscriptId: string) 
  * Returns a single chapter (including `content`) identified by
  * (`projectId`, `manuscriptId`, `chapterId`), or `null` if not found.
  */
-export const getChapter = async (projectId: string, manuscriptId: string, chapterId: string) => {
+export const getChapter = async (
+  projectId: string,
+  manuscriptId: string,
+  chapterId: string,
+) => {
   return manuscriptRepo.getChapter(projectId, manuscriptId, chapterId);
 };
 
@@ -184,7 +204,11 @@ export const updateChapter = async (
   chapterId: string,
   data: UpdateChapterData,
 ): Promise<UpdateChapterResult> => {
-  const chapter = await manuscriptRepo.getChapter(projectId, manuscriptId, chapterId);
+  const chapter = await manuscriptRepo.getChapter(
+    projectId,
+    manuscriptId,
+    chapterId,
+  );
   if (!chapter) return { conflict: false };
 
   if (data.clientTimestamp) {
@@ -199,12 +223,22 @@ export const updateChapter = async (
   if (data.content !== undefined) updateData.content = data.content;
   if (data.order !== undefined) updateData.order = data.order;
   updateData.updatedAt = new Date();
-
-  await manuscriptRepo.updateChapter(projectId, manuscriptId, chapterId, updateData);
+  // TODO: Verificar este schema con UpdateChapterData
+  await manuscriptRepo.updateChapter(
+    projectId,
+    manuscriptId,
+    chapterId,
+    updateData,
+  );
 
   if (data.content !== undefined) {
-    const manuscript = await manuscriptRepo.getManuscript(projectId, manuscriptId);
-    const chapterDoc = manuscript?.chapters.find((c: any) => c.chapterId === chapterId);
+    const manuscript: IManuscript | null = await manuscriptRepo.getManuscript(
+      projectId,
+      manuscriptId,
+    );
+    const chapterDoc = manuscript?.chapters.find(
+      (c: IChapter) => c.chapterId === chapterId,
+    );
 
     if (manuscript && chapterDoc) {
       try {
@@ -217,14 +251,23 @@ export const updateChapter = async (
           content: data.content,
         });
 
-        await manuscriptRepo.updateChapter(projectId, manuscriptId, chapterId, { mentions });
+        await manuscriptRepo.updateChapter(projectId, manuscriptId, chapterId, {
+          mentions,
+        });
       } catch (err) {
-        console.warn(`[Manuscript.service] Mention sync failed for chapter ${chapterId}`, err);
+        console.warn(
+          `[Manuscript.service] Mention sync failed for chapter ${chapterId}`,
+          err,
+        );
       }
     }
   }
 
-  const updatedChapter = await manuscriptRepo.getChapter(projectId, manuscriptId, chapterId);
+  const updatedChapter = await manuscriptRepo.getChapter(
+    projectId,
+    manuscriptId,
+    chapterId,
+  );
   return { conflict: false, chapter: updatedChapter ?? undefined };
 };
 

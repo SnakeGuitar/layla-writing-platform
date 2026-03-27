@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { IWikiEntry, WikiEntityType } from "@/interfaces/wiki/IWikiEntry";
+import type { IWikiEntry, WikiEntityType } from "@/interfaces/wiki/IWikiEntry";
 import { MongooseWikiEntryRepository } from "@/repositories/MongooseWikiEntryRepository";
 import { Neo4jGraphRepository } from "@/repositories/Neo4jGraphRepository";
 
@@ -52,7 +52,7 @@ export const createEntry = async (data: {
       name: entry.name,
       entityType: entry.entityType,
     });
-    
+
     await wikiRepo.updateEntry(entry.entityId, { neo4jSynced: true });
     entry.neo4jSynced = true;
   } catch (err) {
@@ -71,7 +71,9 @@ export const createEntry = async (data: {
  */
 export const updateEntry = async (
   entityId: string,
-  data: Partial<Pick<IWikiEntry, "name" | "entityType" | "description" | "tags">>,
+  data: Partial<
+    Pick<IWikiEntry, "name" | "entityType" | "description" | "tags">
+  >,
 ) => {
   const entry = await wikiRepo.updateEntry(entityId, data);
 
