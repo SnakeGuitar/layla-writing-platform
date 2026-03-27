@@ -6,15 +6,11 @@
     "outDir": "./dist",
 
     // Environment Settings
-    "module": "commonjs",
-    "moduleResolution": "bundler",
-    "target": "es2022",
-    "types": ["node"],
+    "module": "ESNext",
+    "target": "ESNext",
     "lib": ["ES2021", "DOM", "DOM.Iterable"],
-    // For nodejs:
-    // "lib": ["esnext"],
-    // "types": ["node"],
-    // and npm install -D @types/node
+    "types": ["vite/client"],
+    "skipLibCheck": true,
 
     // Other Outputs
     "sourceMap": true,
@@ -34,22 +30,32 @@
     // "noPropertyAccessFromIndexSignature": true,
 
     // Recommended Options
-    "strict": true,
-    "verbatimModuleSyntax": false,
     "isolatedModules": true,
-    "noUncheckedSideEffectImports": true,
-    "moduleDetection": "force",
-    "skipLibCheck": true,
     "allowSyntheticDefaultImports": true,
     "forceConsistentCasingInFileNames": true,
+    "useDefineForClassFields": true,
 
     // Standarize root/src
     "baseUrl": ".",
     "paths": { "@/*": ["src/*"] },
     "resolveJsonModule": true,
-    "allowImportingTsExtensions": true,
     "esModuleInterop": true,
+
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+
+    /* Linting */
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "vite-env.d.ts"],
+  "include": ["src", "vite-env.d.ts", "index.ts"],
   "exclude": ["node_modules", "dist", "eslint.config.mts"]
 }

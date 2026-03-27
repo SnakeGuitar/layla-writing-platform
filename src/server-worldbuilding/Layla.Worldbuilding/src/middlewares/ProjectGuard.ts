@@ -1,5 +1,5 @@
-import { Response, NextFunction } from "express";
-import InterfaceAuthRequest from "@/interfaces/auth/AuthRequest";
+import type { Response, NextFunction } from "express";
+import type InterfaceAuthRequest from "@/interfaces/auth/AuthRequest";
 import { getNeo4jDriver } from "@/db/neo4j";
 
 /**
@@ -36,7 +36,7 @@ export const requireProjectAccess = () => {
     const session = driver.session();
 
     try {
-      // TODO: Alignment with SQL ProjectRole system. 
+      // TODO: Alignment with SQL ProjectRole system.
       // Current check only verifies ownership in Neo4j.
       const result = await session.run(
         `MATCH (u:User { id: $userId })-[:MEMBER_OF]->(p:Project { projectId: $projectId }) RETURN p LIMIT 1`,

@@ -1,5 +1,5 @@
-import { Request } from "express";
-import InterfaceJwtPayloadCustom from "@/interfaces/auth/JwtPayloadCustom";
+import type { Request } from "express";
+import type InterfaceJwtPayloadCustom from "@/interfaces/auth/JwtPayloadCustom";
 
 /**
  * Extends the standard Express Request object to include the authenticated

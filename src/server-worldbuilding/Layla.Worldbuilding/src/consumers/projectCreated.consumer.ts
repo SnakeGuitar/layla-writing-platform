@@ -1,4 +1,5 @@
-import amqplib, { Channel, ChannelModel } from "amqplib";
+import amqplib from "amqplib";
+import type { Channel, ChannelModel } from "amqplib";
 import { getNeo4jDriver } from "@/db/neo4j";
 import { ManuscriptModel } from "@/models/Manuscript.model";
 import { config } from "@/config/env";
@@ -104,9 +105,7 @@ export const startProjectCreatedConsumer = async (): Promise<void> => {
   channel.consume(config.rabbitmq.queue, async (msg) => {
     if (!msg) return;
     try {
-      const payload: ProjectCreatedPayload = JSON.parse(
-        msg.content.toString(),
-      );
+      const payload: ProjectCreatedPayload = JSON.parse(msg.content.toString());
       await initializeProjectInNeo4j(payload);
       await initializeManuscriptInMongo(payload.projectId);
       channel.ack(msg);

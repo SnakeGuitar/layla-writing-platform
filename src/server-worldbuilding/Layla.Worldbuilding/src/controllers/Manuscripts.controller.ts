@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import type { Request, Response } from "express";
 import * as ManuscriptService from "@/services/Manuscript.service";
 
 /**

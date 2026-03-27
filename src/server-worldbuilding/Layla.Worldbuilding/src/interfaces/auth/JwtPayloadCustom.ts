@@ -1,4 +1,4 @@
-import { JwtPayload } from "jsonwebtoken";
+import type { JwtPayload } from "jsonwebtoken";
 
 /**
  * Expected structure of the decoded JWT payload issued by server-core.

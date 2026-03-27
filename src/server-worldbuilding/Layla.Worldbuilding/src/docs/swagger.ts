@@ -40,11 +40,22 @@ const definition: swaggerJsdoc.OAS3Definition = {
     schemas: {
       Mention: {
         type: "object",
-        description: "A reference from a chapter to a wiki entity, detected automatically from the text.",
+        description:
+          "A reference from a chapter to a wiki entity, detected automatically from the text.",
         properties: {
-          entityId: { type: "string", format: "uuid", description: "UUID of the referenced wiki entry." },
-          name: { type: "string", description: "Entity name at the time of detection." },
-          entityType: { type: "string", description: "Entity type (Character, Location, Event, Object)." },
+          entityId: {
+            type: "string",
+            format: "uuid",
+            description: "UUID of the referenced wiki entry.",
+          },
+          name: {
+            type: "string",
+            description: "Entity name at the time of detection.",
+          },
+          entityType: {
+            type: "string",
+            description: "Entity type (Character, Location, Event, Object).",
+          },
         },
       },
       AppearanceRecord: {
@@ -60,18 +71,38 @@ const definition: swaggerJsdoc.OAS3Definition = {
       Chapter: {
         type: "object",
         properties: {
-          chapterId: { type: "string", format: "uuid", description: "UUID identifying the chapter." },
-          title: { type: "string", maxLength: 200, description: "Display title shown in the navigation panel." },
-          content: { type: "string", description: "Full RTF content. Omitted in index responses." },
-          order: { type: "integer", minimum: 0, description: "Zero-based position within the manuscript." },
-          mentions: { type: "array", description: "Wiki entities referenced in this chapter.", items: { $ref: "#/components/schemas/Mention" } },
+          chapterId: {
+            type: "string",
+            format: "uuid",
+            description: "UUID identifying the chapter.",
+          },
+          title: {
+            type: "string",
+            maxLength: 200,
+            description: "Display title shown in the navigation panel.",
+          },
+          content: {
+            type: "string",
+            description: "Full RTF content. Omitted in index responses.",
+          },
+          order: {
+            type: "integer",
+            minimum: 0,
+            description: "Zero-based position within the manuscript.",
+          },
+          mentions: {
+            type: "array",
+            description: "Wiki entities referenced in this chapter.",
+            items: { $ref: "#/components/schemas/Mention" },
+          },
           createdAt: { type: "string", format: "date-time" },
           updatedAt: { type: "string", format: "date-time" },
         },
       },
       ChapterIndex: {
         type: "object",
-        description: "Chapter metadata without content — used in manuscript index responses.",
+        description:
+          "Chapter metadata without content — used in manuscript index responses.",
         properties: {
           chapterId: { type: "string", format: "uuid" },
           title: { type: "string" },
@@ -83,10 +114,27 @@ const definition: swaggerJsdoc.OAS3Definition = {
       Manuscript: {
         type: "object",
         properties: {
-          manuscriptId: { type: "string", format: "uuid", description: "UUID identifying the manuscript." },
-          projectId: { type: "string", format: "uuid", description: "UUID of the owning project (issued by server-core)." },
-          title: { type: "string", maxLength: 200, description: "Human-readable title (e.g. 'Book 1', 'Draft 2')." },
-          order: { type: "integer", minimum: 0, description: "Zero-based display order among the project's manuscripts." },
+          manuscriptId: {
+            type: "string",
+            format: "uuid",
+            description: "UUID identifying the manuscript.",
+          },
+          projectId: {
+            type: "string",
+            format: "uuid",
+            description: "UUID of the owning project (issued by server-core).",
+          },
+          title: {
+            type: "string",
+            maxLength: 200,
+            description: "Human-readable title (e.g. 'Book 1', 'Draft 2').",
+          },
+          order: {
+            type: "integer",
+            minimum: 0,
+            description:
+              "Zero-based display order among the project's manuscripts.",
+          },
           chapters: {
             type: "array",
             description: "Chapter index — content fields are omitted.",
@@ -116,7 +164,10 @@ const definition: swaggerJsdoc.OAS3Definition = {
         required: ["title"],
         properties: {
           title: { type: "string", maxLength: 200 },
-          content: { type: "string", description: "Initial RTF content. Defaults to empty string." },
+          content: {
+            type: "string",
+            description: "Initial RTF content. Defaults to empty string.",
+          },
           order: { type: "integer", minimum: 0 },
         },
       },
@@ -157,13 +208,19 @@ const definition: swaggerJsdoc.OAS3Definition = {
       ErrorResponse: {
         type: "object",
         properties: {
-          error: { type: "string", description: "Human-readable error message." },
+          error: {
+            type: "string",
+            description: "Human-readable error message.",
+          },
         },
       },
       ConflictResponse: {
         type: "object",
         properties: {
-          error: { type: "string", example: "Version conflict (Last-Write-Wins)" },
+          error: {
+            type: "string",
+            example: "Version conflict (Last-Write-Wins)",
+          },
           currentVersion: { $ref: "#/components/schemas/Chapter" },
         },
       },
@@ -179,30 +236,80 @@ const definition: swaggerJsdoc.OAS3Definition = {
           "Returns all manuscripts belonging to `projectId` as index objects. " +
           "Chapter content is omitted; only metadata is included.",
         parameters: [
-          { name: "projectId", in: "path", required: true, schema: { type: "string", format: "uuid" }, description: "UUID of the project." },
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+            description: "UUID of the project.",
+          },
         ],
         responses: {
           "200": {
             description: "Array of manuscripts ordered by `order` ascending.",
-            content: { "application/json": { schema: { type: "array", items: { $ref: "#/components/schemas/Manuscript" } } } },
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/Manuscript" },
+                },
+              },
+            },
           },
-          "401": { description: "Missing or invalid JWT.", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
-          "403": { description: "Caller is not a member of the project.", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "401": {
+            description: "Missing or invalid JWT.",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
+          "403": {
+            description: "Caller is not a member of the project.",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
         },
       },
       post: {
         tags: ["Manuscripts"],
         summary: "Create a new manuscript",
         parameters: [
-          { name: "projectId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
         ],
         requestBody: {
           required: true,
-          content: { "application/json": { schema: { $ref: "#/components/schemas/CreateManuscriptBody" } } },
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/CreateManuscriptBody" },
+            },
+          },
         },
         responses: {
-          "201": { description: "Manuscript created.", content: { "application/json": { schema: { $ref: "#/components/schemas/Manuscript" } } } },
-          "400": { description: "`title` is missing.", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "201": {
+            description: "Manuscript created.",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Manuscript" },
+              },
+            },
+          },
+          "400": {
+            description: "`title` is missing.",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
           "401": { description: "Missing or invalid JWT." },
           "403": { description: "Caller is not a member of the project." },
         },
@@ -213,27 +320,72 @@ const definition: swaggerJsdoc.OAS3Definition = {
         tags: ["Manuscripts"],
         summary: "Get a single manuscript (with chapter index)",
         parameters: [
-          { name: "projectId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-          { name: "manuscriptId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "manuscriptId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
         ],
         responses: {
-          "200": { description: "Manuscript with chapter index.", content: { "application/json": { schema: { $ref: "#/components/schemas/Manuscript" } } } },
-          "404": { description: "Manuscript not found.", content: { "application/json": { schema: { $ref: "#/components/schemas/ErrorResponse" } } } },
+          "200": {
+            description: "Manuscript with chapter index.",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Manuscript" },
+              },
+            },
+          },
+          "404": {
+            description: "Manuscript not found.",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ErrorResponse" },
+              },
+            },
+          },
         },
       },
       put: {
         tags: ["Manuscripts"],
         summary: "Update manuscript title or order",
         parameters: [
-          { name: "projectId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-          { name: "manuscriptId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "manuscriptId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
         ],
         requestBody: {
           required: true,
-          content: { "application/json": { schema: { $ref: "#/components/schemas/UpdateManuscriptBody" } } },
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/UpdateManuscriptBody" },
+            },
+          },
         },
         responses: {
-          "200": { description: "Updated manuscript.", content: { "application/json": { schema: { $ref: "#/components/schemas/Manuscript" } } } },
+          "200": {
+            description: "Updated manuscript.",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Manuscript" },
+              },
+            },
+          },
           "404": { description: "Manuscript not found." },
         },
       },
@@ -241,8 +393,18 @@ const definition: swaggerJsdoc.OAS3Definition = {
         tags: ["Manuscripts"],
         summary: "Delete a manuscript and all its chapters",
         parameters: [
-          { name: "projectId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-          { name: "manuscriptId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "manuscriptId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
         ],
         responses: {
           "204": { description: "Manuscript deleted." },
@@ -255,15 +417,36 @@ const definition: swaggerJsdoc.OAS3Definition = {
         tags: ["Chapters"],
         summary: "Create a new chapter",
         parameters: [
-          { name: "projectId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-          { name: "manuscriptId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "manuscriptId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
         ],
         requestBody: {
           required: true,
-          content: { "application/json": { schema: { $ref: "#/components/schemas/CreateChapterBody" } } },
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/CreateChapterBody" },
+            },
+          },
         },
         responses: {
-          "201": { description: "Chapter created.", content: { "application/json": { schema: { $ref: "#/components/schemas/Chapter" } } } },
+          "201": {
+            description: "Chapter created.",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Chapter" },
+              },
+            },
+          },
           "400": { description: "`title` is missing." },
           "404": { description: "Manuscript not found." },
         },
@@ -274,12 +457,34 @@ const definition: swaggerJsdoc.OAS3Definition = {
         tags: ["Chapters"],
         summary: "Get full chapter content",
         parameters: [
-          { name: "projectId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-          { name: "manuscriptId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-          { name: "chapterId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "manuscriptId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "chapterId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
         ],
         responses: {
-          "200": { description: "Chapter with full RTF content.", content: { "application/json": { schema: { $ref: "#/components/schemas/Chapter" } } } },
+          "200": {
+            description: "Chapter with full RTF content.",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Chapter" },
+              },
+            },
+          },
           "404": { description: "Chapter not found." },
         },
       },
@@ -291,20 +496,51 @@ const definition: swaggerJsdoc.OAS3Definition = {
           "If `clientTimestamp` is supplied and is older than the server's `updatedAt`, " +
           "the request is rejected with **409 Conflict** so the client can surface a merge UI.",
         parameters: [
-          { name: "projectId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-          { name: "manuscriptId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-          { name: "chapterId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "manuscriptId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "chapterId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
         ],
         requestBody: {
           required: true,
-          content: { "application/json": { schema: { $ref: "#/components/schemas/UpdateChapterBody" } } },
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/UpdateChapterBody" },
+            },
+          },
         },
         responses: {
-          "200": { description: "Updated chapter.", content: { "application/json": { schema: { $ref: "#/components/schemas/Chapter" } } } },
+          "200": {
+            description: "Updated chapter.",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/Chapter" },
+              },
+            },
+          },
           "404": { description: "Chapter not found." },
           "409": {
-            description: "Write rejected — client state is stale (LWW conflict).",
-            content: { "application/json": { schema: { $ref: "#/components/schemas/ConflictResponse" } } },
+            description:
+              "Write rejected — client state is stale (LWW conflict).",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/ConflictResponse" },
+              },
+            },
           },
         },
       },
@@ -312,9 +548,24 @@ const definition: swaggerJsdoc.OAS3Definition = {
         tags: ["Chapters"],
         summary: "Delete a chapter",
         parameters: [
-          { name: "projectId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-          { name: "manuscriptId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-          { name: "chapterId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "manuscriptId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "chapterId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
         ],
         responses: {
           "204": { description: "Chapter deleted." },
@@ -322,45 +573,103 @@ const definition: swaggerJsdoc.OAS3Definition = {
         },
       },
     },
-    "/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/mentions": {
-      get: {
-        tags: ["Chapters"],
-        summary: "Get wiki mentions for a chapter",
-        description: "Returns the list of wiki entities detected in the chapter's text.",
-        parameters: [
-          { name: "projectId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-          { name: "manuscriptId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-          { name: "chapterId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-        ],
-        responses: {
-          "200": { description: "Array of mentions.", content: { "application/json": { schema: { type: "array", items: { $ref: "#/components/schemas/Mention" } } } } },
-          "404": { description: "Chapter not found." },
+    "/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/mentions":
+      {
+        get: {
+          tags: ["Chapters"],
+          summary: "Get wiki mentions for a chapter",
+          description:
+            "Returns the list of wiki entities detected in the chapter's text.",
+          parameters: [
+            {
+              name: "projectId",
+              in: "path",
+              required: true,
+              schema: { type: "string", format: "uuid" },
+            },
+            {
+              name: "manuscriptId",
+              in: "path",
+              required: true,
+              schema: { type: "string", format: "uuid" },
+            },
+            {
+              name: "chapterId",
+              in: "path",
+              required: true,
+              schema: { type: "string", format: "uuid" },
+            },
+          ],
+          responses: {
+            "200": {
+              description: "Array of mentions.",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "array",
+                    items: { $ref: "#/components/schemas/Mention" },
+                  },
+                },
+              },
+            },
+            "404": { description: "Chapter not found." },
+          },
         },
       },
-    },
     "/api/wiki/{projectId}": {
       get: {
         tags: ["Wiki"],
         summary: "List all wiki entries for a project",
         parameters: [
-          { name: "projectId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
         ],
         responses: {
-          "200": { description: "Array of wiki entries.", content: { "application/json": { schema: { type: "array", items: { $ref: "#/components/schemas/WikiEntry" } } } } },
+          "200": {
+            description: "Array of wiki entries.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/WikiEntry" },
+                },
+              },
+            },
+          },
         },
       },
       post: {
         tags: ["Wiki"],
         summary: "Create a wiki entry",
         parameters: [
-          { name: "projectId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
         ],
         requestBody: {
           required: true,
-          content: { "application/json": { schema: { $ref: "#/components/schemas/WikiEntry" } } },
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/WikiEntry" },
+            },
+          },
         },
         responses: {
-          "201": { description: "Entry created.", content: { "application/json": { schema: { $ref: "#/components/schemas/WikiEntry" } } } },
+          "201": {
+            description: "Entry created.",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/WikiEntry" },
+              },
+            },
+          },
           "400": { description: "Validation error." },
         },
       },
@@ -370,11 +679,28 @@ const definition: swaggerJsdoc.OAS3Definition = {
         tags: ["Wiki"],
         summary: "Get a wiki entry",
         parameters: [
-          { name: "projectId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-          { name: "entryId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "entryId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
         ],
         responses: {
-          "200": { description: "Wiki entry.", content: { "application/json": { schema: { $ref: "#/components/schemas/WikiEntry" } } } },
+          "200": {
+            description: "Wiki entry.",
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/WikiEntry" },
+              },
+            },
+          },
           "404": { description: "Entry not found." },
         },
       },
@@ -382,12 +708,26 @@ const definition: swaggerJsdoc.OAS3Definition = {
         tags: ["Wiki"],
         summary: "Update a wiki entry",
         parameters: [
-          { name: "projectId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-          { name: "entryId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "entryId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
         ],
         requestBody: {
           required: true,
-          content: { "application/json": { schema: { $ref: "#/components/schemas/WikiEntry" } } },
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/WikiEntry" },
+            },
+          },
         },
         responses: {
           "200": { description: "Updated entry." },
@@ -398,8 +738,18 @@ const definition: swaggerJsdoc.OAS3Definition = {
         tags: ["Wiki"],
         summary: "Delete a wiki entry",
         parameters: [
-          { name: "projectId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-          { name: "entryId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "entryId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
         ],
         responses: {
           "204": { description: "Entry deleted." },
@@ -415,13 +765,30 @@ const definition: swaggerJsdoc.OAS3Definition = {
           "Returns all chapters that mention this wiki entity, based on APPEARS_IN " +
           "edges in the narrative graph. Useful for building character arc views.",
         parameters: [
-          { name: "projectId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
-          { name: "entityId", in: "path", required: true, schema: { type: "string", format: "uuid" } },
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "entityId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
         ],
         responses: {
           "200": {
             description: "Array of appearance records.",
-            content: { "application/json": { schema: { type: "array", items: { $ref: "#/components/schemas/AppearanceRecord" } } } },
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/AppearanceRecord" },
+                },
+              },
+            },
           },
         },
       },

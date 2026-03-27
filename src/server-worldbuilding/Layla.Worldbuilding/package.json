@@ -1,16 +1,18 @@
 {
-  "name": "server",
+  "name": "server-worldbuilding",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "./index",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
     "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "dev": "ts-node-dev --respawn --transpile-only -r tsconfig-paths/register src/index.ts",
-    "build": "tsc -p tsconfig.json"
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
   },
   "keywords": [],
   "author": "",
@@ -47,6 +49,7 @@
     "jiti": "^2.6.1",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.1"
+    "typescript-eslint": "^8.56.1",
+    "vite": "^8.0.1"
   }
 }

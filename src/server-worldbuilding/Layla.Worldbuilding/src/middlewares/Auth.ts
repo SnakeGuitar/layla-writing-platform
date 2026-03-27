@@ -1,6 +1,6 @@
-import { Response, NextFunction } from "express";
+import type { Response, NextFunction } from "express";
 import { verifyAccessJWTToken } from "@/utils/ManageJWT";
-import InterfaceAuthRequest from "@/interfaces/auth/AuthRequest";
+import type InterfaceAuthRequest from "@/interfaces/auth/AuthRequest";
 
 /**
  * Requires a valid Bearer JWT in the `Authorization` header.

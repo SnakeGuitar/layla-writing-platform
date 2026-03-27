@@ -1,4 +1,4 @@
-import { IGraphResult } from "../graph/IGraphResult";
+import type { IGraphResult } from "../graph/IGraphResult";
 
 /** Describes a chapter-to-entity appearance link stored in Neo4j. */
 export interface IAppearanceRecord {
