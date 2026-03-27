@@ -6,59 +6,97 @@ using Layla.Core.Events;
 using Layla.Core.Interfaces.Data;
 using Layla.Core.Interfaces.Messaging;
 using Layla.Core.Interfaces.Services;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Layla.Core.Services;
 
-public class ProjectService : IProjectService
+/// <summary>
+/// Business logic for project (manuscript) management in the Layla collaborative writing platform.
+///
+/// Responsibilities:
+/// - CRUD operations for projects and project roles (collaborators)
+/// - Access control: verifies user ownership/membership before mutations
+/// - Event publishing: notifies the worldbuilding service (Node.js) when projects are created
+/// - Transactional consistency: ensures projects and their initial owner role are created atomically
+/// - Public project discovery: lists all public projects for the reading feed
+///
+/// Architecture:
+/// - Uses IProjectRepository for SQL queries (via EF Core)
+/// - Uses IAppUserRepository to resolve user details (email → ID) for invitations
+/// - Uses IEventPublisher (inherits from IEventBus) to publish both domain events and integration events
+/// - Inherits from BaseService&lt;ProjectService&gt; for centralized exception handling and logging
+///
+/// All public methods return Result&lt;T&gt; to encapsulate success/failure without throwing exceptions.
+/// Exception handling is delegated to BaseService.ExecuteAsync() which logs and maps errors to ErrorCode.
+/// </summary>
+public class ProjectService : BaseService<ProjectService>, IProjectService
 {
-    private const string ExchangeName = "worldbuilding.events";
-    private const string ProjectCreatedRoutingKey = "project.created";
+    private const string ExchangeName = MessagingConstants.WorldbuildingExchange;
+    private const string ProjectCreatedRoutingKey = MessagingConstants.RoutingKeys.ProjectCreated;
 
     private readonly IProjectRepository _projectRepository;
     private readonly IAppUserRepository _appUserRepository;
     private readonly IEventPublisher _eventPublisher;
-    private readonly IEventBus _eventBus;
-    private readonly ILogger<ProjectService> _logger;
 
     public ProjectService(
         IProjectRepository projectRepository,
         IAppUserRepository appUserRepository,
         IEventPublisher eventPublisher,
-        IEventBus eventBus,
         ILogger<ProjectService> logger)
+        : base(logger)
     {
         _projectRepository = projectRepository;
         _appUserRepository = appUserRepository;
         _eventPublisher = eventPublisher;
-        _eventBus = eventBus;
-        _logger = logger;
     }
 
+    /// <summary>
+    /// Creates a new project owned by the authenticated user.
+    ///
+    /// This operation is transactional:
+    /// 1. Inserts a new Project row
+    /// 2. Inserts a ProjectRole row with role=OWNER and the creator's user ID
+    /// 3. Commits the transaction atomically
+    /// 4. Publishes ProjectCreatedEvent to RabbitMQ (asynchronously, after commit)
+    ///
+    /// The creator is automatically assigned the OWNER role and can invite other collaborators.
+    /// The OWNER is the only user who can delete the project or remove collaborators.
+    ///
+    /// If the transaction fails, all changes are rolled back. If event publishing fails,
+    /// a warning is logged but the operation is still considered successful (eventual consistency).
+    /// </summary>
+    /// <param name="request">Project metadata (title, synopsis, genre, cover image, privacy setting).</param>
+    /// <param name="userId">The ID of the user creating the project (extracted from JWT claim).</param>
+    /// <param name="cancellationToken">Cancellation token for the async operation.</param>
+    /// <returns>
+    /// Success result with ProjectResponseDto if the project was created.
+    /// Failure result with DatabaseError if a database constraint violated or connection failed.
+    /// Failure result with InternalError for unexpected exceptions.
+    /// </returns>
     public async Task<Result<ProjectResponseDto>> CreateProjectAsync(CreateProjectRequestDto request, string userId, CancellationToken cancellationToken = default)
     {
-        await _projectRepository.BeginTransactionAsync(cancellationToken);
+        Project? project = null;
         try
         {
-            var project = BuildProject(request);
+            await _projectRepository.BeginTransactionAsync(cancellationToken);
+            project = BuildProject(request);
             var projectRole = BuildOwnerRole(project.Id, userId);
 
             await _projectRepository.AddProjectAsync(project, cancellationToken);
             await _projectRepository.AddProjectRoleAsync(projectRole, cancellationToken);
             await _projectRepository.CommitTransactionAsync(cancellationToken);
-
-            await PublishProjectCreatedEventsAsync(project, userId, cancellationToken);
-
-            _logger.LogInformation("Project {ProjectId} created successfully by user {UserId}", project.Id, userId);
-            return Result<ProjectResponseDto>.Success(MapToResponseDto(project, ProjectRoles.Owner));
         }
         catch (Exception ex)
         {
             await _projectRepository.RollbackTransactionAsync(cancellationToken);
-            _logger.LogError(ex, "Failed to create project for user {UserId}", userId);
+            Logger.LogError(ex, "Failed to create project for user {UserId}", userId);
             return Result<ProjectResponseDto>.Failure(MapException(ex));
         }
+
+        await PublishProjectCreatedEventsAsync(project!, userId, cancellationToken);
+
+        Logger.LogInformation("Project {ProjectId} created successfully by user {UserId}", project!.Id, userId);
+        return Result<ProjectResponseDto>.Success(MapToResponseDto(project!, ProjectRoles.Owner));
     }
 
     public Task<Result<IEnumerable<ProjectResponseDto>>> GetUserProjectsAsync(string userId, CancellationToken cancellationToken = default) =>
@@ -87,7 +125,7 @@ public class ProjectService : IProjectService
             await _projectRepository.UpdateProjectAsync(project, cancellationToken);
             await _projectRepository.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation("Project {ProjectId} updated by user {UserId}", projectId, userId);
+            Logger.LogInformation("Project {ProjectId} updated by user {UserId}", projectId, userId);
             return Result<ProjectResponseDto>.Success(MapToResponseDto(project, ProjectRoles.Owner));
         }, "Failed to update project {ProjectId} for user {UserId}", projectId, userId);
 
@@ -105,7 +143,7 @@ public class ProjectService : IProjectService
             await _projectRepository.DeleteProjectAsync(project, cancellationToken);
             await _projectRepository.SaveChangesAsync(cancellationToken);
 
-            _logger.LogInformation("Project {ProjectId} deleted by user {UserId}", projectId, userId);
+            Logger.LogInformation("Project {ProjectId} deleted by user {UserId}", projectId, userId);
             return Result<bool>.Success(true);
         }, "Failed to delete project {ProjectId} for user {UserId}", projectId, userId);
 
@@ -126,7 +164,7 @@ public class ProjectService : IProjectService
         ExecuteAsync(async () =>
         {
             var projects = await _projectRepository.GetAllProjectsAsync(cancellationToken);
-            var dtos = projects.Select(MapToResponseDto).ToList();
+            var dtos = projects.Select(p => MapToResponseDto(p)).ToList();
             return Result<IEnumerable<ProjectResponseDto>>.Success(dtos);
         }, "Failed to retrieve all projects");
 
@@ -134,7 +172,7 @@ public class ProjectService : IProjectService
         ExecuteAsync(async () =>
         {
             var projects = await _projectRepository.GetPublicProjectsAsync(cancellationToken);
-            var dtos = projects.Select(MapToResponseDto).ToList();
+            var dtos = projects.Select(p => MapToResponseDto(p)).ToList();
             return Result<IEnumerable<ProjectResponseDto>>.Success(dtos);
         }, "Failed to retrieve public projects");
 
@@ -181,7 +219,7 @@ public class ProjectService : IProjectService
             if (!hasRole)
                 return Result<CollaboratorResponseDto>.Failure(ErrorCode.Forbidden);
 
-            var targetUserResult = await _appUserRepository.GetAppUserByEmailAsync(request.Email, cancellationToken);
+            var targetUserResult = await _appUserRepository.GetAppUserByEmailAsync(request.Email.ToLowerInvariant(), cancellationToken);
             if (!targetUserResult.IsSuccess || targetUserResult.Data == null)
                 return Result<CollaboratorResponseDto>.Failure(ErrorCode.UserNotFound);
 
@@ -215,13 +253,13 @@ public class ProjectService : IProjectService
         {
             var hasAccess = await _projectRepository.UserHasAnyRoleInProjectAsync(projectId, userId, cancellationToken);
             if (!hasAccess)
-                return Result<IEnumerable<CollaboratorResponseDto>>.Failure(ErrorCode.Unauthorized);
+                return Result<IEnumerable<CollaboratorResponseDto>>.Failure(ErrorCode.Forbidden);
 
             var roles = await _projectRepository.GetProjectCollaboratorsAsync(projectId, cancellationToken);
             var dtos = roles.Select(r => new CollaboratorResponseDto
             {
                 UserId = r.AppUserId,
-                DisplayName = r.AppUser?.DisplayName,
+                DisplayName = r.AppUser?.DisplayName ?? "Unknown User",
                 Email = r.AppUser?.Email,
                 Role = r.Role,
                 AssignedAt = r.AssignedAt
@@ -252,19 +290,6 @@ public class ProjectService : IProjectService
 
     // ── Private helpers ───────────────────────────────────────────────────────
 
-    private async Task<Result<T>> ExecuteAsync<T>(Func<Task<Result<T>>> action, string logMessage, params object?[] args)
-    {
-        try
-        {
-            return await action();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, logMessage, args);
-            return Result<T>.Failure(MapException(ex));
-        }
-    }
-
     private async Task PublishProjectCreatedEventsAsync(Project project, string userId, CancellationToken cancellationToken)
     {
         var domainEvent = new ProjectCreatedEvent
@@ -276,7 +301,7 @@ public class ProjectService : IProjectService
         };
 
         if (!await _eventPublisher.PublishAsync(domainEvent, cancellationToken))
-            _logger.LogWarning("Domain event not published for project {ProjectId}. Downstream services may be out of sync.", project.Id);
+            Logger.LogWarning("Domain event not published for project {ProjectId}. Downstream services may be out of sync.", project.Id);
 
         var integrationEvent = new Layla.Core.IntegrationEvents.ProjectCreatedEvent
         {
@@ -286,8 +311,8 @@ public class ProjectService : IProjectService
             CreatedAt = project.CreatedAt
         };
 
-        if (!_eventBus.Publish(integrationEvent, exchangeName: ExchangeName, routingKey: ProjectCreatedRoutingKey))
-            _logger.LogWarning("Integration event not published for project {ProjectId}. Node.js worldbuilding service may be out of sync.", project.Id);
+        if (!_eventPublisher.Publish(integrationEvent, exchangeName: ExchangeName, routingKey: ProjectCreatedRoutingKey))
+            Logger.LogWarning("Integration event not published for project {ProjectId}. Node.js worldbuilding service may be out of sync.", project.Id);
     }
 
     private static Project BuildProject(CreateProjectRequestDto request) => new()
@@ -327,13 +352,6 @@ public class ProjectService : IProjectService
         Email = user.Email,
         Role = role,
         AssignedAt = assignedAt
-    };
-
-    private static ErrorCode MapException(Exception ex) => ex switch
-    {
-        DbUpdateException => ErrorCode.DatabaseError,
-        OperationCanceledException oce => throw oce,
-        _ => ErrorCode.InternalError
     };
 
     private static ProjectResponseDto MapToResponseDto(Project project, string userRole = "") => new()

@@ -1,6 +1,7 @@
 using Layla.Core.Common;
 using Layla.Core.Contracts.AppUser;
 using Layla.Core.Entities;
+using Layla.Core.Extensions;
 using Layla.Core.Interfaces.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -9,12 +10,10 @@ namespace Layla.Infrastructure.Data.Repositories;
 
 public class AppUserRepository : IAppUserRepository
 {
-    private readonly ApplicationDbContext _dbContext;
     private readonly UserManager<AppUser> _userManager;
 
-    public AppUserRepository(ApplicationDbContext dbContext, UserManager<AppUser> userManager)
+    public AppUserRepository(UserManager<AppUser> userManager)
     {
-        _dbContext = dbContext;
         _userManager = userManager;
     }
 
@@ -48,7 +47,7 @@ public class AppUserRepository : IAppUserRepository
         var result = await _userManager.UpdateAsync(user);
         if (!result.Succeeded)
         {
-            var errors = FormatIdentityErrors(result.Errors);
+            var errors = IdentityErrorFormatter.Format(result.Errors);
             return Result<AppUser>.Failure(ErrorCode.ValidationFailed, errors);
         }
 
@@ -64,7 +63,7 @@ public class AppUserRepository : IAppUserRepository
         var result = await _userManager.DeleteAsync(user);
         if (!result.Succeeded)
         {
-            var errors = FormatIdentityErrors(result.Errors);
+            var errors = IdentityErrorFormatter.Format(result.Errors);
             return Result<bool>.Failure(ErrorCode.ValidationFailed, errors);
         }
 
@@ -82,18 +81,23 @@ public class AppUserRepository : IAppUserRepository
         var lockoutResult = await _userManager.SetLockoutEnabledAsync(user, true);
         if (!lockoutResult.Succeeded)
         {
-            var errors = FormatIdentityErrors(lockoutResult.Errors);
+            var errors = IdentityErrorFormatter.Format(lockoutResult.Errors);
             return Result<bool>.Failure(ErrorCode.ValidationFailed, errors);
         }
 
         var lockoutEndResult = await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
         if (!lockoutEndResult.Succeeded)
         {
-            var errors = FormatIdentityErrors(lockoutEndResult.Errors);
+            var errors = IdentityErrorFormatter.Format(lockoutEndResult.Errors);
             return Result<bool>.Failure(ErrorCode.ValidationFailed, errors);
         }
 
-        await _userManager.UpdateAsync(user);
+        var updateResult = await _userManager.UpdateAsync(user);
+        if (!updateResult.Succeeded)
+        {
+            var errors = IdentityErrorFormatter.Format(updateResult.Errors);
+            return Result<bool>.Failure(ErrorCode.ValidationFailed, errors);
+        }
 
         return Result<bool>.Success(true);
     }
@@ -106,7 +110,4 @@ public class AppUserRepository : IAppUserRepository
 
         return Result<AppUser>.Success(user);
     }
-
-    private static string FormatIdentityErrors(IEnumerable<IdentityError> errors) =>
-        string.Join(", ", errors.Select(e => e.Description));
 }

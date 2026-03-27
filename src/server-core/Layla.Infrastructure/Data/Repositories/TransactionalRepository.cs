@@ -29,40 +29,34 @@ public abstract class TransactionalRepository : ITransactionalRepository
 
     public async Task CommitTransactionAsync(CancellationToken cancellationToken = default)
     {
+        if (CurrentTransaction == null)
+            throw new InvalidOperationException("No active transaction to commit.");
+
         try
         {
             await DbContext.SaveChangesAsync(cancellationToken);
-            if (CurrentTransaction != null)
-            {
-                await CurrentTransaction.CommitAsync(cancellationToken);
-            }
+            await CurrentTransaction.CommitAsync(cancellationToken);
         }
         finally
         {
-            if (CurrentTransaction != null)
-            {
-                CurrentTransaction.Dispose();
-                CurrentTransaction = null;
-            }
+            await CurrentTransaction!.DisposeAsync();
+            CurrentTransaction = null;
         }
     }
 
     public async Task RollbackTransactionAsync(CancellationToken cancellationToken = default)
     {
+        if (CurrentTransaction == null)
+            return;
+
         try
         {
-            if (CurrentTransaction != null)
-            {
-                await CurrentTransaction.RollbackAsync(cancellationToken);
-            }
+            await CurrentTransaction.RollbackAsync(cancellationToken);
         }
         finally
         {
-            if (CurrentTransaction != null)
-            {
-                CurrentTransaction.Dispose();
-                CurrentTransaction = null;
-            }
+            await CurrentTransaction!.DisposeAsync();
+            CurrentTransaction = null;
         }
     }
 }

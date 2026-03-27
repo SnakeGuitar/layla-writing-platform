@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Layla.Core.Contracts.Project;
 
-public class InviteCollaboratorRequestDto
+public record InviteCollaboratorRequestDto
 {
     [Required]
     [EmailAddress]

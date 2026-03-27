@@ -44,13 +44,13 @@ public class ProjectRepository : TransactionalRepository, IProjectRepository
     public Task UpdateProjectAsync(Project project, CancellationToken cancellationToken = default)
     {
         DbContext.Projects.Update(project);
-        return Task.CompletedTask;
+        return Task.CompletedTask; // Update is synchronous in EF Core
     }
 
     public Task DeleteProjectAsync(Project project, CancellationToken cancellationToken = default)
     {
         DbContext.Projects.Remove(project);
-        return Task.CompletedTask;
+        return Task.CompletedTask; // Remove is synchronous in EF Core
     }
 
     public async Task<bool> UserHasRoleInProjectAsync(Guid projectId, string userId, string role, CancellationToken cancellationToken = default)

@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Layla.Core.Contracts.Project;
 
-public class CreateProjectRequestDto
+public record CreateProjectRequestDto
 {
     [Required]
     [MaxLength(100)]

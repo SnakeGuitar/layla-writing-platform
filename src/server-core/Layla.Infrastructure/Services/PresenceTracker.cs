@@ -8,11 +8,16 @@ using Layla.Core.Interfaces;
 
 namespace Layla.Infrastructure.Services;
 
+/// <summary>
+/// Tracks which users are actively present in which projects via SignalR connections.
+/// All public methods are protected by a lock for thread safety; ConcurrentDictionary is used for
+/// convenience but the lock is the primary synchronization mechanism.
+/// </summary>
 public class PresenceTracker : IPresenceTracker
 {
     private readonly ConcurrentDictionary<string, (Guid ProjectId, string UserId)> _connections = new();
     private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<string, InternalParticipant>> _projectParticipants = new();
-    private readonly ConcurrentDictionary<string, string> _userConnections = new();
+    private readonly ConcurrentDictionary<string, List<string>> _userConnections = new();
     private readonly object _lock = new();
 
     private record InternalParticipant(string UserId, string DisplayName, string Role, int ConnectionCount);
@@ -22,17 +27,19 @@ public class PresenceTracker : IPresenceTracker
         lock (_lock)
         {
             _connections[connectionId] = (projectId, userId);
-            _userConnections[userId] = connectionId;
+            _userConnections.AddOrUpdate(userId,
+                _ => [connectionId],
+                (_, list) => { if (!list.Contains(connectionId)) list.Add(connectionId); return list; });
 
             var participants = _projectParticipants.GetOrAdd(projectId, _ => new ConcurrentDictionary<string, InternalParticipant>());
 
-            bool wasActive = IsProjectActive(projectId);
+            bool wasActive = IsProjectActiveUnlocked(projectId);
 
             participants.AddOrUpdate(userId,
                 _ => new InternalParticipant(userId, displayName, role, 1),
                 (_, existing) => existing with { ConnectionCount = existing.ConnectionCount + 1, Role = UpgradeRoleIfNeeded(existing.Role, role) });
 
-            bool isNowActive = IsProjectActive(projectId);
+            bool isNowActive = IsProjectActiveUnlocked(projectId);
             return !wasActive && isNowActive;
         }
     }
@@ -56,13 +63,13 @@ public class PresenceTracker : IPresenceTracker
             if (!_projectParticipants.TryGetValue(projectId, out var participants))
                 return false;
 
-            bool wasActive = IsProjectActive(projectId);
+            bool wasActive = IsProjectActiveUnlocked(projectId);
             DecrementParticipant(participants, userId);
 
             if (participants.IsEmpty)
                 _projectParticipants.TryRemove(projectId, out _);
 
-            bool isNowActive = IsProjectActive(projectId);
+            bool isNowActive = IsProjectActiveUnlocked(projectId);
             return wasActive && !isNowActive;
         }
     }
@@ -79,8 +86,12 @@ public class PresenceTracker : IPresenceTracker
         projectId = info.ProjectId;
         userId = info.UserId;
 
-        if (_userConnections.TryGetValue(userId, out var activeConnId) && activeConnId == connectionId)
-            _userConnections.TryRemove(userId, out _);
+        if (_userConnections.TryGetValue(userId, out var connList))
+        {
+            connList.Remove(connectionId);
+            if (connList.Count == 0)
+                _userConnections.TryRemove(userId, out _);
+        }
 
         return true;
     }
@@ -96,24 +107,56 @@ public class PresenceTracker : IPresenceTracker
             participants[userId] = existing with { ConnectionCount = existing.ConnectionCount - 1 };
     }
 
+    /// <summary>
+    /// Checks if a project has any active authors (owner or editor).
+    /// Thread-safe — acquires lock internally.
+    /// </summary>
     public bool IsProjectActive(Guid projectId)
+    {
+        lock (_lock)
+        {
+            return IsProjectActiveUnlocked(projectId);
+        }
+    }
+
+    /// <summary>
+    /// Internal version that assumes the caller already holds the lock.
+    /// Use only within lock(\_lock) blocks.
+    /// </summary>
+    private bool IsProjectActiveUnlocked(Guid projectId)
     {
         if (!_projectParticipants.TryGetValue(projectId, out var participants))
             return false;
 
-        return participants.Values.Any(p => p.Role == ProjectRoles.Owner || p.Role == ProjectRoles.Editor);
+        return participants.Values.Any(p =>
+            p.Role == ProjectRoles.Owner ||
+            p.Role == ProjectRoles.Editor ||
+            p.Role == HubConstants.Presence.RoleAuthor);
     }
 
     public IEnumerable<ParticipantPresenceDto> GetActiveParticipants(Guid projectId)
     {
-        if (!_projectParticipants.TryGetValue(projectId, out var participants))
-            return Enumerable.Empty<ParticipantPresenceDto>();
+        lock (_lock)
+        {
+            if (!_projectParticipants.TryGetValue(projectId, out var participants))
+                return Enumerable.Empty<ParticipantPresenceDto>();
 
-        return participants.Values.Select(p => new ParticipantPresenceDto(p.UserId, p.DisplayName, p.Role));
+            return participants.Values.Select(p => new ParticipantPresenceDto(p.UserId, p.DisplayName, p.Role)).ToList();
+        }
     }
 
+    /// <summary>
+    /// Returns the most recent active connection ID for the user, or null if none.
+    /// Stale IDs (connections that no longer exist) are filtered out automatically.
+    /// </summary>
     public string? GetUserConnection(string userId)
     {
-        return _userConnections.TryGetValue(userId, out var connId) ? connId : null;
+        lock (_lock)
+        {
+            if (!_userConnections.TryGetValue(userId, out var connList))
+                return null;
+
+            return connList.LastOrDefault(id => _connections.ContainsKey(id));
+        }
     }
 }

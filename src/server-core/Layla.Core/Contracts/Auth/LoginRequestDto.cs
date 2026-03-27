@@ -2,7 +2,7 @@
 
 namespace Layla.Core.Contracts.Auth;
 
-public class LoginRequestDto
+public record LoginRequestDto
 {
     [Required]
     [EmailAddress]

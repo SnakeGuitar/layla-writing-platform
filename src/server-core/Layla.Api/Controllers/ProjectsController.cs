@@ -1,7 +1,5 @@
-using Layla.Api.Extensions;
-using Layla.Core.Common;
+using Layla.Core.Constants;
 using Layla.Core.Contracts.Project;
-using Layla.Core.Entities;
 using Layla.Core.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -40,12 +38,7 @@ public class ProjectsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> CreateProject([FromBody] CreateProjectRequestDto request, CancellationToken cancellationToken)
     {
-        var userId = User.GetUserId();
-
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized(new { Error = "User ID not found in token." });
-
-        var result = await _projectService.CreateProjectAsync(request, userId, cancellationToken);
+        var result = await _projectService.CreateProjectAsync(request, CurrentUserId, cancellationToken);
 
         if (!result.IsSuccess)
             return RespondWithError(result.ErrorCode);
@@ -65,12 +58,7 @@ public class ProjectsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetProjects(CancellationToken cancellationToken)
     {
-        var userId = User.GetUserId();
-
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized(new { Error = "User ID not found in token." });
-
-        var result = await _projectService.GetUserProjectsAsync(userId, cancellationToken);
+        var result = await _projectService.GetUserProjectsAsync(CurrentUserId, cancellationToken);
 
         if (!result.IsSuccess)
             return RespondWithError(result.ErrorCode);
@@ -103,7 +91,7 @@ public class ProjectsController : ApiControllerBase
     /// <response code="401">Missing or invalid JWT.</response>
     /// <response code="403">Caller does not have the Admin role.</response>
     [HttpGet("all")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = AppRoles.Admin)]
     [ProducesResponseType(typeof(IEnumerable<ProjectResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -135,17 +123,13 @@ public class ProjectsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetProjectById(Guid id, CancellationToken cancellationToken)
     {
-        var userId = User.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized(new { Error = "User ID not found in token." });
-
         var result = await _projectService.GetProjectByIdAsync(id, cancellationToken);
         if (!result.IsSuccess)
             return RespondWithError(result.ErrorCode);
 
         if (!result.Data!.IsPublic)
         {
-            var isMember = await _projectService.UserHasAccessAsync(id, userId, cancellationToken);
+            var isMember = await _projectService.UserHasAccessAsync(id, CurrentUserId, cancellationToken);
             if (!isMember)
                 return Forbid();
         }
@@ -172,11 +156,7 @@ public class ProjectsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateProject(Guid id, [FromBody] UpdateProjectRequestDto request, CancellationToken cancellationToken)
     {
-        var userId = User.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized(new { Error = "User ID not found in token." });
-
-        var result = await _projectService.UpdateProjectAsync(id, request, userId, cancellationToken);
+        var result = await _projectService.UpdateProjectAsync(id, request, CurrentUserId, cancellationToken);
 
         if (!result.IsSuccess)
             return RespondWithError(result.ErrorCode);
@@ -200,11 +180,7 @@ public class ProjectsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteProject(Guid id, CancellationToken cancellationToken)
     {
-        var userId = User.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized(new { Error = "User ID not found in token." });
-
-        var result = await _projectService.DeleteProjectAsync(id, userId, cancellationToken);
+        var result = await _projectService.DeleteProjectAsync(id, CurrentUserId, cancellationToken);
 
         if (!result.IsSuccess)
             return RespondWithError(result.ErrorCode);
@@ -226,11 +202,7 @@ public class ProjectsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> JoinPublicProject(Guid id, CancellationToken cancellationToken)
     {
-        var userId = User.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized(new { Error = "User ID not found in token." });
-
-        var result = await _projectService.JoinPublicProjectAsync(id, userId, cancellationToken);
+        var result = await _projectService.JoinPublicProjectAsync(id, CurrentUserId, cancellationToken);
 
         if (!result.IsSuccess)
             return RespondWithError(result.ErrorCode);
@@ -257,11 +229,7 @@ public class ProjectsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> InviteCollaborator(Guid id, [FromBody] InviteCollaboratorRequestDto request, CancellationToken cancellationToken)
     {
-        var userId = User.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized(new { Error = "User ID not found in token." });
-
-        var result = await _projectService.InviteCollaboratorAsync(id, request, userId, cancellationToken);
+        var result = await _projectService.InviteCollaboratorAsync(id, request, CurrentUserId, cancellationToken);
 
         if (!result.IsSuccess)
             return RespondWithError(result.ErrorCode);
@@ -283,11 +251,7 @@ public class ProjectsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetCollaborators(Guid id, CancellationToken cancellationToken)
     {
-        var userId = User.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized(new { Error = "User ID not found in token." });
-
-        var result = await _projectService.GetCollaboratorsAsync(id, userId, cancellationToken);
+        var result = await _projectService.GetCollaboratorsAsync(id, CurrentUserId, cancellationToken);
 
         if (!result.IsSuccess)
             return RespondWithError(result.ErrorCode);
@@ -313,16 +277,11 @@ public class ProjectsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> RemoveCollaborator(Guid id, string collaboratorUserId, CancellationToken cancellationToken)
     {
-        var userId = User.GetUserId();
-        if (string.IsNullOrEmpty(userId))
-            return Unauthorized(new { Error = "User ID not found in token." });
-
-        var result = await _projectService.RemoveCollaboratorAsync(id, collaboratorUserId, userId, cancellationToken);
+        var result = await _projectService.RemoveCollaboratorAsync(id, collaboratorUserId, CurrentUserId, cancellationToken);
 
         if (!result.IsSuccess)
             return RespondWithError(result.ErrorCode);
 
         return NoContent();
     }
-
 }

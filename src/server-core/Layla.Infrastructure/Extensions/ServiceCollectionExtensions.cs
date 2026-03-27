@@ -8,6 +8,7 @@ using Layla.Infrastructure.Messaging;
 using Layla.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -19,8 +20,12 @@ public static class ServiceCollectionExtensions
     {
         var commandTimeout = configuration.GetValue<int>("Database:CommandTimeoutSeconds", defaultValue: 30);
         services.AddDbContext<ApplicationDbContext>(options =>
+        {
             options.UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
-                sqlOptions => sqlOptions.CommandTimeout(commandTimeout)));
+                sqlOptions => sqlOptions.CommandTimeout(commandTimeout));
+            options.ConfigureWarnings(w =>
+                w.Log(RelationalEventId.PendingModelChangesWarning));
+        });
 
         services.AddIdentity<AppUser, IdentityRole>(options =>
         {
@@ -35,8 +40,12 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<IAppUserRepository, AppUserRepository>();
-        services.AddSingleton<IEventPublisher, EventBus>();
-        services.AddSingleton<IEventBus, EventBus>();
+
+        // Register EventBus as a single instance shared by both interfaces
+        services.AddSingleton<EventBus>();
+        services.AddSingleton<IEventPublisher>(sp => sp.GetRequiredService<EventBus>());
+        services.AddSingleton<IEventBus>(sp => sp.GetRequiredService<EventBus>());
+
         services.AddScoped<IAuthService, AuthService>();
 
         return services;

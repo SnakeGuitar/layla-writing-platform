@@ -12,5 +12,4 @@ public class Project
     public bool IsPublic { get; set; } = false;
 
     public ICollection<ProjectRole> Roles { get; set; } = new List<ProjectRole>();
-    public ICollection<AppUser>? Collaborators { get; set; } = new List<AppUser>();
 }

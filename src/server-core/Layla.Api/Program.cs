@@ -1,4 +1,5 @@
 using Layla.Api.Extensions;
+using Layla.Api.Filters;
 using Layla.Api.Hubs;
 using Layla.Api.Middleware;
 using Layla.Core.Constants;
@@ -9,6 +10,7 @@ using Layla.Infrastructure.Data;
 using Layla.Infrastructure.Extensions;
 using Layla.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 
@@ -67,12 +69,8 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("LaylaCors", policy =>
     {
-        policy.WithOrigins(
-                "https://0.0.0.0:7165",
-                "http://0.0.0.0:5287",
-                "https://0.0.0.0:3000",
-                "http://0.0.0.0:3000"
-            )
+        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+        policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
@@ -81,6 +79,7 @@ builder.Services.AddCors(options =>
 
 System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
 builder.Services.AddScoped<TokenVersionValidator>();
+builder.Services.AddScoped<RequireUserIdFilter>();
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = "Bearer";
@@ -96,8 +95,8 @@ builder.Services.AddAuthentication(options =>
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
             ValidAudience = builder.Configuration["JwtSettings:Audience"],
-            NameClaimType = "name",
-            RoleClaimType = "role",
+            NameClaimType = ClaimNames.Name,
+            RoleClaimType = ClaimNames.Role,
             IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
                 System.Text.Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]!))
         };
@@ -125,6 +124,18 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 builder.Services.AddCoreServices(builder.Configuration);
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddSlidingWindowLimiter("login", opt =>
+    {
+        opt.Window = TimeSpan.FromMinutes(1);
+        opt.SegmentsPerWindow = 3;
+        opt.PermitLimit = 10;
+        opt.QueueLimit = 0;
+    });
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
+
 var app = builder.Build();
 
 app.UseMiddleware<GlobalExceptionMiddleware>();
@@ -140,6 +151,7 @@ else
     app.UseHttpsRedirection();
 }
 
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

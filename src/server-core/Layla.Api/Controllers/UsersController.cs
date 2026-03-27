@@ -45,7 +45,7 @@ public class UsersController : ApiControllerBase
     /// Get all users (Admin only).
     /// </summary>
     [HttpGet]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = AppRoles.Admin)]
     [ProducesResponseType(typeof(IEnumerable<UserResponseDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAllUsers(CancellationToken cancellationToken)
     {
@@ -62,9 +62,15 @@ public class UsersController : ApiControllerBase
     /// </summary>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(UserResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetUserById(Guid id, CancellationToken cancellationToken)
     {
+        var isAdmin = User.IsInRole(AppRoles.Admin);
+
+        if (!isAdmin && CurrentUserId != id.ToString())
+            return Forbid();
+
         var result = await _appUserService.GetAppUserByIdAsync(id, cancellationToken);
 
         if (!result.IsSuccess)
@@ -82,10 +88,9 @@ public class UsersController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateAppUserRequestDto request, CancellationToken cancellationToken)
     {
-        var callerId = User.GetUserId();
         var isAdmin = User.IsInRole(AppRoles.Admin);
 
-        if (!isAdmin && callerId != id.ToString())
+        if (!isAdmin && CurrentUserId != id.ToString())
             return Forbid();
 
         var result = await _appUserService.UpdateAppUserAsync(id, request, cancellationToken);
@@ -105,10 +110,9 @@ public class UsersController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteUser(Guid id, CancellationToken cancellationToken)
     {
-        var callerId = User.GetUserId();
         var isAdmin = User.IsInRole(AppRoles.Admin);
 
-        if (!isAdmin && callerId != id.ToString())
+        if (!isAdmin && CurrentUserId != id.ToString())
             return Forbid();
 
         var result = await _appUserService.DeleteAppUserAsync(id, cancellationToken);
@@ -123,7 +127,7 @@ public class UsersController : ApiControllerBase
     /// Ban a user (Admin only). Invalidates all sessions and locks the account.
     /// </summary>
     [HttpPost("{id:guid}/ban")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = AppRoles.Admin)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> BanUser(Guid id, CancellationToken cancellationToken)
