@@ -2,11 +2,30 @@ import { v4 as uuidv4 } from "uuid";
 import type {
   IChapter,
   IManuscript,
+  IMention,
 } from "@/interfaces/manuscript/IManuscript";
 import { MongooseManuscriptRepository } from "@/repositories/MongooseManuscriptRepository";
 import { syncChapterMentions } from "@/services/Mention.service";
 
 const manuscriptRepo = new MongooseManuscriptRepository();
+
+type ChapterMeta = Pick<
+  IChapter,
+  "chapterId" | "title" | "order" | "updatedAt" | "createdAt"
+>;
+const toChapterMeta = ({
+  chapterId,
+  title,
+  order,
+  updatedAt,
+  createdAt,
+}: IChapter): ChapterMeta => ({
+  chapterId,
+  title,
+  order,
+  updatedAt,
+  createdAt,
+});
 
 /**
  * Returns all manuscripts belonging to `projectId` as index objects —
@@ -19,15 +38,7 @@ export const getManuscriptsByProject = async (projectId: string) => {
     projectId: m.projectId,
     title: m.title,
     order: m.order,
-    chapters: m.chapters.map(
-      ({ chapterId, title, order, updatedAt, createdAt }) => ({
-        chapterId,
-        title,
-        order,
-        updatedAt,
-        createdAt,
-      }),
-    ),
+    chapters: m.chapters.map(toChapterMeta),
     createdAt: m.createdAt,
     updatedAt: m.updatedAt,
   }));
@@ -53,15 +64,7 @@ export const getManuscript = async (
     projectId: manuscript.projectId,
     title: manuscript.title,
     order: manuscript.order,
-    chapters: manuscript.chapters.map(
-      ({ chapterId, title, order, updatedAt, createdAt }) => ({
-        chapterId,
-        title,
-        order,
-        updatedAt,
-        createdAt,
-      }),
-    ),
+    chapters: manuscript.chapters.map(toChapterMeta),
     createdAt: manuscript.createdAt,
     updatedAt: manuscript.updatedAt,
   };
@@ -114,9 +117,9 @@ export const updateManuscriptMeta = async (
   manuscriptId: string,
   data: UpdateManuscriptData,
 ) => {
-  const updateData: UpdateManuscriptData = {};
-  if (data.title !== undefined) updateData.title = data.title;
-  if (data.order !== undefined) updateData.order = data.order;
+  const updateData = Object.fromEntries(
+    Object.entries(data).filter(([, v]) => v !== undefined),
+  ) as UpdateManuscriptData;
 
   return manuscriptRepo.updateManuscript(projectId, manuscriptId, updateData);
 };
@@ -153,11 +156,17 @@ export const createChapter = async (
   manuscriptId: string,
   data: { title: string; content?: string; order?: number },
 ) => {
+  const manuscript = await manuscriptRepo.getManuscript(
+    projectId,
+    manuscriptId,
+  );
+  const defaultOrder = manuscript?.chapters.length ?? 0;
+
   const newChapter: Partial<IChapter> = {
     chapterId: uuidv4(),
     title: data.title,
     content: data.content ?? "",
-    order: data.order ?? 0,
+    order: data.order ?? defaultOrder,
   };
 
   return manuscriptRepo.createChapter(projectId, manuscriptId, newChapter);
@@ -177,6 +186,14 @@ export interface UpdateChapterData {
    * the server's `updatedAt` (Last-Write-Wins guard).
    */
   clientTimestamp?: string;
+}
+
+interface ChapterUpdatePayload {
+  title?: string;
+  content?: string;
+  order?: number;
+  mentions?: IMention[];
+  updatedAt: Date;
 }
 
 /** Result shape returned by {@link updateChapter}. */
@@ -218,18 +235,10 @@ export const updateChapter = async (
     }
   }
 
-  const updateData: any = {};
-  if (data.title !== undefined) updateData.title = data.title;
-  if (data.content !== undefined) updateData.content = data.content;
-  if (data.order !== undefined) updateData.order = data.order;
-  updateData.updatedAt = new Date();
-  // TODO: Verificar este schema con UpdateChapterData
-  await manuscriptRepo.updateChapter(
-    projectId,
-    manuscriptId,
-    chapterId,
-    updateData,
-  );
+  const updatePayload: ChapterUpdatePayload = { updatedAt: new Date() };
+  if (data.title !== undefined) updatePayload.title = data.title;
+  if (data.content !== undefined) updatePayload.content = data.content;
+  if (data.order !== undefined) updatePayload.order = data.order;
 
   if (data.content !== undefined) {
     const manuscript: IManuscript | null = await manuscriptRepo.getManuscript(
@@ -242,17 +251,13 @@ export const updateChapter = async (
 
     if (manuscript && chapterDoc) {
       try {
-        const mentions = await syncChapterMentions({
+        updatePayload.mentions = await syncChapterMentions({
           projectId,
           manuscriptId,
           manuscriptTitle: manuscript.title,
           chapterId,
           chapterTitle: chapterDoc.title,
           content: data.content,
-        });
-
-        await manuscriptRepo.updateChapter(projectId, manuscriptId, chapterId, {
-          mentions,
         });
       } catch (err) {
         console.warn(
@@ -263,12 +268,26 @@ export const updateChapter = async (
     }
   }
 
+  await manuscriptRepo.updateChapter(
+    projectId,
+    manuscriptId,
+    chapterId,
+    updatePayload,
+  );
+
   const updatedChapter = await manuscriptRepo.getChapter(
     projectId,
     manuscriptId,
     chapterId,
   );
-  return { conflict: false, chapter: updatedChapter ?? undefined };
+
+  if (!updatedChapter) {
+    throw new Error(
+      `[Manuscript.service] Chapter ${chapterId} not found after update — possible race condition`,
+    );
+  }
+
+  return { conflict: false, chapter: updatedChapter };
 };
 
 /**
