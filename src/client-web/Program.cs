@@ -3,7 +3,7 @@ using client_web.UI;
 
 WebApplicationBuilder? builder = WebApplication.CreateBuilder(args);
 
-Secure.Configure(builder.Services, builder);
+HttpClientConfig.Configure(builder.Services, builder);
 Builder.Configure(builder.Services, builder);
 Services.Configure(builder.Services);
 

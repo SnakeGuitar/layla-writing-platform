@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.SignalR.Client;
-using System.Net.Http.Json;
 
 namespace client_web.Services;
 
@@ -10,7 +9,8 @@ public record PublicProjectDto(
     string LiteraryGenre,
     string? CoverImageUrl,
     DateTime UpdatedAt,
-    bool IsPublic);
+    bool IsPublic
+);
 
 public class PresenceService : IAsyncDisposable
 {
@@ -23,7 +23,7 @@ public class PresenceService : IAsyncDisposable
     public PresenceService(IHttpClientFactory httpClientFactory, IConfiguration configuration)
     {
         _httpClientFactory = httpClientFactory;
-        _coreBaseUrl = configuration["ApiUrls:Core"] ?? "https://localhost:7165";
+        _coreBaseUrl = configuration["ApiUrls:BackendURL"]!;
     }
 
     public async Task<List<PublicProjectDto>> GetPublicProjectsAsync()

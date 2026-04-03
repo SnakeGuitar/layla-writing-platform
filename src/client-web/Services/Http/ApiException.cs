@@ -3,13 +3,12 @@ namespace client_web.Services.Http;
 public class ApiException : Exception
 {
     public int Status { get; }
-    public new object? Data { get; }
+    public object? ResponseData { get; }
 
-
-    public ApiException(string message, int status, object? data = null)
+    public ApiException(string message, int status, object? responseData = null)
         : base(message)
     {
         Status = status;
-        Data = data;
+        ResponseData = responseData;
     }
 }

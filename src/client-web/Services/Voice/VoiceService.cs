@@ -1,5 +1,4 @@
 using client_web.Services.Voice.SignalR;
-using Microsoft.AspNetCore.SignalR.Client;
 
 namespace client_web.Services;
 
@@ -9,13 +8,13 @@ public record VoiceRoomState(Guid ProjectId, List<VoiceParticipant> Participants
 public class VoiceService : IVoiceService
 {
     private readonly ISignalRClient _client;
+    private readonly string _voiceHubBaseUrl;
     private bool _handlersRegistered;
 
-    private const string VoiceHubBaseUrl = "https://localhost:7165";
-
-    public VoiceService(ISignalRClient client)
+    public VoiceService(ISignalRClient client, IConfiguration configuration)
     {
         _client = client;
+        _voiceHubBaseUrl = configuration["ApiUrls:BackendURL"]!;
         _client.OnConnectionChanged += state => ConnectionChanged?.Invoke(this, state);
     }
 
@@ -63,7 +62,7 @@ public class VoiceService : IVoiceService
     public event EventHandler<string>? ConnectionChanged;
 
     public Task ConnectAsync(string token) =>
-        _client.ConnectAsync($"{VoiceHubBaseUrl}/hubs/voice", token);
+        _client.ConnectAsync($"{_voiceHubBaseUrl}/hubs/voice", token);
 
     public Task DisconnectAsync() => _client.DisconnectAsync();
 

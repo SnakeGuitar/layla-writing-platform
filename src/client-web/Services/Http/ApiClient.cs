@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using Polly;
 
 namespace client_web.Services.Http;
 
@@ -7,6 +8,7 @@ public class ApiClient
 {
     private readonly HttpClient _httpClient;
     private readonly string _baseUrl;
+    private readonly IAsyncPolicy<HttpResponseMessage> _retryPolicy;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -14,10 +16,11 @@ public class ApiClient
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public ApiClient(HttpClient httpClient, string baseUrl)
+    public ApiClient(HttpClient httpClient, string baseUrl, IAsyncPolicy<HttpResponseMessage> retryPolicy)
     {
         _httpClient = httpClient;
-        _baseUrl = baseUrl.TrimEnd('/');
+        _baseUrl = baseUrl;
+        _retryPolicy = retryPolicy;
     }
 
     public async Task<T> RequestAsync<T>(RequestHttp request)
@@ -25,7 +28,7 @@ public class ApiClient
         try
         {
             using var httpRequest = BuildHttpRequest(request);
-            using var response = await _httpClient.SendAsync(httpRequest);
+            using var response = await _retryPolicy.ExecuteAsync(() => _httpClient.SendAsync(httpRequest));
 
             var rawText = await response.Content.ReadAsStringAsync();
 
@@ -45,7 +48,7 @@ public class ApiClient
                 throw new ApiException(
                     mensaje ?? "Error en la solicitud",
                     (int)response.StatusCode,
-                    data
+                    responseData: data
                 );
             }
 

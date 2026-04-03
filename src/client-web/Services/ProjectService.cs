@@ -1,7 +1,4 @@
-using client_web.Schemas.Auth;
 using client_web.Services.Http;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace client_web.Services;
 
