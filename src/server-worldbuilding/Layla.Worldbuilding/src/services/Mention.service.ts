@@ -1,5 +1,5 @@
 import type { IMention } from "@/interfaces/manuscript/IManuscript";
-import type { IWikiEntry } from "@/interfaces/wiki/IWikiEntry";
+import type { IWikiEntryNoDescription } from "@/interfaces/wiki/IWikiEntry";
 import { container } from "./container";
 
 /** Escapes special regex characters in a string. */
@@ -31,7 +31,7 @@ export const stripRtf = (rtf: string): string => {
  */
 export const extractMentions = (
   plainText: string,
-  entries: IWikiEntry[],
+  entries: IWikiEntryNoDescription[],
 ): IMention[] => {
   const found = new Map<string, IMention>();
 
@@ -67,9 +67,11 @@ export const syncChapterMentions = async (
   },
   repo = container,
 ): Promise<IMention[]> => {
-  const entries = await repo.wikiRepo.listEntries(data.projectId);
-  const plainText = stripRtf(data.content);
-  const mentions = extractMentions(plainText, entries);
+  const entries: IWikiEntryNoDescription[] = await repo.wikiRepo.listEntries(
+    data.projectId,
+  );
+  const plainText: string = stripRtf(data.content);
+  const mentions: IMention[] = extractMentions(plainText, entries);
 
   try {
     await container.graphRepo.syncAppearances({

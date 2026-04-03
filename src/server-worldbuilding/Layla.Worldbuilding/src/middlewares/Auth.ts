@@ -1,7 +1,7 @@
 import type { Response, NextFunction } from "express";
+import type InterfaceAuthRequest from "@/interfaces/auth/AuthRequest";
 import { TokenExpiredError, JsonWebTokenError } from "jsonwebtoken";
 import { verifyAccessJWTToken } from "@/utils/ManageJWT";
-import type InterfaceAuthRequest from "@/interfaces/auth/AuthRequest";
 
 /**
  * Extracts the Bearer token from the Authorization header.

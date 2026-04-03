@@ -11,3 +11,5 @@ export interface IWikiEntry {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type IWikiEntryNoDescription = Omit<IWikiEntry, "description">;

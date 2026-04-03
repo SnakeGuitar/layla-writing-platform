@@ -37,7 +37,7 @@ export interface IGraphRepository {
     manuscriptTitle: string;
     chapterId: string;
     chapterTitle: string;
-    entityIds: [string];
+    entityIds: string[];
   }): Promise<void>;
 
   /** Removes all APPEARS_IN edges for a given chapter (used before re-syncing mentions). */

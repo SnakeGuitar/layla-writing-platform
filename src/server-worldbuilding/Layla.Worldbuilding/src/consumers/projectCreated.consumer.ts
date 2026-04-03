@@ -1,5 +1,5 @@
-import amqplib from "amqplib";
 import type { Channel, ChannelModel } from "amqplib";
+import amqplib from "amqplib";
 import { getNeo4jDriver } from "@/db/neo4j";
 import { ManuscriptModel } from "@/models/Manuscript.model";
 import { config } from "@/config/env";

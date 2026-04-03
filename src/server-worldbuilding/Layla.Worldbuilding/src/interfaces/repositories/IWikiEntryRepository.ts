@@ -1,10 +1,14 @@
-import type { IWikiEntry, WikiEntityType } from "@/interfaces/wiki/IWikiEntry";
+import type {
+  IWikiEntry,
+  IWikiEntryNoDescription,
+  WikiEntityType,
+} from "@/interfaces/wiki/IWikiEntry";
 
 export interface IWikiEntryRepository {
   listEntries(
     projectId: string,
     entityType?: WikiEntityType,
-  ): Promise<Omit<IWikiEntry, "description">[]>;
+  ): Promise<IWikiEntryNoDescription[]>;
 
   getEntry(entityId: string): Promise<IWikiEntry | null>;
 
