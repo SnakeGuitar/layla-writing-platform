@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.SignalR.Client;
+using Polly;
+using Polly.Retry;
 
 namespace client_web.Services.Voice.SignalR;
 
@@ -6,10 +8,24 @@ public class SignalRClient : ISignalRClient
 {
     private HubConnection? _hub;
     private readonly SemaphoreSlim _connectionLock = new(1, 1);
+    private AsyncRetryPolicy _retryPolicy;
 
     public bool IsConnected => _hub?.State == HubConnectionState.Connected;
 
     public event Action<string>? OnConnectionChanged;
+
+    public SignalRClient()
+    {
+        _retryPolicy = Policy
+            .Handle<Exception>()
+            .WaitAndRetryAsync(
+                3,
+                retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                (ex, time) =>
+                {
+                    Console.WriteLine($"Retrying in {time}. Error: {ex.Message}");
+                });
+    }
 
     public async Task ConnectAsync(string url, string token)
     {
@@ -46,8 +62,11 @@ public class SignalRClient : ISignalRClient
                 return Task.CompletedTask;
             };
 
-            await _hub.StartAsync();
-            OnConnectionChanged?.Invoke("Connected");
+            await _retryPolicy.ExecuteAsync(async () =>
+            {
+                await _hub.StartAsync();
+                OnConnectionChanged?.Invoke("Connected");
+            });
         }
         finally
         {
@@ -78,7 +97,8 @@ public class SignalRClient : ISignalRClient
     {
         if (!IsConnected || _hub == null) return;
 
-        await _hub.InvokeAsync(method, args);
+        await _retryPolicy.ExecuteAsync(async () =>
+            await _hub.InvokeAsync(method, args));
     }
 
     public void On<T>(string methodName, Action<T> handler)
