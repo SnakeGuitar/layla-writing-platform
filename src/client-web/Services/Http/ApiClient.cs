@@ -7,30 +7,25 @@ namespace client_web.Services.Http;
 public class ApiClient
 {
     private readonly HttpClient _httpClient;
-    private readonly string _baseUrl;
-    private readonly IAsyncPolicy<HttpResponseMessage> _retryPolicy;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public ApiClient(HttpClient httpClient, string baseUrl, IAsyncPolicy<HttpResponseMessage> retryPolicy)
+    public ApiClient(HttpClient httpClient)
     {
         _httpClient = httpClient;
-        _baseUrl = baseUrl;
-        _retryPolicy = retryPolicy;
     }
 
-    public async Task<T> RequestAsync<T>(RequestHttp request)
+    public async Task<T> RequestAsync<T>(RequestHttp<T> request, CancellationToken ct = default)
     {
         try
         {
             using var httpRequest = BuildHttpRequest(request);
-            using var response = await _retryPolicy.ExecuteAsync(() => _httpClient.SendAsync(httpRequest));
+            using var response = await _httpClient.SendAsync(httpRequest, ct);
 
-            var rawText = await response.Content.ReadAsStringAsync();
+            string rawText = await response.Content.ReadAsStringAsync();
 
             object? data;
             try
@@ -59,27 +54,31 @@ public class ApiClient
         {
             throw;
         }
-        catch (Exception ex)
+        catch (HttpRequestException ex)
         {
-            throw new ApiException("Error de conexión con el servidor", 0, ex.Message);
+            throw new ApiException("Error de red", 0, null, ex);
+        }
+        catch (TaskCanceledException ex)
+        {
+            throw new ApiException("Timeout", 0, null, ex);
         }
     }
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 
-    private HttpRequestMessage BuildHttpRequest(RequestHttp request)
+    private HttpRequestMessage BuildHttpRequest<T>(RequestHttp<T> request)
     {
-        var url = $"{_baseUrl}{request.Endpoint}";
-        var httpRequest = new HttpRequestMessage(request.Method, url);
+        var httpRequest = new HttpRequestMessage(request.Method, request.Endpoint);
 
         // Headers personalizados
         if (request.Headers is not null)
-            foreach (var (key, value) in request.Headers)
-                httpRequest.Headers.TryAddWithoutValidation(key, value);
+            foreach (var header in request.Headers)
+                httpRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
 
         // Bearer token
         if (!string.IsNullOrEmpty(request.Token))
-            httpRequest.Headers.TryAddWithoutValidation("Authorization", $"Bearer {request.Token}");
+            httpRequest.Headers.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", request.Token);
 
         // Body
         if (request.Body is not null)

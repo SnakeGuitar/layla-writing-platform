@@ -7,7 +7,7 @@ public static class Builder
         services.AddRazorComponents().AddInteractiveServerComponents();
 
         builder.Logging.ClearProviders();
-        builder.Logging.AddConsole(); // Esto es lo que imprime en consola
+        builder.Logging.AddConsole(); // Esto imprime en consola
         builder.Logging.SetMinimumLevel(LogLevel.Trace);
     }
 }
