@@ -12,7 +12,7 @@ dotnet build                  # Build
 
 # Frontend assets
 pnpm install                  # Install Node.js dependencies
-npx @tailwindcss/cli -i ./Styles/Styles.css -o ./wwwroot/styles/styles.css  # Compile Tailwind CSS
+npx @tailwindcss/cli -i ./UI/Styles/Styles.css -o ./wwwroot/styles/styles.css  # Compile Tailwind CSS
 npx tsc wwwroot/js/chartInterop.ts --target ES6 --module none --outDir wwwroot/js  # Compile TypeScript
 ```
 
@@ -21,7 +21,7 @@ npx tsc wwwroot/js/chartInterop.ts --target ES6 --module none --outDir wwwroot/j
 **Stack:** Blazor Web App (.NET 9) + Razor Components (Interactive Server render mode) + Tailwind CSS v4 + TypeScript
 
 **Project Structure:**
-- `Components/` - Razor pages and components (Blazor UI)
+- `UI/` - Razor pages, components (Blazor UI) and styles
 - `Services/` - Business logic and HTTP clients
   - `ApiClient.cs` - Centralized HTTP client with automatic JSON serialization and error handling
   - `AuthService.cs`, `ProjectService.cs`, `VoiceService.cs`, `PresenceService.cs` - Domain services

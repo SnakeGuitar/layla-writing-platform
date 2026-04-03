@@ -34,7 +34,7 @@
     }
 
     <!-- Participants -->
-    <div class="bg-gray-800 rounded-lg p-4 mb-6 min-h-[200px]">
+    <div class="bg-gray-800 rounded-lg p-4 mb-6 min-h-50">
         <h3 class="text-sm font-medium text-gray-400 mb-3">Participants (@_participants.Count)</h3>
         @if (_participants.Count == 0)
         {
@@ -116,13 +116,13 @@
 
         try
         {
-            VoiceService.OnRoomState += OnRoomState;
-            VoiceService.OnUserJoined += OnUserJoined;
-            VoiceService.OnUserLeft += OnUserLeft;
-            VoiceService.OnSpeakerStarted += OnSpeakerStarted;
-            VoiceService.OnSpeakerStopped += OnSpeakerStopped;
-            VoiceService.OnAudioReceived += OnAudioReceived;
-            VoiceService.OnConnectionChanged += OnConnectionChanged;
+            VoiceService.RoomStateChanged += OnRoomState;
+            VoiceService.UserJoined += OnUserJoined;
+            VoiceService.UserLeft += OnUserLeft;
+            VoiceService.SpeakerStarted += OnSpeakerStarted;
+            VoiceService.SpeakerStopped += OnSpeakerStopped;
+            VoiceService.AudioReceived += OnAudioReceived;
+            VoiceService.ConnectionChanged += OnConnectionChanged;
 
             await VoiceService.ConnectAsync(_token);
             await VoiceService.JoinRoomAsync(ProjectId);
@@ -198,34 +198,34 @@
         StateHasChanged();
     }
 
-    private void OnRoomState(List<VoiceParticipant> participants)
+    private void OnRoomState(object? sender, List<VoiceParticipant> participants)
     {
         _participants = participants;
         InvokeAsync(StateHasChanged);
     }
 
-    private void OnUserJoined(VoiceParticipant participant)
+    private void OnUserJoined(object? sender, VoiceParticipant participant)
     {
         if (_participants.All(p => p.UserId != participant.UserId))
             _participants.Add(participant);
         InvokeAsync(StateHasChanged);
     }
 
-    private void OnUserLeft(string userId)
+    private void OnUserLeft(object? sender, string userId)
     {
         _participants.RemoveAll(p => p.UserId == userId);
         InvokeAsync(StateHasChanged);
     }
 
-    private void OnSpeakerStarted(string userId, string displayName)
+    private void OnSpeakerStarted(object? sender, (string userId, string displayName) e)
     {
-        var idx = _participants.FindIndex(p => p.UserId == userId);
+        var idx = _participants.FindIndex(p => p.UserId == e.userId);
         if (idx >= 0)
             _participants[idx] = _participants[idx] with { IsSpeaking = true };
         InvokeAsync(StateHasChanged);
     }
 
-    private void OnSpeakerStopped(string userId)
+    private void OnSpeakerStopped(object? sender, string userId)
     {
         var idx = _participants.FindIndex(p => p.UserId == userId);
         if (idx >= 0)
@@ -233,16 +233,16 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private async void OnAudioReceived(string senderId, byte[] audioData)
+    private void OnAudioReceived(object? sender, (string senderId, byte[] audio) e)
     {
         if (_jsModule != null)
         {
-            var base64 = Convert.ToBase64String(audioData);
-            await _jsModule.InvokeVoidAsync("playAudio", base64);
+            var base64 = Convert.ToBase64String(e.audio);
+            _ = _jsModule.InvokeVoidAsync("playAudio", base64);
         }
     }
 
-    private void OnConnectionChanged(string state)
+    private void OnConnectionChanged(object? sender, string state)
     {
         _connectionState = state;
         _isConnected = state == "Connected";
@@ -251,13 +251,13 @@
 
     public async ValueTask DisposeAsync()
     {
-        VoiceService.OnRoomState -= OnRoomState;
-        VoiceService.OnUserJoined -= OnUserJoined;
-        VoiceService.OnUserLeft -= OnUserLeft;
-        VoiceService.OnSpeakerStarted -= OnSpeakerStarted;
-        VoiceService.OnSpeakerStopped -= OnSpeakerStopped;
-        VoiceService.OnAudioReceived -= OnAudioReceived;
-        VoiceService.OnConnectionChanged -= OnConnectionChanged;
+        VoiceService.RoomStateChanged -= OnRoomState;
+        VoiceService.UserJoined -= OnUserJoined;
+        VoiceService.UserLeft -= OnUserLeft;
+        VoiceService.SpeakerStarted -= OnSpeakerStarted;
+        VoiceService.SpeakerStopped -= OnSpeakerStopped;
+        VoiceService.AudioReceived -= OnAudioReceived;
+        VoiceService.ConnectionChanged -= OnConnectionChanged;
 
         _dotNetRef?.Dispose();
 

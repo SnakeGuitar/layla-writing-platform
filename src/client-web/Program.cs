@@ -1,29 +1,12 @@
-using client_web.Components;
-using client_web.Services;
-using client_web.Services.Http;
+using client_web.Config;
+using client_web.UI;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder? builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
-var apiAccesoUrl = builder.Configuration["ApiUrls:Acceso"]
-?? throw new InvalidOperationException("Falta la configuración ApiUrls:Acceso");
-builder.Services.AddHttpClient<ApiClient>((sp, client) =>
-{
-    client.BaseAddress = new Uri(apiAccesoUrl);
-}).AddTypedClient((httpClient, sp) =>
-    new ApiClient(httpClient, apiAccesoUrl)
-);
-builder.Services.AddHttpClient("ServerCore", client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["ApiUrls:Core"] ?? "https://localhost:7165");
-});
-builder.Services.AddSingleton<HttpContextAccessor>();
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<ProjectService>();
-builder.Services.AddScoped<VoiceService>();
-builder.Services.AddScoped<PresenceService>();
+Secure.Configure(builder.Services, builder);
+Builder.Configure(builder.Services, builder);
+Services.Configure(builder.Services);
+
 
 var app = builder.Build();
 

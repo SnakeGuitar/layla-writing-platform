@@ -1,0 +1,18 @@
+using client_web.Services;
+
+namespace client_web.Config;
+
+public static class Services
+{
+    public static void Configure(this IServiceCollection services)
+    {
+        services.AddSingleton<HttpContextAccessor>();
+        services.AddScoped<AuthService>();
+        services.AddScoped<ProjectService>();
+        services.AddScoped<PresenceService>();
+        services.AddSingleton<IVoiceService, VoiceService>();
+        services.AddSingleton<IVoiceConnectionService>(sp => sp.GetRequiredService<IVoiceService>());
+        services.AddSingleton<IVoiceRoomService>(sp => sp.GetRequiredService<IVoiceService>());
+        services.AddSingleton<IVoiceAudioService>(sp => sp.GetRequiredService<IVoiceService>());
+    }
+}
