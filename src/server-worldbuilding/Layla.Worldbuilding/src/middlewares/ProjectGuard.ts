@@ -1,15 +1,12 @@
-import type { Response, NextFunction } from "express";
-import type InterfaceAuthRequest from "@/interfaces/auth/AuthRequest";
+import { Response, NextFunction } from "express";
+import InterfaceAuthRequest from "@/interfaces/auth/AuthRequest";
 import { getNeo4jDriver } from "@/db/neo4j";
 
 /**
  * Middleware factory that enforces per-project access control.
- * Queries the Neo4j `:Project` node for access.
  *
- * Possible responses:
- * 401 Unauthorized   <->   Without `req.user`.
- * 403 Forbidden      <->   if the project does not exist or access is denied.
- * 503 Serv. Unavail. <->   Error from Neo4j.
+ * Queries the Neo4j `:Project` node for access.
+ * Returns **403 Forbidden** if the project does not exist or access is denied.
  *
  * Must be used **after** {@link MiddlewareAuthenticate} so that
  * `req.user` is already populated.
@@ -35,16 +32,15 @@ export const requireProjectAccess = () => {
       return;
     }
 
-    const { id: userId } = req.user;
     const driver = getNeo4jDriver();
     const session = driver.session();
 
     try {
-      // TODO: Alignment with SQL ProjectRole system.
+      // TODO: Alignment with SQL ProjectRole system. 
       // Current check only verifies ownership in Neo4j.
       const result = await session.run(
         `MATCH (u:User { id: $userId })-[:MEMBER_OF]->(p:Project { projectId: $projectId }) RETURN p LIMIT 1`,
-        { projectId, userId },
+        { projectId, userId: req.user.id },
       );
 
       if (result.records.length === 0) {
@@ -54,9 +50,9 @@ export const requireProjectAccess = () => {
 
       next();
     } catch (err) {
-      console.error("[ProjectGuard] Neo4j query failed:\n", err);
-      // Fail open only during a Neo4j outage — still log it
+      console.error("[ProjectGuard] Neo4j query failed:", err);
       res.status(503).json({ error: "Service temporarily unavailable" });
+      return;
     } finally {
       await session.close();
     }

@@ -237,6 +237,42 @@ export class Neo4jGraphRepository implements IGraphRepository {
     }
   }
 
+  async mergeAppearancesBatch(data: {
+    projectId: string;
+    manuscriptId: string;
+    manuscriptTitle: string;
+    chapterId: string;
+    chapterTitle: string;
+    entityIds: string[];
+  }): Promise<void> {
+    if (data.entityIds.length === 0) return;
+
+    const driver = getNeo4jDriver();
+    const session = driver.session();
+
+    try {
+      await session.run(
+        `MERGE (ch:Chapter { chapterId: $chapterId, projectId: $projectId })
+         ON CREATE SET ch.manuscriptId = $manuscriptId, ch.manuscriptTitle = $manuscriptTitle, ch.chapterTitle = $chapterTitle
+         ON MATCH  SET ch.manuscriptTitle = $manuscriptTitle, ch.chapterTitle = $chapterTitle
+         WITH ch
+         UNWIND $entityIds AS eid
+         MATCH (e:Entity { entityId: eid, projectId: $projectId })
+         MERGE (e)-[:APPEARS_IN]->(ch)`,
+        {
+          projectId: data.projectId,
+          manuscriptId: data.manuscriptId,
+          manuscriptTitle: data.manuscriptTitle,
+          chapterId: data.chapterId,
+          chapterTitle: data.chapterTitle,
+          entityIds: data.entityIds,
+        }
+      );
+    } finally {
+      await session.close();
+    }
+  }
+
   async clearChapterAppearances(data: {
     projectId: string;
     chapterId: string;

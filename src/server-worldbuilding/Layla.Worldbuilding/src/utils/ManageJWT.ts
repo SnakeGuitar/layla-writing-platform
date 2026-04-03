@@ -12,12 +12,16 @@ import { config } from "@/config/env";
  */
 export const generatejwtTokens = (payload: JwtPayloadCustom): TokenPair => {
   const accessToken = jwt.sign(payload, config.jwt.secret, {
-    expiresIn: config.jwt.refreshExpiry,
-  } as SignOptions);
-
-  const refreshToken = jwt.sign({ id: payload.id }, config.jwt.refreshExpiry, {
     expiresIn: config.jwt.accessExpiry,
   } as SignOptions);
+
+  const refreshToken = jwt.sign(
+    { id: payload.id },
+    config.jwt.secretRefresh,
+    {
+      expiresIn: config.jwt.refreshExpiry,
+    } as SignOptions,
+  );
 
   return { accessToken, refreshToken };
 };

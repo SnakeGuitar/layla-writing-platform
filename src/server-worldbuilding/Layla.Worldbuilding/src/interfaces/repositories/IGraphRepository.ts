@@ -40,6 +40,16 @@ export interface IGraphRepository {
     entityIds: string[];
   }): Promise<void>;
 
+  /** Creates or updates APPEARS_IN edges for multiple entities in a single query. */
+  mergeAppearancesBatch(data: {
+    projectId: string;
+    manuscriptId: string;
+    manuscriptTitle: string;
+    chapterId: string;
+    chapterTitle: string;
+    entityIds: string[];
+  }): Promise<void>;
+
   /** Removes all APPEARS_IN edges for a given chapter (used before re-syncing mentions). */
   clearChapterAppearances(data: {
     projectId: string;
