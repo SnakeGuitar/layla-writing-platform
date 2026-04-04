@@ -298,7 +298,8 @@
                 <!-- Mentions list -->
                 <ListBox Grid.Row="1" x:Name="MentionsListBox"
                          ItemsSource="{Binding CurrentMentions}"
-                         Background="Transparent" BorderThickness="0" Padding="5,5">
+                         Background="Transparent" BorderThickness="0" Padding="5,5"
+                         SelectionChanged="MentionsListBox_SelectionChanged">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Border Padding="6,5" Margin="0,1" CornerRadius="4"
@@ -325,6 +326,9 @@
                                                     </DataTrigger>
                                                     <DataTrigger Binding="{Binding EntityType}" Value="Object">
                                                         <Setter Property="Background" Value="#CE93D8"/>
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding EntityType}" Value="Concept">
+                                                        <Setter Property="Background" Value="#90A4AE"/>
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
@@ -384,9 +388,13 @@
                             <Border Width="8" Height="8" CornerRadius="4" Background="#FFB74D" Margin="0,0,4,0" VerticalAlignment="Center"/>
                             <TextBlock Text="Event" FontSize="9" Foreground="{DynamicResource SecondaryText}" VerticalAlignment="Center"/>
                         </StackPanel>
-                        <StackPanel Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,10,0">
                             <Border Width="8" Height="8" CornerRadius="4" Background="#CE93D8" Margin="0,0,4,0" VerticalAlignment="Center"/>
                             <TextBlock Text="Object" FontSize="9" Foreground="{DynamicResource SecondaryText}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="8" Height="8" CornerRadius="4" Background="#90A4AE" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="Concept" FontSize="9" Foreground="{DynamicResource SecondaryText}" VerticalAlignment="Center"/>
                         </StackPanel>
                     </WrapPanel>
                 </Border>
