@@ -1,5 +1,12 @@
 import type { Request, Response } from "express";
 import * as ManuscriptService from "@/services/Manuscript.service";
+import {
+  CreateManuscriptSchema,
+  UpdateManuscriptSchema,
+  CreateChapterSchema,
+  UpdateChapterSchema,
+  validate,
+} from "@/validation";
 
 /**
  * GET /api/manuscripts/:projectId
@@ -42,21 +49,20 @@ export const getManuscript = async (
  * POST /api/manuscripts/:projectId
  *
  * Creates a new manuscript in the project.
- * Responds with **400** when `title` is absent from the request body.
  */
 export const createManuscript = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  const { title, order } = req.body as { title: string; order?: number };
-  if (!title) {
-    res.status(400).json({ error: "title is required" });
+  const parsed = validate(CreateManuscriptSchema, req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error });
     return;
   }
 
   const manuscript = await ManuscriptService.createManuscript(
     req.params["projectId"] as string,
-    { title, order },
+    parsed.data,
   );
   res.status(201).json(manuscript);
 };
@@ -71,10 +77,16 @@ export const updateManuscript = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
+  const parsed = validate(UpdateManuscriptSchema, req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error });
+    return;
+  }
+
   const result = await ManuscriptService.updateManuscriptMeta(
     req.params["projectId"] as string,
     req.params["manuscriptId"] as string,
-    req.body as ManuscriptService.UpdateManuscriptData,
+    parsed.data,
   );
   if (!result) {
     res.status(404).json({ error: "Manuscript not found" });
@@ -108,7 +120,6 @@ export const deleteManuscript = async (
  * GET /api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId
  *
  * Returns the full content of a single chapter.
- * Responds with **404** when the chapter does not exist.
  */
 export const getChapter = async (
   req: Request,
@@ -130,34 +141,26 @@ export const getChapter = async (
  * POST /api/manuscripts/:projectId/:manuscriptId/chapters
  *
  * Creates a new chapter in the specified manuscript.
- * Responds with **400** when `title` is absent, **404** when the manuscript does not exist.
  */
 export const createChapter = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  const { title, content, order } = req.body as {
-    title: string;
-    content?: string;
-    order?: number;
-  };
-
-  if (!title) {
-    res.status(400).json({ error: "title is required" });
+  const parsed = validate(CreateChapterSchema, req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error });
     return;
   }
 
   const chapter = await ManuscriptService.createChapter(
     req.params["projectId"] as string,
     req.params["manuscriptId"] as string,
-    { title, content, order },
+    parsed.data,
   );
-
   if (!chapter) {
     res.status(404).json({ error: "Manuscript not found" });
     return;
   }
-
   res.status(201).json(chapter);
 };
 
@@ -165,18 +168,23 @@ export const createChapter = async (
  * PUT /api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId
  *
  * Updates a chapter's `title`, `content`, and/or `order`.
- * Responds with **409 Conflict** when `clientTimestamp` is stale (Last-Write-Wins guard)
- * and **404** when the chapter is not found.
+ * Responds with **409 Conflict** when `clientTimestamp` is stale (LWW guard).
  */
 export const updateChapter = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
+  const parsed = validate(UpdateChapterSchema, req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error });
+    return;
+  }
+
   const result = await ManuscriptService.updateChapter(
     req.params["projectId"] as string,
     req.params["manuscriptId"] as string,
     req.params["chapterId"] as string,
-    req.body as ManuscriptService.UpdateChapterData,
+    parsed.data,
   );
 
   if (result.conflict) {
@@ -199,7 +207,6 @@ export const updateChapter = async (
  * DELETE /api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId
  *
  * Removes a chapter from the manuscript.
- * Returns **204 No Content** on success, **404** when not found.
  */
 export const deleteChapter = async (
   req: Request,
@@ -221,7 +228,6 @@ export const deleteChapter = async (
  * GET /api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId/mentions
  *
  * Returns the list of wiki entity mentions detected in the chapter.
- * Each mention includes `entityId`, `name`, and `entityType`.
  */
 export const getChapterMentions = async (
   req: Request,

@@ -8,8 +8,7 @@
     // Environment Settings
     "module": "ESNext",
     "target": "ESNext",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
+    "lib": ["ES2022"],
     "skipLibCheck": true,
 
     // Other Outputs
@@ -56,6 +55,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src", "vite-env.d.ts"],
+  "include": ["src"],
   "exclude": ["node_modules", "dist", "eslint.config.mts"]
 }

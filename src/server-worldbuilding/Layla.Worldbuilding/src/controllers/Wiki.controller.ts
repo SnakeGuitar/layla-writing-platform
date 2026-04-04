@@ -1,7 +1,12 @@
 import type { Request, Response } from "express";
-import type { WikiEntityType } from "@/interfaces/wiki/IWikiEntry";
 import * as WikiService from "@/services/WikiEntry.service";
 import * as GraphService from "@/services/Graph.service";
+import {
+  CreateWikiEntrySchema,
+  UpdateWikiEntrySchema,
+  entityTypeSchema,
+  validate,
+} from "@/validation";
 
 /**
  * GET /api/wiki/:projectId/entries
@@ -13,10 +18,15 @@ export const listEntries = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  const entityType = req.query["type"] as WikiEntityType | undefined;
+  const typeParam = req.query["type"];
+  const entityTypeParsed = entityTypeSchema.optional().safeParse(typeParam);
+  if (!entityTypeParsed.success) {
+    res.status(400).json({ error: "Invalid entityType filter" });
+    return;
+  }
   const entries = await WikiService.listEntries(
     req.params["projectId"] as string,
-    entityType,
+    entityTypeParsed.data,
   );
   res.json(entries);
 };
@@ -38,30 +48,21 @@ export const getEntry = async (req: Request, res: Response): Promise<void> => {
 /**
  * POST /api/wiki/:projectId/entries
  *
- * Creates a new wiki entry. Requires `name` and `entityType` in the request body.
+ * Creates a new wiki entry.
  */
 export const createEntry = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  const { name, entityType, description, tags } = req.body as {
-    name: string;
-    entityType: WikiEntityType;
-    description?: string;
-    tags?: string[];
-  };
-
-  if (!name || !entityType) {
-    res.status(400).json({ error: "name and entityType are required" });
+  const parsed = validate(CreateWikiEntrySchema, req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error });
     return;
   }
 
   const entry = await WikiService.createEntry({
     projectId: req.params["projectId"] as string,
-    name,
-    entityType,
-    description,
-    tags,
+    ...parsed.data,
   });
   res.status(201).json(entry);
 };
@@ -75,14 +76,15 @@ export const updateEntry = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
+  const parsed = validate(UpdateWikiEntrySchema, req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error });
+    return;
+  }
+
   const entry = await WikiService.updateEntry(
     req.params["entityId"] as string,
-    req.body as Partial<{
-      name: string;
-      entityType: WikiEntityType;
-      description: string;
-      tags: string[];
-    }>,
+    parsed.data,
   );
   if (!entry) {
     res.status(404).json({ error: "Entity not found" });
@@ -114,7 +116,6 @@ export const deleteEntry = async (
  * GET /api/wiki/:projectId/entries/:entityId/appearances
  *
  * Returns all chapters where the entity is mentioned (via APPEARS_IN edges in Neo4j).
- * Each result includes `manuscriptId`, `manuscriptTitle`, `chapterId`, and `chapterTitle`.
  */
 export const getEntityAppearances = async (
   req: Request,

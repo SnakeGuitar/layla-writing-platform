@@ -16,7 +16,7 @@ const required = [
 ] as const;
 
 /**
- * Verify if some secret ir empty or missing
+ * Verify if some secret is empty or missing
  */
 const missing = required.filter((key) => !process.env[key]?.trim());
 if (missing.length > 0) {

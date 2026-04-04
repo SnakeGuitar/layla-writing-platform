@@ -496,6 +496,28 @@ namespace Layla.Desktop.Views
         }
 
         /// <summary>
+        /// When the user clicks a mention in the context panel, navigate to the
+        /// corresponding wiki entry in the Wiki tab.
+        /// </summary>
+        private void MentionsListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is ListBox lb && lb.SelectedItem is Mention mention)
+            {
+                WorkspaceMediator.RequestNavigateToWikiEntry(mention.EntityId);
+                lb.SelectedItem = null; // reset so the same item can be clicked again
+            }
+        }
+
+        /// <summary>
+        /// Called by <see cref="Views.WorkspaceView"/> when cross-tab navigation requests
+        /// opening a specific chapter (e.g. from a wiki appearance click).
+        /// </summary>
+        public async void NavigateToChapter(string manuscriptId, string chapterId)
+        {
+            await _viewModel.NavigateToChapterAsync(manuscriptId, chapterId);
+        }
+
+        /// <summary>
         /// Recursively enumerates all visual-tree descendants of <paramref name="parent"/>
         /// that are assignable to <typeparamref name="T"/>.
         /// </summary>

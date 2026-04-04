@@ -13,7 +13,6 @@ const escapeRegex = (str: string): string =>
 export const stripRtf = (rtf: string): string => {
   if (!rtf) return "";
 
-  // Si no es RTF, se limpia de whitespace
   const source: string = rtf.startsWith("{\\rtf")
     ? rtf
         .replace(/\\[a-z]+[-]?\d*\s?/gi, " ")
@@ -28,6 +27,8 @@ export const stripRtf = (rtf: string): string => {
 /**
  * Scans plain text for known wiki entity names (case-insensitive, whole-word).
  * Returns a deduplicated array of mentions found.
+ *
+ * Pre-compiles all regex patterns before scanning to avoid O(n) compilations.
  */
 export const extractMentions = (
   plainText: string,
@@ -35,12 +36,15 @@ export const extractMentions = (
 ): IMention[] => {
   const found = new Map<string, IMention>();
 
-  for (const entry of entries) {
+  const patterns = entries.map((entry) => ({
+    entry,
+    regex: new RegExp(`\\b${escapeRegex(entry.name)}\\b`, "i"),
+  }));
+
+  for (const { entry, regex } of patterns) {
     if (found.has(entry.entityId)) continue;
 
-    const pattern: RegExp = new RegExp(`\\b${escapeRegex(entry.name)}\\b`, "i");
-
-    if (pattern.test(plainText)) {
+    if (regex.test(plainText)) {
       found.set(entry.entityId, {
         entityId: entry.entityId,
         name: entry.name,
@@ -74,7 +78,7 @@ export const syncChapterMentions = async (
   const mentions: IMention[] = extractMentions(plainText, entries);
 
   try {
-    await container.graphRepo.syncAppearances({
+    await repo.graphRepo.syncAppearances({
       projectId: data.projectId,
       manuscriptId: data.manuscriptId,
       manuscriptTitle: data.manuscriptTitle,
@@ -84,45 +88,11 @@ export const syncChapterMentions = async (
     });
   } catch (err) {
     throw new Error(
-      `[Mention.service] Failed to clear APPEARS_IN edges for chapter ${data.chapterId}`,
+      `[Mention.service] Failed to sync APPEARS_IN edges for chapter ${data.chapterId}`,
       { cause: err },
     );
   }
 
-  // Sincroniza todas las apariciones en paralelo; los fallos individuales
-  // se loguean sin abortar el resto del lote.
-  const results = await Promise.allSettled(
-    mentions.map((mention) =>
-      container.graphRepo.syncAppearances({
-        projectId: data.projectId,
-        entityIds: [mention.entityId],
-        manuscriptId: data.manuscriptId,
-        manuscriptTitle: data.manuscriptTitle,
-        chapterId: data.chapterId,
-        chapterTitle: data.chapterTitle,
-      }),
-    ),
-  );
-
-  results.forEach((result, i) => {
-    if (result.status === "rejected") {
-      console.warn(
-        `[Mention.service] Failed to sync APPEARS_IN for entity ${mentions[i].entityId} in chapter ${data.chapterId}`,
-        result.reason,
-      );
-    }
-  });
-
   return mentions;
 };
 
-/**
- * Returns all chapters where a given entity appears, queried from Neo4j.
- */
-export const getEntityAppearances = async (
-  projectId: string,
-  entityId: string,
-  repo = container.graphRepo,
-) => {
-  return repo.getEntityAppearances({ projectId, entityId });
-};

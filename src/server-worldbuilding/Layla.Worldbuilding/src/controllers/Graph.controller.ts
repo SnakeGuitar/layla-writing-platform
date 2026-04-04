@@ -1,5 +1,10 @@
 import type { Request, Response } from "express";
 import * as GraphService from "@/services/Graph.service";
+import {
+  CreateRelationshipSchema,
+  DeleteRelationshipSchema,
+  validate,
+} from "@/validation";
 
 /**
  * GET /api/graph/:projectId
@@ -21,34 +26,20 @@ export const getGraph = async (req: Request, res: Response): Promise<void> => {
  *
  * Creates a directed relationship between two entities.
  * Requires `sourceEntityId`, `targetEntityId`, and `type` in the request body.
- *
- * Note: all relationships are stored as `:RELATED_TO` in Neo4j;
- * the `type` and optional `label` fields are stored as properties on the edge.
  */
 export const createRelationship = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  const { sourceEntityId, targetEntityId, type, label } = req.body as {
-    sourceEntityId: string;
-    targetEntityId: string;
-    type: string;
-    label?: string;
-  };
-
-  if (!sourceEntityId || !targetEntityId || !type) {
-    res
-      .status(400)
-      .json({ error: "sourceEntityId, targetEntityId, and type are required" });
+  const parsed = validate(CreateRelationshipSchema, req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error });
     return;
   }
 
   await GraphService.createRelationship({
     projectId: req.params["projectId"] as string,
-    sourceEntityId,
-    targetEntityId,
-    type,
-    label,
+    ...parsed.data,
   });
   res.status(201).json({ message: "Relationship created" });
 };
@@ -63,22 +54,15 @@ export const deleteRelationship = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  const { sourceEntityId, targetEntityId } = req.body as {
-    sourceEntityId: string;
-    targetEntityId: string;
-  };
-
-  if (!sourceEntityId || !targetEntityId) {
-    res
-      .status(400)
-      .json({ error: "sourceEntityId and targetEntityId are required" });
+  const parsed = validate(DeleteRelationshipSchema, req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: parsed.error });
     return;
   }
 
   await GraphService.deleteRelationship({
     projectId: req.params["projectId"] as string,
-    sourceEntityId,
-    targetEntityId,
+    ...parsed.data,
   });
   res.status(204).send();
 };

@@ -1,10 +1,10 @@
-import { ManuscriptModel } from "../models/Manuscript.model";
+import { ManuscriptModel } from "@/models/Manuscript.model";
 import type {
   IManuscript,
   IChapter,
-} from "../interfaces/manuscript/IManuscript";
-import type { IManuscriptRepository } from "../interfaces/repositories/IManuscriptRepository";
-import type { UpdateChapterData } from "@/services/Manuscript.service";
+  ChapterUpdatePayload,
+} from "@/interfaces/manuscript/IManuscript";
+import type { IManuscriptRepository } from "@/interfaces/repositories/IManuscriptRepository";
 
 /** Mongoose implementation of {@link IManuscriptRepository}. */
 export class MongooseManuscriptRepository implements IManuscriptRepository {
@@ -65,9 +65,11 @@ export class MongooseManuscriptRepository implements IManuscriptRepository {
       manuscriptId,
     }).lean();
     if (!manuscript) return null;
-    return (manuscript.chapters.find(
-      (c: IChapter) => c.chapterId === chapterId,
-    ) ?? null) as unknown as IChapter | null;
+    return (
+      (manuscript.chapters.find(
+        (c: IChapter) => c.chapterId === chapterId,
+      ) ?? null) as unknown as IChapter | null
+    );
   }
 
   /** @inheritdoc */
@@ -83,9 +85,11 @@ export class MongooseManuscriptRepository implements IManuscriptRepository {
         { new: true },
       );
     if (!manuscript) return null;
-    return (manuscript.chapters.find(
-      (c: IChapter) => c.chapterId === chapter.chapterId,
-    ) ?? null) as unknown as IChapter | null;
+    return (
+      (manuscript.chapters.find(
+        (c: IChapter) => c.chapterId === chapter.chapterId,
+      ) ?? null) as unknown as IChapter | null
+    );
   }
 
   /**
@@ -98,7 +102,7 @@ export class MongooseManuscriptRepository implements IManuscriptRepository {
     projectId: string,
     manuscriptId: string,
     chapterId: string,
-    data: UpdateChapterData,
+    data: ChapterUpdatePayload,
   ): Promise<IManuscript | null> {
     const manuscript = await ManuscriptModel.findOne({
       projectId,

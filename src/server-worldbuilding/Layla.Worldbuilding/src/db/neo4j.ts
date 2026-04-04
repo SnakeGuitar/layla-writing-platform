@@ -10,7 +10,7 @@ let driver: Driver | null = null;
  * The driver maintains an internal connection pool (`maxConnectionPoolSize: 50`).
  * Each operation should open its own session and close it in a `finally` block.
  *
- * @throws {Error} If the initializon fails.
+ * @throws {Error} If the initialization fails.
  */
 export const getNeo4jDriver = (): Driver => {
   if (!driver) {

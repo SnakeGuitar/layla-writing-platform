@@ -1,4 +1,4 @@
-export type WikiEntityType = "Character" | "Location" | "Event" | "Object";
+export type WikiEntityType = "Character" | "Location" | "Event" | "Object" | "Concept";
 
 export interface IWikiEntry {
   projectId: string;

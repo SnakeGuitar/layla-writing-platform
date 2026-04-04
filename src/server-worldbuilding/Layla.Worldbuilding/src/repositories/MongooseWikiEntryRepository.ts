@@ -1,6 +1,6 @@
-import { WikiEntryModel } from "../models/WikiEntry.model";
-import type { IWikiEntry, WikiEntityType } from "../interfaces/wiki/IWikiEntry";
-import type { IWikiEntryRepository } from "../interfaces/repositories/IWikiEntryRepository";
+import { WikiEntryModel } from "@/models/WikiEntry.model";
+import type { IWikiEntry, WikiEntityType } from "@/interfaces/wiki/IWikiEntry";
+import type { IWikiEntryRepository } from "@/interfaces/repositories/IWikiEntryRepository";
 
 export class MongooseWikiEntryRepository implements IWikiEntryRepository {
   async listEntries(

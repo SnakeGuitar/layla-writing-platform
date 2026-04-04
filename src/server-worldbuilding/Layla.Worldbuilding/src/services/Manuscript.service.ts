@@ -222,23 +222,20 @@ export const updateChapter = async (
   if (data.content !== undefined) updatePayload.content = data.content;
   if (data.order !== undefined) updatePayload.order = data.order;
 
+  // If content changed, compute mentions and include them in a single update
   if (data.content !== undefined) {
     const manuscript: IManuscript | null = await repo.getManuscript(
       projectId,
       manuscriptId,
     );
-    const chapterDoc = manuscript?.chapters.find(
-      (c: IChapter) => c.chapterId === chapterId,
-    );
-
-    if (manuscript && chapterDoc) {
+    if (manuscript) {
       try {
         updatePayload.mentions = await syncChapterMentions({
           projectId,
           manuscriptId,
           manuscriptTitle: manuscript.title,
           chapterId,
-          chapterTitle: chapterDoc.title,
+          chapterTitle: data.title ?? chapter.title,
           content: data.content,
         });
       } catch (err) {
@@ -250,21 +247,18 @@ export const updateChapter = async (
     }
   }
 
-  await repo.updateChapter(projectId, manuscriptId, chapterId, updatePayload);
-
-  const updatedChapter = await repo.getChapter(
+  // Single update with all fields (including mentions), then extract chapter from result
+  const updatedManuscript = await repo.updateChapter(
     projectId,
     manuscriptId,
     chapterId,
+    updatePayload,
+  );
+  const updatedChapter = updatedManuscript?.chapters.find(
+    (c: IChapter) => c.chapterId === chapterId,
   );
 
-  if (!updatedChapter) {
-    throw new Error(
-      `[Manuscript.service] Chapter ${chapterId} not found after update — possible race condition`,
-    );
-  }
-
-  return { conflict: false, chapter: updatedChapter };
+  return { conflict: false, chapter: updatedChapter ?? undefined };
 };
 
 /**
