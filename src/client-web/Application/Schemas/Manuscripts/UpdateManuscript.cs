@@ -1,4 +1,4 @@
-namespace client_web.Schemas.Manuscripts;
+namespace client_web.Application.Schemas.Manuscripts;
 
 /// <summary>Payload sent by the web client to rename or reorder an existing manuscript.</summary>
 public class UpdateManuscript

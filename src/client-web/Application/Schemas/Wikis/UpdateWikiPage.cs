@@ -1,4 +1,4 @@
-namespace client_web.Schemas.Wikis;
+namespace client_web.Application.Schemas.Wikis;
 
 public class UpdateWikiPage
 {

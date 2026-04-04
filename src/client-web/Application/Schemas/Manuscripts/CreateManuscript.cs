@@ -1,4 +1,4 @@
-namespace client_web.Schemas.Manuscripts;
+namespace client_web.Application.Schemas.Manuscripts;
 
 /// <summary>Payload sent by the web client to create a new manuscript within a project.</summary>
 public class CreateManuscript

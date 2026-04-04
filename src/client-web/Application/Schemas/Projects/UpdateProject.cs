@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace client_web.Schemas.Projects;
+namespace client_web.Application.Schemas.Projects;
 
 public class UpdateProject
 {

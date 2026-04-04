@@ -1,4 +1,4 @@
-namespace client_web.Schemas.Auth;
+namespace client_web.Application.Schemas.Auth;
 
 public class LoginResponse
 {

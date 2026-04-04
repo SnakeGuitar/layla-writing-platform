@@ -1,10 +1,9 @@
 @page "/auth/login"
 @layout client_web.UI.Layout.LayoutEmpty
 @rendermode InteractiveServer
-@using client_web.Schemas
-@using client_web.Schemas.Auth
+@using client_web.Application.Schemas.Auth
 @using client_web.Services
-@using client_web.Services.Http
+@using client_web.Application.Services.Http
 @inject AuthService AuthService
 @inject NavigationManager Navigation
 
@@ -138,7 +137,7 @@
 
             // TODO-Development: Save token / navigate according to session logic
             Navigation.NavigateTo("/home");
-        } catch (ApiException ex) {
+        } catch (APIException ex) {
             _errorMessage = ex.Message;
         } catch (Exception) {
             _errorMessage = "An unexpected error occurred.";

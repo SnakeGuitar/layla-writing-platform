@@ -1,3 +1,4 @@
+using client_web.Application.Services.Http;
 using client_web.Services;
 using client_web.Services.Voice.SignalR;
 
@@ -7,9 +8,15 @@ public static class Services
 {
     public static void Configure(this IServiceCollection services)
     {
+        // HTTP Services
+        services.AddScoped<ApiClient>();
         services.AddScoped<AuthService>();
-        services.AddScoped<ProjectService>();
+
+        // Other Services
         services.AddScoped<PresenceService>();
+        services.AddScoped<ProjectService>();
+
+        // Voice Services
         services.AddSingleton<ISignalRClient, SignalRClient>();
         services.AddSingleton<IVoiceService, VoiceService>();
         services.AddSingleton<IVoiceConnectionService>(sp => sp.GetRequiredService<IVoiceService>());

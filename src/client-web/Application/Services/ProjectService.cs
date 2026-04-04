@@ -1,4 +1,4 @@
-using client_web.Services.Http;
+using client_web.Application.Services.Http;
 
 namespace client_web.Services;
 
@@ -13,7 +13,7 @@ public class ProjectService
 
     public async Task<IEnumerable<ProjectResponse>> GetUserProjectsAsync(string token)
     {
-        return await _api.RequestAsync<IEnumerable<ProjectResponse>>(new RequestHttp
+        return await _api.SendAsync<IEnumerable<ProjectResponse>>(new APIRequest
         {
             Endpoint = "/api/projects",
             Method = HttpMethod.Get,
@@ -23,7 +23,7 @@ public class ProjectService
 
     public async Task<IEnumerable<ProjectResponse>> GetAllProjectsAsync(string token)
     {
-        return await _api.RequestAsync<IEnumerable<ProjectResponse>>(new RequestHttp
+        return await _api.SendAsync<IEnumerable<ProjectResponse>>(new APIRequest
         {
             Endpoint = "/api/projects/all",
             Method = HttpMethod.Get,
