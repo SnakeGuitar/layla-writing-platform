@@ -1,4 +1,4 @@
-using client_web.Application.Services.Http;
+using client_web.Application.Config.Http;
 using Polly;
 
 namespace client_web.Config;
@@ -7,7 +7,6 @@ public static class HttpClientConfig
 {
     public static void Configure(IServiceCollection services, WebApplicationBuilder builder)
     {
-        services.AddHttpClient();
         // Política de retry con backoff exponencial
         var retryPolicy = Policy
             .Handle<HttpRequestException>()
@@ -22,6 +21,7 @@ public static class HttpClientConfig
 
         string backendUrl = builder.Configuration["ApiUrls:BackendURL"] ?? throw new InvalidOperationException("ApiUrls:BackendURL no configurado");
 
+        services.AddHttpClient();
         // Typed client con retry policy aplicada directamente
         services.AddHttpClient<ApiClient>(client =>
         {

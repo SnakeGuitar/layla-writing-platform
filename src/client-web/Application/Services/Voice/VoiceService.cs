@@ -1,4 +1,6 @@
+using System.Data;
 using client_web.Application.Config.SignalR;
+using client_web.Helpers;
 
 namespace client_web.Application.Services.Voice;
 
@@ -8,14 +10,15 @@ public record VoiceRoomState(Guid ProjectId, List<VoiceParticipant> Participants
 public class VoiceService : IVoiceService
 {
     private readonly ISignalRClient _client;
-    private readonly string _voiceHubBaseUrl;
+    private readonly string _baseUrl;
     private bool _handlersRegistered;
 
     public VoiceService(ISignalRClient client, IConfiguration configuration)
     {
         _client = client;
-        _voiceHubBaseUrl = configuration["ApiUrls:BackendURL"]!;
-        _client.OnConnectionChanged += state => ConnectionChanged?.Invoke(this, state);
+        _baseUrl = configuration["ApiUrls:BackendURL"]!;
+        _client.OnConnectionChanged += (sender, state) =>
+            OnConnectionChanged?.Invoke(this, state);
     }
 
     private void RegisterHandlers()
@@ -23,76 +26,75 @@ public class VoiceService : IVoiceService
         if (_handlersRegistered) return;
 
         _client.On<VoiceRoomState>("RoomState", state =>
-            RoomStateChanged?.Invoke(this, state.Participants));
+            OnRoomStateChanged?.Invoke(this, state.Participants));
 
         _client.On<VoiceParticipant>("UserJoined", participant =>
-            UserJoined?.Invoke(this, participant));
+            OnUserJoined?.Invoke(this, participant));
 
         _client.On<string>("UserLeft", userId =>
-            UserLeft?.Invoke(this, userId));
+            OnUserLeft?.Invoke(this, userId));
 
         _client.On<string, string>("UserStartedSpeaking", (userId, displayName) =>
-            SpeakerStarted?.Invoke(this, (userId, displayName)));
+            OnSpeakerStarted?.Invoke(this, (userId, displayName)));
 
         _client.On<string>("UserStoppedSpeaking", userId =>
-            SpeakerStopped?.Invoke(this, userId));
+            OnSpeakerStopped?.Invoke(this, userId));
 
         _client.On<string, byte[]>("ReceiveAudio", (senderId, audioData) =>
-            AudioReceived?.Invoke(this, (senderId, audioData)));
+            OnAudioReceived?.Invoke(this, (senderId, audioData)));
 
         _handlersRegistered = true;
     }
 
-    private async Task InvokeSafeAsync(string method, params object[] args)
+    private async Task InvokeSafeAsync(Enum method, params object[] args)
     {
-        if (!IsConnected) return;
-
-        try
+        string methodName = FormatData.EnumToMethodName(method);
+        await _client.InvokeSafeAsync(methodName, args).ContinueWith(task =>
         {
-            await _client.InvokeAsync(method, args);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Error calling {method}: {ex.Message}");
-        }
+            if (task.IsFaulted)
+            {
+                Console.Error.WriteLine($"Error calling {method}: {task.Exception?.GetBaseException().Message}");
+            }
+        });
     }
 
     // IVoiceConnectionService ----------------------------------------------------------
     public bool IsConnected => _client.IsConnected;
-    public event EventHandler<string>? ConnectionChanged;
+    public event EventHandler<ConnectionState>? OnConnectionChanged;
 
     public Task ConnectAsync(string token) =>
-        _client.ConnectAsync($"{_voiceHubBaseUrl}/hubs/voice", token);
+        _client.ConnectAsync($"{_baseUrl}/hubs/voice", token);
 
-    public Task DisconnectAsync() => _client.DisconnectAsync();
+    public Task DisconnectAsync() =>
+        _client.DisconnectAsync();
 
-    public async ValueTask DisposeAsync() => await _client.DisposeAsync();
+    public async ValueTask DisposeAsync() =>
+        await _client.DisposeAsync();
 
     // IVoiceRoomService -----------------------------------------------------------
-    public event EventHandler<List<VoiceParticipant>>? RoomStateChanged;
-    public event EventHandler<VoiceParticipant>? UserJoined;
-    public event EventHandler<string>? UserLeft;
-    public event EventHandler<(string userId, string displayName)>? SpeakerStarted;
-    public event EventHandler<string>? SpeakerStopped;
+    public event EventHandler<List<VoiceParticipant>>? OnRoomStateChanged;
+    public event EventHandler<VoiceParticipant>? OnUserJoined;
+    public event EventHandler<string>? OnUserLeft;
+    public event EventHandler<(string userId, string displayName)>? OnSpeakerStarted;
+    public event EventHandler<string>? OnSpeakerStopped;
 
     public async Task JoinRoomAsync(Guid projectId)
     {
-        RegisterHandlers();
-        await InvokeSafeAsync("JoinRoom", projectId);
+        await InvokeSafeAsync(RoomAccessState.JoinRoom, projectId);
     }
 
     public async Task LeaveRoomAsync(Guid projectId) =>
-        await InvokeSafeAsync("LeaveRoom", projectId);
+        await InvokeSafeAsync(RoomAccessState.LeaveRoom, projectId);
 
     // IVoiceAudioService -----------------------------------------------------------
-    public event EventHandler<(string senderId, byte[] audio)>? AudioReceived;
+    public event EventHandler<(string senderId, byte[] audio)>? OnAudioReceived;
 
     public async Task StartSpeakingAsync(Guid projectId) =>
-        await InvokeSafeAsync("StartSpeaking", projectId);
+        await InvokeSafeAsync(AudioState.StartSpeaking, projectId);
 
     public async Task StopSpeakingAsync(Guid projectId) =>
-        await InvokeSafeAsync("StopSpeaking", projectId);
+        await InvokeSafeAsync(AudioState.StopSpeaking, projectId);
 
     public async Task SendAudioAsync(Guid projectId, byte[] audioData) =>
-        await InvokeSafeAsync("SendAudio", projectId, audioData);
+        await InvokeSafeAsync(AudioState.SendingAudio, projectId, audioData);
 }

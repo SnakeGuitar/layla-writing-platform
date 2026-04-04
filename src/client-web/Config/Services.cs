@@ -1,6 +1,9 @@
-using client_web.Application.Services.Http;
+using client_web.Application.Config.Http;
+using client_web.Application.Config.SignalR;
+using client_web.Application.Services.ActiveStatusAuthor;
+using client_web.Application.Services.Projects;
+using client_web.Application.Services.Voice;
 using client_web.Services;
-using client_web.Services.Voice.SignalR;
 
 namespace client_web.Config;
 

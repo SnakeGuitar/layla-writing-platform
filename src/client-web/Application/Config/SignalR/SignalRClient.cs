@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.AspNetCore.SignalR.Client;
 using Polly;
 using Polly.Retry;
@@ -6,13 +7,11 @@ namespace client_web.Application.Config.SignalR;
 
 public class SignalRClient : ISignalRClient
 {
-    private HubConnection? _hub;
-    private readonly SemaphoreSlim _connectionLock = new(1, 1);
-    private AsyncRetryPolicy _retryPolicy;
-
+    public HubConnection? _hub;
+    public readonly SemaphoreSlim _connectionLock = new(1, 1);
+    public AsyncRetryPolicy _retryPolicy;
     public bool IsConnected => _hub?.State == HubConnectionState.Connected;
-
-    public event Action<string>? OnConnectionChanged;
+    public event EventHandler<ConnectionState>? OnConnectionChanged;
 
     public SignalRClient()
     {
@@ -46,26 +45,26 @@ public class SignalRClient : ISignalRClient
 
             _hub.Closed += _ =>
             {
-                OnConnectionChanged?.Invoke("Disconnected");
+                OnConnectionChanged?.Invoke(this, ConnectionState.Closed);
                 return Task.CompletedTask;
             };
 
             _hub.Reconnecting += _ =>
             {
-                OnConnectionChanged?.Invoke("Reconnecting");
+                OnConnectionChanged?.Invoke(this, ConnectionState.Connecting);
                 return Task.CompletedTask;
             };
 
             _hub.Reconnected += _ =>
             {
-                OnConnectionChanged?.Invoke("Connected");
+                OnConnectionChanged?.Invoke(this, ConnectionState.Open);
                 return Task.CompletedTask;
             };
 
             await _retryPolicy.ExecuteAsync(async () =>
             {
                 await _hub.StartAsync();
-                OnConnectionChanged?.Invoke("Connected");
+                OnConnectionChanged?.Invoke(this, ConnectionState.Connecting);
             });
         }
         finally
@@ -85,7 +84,7 @@ public class SignalRClient : ISignalRClient
             await _hub.DisposeAsync();
             _hub = null;
 
-            OnConnectionChanged?.Invoke("Disconnected");
+            OnConnectionChanged?.Invoke(this, ConnectionState.Closed);
         }
         finally
         {
@@ -93,7 +92,7 @@ public class SignalRClient : ISignalRClient
         }
     }
 
-    public async Task InvokeAsync(string method, params object[] args)
+    public async Task InvokeSafeAsync(string method, params object[] args)
     {
         if (!IsConnected || _hub == null) return;
 

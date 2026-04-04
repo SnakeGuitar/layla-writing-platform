@@ -1,4 +1,5 @@
 using client_web.Application.Config.Http;
+using client_web.Application.Services.ActiveStatusAuthor;
 
 namespace client_web.Application.Services.Projects;
 
@@ -30,6 +31,16 @@ public class ProjectService
             Token = token
         });
     }
+
+    public async Task<List<PublicProjectDto>> GetPublicProjectsAsync()
+    {
+        return await _api.SendAsync<List<PublicProjectDto>>(new APIRequest
+        {
+            Endpoint = "/api/projects/public",
+            Method = HttpMethod.Get,
+            Token = null
+        });
+    }
 }
 
 public class ProjectResponse
@@ -41,3 +52,13 @@ public class ProjectResponse
     public string? CoverImageUrl { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
+
+public record PublicProjectDto(
+    Guid Id,
+    string Title,
+    string Synopsis,
+    string LiteraryGenre,
+    string? CoverImageUrl,
+    DateTime UpdatedAt,
+    bool IsPublic
+);

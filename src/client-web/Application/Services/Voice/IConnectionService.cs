@@ -1,10 +1,12 @@
+using System.Data;
+
 namespace client_web.Application.Services.Voice;
 
 /// <summary>
 /// Maneja el ciclo de vida de la conexión con el Hub de SignalR.
 /// Responsable de conectar, reconectar y desconectar.
 /// </summary>
-public interface IVoiceConnectionService : IAsyncDisposable
+public interface IConnectionService : IAsyncDisposable
 {
     /// <summary>
     /// Indica si la conexión está activa.
@@ -15,7 +17,7 @@ public interface IVoiceConnectionService : IAsyncDisposable
     /// Evento que notifica cambios en el estado de la conexión.
     /// Valores posibles: Connected, Reconnecting, Disconnected.
     /// </summary>
-    event EventHandler<string>? ConnectionChanged;
+    event EventHandler<ConnectionState>? OnConnectionChanged;
 
     /// <summary>
     /// Establece conexión con el servidor usando un JWT.

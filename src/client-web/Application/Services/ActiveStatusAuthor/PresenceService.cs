@@ -1,64 +1,36 @@
+using client_web.Application.Config.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace client_web.Application.Services.ActiveStatusAuthor;
 
 public class PresenceService : IPresenceService
 {
-    private HubConnection? _hub;
-    private readonly IHttpClientFactory _httpClientFactory;
-    private readonly string _coreBaseUrl;
+    private readonly ISignalRClient _client;
+    private readonly string _baseUrl;
+    private bool _handlersRegistered;
 
-    public event Action<Guid, bool>? OnAuthorStatusChanged;
-
-    public PresenceService(IHttpClientFactory httpClientFactory, IConfiguration configuration)
+    public PresenceService(ISignalRClient client, IConfiguration configuration)
     {
-        _httpClientFactory = httpClientFactory;
-        _coreBaseUrl = configuration["ApiUrls:BackendURL"]!;
+        _client = client;
+        _baseUrl = configuration["ApiUrls:BackendURL"]!;
+        _client.OnConnectionChanged += state => ConnectionChanged?.Invoke(this, state);
     }
 
-    public async Task<List<PublicProjectDto>> GetPublicProjectsAsync()
-    {
-        var client = _httpClientFactory.CreateClient("ServerCore");
-        try
-        {
-            var projects = await client.GetFromJsonAsync<List<PublicProjectDto>>("/api/projects/public");
-            return projects ?? [];
-        }
-        catch
-        {
-            return [];
-        }
-    }
+    // Connection -------------------------------------------------------------------
+    public bool IsConnected => _client.IsConnected;
+    public event EventHandler<string>? OnConnectionChanged;
 
-    public async Task ConnectAsync()
-    {
-        if (_hub != null) return;
+    public async Task ConnectAsync(string token) => await _client.ConnectAsync($"{_baseUrl}/presenceHub", token);
 
-        _hub = new HubConnectionBuilder()
-            .WithUrl($"{_coreBaseUrl}/hubs/presence")
-            .WithAutomaticReconnect()
-            .Build();
+    public Task DisconnectAsync() => _client.DisconnectAsync();
 
-        _hub.On<Guid, bool>("AuthorStatusChanged", (projectId, isActive) =>
-        {
-            OnAuthorStatusChanged?.Invoke(projectId, isActive);
-        });
+    public async ValueTask DisposeAsync() => await _client.DisposeAsync();
 
-        await _hub.StartAsync();
-    }
+    // 
 
     public async Task WatchProjectAsync(Guid projectId)
     {
         if (_hub?.State != HubConnectionState.Connected) return;
         await _hub.InvokeAsync("WatchProject", projectId);
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        if (_hub != null)
-        {
-            await _hub.DisposeAsync();
-            _hub = null;
-        }
     }
 }
