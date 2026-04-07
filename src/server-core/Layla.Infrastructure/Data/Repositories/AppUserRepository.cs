@@ -28,6 +28,7 @@ public class AppUserRepository : IAppUserRepository
 
     public async Task<Result<AppUser>> GetAppUserByIdAsync(Guid userId, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
             return Result<AppUser>.Failure(ErrorCode.UserNotFound);
@@ -37,6 +38,7 @@ public class AppUserRepository : IAppUserRepository
 
     public async Task<Result<AppUser>> UpdateAppUserAsync(Guid userId, UpdateAppUserRequestDto request, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
             return Result<AppUser>.Failure(ErrorCode.UserNotFound);
@@ -44,6 +46,7 @@ public class AppUserRepository : IAppUserRepository
         user.DisplayName = request.DisplayName ?? user.DisplayName;
         user.Bio = request.Bio ?? user.Bio;
 
+        cancellationToken.ThrowIfCancellationRequested();
         var result = await _userManager.UpdateAsync(user);
         if (!result.Succeeded)
         {
@@ -56,10 +59,12 @@ public class AppUserRepository : IAppUserRepository
 
     public async Task<Result<bool>> DeleteAppUserAsync(Guid userId, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
             return Result<bool>.Failure(ErrorCode.UserNotFound);
 
+        cancellationToken.ThrowIfCancellationRequested();
         var result = await _userManager.DeleteAsync(user);
         if (!result.Succeeded)
         {
@@ -72,12 +77,14 @@ public class AppUserRepository : IAppUserRepository
 
     public async Task<Result<bool>> BanAppUserAsync(Guid userId, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var user = await _userManager.FindByIdAsync(userId.ToString());
         if (user == null)
             return Result<bool>.Failure(ErrorCode.UserNotFound);
 
         user.TokenVersion++;
 
+        cancellationToken.ThrowIfCancellationRequested();
         var lockoutResult = await _userManager.SetLockoutEnabledAsync(user, true);
         if (!lockoutResult.Succeeded)
         {
@@ -85,6 +92,7 @@ public class AppUserRepository : IAppUserRepository
             return Result<bool>.Failure(ErrorCode.ValidationFailed, errors);
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
         var lockoutEndResult = await _userManager.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
         if (!lockoutEndResult.Succeeded)
         {
@@ -92,6 +100,7 @@ public class AppUserRepository : IAppUserRepository
             return Result<bool>.Failure(ErrorCode.ValidationFailed, errors);
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
         var updateResult = await _userManager.UpdateAsync(user);
         if (!updateResult.Succeeded)
         {
@@ -104,6 +113,7 @@ public class AppUserRepository : IAppUserRepository
 
     public async Task<Result<AppUser>> GetAppUserByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var user = await _userManager.FindByEmailAsync(email);
         if (user == null)
             return Result<AppUser>.Failure(ErrorCode.UserNotFound);

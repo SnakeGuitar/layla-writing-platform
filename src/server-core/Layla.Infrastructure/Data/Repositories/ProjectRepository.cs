@@ -33,7 +33,9 @@ public class ProjectRepository : TransactionalRepository, IProjectRepository
 
     public async Task<Project?> GetProjectByIdAsync(Guid projectId, CancellationToken cancellationToken = default)
     {
-        return await DbContext.Projects.FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
+        return await DbContext.Projects
+            .Include(p => p.Roles)
+            .FirstOrDefaultAsync(p => p.Id == projectId, cancellationToken);
     }
 
     public async Task<IEnumerable<Project>> GetAllProjectsAsync(CancellationToken cancellationToken = default)
