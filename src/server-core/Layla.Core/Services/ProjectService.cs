@@ -6,6 +6,7 @@ using Layla.Core.Events;
 using Layla.Core.Interfaces.Data;
 using Layla.Core.Interfaces.Messaging;
 using Layla.Core.Interfaces.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Layla.Core.Services;
@@ -189,6 +190,9 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
             if (!project.IsPublic)
                 return Result<CollaboratorResponseDto>.Failure(ErrorCode.InvalidInput, "Project is not public.");
 
+            // Optimistic check for the common path: avoids hitting the duplicate-key
+            // exception path under normal traffic. The DB-level catch below closes
+            // the race window between this check and SaveChangesAsync.
             var alreadyMember = await _projectRepository.UserHasAnyRoleInProjectAsync(projectId, userId, cancellationToken);
             if (alreadyMember)
                 return Result<CollaboratorResponseDto>.Failure(ErrorCode.AlreadyMember);
@@ -201,8 +205,19 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
                 AssignedAt = DateTime.UtcNow
             };
 
-            await _projectRepository.AddProjectRoleAsync(projectRole, cancellationToken);
-            await _projectRepository.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _projectRepository.AddProjectRoleAsync(projectRole, cancellationToken);
+                await _projectRepository.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex)
+            {
+                // Composite PK (ProjectId, AppUserId) on ProjectRoles guarantees
+                // that a concurrent join request will fail at SaveChanges. Translate
+                // it into the same error the optimistic check would have produced.
+                Logger.LogInformation(ex, "Race detected joining project {ProjectId} for user {UserId} — translating to AlreadyMember.", projectId, userId);
+                return Result<CollaboratorResponseDto>.Failure(ErrorCode.AlreadyMember);
+            }
 
             var userResult = await _appUserRepository.GetAppUserByIdAsync(userGuid, cancellationToken);
             if (!userResult.IsSuccess || userResult.Data == null)
@@ -241,8 +256,16 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
                 AssignedAt = DateTime.UtcNow
             };
 
-            await _projectRepository.AddProjectRoleAsync(projectRole, cancellationToken);
-            await _projectRepository.SaveChangesAsync(cancellationToken);
+            try
+            {
+                await _projectRepository.AddProjectRoleAsync(projectRole, cancellationToken);
+                await _projectRepository.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException ex)
+            {
+                Logger.LogInformation(ex, "Race detected inviting user {TargetUserId} to project {ProjectId} — translating to AlreadyMember.", targetUser.Id, projectId);
+                return Result<CollaboratorResponseDto>.Failure(ErrorCode.AlreadyMember);
+            }
 
             return Result<CollaboratorResponseDto>.Success(
                 MapToCollaboratorDto(targetUser, normalizedRole, projectRole.AssignedAt));

@@ -10,6 +10,7 @@ public record RegisterRequestDto
 
     [Required]
     [MinLength(8)]
+    [MaxLength(128)]
     public string Password { get; set; } = string.Empty;
 
     public string? DisplayName { get; set; }
