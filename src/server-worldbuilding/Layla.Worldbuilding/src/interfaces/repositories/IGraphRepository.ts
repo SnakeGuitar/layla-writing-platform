@@ -17,13 +17,17 @@ export interface IGraphRepository {
     entityType: string;
   }): Promise<void>;
   deleteEntity(entityId: string): Promise<void>;
+  /**
+   * Creates a relationship between two entities.
+   * Returns `false` if either entity does not exist in the project.
+   */
   createRelationship(data: {
     projectId: string;
     sourceEntityId: string;
     targetEntityId: string;
     type: string;
     label?: string;
-  }): Promise<void>;
+  }): Promise<boolean>;
   deleteRelationship(data: {
     projectId: string;
     sourceEntityId: string;
