@@ -7,38 +7,38 @@ Collaborative creative-writing and worldbuilding platform. Multiple authors can 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                         Clients                             │
+┌────────────────────────────────────────────────────────────────┐
+│                         Clients                                │
 │  Desktop (WPF/Net9)  │  Web (Blazor/Net9)  │  Android (Kotlin) │
-└────────────┬───────────────────┬────────────────────────────┘
+└────────────┬───────────────────┬───────────────────────────────┘
              │ HTTPS + SignalR   │ HTTPS
              ▼                   ▼
 ┌────────────────────┐   ┌─────────────────────────────┐
-│   server-core      │   │   server-worldbuilding       │
-│   ASP.NET Core 10  │   │   Node.js + Express 5        │
-│   Port 7165 (HTTPS)│   │   Port 3000 (HTTP)           │
+│   server-core      │   │   server-worldbuilding      │
+│   ASP.NET Core 10  │   │   Node.js + Express 5       │
+│   Port 7165 (HTTPS)│   │   Port 3000 (HTTP)          │
 │   Port 5287 (HTTP) │   │                             │
-│                    │   │  /api/manuscripts            │
+│                    │   │  /api/manuscripts           │
 │  /api/tokens       │   │  /api/wiki                  │
 │  /api/users        │   │  /api/graph                 │
 │  /api/projects     │   │  /api-docs  ← Swagger UI    │
 │  /hubs/voice       │   └──────────────┬──────────────┘
 │  /hubs/presence    │                  │
-│  /swagger  ← UI    │          ┌───────▼────────┐
-└────────┬───────────┘          │   MongoDB       │
-         │                      │   (manuscripts, │
-         │  RabbitMQ events      │   wiki entries) │
-         │  (project.created)    └────────────────┘
-         ▼                      ┌────────────────┐
-┌────────────────┐              │   Neo4j         │
-│   SQL Server   │              │ (narrative graph)│
-│  (users,       │              └────────────────┘
+│  /swagger  ← UI    │          ┌───────▼──────────┐
+└────────┬───────────┘          │   MongoDB        │
+         │                      │   (manuscripts,  │
+         │  RabbitMQ events     │   wiki entries)  │
+         │  (project.created)   └──────────────────┘
+         ▼                      ┌───────────────────┐
+┌────────────────┐              │   Neo4j           │
+│   SQL Server   │              │ (narrative graph) │
+│  (users,       │              └───────────────────┘
 │   projects,    │
-│   roles)       │       ┌──────────────────────┐
-└────────────────┘       │     RabbitMQ          │
+│   roles)       │       ┌─────────────────────────────────┐
+└────────────────┘       │     RabbitMQ                    │
                          │  Exchange: worldbuilding.events │
                          │  Routing key: project.created   │
-                         └──────────────────────┘
+                         └─────────────────────────────────┘
 ```
 
 ### Services
