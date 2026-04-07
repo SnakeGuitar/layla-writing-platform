@@ -68,7 +68,7 @@ public class UsersController : ApiControllerBase
     {
         var isAdmin = User.IsInRole(AppRoles.Admin);
 
-        if (!isAdmin && CurrentUserId != id.ToString())
+        if (!isAdmin && (!Guid.TryParse(CurrentUserId, out var currentGuid) || currentGuid != id))
             return Forbid();
 
         var result = await _appUserService.GetAppUserByIdAsync(id, cancellationToken);
@@ -90,7 +90,7 @@ public class UsersController : ApiControllerBase
     {
         var isAdmin = User.IsInRole(AppRoles.Admin);
 
-        if (!isAdmin && CurrentUserId != id.ToString())
+        if (!isAdmin && (!Guid.TryParse(CurrentUserId, out var currentGuid) || currentGuid != id))
             return Forbid();
 
         var result = await _appUserService.UpdateAppUserAsync(id, request, cancellationToken);
@@ -112,7 +112,7 @@ public class UsersController : ApiControllerBase
     {
         var isAdmin = User.IsInRole(AppRoles.Admin);
 
-        if (!isAdmin && CurrentUserId != id.ToString())
+        if (!isAdmin && (!Guid.TryParse(CurrentUserId, out var currentGuid) || currentGuid != id))
             return Forbid();
 
         var result = await _appUserService.DeleteAppUserAsync(id, cancellationToken);

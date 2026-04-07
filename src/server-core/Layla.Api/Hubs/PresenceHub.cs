@@ -26,7 +26,8 @@ public class PresenceHub : Hub
     [Authorize]
     public async Task WatchProject(Guid projectId)
     {
-        await Groups.AddToGroupAsync(Context.ConnectionId, HubConstants.GroupNames.PresenceGroup(projectId));
+        var ct = Context.ConnectionAborted;
+        await Groups.AddToGroupAsync(Context.ConnectionId, HubConstants.GroupNames.PresenceGroup(projectId), ct);
 
         if (Context.User?.Identity?.IsAuthenticated == true)
         {
@@ -37,7 +38,7 @@ public class PresenceHub : Hub
                 return;
             }
 
-            var isMember = await _projectRepository.UserHasAnyRoleInProjectAsync(projectId, userId);
+            var isMember = await _projectRepository.UserHasAnyRoleInProjectAsync(projectId, userId, ct);
             if (!isMember)
                 throw new HubException("You are not a member of this project.");
 
@@ -61,6 +62,7 @@ public class PresenceHub : Hub
         await Clients.Caller.SendAsync(PresenceEvents.ParticipantsUpdated, projectId, participants);
     }
 
+    [Authorize]
     public async Task UnwatchProject(Guid projectId)
     {
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, HubConstants.GroupNames.PresenceGroup(projectId));

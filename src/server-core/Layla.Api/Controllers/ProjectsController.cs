@@ -127,14 +127,20 @@ public class ProjectsController : ApiControllerBase
         if (!result.IsSuccess)
             return RespondWithError(result.ErrorCode);
 
-        if (!result.Data!.IsPublic)
+        // Defensive: a successful Result<T> should always carry data, but treat
+        // a missing payload as 404 instead of throwing an NRE on `.IsPublic`.
+        var project = result.Data;
+        if (project == null)
+            return RespondWithError(Layla.Core.Common.ErrorCode.ProjectNotFound);
+
+        if (!project.IsPublic)
         {
             var isMember = await _projectService.UserHasAccessAsync(id, CurrentUserId, cancellationToken);
             if (!isMember)
                 return Forbid();
         }
 
-        return Ok(result.Data);
+        return Ok(project);
     }
 
     /// <summary>
@@ -148,7 +154,7 @@ public class ProjectsController : ApiControllerBase
     /// <response code="401">Missing or invalid JWT.</response>
     /// <response code="403">Caller is not the project OWNER.</response>
     /// <response code="404">Project not found.</response>
-    [HttpPut("{id}")]
+    [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(ProjectResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -173,7 +179,7 @@ public class ProjectsController : ApiControllerBase
     /// <response code="401">Missing or invalid JWT.</response>
     /// <response code="403">Caller is not the project OWNER.</response>
     /// <response code="404">Project not found.</response>
-    [HttpDelete("{id}")]
+    [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

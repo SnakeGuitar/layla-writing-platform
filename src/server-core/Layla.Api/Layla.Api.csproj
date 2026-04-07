@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
+    <UserSecretsId>layla-api-2c1d4f3e-8a5b-4f2e-9c7d-1b6e3a8d5f9c</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

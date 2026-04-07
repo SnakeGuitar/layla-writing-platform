@@ -29,15 +29,17 @@ public class VoiceHub : Hub
 
     public async Task JoinRoom(Guid projectId)
     {
+        var ct = Context.ConnectionAborted;
+
         var userId = ExtractUserId();
         if (userId == null)
             return;
 
-        var project = await _projectRepository.GetProjectByIdAsync(projectId);
+        var project = await _projectRepository.GetProjectByIdAsync(projectId, ct);
         if (project == null)
             throw new HubException("Project not found.");
 
-        var userRole = await _projectRepository.GetProjectRoleAsync(projectId, userId);
+        var userRole = await _projectRepository.GetProjectRoleAsync(projectId, userId, ct);
 
         if (userRole == null && !project.IsPublic)
             throw new HubException("You are not a member of this project.");
@@ -48,10 +50,10 @@ public class VoiceHub : Hub
         var participant = _roomManager.AddParticipant(projectId, userId, displayName, Context.ConnectionId, participantRole);
         var groupName = HubConstants.GroupNames.VoiceGroup(projectId);
 
-        await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+        await Groups.AddToGroupAsync(Context.ConnectionId, groupName, ct);
         var participants = _roomManager.GetParticipants(projectId);
-        await Clients.Caller.SendAsync(VoiceEvents.RoomState, new VoiceRoomStateDto(projectId, participants));
-        await Clients.OthersInGroup(groupName).SendAsync(VoiceEvents.UserJoined, participant);
+        await Clients.Caller.SendAsync(VoiceEvents.RoomState, new VoiceRoomStateDto(projectId, participants), ct);
+        await Clients.OthersInGroup(groupName).SendAsync(VoiceEvents.UserJoined, participant, ct);
 
         _logger.LogInformation("User {UserId} joined voice room for project {ProjectId}", userId, projectId);
     }

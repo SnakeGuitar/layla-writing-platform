@@ -16,6 +16,31 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ── Fail-fast on missing critical secrets ─────────────────────────────────────
+// Secrets MUST be supplied via environment variables, dotnet user-secrets, or a
+// secret store — NEVER committed to appsettings.json. Without this guard the
+// app would boot with null!/empty strings and crash deep in JWT validation
+// or DB connection paths.
+const int MinJwtSecretLength = 32;
+
+string RequireConfig(string key)
+{
+    var value = builder.Configuration[key];
+    if (string.IsNullOrWhiteSpace(value))
+        throw new InvalidOperationException(
+            $"Missing required configuration '{key}'. Set it via environment variable or user-secrets.");
+    return value;
+}
+
+var jwtSecret = RequireConfig("JwtSettings:Secret");
+if (jwtSecret.Length < MinJwtSecretLength)
+    throw new InvalidOperationException(
+        $"'JwtSettings:Secret' must be at least {MinJwtSecretLength} characters for HS256 security.");
+
+_ = RequireConfig("ConnectionStrings:DefaultConnection");
+_ = RequireConfig("RabbitMQ:UserName");
+_ = RequireConfig("RabbitMQ:Password");
+
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
@@ -98,7 +123,7 @@ builder.Services.AddAuthentication(options =>
             NameClaimType = ClaimNames.Name,
             RoleClaimType = ClaimNames.Role,
             IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
-                System.Text.Encoding.UTF8.GetBytes(builder.Configuration["JwtSettings:Secret"]!))
+                System.Text.Encoding.UTF8.GetBytes(jwtSecret))
         };
         options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
         {
