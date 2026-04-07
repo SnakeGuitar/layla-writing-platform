@@ -14,10 +14,16 @@ export const listEntries = async (
 };
 
 /**
- * Returns a single wiki entry by its `entityId`, or `null` if not found.
+ * Returns a single wiki entry by its `entityId`, scoped to `projectId` to
+ * prevent cross-project access (returns `null` if the entry belongs to a
+ * different project).
  */
-export const getEntry = async (entityId: string, repo = container.wikiRepo) => {
-  return repo.getEntry(entityId);
+export const getEntry = async (
+  entityId: string,
+  projectId?: string,
+  repo = container.wikiRepo,
+) => {
+  return repo.getEntry(entityId, projectId);
 };
 
 /**
@@ -67,16 +73,18 @@ export const createEntry = async (
 
 /**
  * Updates mutable fields of an existing wiki entry in MongoDB and re-syncs
- * to Neo4j if the entry exists.
+ * to Neo4j if the entry exists. Pass `projectId` to scope the update to a
+ * specific project — prevents cross-project mutations.
  */
 export const updateEntry = async (
   entityId: string,
   data: Partial<
     Pick<IWikiEntry, "name" | "entityType" | "description" | "tags">
   >,
+  projectId?: string,
   repo = container,
 ) => {
-  const entry = await repo.wikiRepo.updateEntry(entityId, data);
+  const entry = await repo.wikiRepo.updateEntry(entityId, data, projectId);
 
   if (entry) {
     try {
@@ -88,6 +96,7 @@ export const updateEntry = async (
       });
 
       if (!entry.neo4jSynced) {
+        // Internal call — no projectId filter needed (entry already resolved)
         await repo.wikiRepo.updateEntry(entityId, { neo4jSynced: true });
         entry.neo4jSynced = true;
       }
@@ -113,9 +122,10 @@ const NEO4J_DELETE_RETRIES = 3;
 
 export const deleteEntry = async (
   entityId: string,
+  projectId?: string,
   repo = container,
 ): Promise<boolean> => {
-  const deleted = await repo.wikiRepo.deleteEntry(entityId);
+  const deleted = await repo.wikiRepo.deleteEntry(entityId, projectId);
   if (!deleted) return false;
 
   for (let attempt = 1; attempt <= NEO4J_DELETE_RETRIES; attempt++) {

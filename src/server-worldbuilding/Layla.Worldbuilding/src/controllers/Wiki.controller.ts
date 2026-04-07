@@ -37,7 +37,10 @@ export const listEntries = async (
  * Returns a single wiki entry by its `entityId`.
  */
 export const getEntry = async (req: Request, res: Response): Promise<void> => {
-  const entry = await WikiService.getEntry(req.params["entityId"] as string);
+  const entry = await WikiService.getEntry(
+    req.params["entityId"] as string,
+    req.params["projectId"] as string,
+  );
   if (!entry) {
     res.status(404).json({ error: "Entity not found" });
     return;
@@ -85,6 +88,7 @@ export const updateEntry = async (
   const entry = await WikiService.updateEntry(
     req.params["entityId"] as string,
     parsed.data,
+    req.params["projectId"] as string,
   );
   if (!entry) {
     res.status(404).json({ error: "Entity not found" });
@@ -104,6 +108,7 @@ export const deleteEntry = async (
 ): Promise<void> => {
   const deleted = await WikiService.deleteEntry(
     req.params["entityId"] as string,
+    req.params["projectId"] as string,
   );
   if (!deleted) {
     res.status(404).json({ error: "Entity not found" });

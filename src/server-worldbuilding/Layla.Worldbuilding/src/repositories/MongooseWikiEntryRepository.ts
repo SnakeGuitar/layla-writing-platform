@@ -14,10 +14,10 @@ export class MongooseWikiEntryRepository implements IWikiEntryRepository {
       .lean() as unknown as IWikiEntry[];
   }
 
-  async getEntry(entityId: string): Promise<IWikiEntry | null> {
-    return WikiEntryModel.findOne({
-      entityId,
-    }).lean() as unknown as IWikiEntry | null;
+  async getEntry(entityId: string, projectId?: string): Promise<IWikiEntry | null> {
+    const filter: Record<string, string> = { entityId };
+    if (projectId) filter.projectId = projectId;
+    return WikiEntryModel.findOne(filter).lean() as unknown as IWikiEntry | null;
   }
 
   async createEntry(data: Partial<IWikiEntry>): Promise<IWikiEntry> {
@@ -28,16 +28,21 @@ export class MongooseWikiEntryRepository implements IWikiEntryRepository {
   async updateEntry(
     entityId: string,
     data: Partial<IWikiEntry>,
+    projectId?: string,
   ): Promise<IWikiEntry | null> {
+    const filter: Record<string, string> = { entityId };
+    if (projectId) filter.projectId = projectId;
     return WikiEntryModel.findOneAndUpdate(
-      { entityId },
+      filter,
       { $set: data },
       { new: true },
     ).lean() as unknown as IWikiEntry | null;
   }
 
-  async deleteEntry(entityId: string): Promise<boolean> {
-    const result = await WikiEntryModel.deleteOne({ entityId });
+  async deleteEntry(entityId: string, projectId?: string): Promise<boolean> {
+    const filter: Record<string, string> = { entityId };
+    if (projectId) filter.projectId = projectId;
+    const result = await WikiEntryModel.deleteOne(filter);
     return result.deletedCount > 0;
   }
 
