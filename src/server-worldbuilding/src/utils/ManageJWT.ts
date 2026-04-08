@@ -8,7 +8,7 @@ import { config } from "@/config/env";
  * Throws an error (e.g., `TokenExpiredError`, `JsonWebTokenError`) if invalid.
  */
 export const verifyAccessJWTToken = (token: string): JwtPayloadCustom => {
-  return jwt.verify(token, config.jwt.secret, {
-    algorithms: ["HS256"],
-  } as VerifyOptions) as JwtPayloadCustom;
+	return jwt.verify(token, config.jwt.secret, {
+		algorithms: ["HS256"],
+	} as VerifyOptions) as JwtPayloadCustom;
 };

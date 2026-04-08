@@ -13,21 +13,21 @@ let driver: Driver | null = null;
  * @throws {Error} If the initialization fails.
  */
 export const getNeo4jDriver = (): Driver => {
-  if (!driver) {
-    try {
-      driver = neo4j.driver(
-        config.neo4j.uri,
-        neo4j.auth.basic(config.neo4j.username, config.neo4j.password),
-        {
-          maxConnectionPoolSize: 50,
-          connectionAcquisitionTimeout: 5_000, // ms — evita bloqueos indefinidos
-        },
-      );
-    } catch (err) {
-      throw new Error(`[Neo4j] Failed to initialize driver`, { cause: err });
-    }
-  }
-  return driver;
+	if (!driver) {
+		try {
+			driver = neo4j.driver(
+				config.neo4j.uri,
+				neo4j.auth.basic(config.neo4j.username, config.neo4j.password),
+				{
+					maxConnectionPoolSize: 50,
+					connectionAcquisitionTimeout: 5_000, // ms — evita bloqueos indefinidos
+				},
+			);
+		} catch (err) {
+			throw new Error(`[Neo4j] Failed to initialize driver.\n`, { cause: err });
+		}
+	}
+	return driver;
 };
 
 /**
@@ -37,8 +37,8 @@ export const getNeo4jDriver = (): Driver => {
  * @throws {Error} If connection fails
  */
 export const verifyNeo4jConnection = async (): Promise<void> => {
-  await getNeo4jDriver().verifyConnectivity();
-  console.log("Neo4j connected");
+	await getNeo4jDriver().verifyConnectivity();
+	console.log("Neo4j connected.");
 };
 
 /**
@@ -46,9 +46,9 @@ export const verifyNeo4jConnection = async (): Promise<void> => {
  * Called during graceful shutdown.
  */
 export const closeNeo4jDriver = async (): Promise<void> => {
-  if (driver) {
-    await driver.close();
-    driver = null;
-    console.log("[Neo4j] Driver closed");
-  }
+	if (driver) {
+		await driver.close();
+		driver = null;
+		console.log("[Neo4j] Driver closed.");
+	}
 };
