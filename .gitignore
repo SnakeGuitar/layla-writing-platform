@@ -1,6 +1,7 @@
 ## Secrets files
 .env
 .env.*
+!.env.Development
 .env.*.*
 appsettings.json
 appsettings.json.*
