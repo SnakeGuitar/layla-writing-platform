@@ -1,8 +1,4 @@
 # File Tree: Layla
-
-**Generated:** 4/8/2026, 2:42:05 PM
-**Root Path:** `c:\Users\fofor\Desktop\Desarrollo en red\Layla`
-
 ```
 ├── 📁 .github
 │   └── 📁 workflows
