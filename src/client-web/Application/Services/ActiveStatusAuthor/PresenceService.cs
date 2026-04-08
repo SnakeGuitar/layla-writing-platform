@@ -1,5 +1,6 @@
 using client_web.Application.Config.SignalR;
 using client_web.Helpers;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace client_web.Application.Services.ActiveStatusAuthor;
 
@@ -33,11 +34,11 @@ public class PresenceService : IPresenceService
         _handlersRegistered = true;
     }
 
-    private SignalRConnectionState _state;
+    private HubConnectionState _state;
 
-    public SignalRConnectionState State => _state;
+    public HubConnectionState State => _state;
 
-    private void Notify(SignalRConnectionState state)
+    private void Notify(HubConnectionState state)
     {
         _state = state;
         OnConnectionChanged?.Invoke(this, state);
@@ -58,7 +59,7 @@ public class PresenceService : IPresenceService
 
     // Connection -------------------------------------------------------------------
     public bool IsConnected => _client.IsConnected;
-    public event EventHandler<SignalRConnectionState>? OnConnectionChanged;
+    public event EventHandler<HubConnectionState>? OnConnectionChanged;
 
     public async Task ConnectAsync(string token)
     {

@@ -1,12 +1,6 @@
-namespace client_web.Application.Config.SignalR;
+using Microsoft.AspNetCore.SignalR.Client;
 
-public enum SignalRConnectionState
-{
-    Disconnected,
-    Connecting,
-    Connected,
-    Reconnecting
-}
+namespace client_web.Application.Config.SignalR;
 
 /// <summary>
 /// Contrato para clientes que interactúan con un Hub de SignalR.
@@ -22,6 +16,12 @@ public enum SignalRConnectionState
 public interface ISignalRClient : IAsyncDisposable
 {
     /// <summary>
+    /// Define el Hub de SignalR.
+    /// </summary>
+    /// 
+    HubConnection? Hub { get; }
+
+    /// <summary>
     /// Define si el cliente está actualmente conectado al Hub de SignalR.
     /// </summary>
     bool IsConnected { get; }
@@ -31,7 +31,7 @@ public interface ISignalRClient : IAsyncDisposable
     /// Valores posibles: <see cref="ConnectionState.Connected"/>, 
     /// <see cref="ConnectionState.Reconnecting"/>, <see cref="ConnectionState.Disconnected"/>.
     /// </summary>
-    event EventHandler<SignalRConnectionState>? OnConnectionChanged;
+    event EventHandler<HubConnectionState>? OnConnectionChanged;
 
     /// <summary>
     /// Abre una conexión con el servidor de SignalR.

@@ -1,5 +1,6 @@
 @page "/"
 @page "/home"
+@using Microsoft.AspNetCore.SignalR.Client
 @using Microsoft.Extensions.Http
 @using client_web.Application.Config.Http
 @using client_web.Application.Config.SignalR
@@ -8,6 +9,7 @@
 @using client_web.Application.Services.ActiveStatusAuthor
 @inject IPresenceService PresenceService
 @inject IProjectService ProjectService
+@inject ILogger<Home> Logger
 @implements IAsyncDisposable
 <PageTitle>Home</PageTitle>
 
@@ -35,39 +37,23 @@ else
         @foreach (ProjectViewModel project in projects)
         {
             <div>
-                <ProjectCard Id="@project.Id" Title="@project.Title"
-                             Synopsis="@project.Synopsis"
-                             LiteraryGenre="@project.LiteraryGenre"
-                             CoverImageUrl="@project.CoverImageUrl"
-                             UpdatedAt="@project.UpdatedAt"
-                             IsAuthorActive="@project.IsAuthorActive"
-                             OnCardClick="HandleCardClick" />
+                <ProjectCard Id="@project.Id" Title="@project.Title" Synopsis="@project.Synopsis"
+                             LiteraryGenre="@project.LiteraryGenre" CoverImageUrl="@project.CoverImageUrl" UpdatedAt="@project.UpdatedAt"
+                             IsAuthorActive="@project.IsAuthorActive" OnCardClick="HandleCardClick" />
             </div>
         }
     </div>
 }
 
 @code {
-    private SignalRConnectionState _connectionState = SignalRConnectionState.Disconnected;
-    private bool _isConnected;
-    private bool _isConnecting;
     private string _token = "";
-    private string? _error;
-    private readonly IProjectService _projectService;
     private List<ProjectViewModel>? projects;
-    private ILogger<Home> _logger;
-
-    public Home(IProjectService projectService, ILogger<Home> logger)
-    {
-        _projectService = projectService;
-        _logger = logger;
-    }
 
     protected override async Task OnInitializedAsync()
     {
         PresenceService.OnAuthorStatusChanged += HandleAuthorStatusChanged;
 
-        List<PublicProjectDto>? dtos = await _projectService.GetPublicProjectsAsync();
+        List<PublicProjectDto>? dtos = await ProjectService.GetPublicProjectsAsync();
         projects = dtos.Select(p => new ProjectViewModel
         {
             Id = p.Id,
@@ -80,7 +66,7 @@ else
 
         await PresenceService.ConnectAsync(_token);
 
-        if(PresenceService.IsConnected)
+        if (PresenceService.IsConnected)
             foreach (ProjectViewModel p in projects)
                 await PresenceService.WatchProjectAsync(p.Id);
     }

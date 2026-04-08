@@ -1,5 +1,5 @@
 @page "/projects/{ProjectId:guid}/voice"
-@using System.Data
+@using Microsoft.AspNetCore.SignalR.Client
 @using client_web.Application.Config.SignalR
 @using client_web.Application.Services.Voice
 @inject IVoiceService VoiceService
@@ -11,7 +11,7 @@
         <h2 class="text-xl font-bold text-white">Voice Room</h2>
         <div class="flex items-center gap-2">
             <span class="w-3 h-3 rounded-full @StatusColor"></span>
-            <span class="text-sm text-gray-400">@_connectionState</span>
+            <span class="text-sm text-gray-400">@VoiceService.IsConnected</span>
         </div>
     </div>
 
@@ -22,7 +22,7 @@
         </div>
     }
 
-    @if (!_isConnected)
+    @if (!VoiceService.IsConnected)
     {
         <div class="mb-6">
             <label class="block text-sm text-gray-400 mb-2">Auth Token</label>
@@ -44,7 +44,7 @@
         }
         else
         {
-            @foreach (var p in _participants)
+            @foreach (VoiceParticipant p in _participants)
             {
                 <div class="flex items-center gap-3 py-2">
                     <span class="w-2.5 h-2.5 rounded-full @(p.IsSpeaking ? "bg-green-400" : "bg-gray-500")"></span>
@@ -59,15 +59,14 @@
     </div>
 
     <!-- PTT Button -->
-    @if (_isConnected)
+    @if (VoiceService.IsConnected)
     {
         <div class="flex flex-col items-center gap-4">
-            <button @onmousedown="StartSpeakingAsync" @onmouseup="StopSpeakingAsync"
-                    @ontouchstart="StartSpeakingAsync" @ontouchend="StopSpeakingAsync"
-                    class="w-36 h-36 rounded-full text-white font-bold text-2xl transition-all select-none
-                           @(_isSpeaking ? "bg-red-600 scale-110" : "bg-blue-600 hover:bg-blue-700")">
+            <button @onmousedown="StartSpeakingAsync" @onmouseup="StopSpeakingAsync" @ontouchstart="StartSpeakingAsync"
+                    @ontouchend="StopSpeakingAsync" class="w-36 h-36 rounded-full text-white font-bold text-2xl transition-all select-none
+                @(_isSpeaking ? "bg-red-600 scale-110" : "bg-blue-600 hover:bg-blue-700")">
                 PTT
-                <br/>
+                <br />
                 <span class="text-xs font-normal opacity-70">
                     @(_isSpeaking ? "Release to stop" : "Hold to talk")
                 </span>
@@ -83,21 +82,18 @@
 @code {
     [Parameter] public Guid ProjectId { get; set; }
 
-    private SignalRConnectionState _connectionState = SignalRConnectionState.Disconnected;
-    private bool _isConnected;
-    private bool _isConnecting;
-    private bool _isSpeaking;
-    private string _token = "";
-    private string? _error;
-    private List<VoiceParticipant> _participants = new();
+    private string _token = string.Empty;
+    private bool _isConnecting = false;
+    private bool _isSpeaking = false;
+    private string? _error = string.Empty;
+    private List<VoiceParticipant> _participants = new List<VoiceParticipant>();
     private IJSObjectReference? _jsModule;
     private DotNetObjectReference<VoiceRoom>? _dotNetRef;
-
-    private string StatusColor => _connectionState switch
+    private string StatusColor => VoiceService.State switch
     {
-        SignalRConnectionState.Connected => "bg-green-400",
-        SignalRConnectionState.Connecting => "bg-yellow-400",
-        SignalRConnectionState.Reconnecting => "bg-orange-400",
+        HubConnectionState.Connected => "bg-green-400",
+        HubConnectionState.Connecting => "bg-yellow-400",
+        HubConnectionState.Reconnecting => "bg-orange-400",
         _ => "bg-gray-500"
     };
 
@@ -105,13 +101,16 @@
     {
         if (firstRender)
         {
-            _jsModule = await JS.InvokeAsync<IJSObjectReference>("import", "./js/voiceAudio.js");
+            _jsModule = await JS.InvokeAsync<IJSObjectReference>(
+                identifier: "import",
+                args: "./js/voiceAudio.js"
+            );
         }
     }
 
     private async Task ConnectAsync()
     {
-        if (string.IsNullOrWhiteSpace(_token)) { _error = "Token is required"; return; }
+        if (string.IsNullOrWhiteSpace(_token)) { _error = "JWT Token is required"; return; }
 
         _isConnecting = true;
         _error = null;
@@ -133,7 +132,7 @@
             if (_jsModule != null)
                 await _jsModule.InvokeVoidAsync("initPlayback");
 
-            _isConnected = true;
+            VoiceService.IsConnected = true;
         }
         catch (Exception ex)
         {
@@ -148,7 +147,7 @@
 
     private async Task StartSpeakingAsync()
     {
-        if (!_isConnected) return;
+        if (!VoiceService.IsConnected) return;
         try
         {
             await VoiceService.StartSpeakingAsync(ProjectId);
@@ -157,7 +156,7 @@
             if (_jsModule != null)
             {
                 _dotNetRef = DotNetObjectReference.Create(this);
-                await _jsModule.InvokeVoidAsync("startCapture", _dotNetRef);
+                await _jsModule.InvokeVoidAsync(identifier: "startCapture", _dotNetRef);
             }
         }
         catch (Exception ex)
@@ -182,22 +181,22 @@
     [JSInvokable]
     public async Task OnAudioCaptured(string base64Audio)
     {
-        var audioData = Convert.FromBase64String(base64Audio);
+        byte[]? audioData = Convert.FromBase64String(base64Audio);
         await VoiceService.SendAudioAsync(ProjectId, audioData);
     }
 
     private async Task LeaveRoomAsync()
     {
-        if (_isSpeaking) await StopSpeakingAsync();
+        if (_isSpeaking)
+            await StopSpeakingAsync();
         await VoiceService.LeaveRoomAsync(ProjectId);
         await VoiceService.DisconnectAsync();
 
         if (_jsModule != null)
             await _jsModule.InvokeVoidAsync("disposePlayback");
 
-        _isConnected = false;
+        VoiceService.IsConnected = false;
         _participants.Clear();
-        _connectionState = SignalRConnectionState.Disconnected;
         StateHasChanged();
     }
 
@@ -230,7 +229,7 @@
 
     private void OnSpeakerStopped(object? sender, string userId)
     {
-        var idx = _participants.FindIndex(p => p.UserId == userId);
+        int idx = _participants.FindIndex(p => p.UserId == userId);
         if (idx >= 0)
             _participants[idx] = _participants[idx] with { IsSpeaking = false };
         InvokeAsync(StateHasChanged);
@@ -241,14 +240,13 @@
         if (_jsModule != null)
         {
             var base64 = Convert.ToBase64String(e.audio);
-            _ = _jsModule.InvokeVoidAsync("playAudio", base64);
+            _ = _jsModule.InvokeVoidAsync(identifier: "playAudio", base64);
         }
     }
 
-    private async void OnConnectionChanged(object? sender, SignalRConnectionState state)
+    private async void OnConnectionChanged(object? sender, HubConnectionState state)
     {
-        _connectionState = state;
-        _isConnected = state == SignalRConnectionState.Connected;
+        VoiceService.IsConnected = state == HubConnectionState.Connected;
         await InvokeAsync(StateHasChanged);
     }
 

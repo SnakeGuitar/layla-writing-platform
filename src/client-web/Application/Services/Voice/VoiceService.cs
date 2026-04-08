@@ -1,5 +1,6 @@
 using client_web.Application.Config.SignalR;
 using client_web.Helpers;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace client_web.Application.Services.Voice;
 
@@ -15,8 +16,8 @@ public class VoiceService : IVoiceService
     public VoiceService(ISignalRClient client, IConfiguration configuration, ILogger<VoiceService> logger)
     {
         _client = client;
-        _baseUrl = configuration["ApiUrls:SignalRHubURL:VoiceServiceHub"]!;
         _client.OnConnectionChanged += (sender, state) => Notify(state);
+        _baseUrl = configuration["ApiUrls:SignalRHubURL:VoiceServiceHub"]!;
         _logger = logger;
     }
 
@@ -47,13 +48,23 @@ public class VoiceService : IVoiceService
         _handlersRegistered = true;
     }
 
-    private SignalRConnectionState _state;
-
-    public SignalRConnectionState State => _state;
-
-    private void Notify(SignalRConnectionState state)
+    // ISignalRClient -------------------------------------------------------------------;
+    private HubConnectionState _state;
+    public HubConnectionState State
     {
-        _state = state;
+        get => _client.Hub!.State;
+        set => _state = value;
+    }
+
+    private bool _isConnected;
+    public bool IsConnected
+    {
+        get => _client.IsConnected;
+        set => _isConnected = value;
+    }
+
+    private void Notify(HubConnectionState state)
+    {
         OnConnectionChanged?.Invoke(this, state);
     }
 
@@ -71,8 +82,7 @@ public class VoiceService : IVoiceService
     }
 
     // IVoiceConnectionService ----------------------------------------------------------
-    public bool IsConnected => _client.IsConnected;
-    public event EventHandler<SignalRConnectionState>? OnConnectionChanged;
+    public event EventHandler<HubConnectionState>? OnConnectionChanged;
 
     public async Task ConnectAsync(string token)
     {

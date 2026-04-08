@@ -1,5 +1,4 @@
-using System.Data;
-using client_web.Application.Config.SignalR;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace client_web.Application.Services.Voice;
 
@@ -10,15 +9,20 @@ namespace client_web.Application.Services.Voice;
 public interface IConnectionService : IAsyncDisposable
 {
     /// <summary>
+    /// Estado de conexión con el hub de SignalR. Puede ser null si no se ha establecido conexión.
+    /// </summary>
+    public HubConnectionState State { get; }
+
+    /// <summary>
     /// Indica si la conexión está activa.
     /// </summary>
-    bool IsConnected { get; }
+    bool IsConnected { get; set; }
 
     /// <summary>
     /// Evento que notifica cambios en el estado de la conexión.
     /// Valores posibles: Connected, Reconnecting, Disconnected.
     /// </summary>
-    event EventHandler<SignalRConnectionState>? OnConnectionChanged;
+    event EventHandler<HubConnectionState>? OnConnectionChanged;
 
     /// <summary>
     /// Establece conexión con el servidor usando un JWT.

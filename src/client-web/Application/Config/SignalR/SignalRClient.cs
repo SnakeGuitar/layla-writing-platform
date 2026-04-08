@@ -25,23 +25,24 @@ public class SignalRClient : ISignalRClient
         _logger = logger;
     }
 
-    private HubConnection? _hub;
+    // TODO-Desarrollo: Verfidy access method
+    public HubConnection? Hub { set; get; }
+    public bool IsConnected => Hub?.State == HubConnectionState.Connected;
     private readonly SemaphoreSlim _connectionLock = new(1, 1);
-    public bool IsConnected => _hub?.State == HubConnectionState.Connected;
-    public event EventHandler<SignalRConnectionState>? OnConnectionChanged;
+    public event EventHandler<HubConnectionState>? OnConnectionChanged;
 
     public async Task ConnectAsync(string url, string token)
     {
-        if (_hub != null && IsConnected) return;
+        if (Hub != null && IsConnected) return;
 
         await _connectionLock.WaitAsync();
         try
         {
-            if (IsConnected && _hub != null && _hub.State == HubConnectionState.Connected) return;
-            await _hub!.StopAsync();
-            await _hub!.DisposeAsync();
+            if (IsConnected && Hub != null && Hub.State == HubConnectionState.Connected) return;
+            await Hub!.StopAsync();
+            await Hub!.DisposeAsync();
 
-            _hub = new HubConnectionBuilder()
+            Hub = new HubConnectionBuilder()
                 .WithUrl(_baseUrl + url, options =>
                 {
                     options.AccessTokenProvider = () => Task.FromResult<string?>(token);
@@ -49,36 +50,36 @@ public class SignalRClient : ISignalRClient
                 .WithAutomaticReconnect()
                 .Build();
 
-            _hub.Reconnecting += _ =>
+            Hub.Reconnecting += _ =>
             {
                 _logger.LogWarning("SignalR connection lost. Attempting to reconnect...");
-                Notify(SignalRConnectionState.Reconnecting);
+                Notify(HubConnectionState.Reconnecting);
                 return Task.CompletedTask;
             };
 
-            _hub.Reconnected += _ =>
+            Hub.Reconnected += _ =>
             {
                 _logger.LogInformation("SignalR reconnected.");
-                Notify(SignalRConnectionState.Connected);
+                Notify(HubConnectionState.Connected);
                 return Task.CompletedTask;
             };
 
-            _hub.Closed += _ =>
+            Hub.Closed += _ =>
             {
                 _logger.LogInformation("SignalR connection closed.");
-                Notify(SignalRConnectionState.Disconnected);
+                Notify(HubConnectionState.Disconnected);
                 return Task.CompletedTask;
             };
 
-            Notify(SignalRConnectionState.Connecting);
+            Notify(HubConnectionState.Connecting);
 
             await _retryPolicy.ExecuteAsync(async () =>
             {
                 _logger.LogInformation("Attempting to connect to SignalR hub...");
-                await _hub.StartAsync();
+                await Hub.StartAsync();
             });
 
-            Notify(SignalRConnectionState.Connected);
+            Notify(HubConnectionState.Connected);
         }
         finally
         {
@@ -91,14 +92,14 @@ public class SignalRClient : ISignalRClient
         await _connectionLock.WaitAsync();
         try
         {
-            if (_hub == null) return;
+            if (Hub == null) return;
 
             _logger.LogInformation("Disconnecting from SignalR hub...");
-            await _hub.StopAsync();
-            await _hub.DisposeAsync();
-            _hub = null;
+            await Hub.StopAsync();
+            await Hub.DisposeAsync();
+            Hub = null;
 
-            OnConnectionChanged?.Invoke(this, SignalRConnectionState.Disconnected);
+            OnConnectionChanged?.Invoke(this, HubConnectionState.Disconnected);
         }
         finally
         {
@@ -114,7 +115,7 @@ public class SignalRClient : ISignalRClient
         _connectionLock.Dispose();
     }
 
-    private void Notify(SignalRConnectionState state)
+    private void Notify(HubConnectionState state)
     {
         try
         {
@@ -128,19 +129,19 @@ public class SignalRClient : ISignalRClient
 
     public async Task InvokeSafeAsync(string method, params object[] args)
     {
-        if (!IsConnected || _hub == null) return;
-        await _hub.InvokeAsync(method, args);
+        if (!IsConnected || Hub == null) return;
+        await Hub.InvokeAsync(method, args);
     }
 
     public void On<T>(string methodName, Action<T> handler)
     {
-        if (_hub == null) throw new InvalidOperationException("Call ConnectAsync first");
-        _hub.On(methodName, handler);
+        if (Hub == null) throw new InvalidOperationException("Call ConnectAsync first");
+        Hub.On(methodName, handler);
     }
 
     public void On<T1, T2>(string methodName, Action<T1, T2> handler)
     {
-        if (_hub == null) throw new InvalidOperationException("Call ConnectAsync first");
-        _hub.On(methodName, handler);
+        if (Hub == null) throw new InvalidOperationException("Call ConnectAsync first");
+        Hub.On(methodName, handler);
     }
 }

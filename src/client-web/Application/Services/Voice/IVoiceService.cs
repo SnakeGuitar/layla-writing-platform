@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.SignalR.Client;
+
 namespace client_web.Application.Services.Voice;
 /// <summary>
 /// Facade que agrupa todos los servicios de voz.

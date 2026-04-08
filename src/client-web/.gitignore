@@ -6,4 +6,6 @@ node_modules
 node_modules/
 obj
 obj/
+!appsettings.Development.json
 appsettings.json
+.vscode/
