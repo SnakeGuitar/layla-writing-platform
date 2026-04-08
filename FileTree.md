@@ -1,0 +1,127 @@
+# File Tree: Layla
+
+**Generated:** 4/8/2026, 2:42:05 PM
+**Root Path:** `c:\Users\fofor\Desktop\Desarrollo en red\Layla`
+
+```
+├── 📁 .github
+│   └── 📁 workflows
+├── 📁 docs
+│   ├── 📘 Layla (Documento de Proyecto).docx
+│   ├── 📕 Layla (Documento de Proyecto).pdf
+│   ├── 📘 Layla - Definición del Problema.docx
+│   └── 🖼️ NAVIGATION DIAGRAM.png
+├── 📁 src
+│   ├── 📁 client-android
+│   │   ├── 📁 app
+│   │   ├── 📁 gradle
+│   │   ├── ⚙️ .gitignore
+│   │   ├── 📄 gradle.properties
+│   │   ├── 📄 gradlew
+│   │   ├── 📄 gradlew.bat
+│   │   └── 📄 settings.gradle.kts
+│   ├── 📁 client-desktop
+│   │   ├── 📁 Layla.Desktop
+│   │   │   ├── 📁 Data
+│   │   │   ├── 📁 Fonts
+│   │   │   ├── 📁 Models
+│   │   │   ├── 📁 Services
+│   │   │   ├── 📁 Themes
+│   │   │   ├── 📁 ViewModels
+│   │   │   ├── 📁 Views
+│   │   │   ├── 📄 App.xaml
+│   │   │   ├── 📄 App.xaml.cs
+│   │   │   ├── 📄 AssemblyInfo.cs
+│   │   │   ├── 📄 Layla.Desktop.csproj
+│   │   │   └── 📄 Layla.Desktop.sln
+│   │   └── 📝 README.md
+│   ├── 📁 client-web
+│   │   ├── 📁 Application
+│   │   ├── 📁 Config
+│   │   ├── 📁 Helpers
+│   │   ├── 📁 Models
+│   │   ├── 📁 Properties
+│   │   ├── 📁 UI
+│   │   ├── 📁 wwwroot
+│   │   ├── ⚙️ .dockerignore
+│   │   ├── ⚙️ .gitignore
+│   │   ├── 🐳 Dockerfile
+│   │   ├── 📝 FileTree.md
+│   │   ├── 📄 Program.cs
+│   │   ├── 📝 README.md
+│   │   ├── ⚙️ appsettings.Development.json
+│   │   ├── 📄 client-web.csproj
+│   │   ├── 📄 client-web.sln
+│   │   └── ⚙️ package.json
+│   ├── 📁 server-core
+│   │   ├── 📁 Layla.Api
+│   │   │   ├── 📁 Controllers
+│   │   │   ├── 📁 Extensions
+│   │   │   ├── 📁 Filters
+│   │   │   ├── 📁 Hubs
+│   │   │   ├── 📁 Middleware
+│   │   │   ├── 📁 Properties
+│   │   │   ├── ⚙️ .gitignore
+│   │   │   ├── 🐳 Dockerfile
+│   │   │   ├── 📝 FileTree.md
+│   │   │   ├── 📄 Layla.Api.csproj
+│   │   │   ├── 📄 Layla.Api.http
+│   │   │   ├── 📄 Program.cs
+│   │   │   └── ⚙️ appsettings.Development.json
+│   │   ├── 📁 Layla.Core
+│   │   │   ├── 📁 Common
+│   │   │   ├── 📁 Configuration
+│   │   │   ├── 📁 Constants
+│   │   │   ├── 📁 Contracts
+│   │   │   ├── 📁 Entities
+│   │   │   ├── 📁 Events
+│   │   │   ├── 📁 Extensions
+│   │   │   ├── 📁 IntegrationEvents
+│   │   │   ├── 📁 Interfaces
+│   │   │   ├── 📁 Services
+│   │   │   ├── 📝 FileTree.md
+│   │   │   └── 📄 Layla.Core.csproj
+│   │   ├── 📁 Layla.Infrastructure
+│   │   │   ├── 📁 Data
+│   │   │   ├── 📁 Extensions
+│   │   │   ├── 📁 Messaging
+│   │   │   ├── 📁 Migrations
+│   │   │   ├── 📁 Services
+│   │   │   ├── 📝 FileTree.md
+│   │   │   └── 📄 Layla.Infrastructure.csproj
+│   │   ├── 📄 Layla.Core.slnx
+│   │   └── 📄 migration.sql
+│   └── 📁 server-worldbuilding
+│       ├── 📁 src
+│       │   ├── 📁 config
+│       │   ├── 📁 consumers
+│       │   ├── 📁 controllers
+│       │   ├── 📁 db
+│       │   ├── 📁 docs
+│       │   ├── 📁 interfaces
+│       │   ├── 📁 middlewares
+│       │   ├── 📁 models
+│       │   ├── 📁 repositories
+│       │   ├── 📁 routes
+│       │   ├── 📁 services
+│       │   ├── 📁 utils
+│       │   ├── 📁 validation
+│       │   ├── 📁 workers
+│       │   └── 📄 index.ts
+│       ├── ⚙️ .dockerignore
+│       ├── ⚙️ .gitignore
+│       ├── 🐳 Dockerfile
+│       ├── 📝 FileTree.md
+│       ├── 📝 README.md
+│       ├── 📄 eslint.config.mts
+│       ├── 📄 example.http
+│       ├── ⚙️ package-lock.json
+│       ├── ⚙️ package.json
+│       └── ⚙️ tsconfig.json
+├── ⚙️ .gitignore
+├── 📝 README.md
+└── ⚙️ docker-compose.yml
+```
+
+---
+*Generated by FileTree Pro Extension*
