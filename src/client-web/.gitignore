@@ -1,11 +1,11 @@
 .vs
 .vs/
+.vscode/
 bin
 bin/
-node_modules
-node_modules/
 obj
 obj/
+node_modules
+node_modules/
 !appsettings.Development.json
 appsettings.json
-.vscode/

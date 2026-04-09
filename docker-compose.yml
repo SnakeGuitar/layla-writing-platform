@@ -7,13 +7,13 @@ services:
     environment:
       - ACCEPT_EULA=Y
       - SA_PASSWORD=${SQL_PASSWORD}
-      - MSSQL_MEM_LIMIT=1GB
+      - MSSQL_MEM_LIMIT=${MSSQL_MEM_LIMIT}
     ports:
-      - "1433:1433"
+      - "${SQL_PORT}:${SQL_PORT}"
     volumes:
       - sql_data:/var/opt/mssql
     healthcheck:
-      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${SQL_PASSWORD} -Q 'SELECT 1' -C
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U ${SQL_USERNAME} -P ${SQL_PASSWORD} -Q 'SELECT 1' -C
       interval: 10s
       retries: 5
       timeout: 3s
@@ -27,11 +27,11 @@ services:
       - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
       - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
     ports:
-      - "27017:27017"
+      - "${MONGO_PORT}:${MONGO_PORT}"
     volumes:
       - mongo_data:/data/db
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:${MONGO_PORT}/test --quiet
       interval: 10s
       retries: 5
     restart: unless-stopped
@@ -41,15 +41,15 @@ services:
     image: neo4j:5
     container_name: layla-neo4j
     environment:
-      - NEO4J_AUTH=neo4j/${NEO4J_PASSWORD}
+      - NEO4J_AUTH=${NEO4J_USERNAME}/${NEO4J_PASSWORD}
       - NEO4J_PLUGINS=["apoc"]
     ports:
-      - "7474:7474"
-      - "7687:7687"
+      - "${NEO4J_BROWSER_PORT}:${NEO4J_BROWSER_PORT}"
+      - "${NEO4J_BOLT_PORT}:${NEO4J_BOLT_PORT}"
     volumes:
       - neo4j_data:/data
     healthcheck:
-      test: wget --no-verbose --tries=1 --spider http://localhost:7474 || exit 1
+      test: wget --no-verbose --tries=1 --spider http://localhost:${NEO4J_BROWSER_PORT} || exit 1
       interval: 10s
       retries: 5
     restart: unless-stopped
@@ -61,16 +61,18 @@ services:
       dockerfile: Dockerfile
     container_name: layla-worldbuilding
     ports:
-      - "3000:3000"
+      - "${WORLDBUILDING_PORT}:${WORLDBUILDING_PORT}"
     environment:
-      - PORT=3000
+      - PORT=${WORLDBUILDING_PORT}
       - JWT_SECRET=${JWT_SECRET}
       - JWT_SECRET_REFRESH=${JWT_SECRET_REFRESH}
-      - MONGODB_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/layla_worldbuilding?authSource=admin
-      - NEO4J_URI=bolt://neo4j:7687
-      - NEO4J_USERNAME=neo4j
+      - JWT_ACCESS_TOKEN_EXPIRY=${JWT_ACCESS_TOKEN_EXPIRY}
+      - ALLOWED_ORIGINS=${WORLDBUILDING_ALLOWED_ORIGINS}
+      - MONGODB_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:${MONGO_PORT}/layla_worldbuilding?authSource=admin
+      - NEO4J_URI=bolt://neo4j:${NEO4J_BOLT_PORT}
+      - NEO4J_USERNAME=${NEO4J_USERNAME}
       - NEO4J_PASSWORD=${NEO4J_PASSWORD}
-      - RABBITMQ_URL=amqp://${RABBIT_USER}:${RABBIT_PASSWORD}@rabbitmq:5672
+      - RABBITMQ_URL=amqp://${RABBIT_USER}:${RABBIT_PASSWORD}@rabbitmq:${RABBIT_PORT}
       - RABBITMQ_EXCHANGE=worldbuilding.events
       - RABBITMQ_QUEUE=worldbuilding.node.queue
     depends_on:
@@ -89,14 +91,17 @@ services:
       dockerfile: Layla.Api/Dockerfile
     container_name: layla-core
     ports:
-      - "7165:7165"
-      - "5287:5287"
+      - "${CORE_PORT_1}:${CORE_PORT_1}"
+      - "${CORE_PORT_2}:${CORE_PORT_2}"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=LaylaDb;User Id=sa;Password=${SQL_PASSWORD};TrustServerCertificate=True;
       - JwtSettings__Secret=${JWT_SECRET}
-      - RabbitMQ__HostName=rabbitmq
-      - RabbitMQ__Port=5672
+      - JwtSettings__Issuer=${JWT_ISSUER}
+      - JwtSettings__Audience=${JWT_AUDIENCE}
+      - JwtSettings__ExpirationInMinutes=${JWT_ACCESS_TOKEN_EXPIRY}
+      - ASPNETCORE_ENVIRONMENT=${CORE_ENVIRONMENT}
+      - ConnectionStrings__DefaultConnection=Server=sqlserver:${SQL_PORT};Database=${SQL_DATABASE};User Id=${SQL_USERNAME};Password=${SQL_PASSWORD};TrustServerCertificate=True;
+      - RabbitMQ__HostName=${RABBIT_HostName}
+      - RabbitMQ__Port=${RABBIT_PORT}
       - RabbitMQ__UserName=${RABBIT_USER}
       - RabbitMQ__Password=${RABBIT_PASSWORD}
     depends_on:
@@ -111,8 +116,8 @@ services:
     image: rabbitmq:3-management
     container_name: layla-rabbit
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "${RABBIT_PORT}:${RABBIT_PORT}"
+      - "${RABBIT_MANAGEMENT_PORT}:${RABBIT_MANAGEMENT_PORT}"
     environment:
       - RABBITMQ_DEFAULT_USER=${RABBIT_USER}
       - RABBITMQ_DEFAULT_PASS=${RABBIT_PASSWORD}
