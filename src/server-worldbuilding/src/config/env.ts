@@ -46,7 +46,7 @@ for (const key of required) {
 
 if (missing.length > 0) {
 	throw new Error(
-		`Missing or empty required environment variables: ${missing.join(", ")}`,
+		`Missing or empty required environment variables:\n\t ${missing.join(", ")}`,
 	);
 }
 if (tooShort.length > 0) {

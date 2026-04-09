@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "./src/index.ts",
-  "type": "module",
+  "type": "commonjs",
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -50,6 +50,7 @@
     "eslint": "^10.1.0",
     "globals": "^17.4.0",
     "jiti": "^2.6.1",
+    "tsc-alias": "^1.8.16",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.2"
   }

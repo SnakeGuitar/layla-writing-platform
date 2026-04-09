@@ -7,11 +7,12 @@ RUN corepack enable
 WORKDIR /app
 
 # Copy only manifest files first for better layer caching
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --no-frozen-lockfile
-RUN pnpm add -D tsc-alias
+COPY package.json ./
+COPY pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 COPY . .
+
 RUN pnpm run build
 RUN pnpm exec tsc-alias -p tsconfig.json
 
