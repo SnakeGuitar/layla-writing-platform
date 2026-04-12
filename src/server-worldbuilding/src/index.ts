@@ -40,6 +40,8 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(apiLimiter);
 
+app.get("api/health", (req, res) => res.send("OK"));
+
 app.use("/api/manuscripts", ManuscriptsRouter);
 app.use("/api/wiki", WikiRouter);
 app.use("/api/graph", GraphRouter);

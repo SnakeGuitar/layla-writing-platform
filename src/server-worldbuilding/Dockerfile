@@ -9,7 +9,7 @@ WORKDIR /app
 # Copy only manifest files first for better layer caching
 COPY package.json ./
 COPY pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN pnpm install
 
 COPY . .
 

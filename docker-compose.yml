@@ -15,8 +15,8 @@ services:
     healthcheck:
       test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U ${SQL_USERNAME} -P ${SQL_PASSWORD} -Q 'SELECT 1' -C
       interval: 10s
+      timeout: 5s
       retries: 5
-      timeout: 3s
     restart: unless-stopped
 
   # --- 2. MongoDB (Manuscripts & Wiki) ---
@@ -33,6 +33,7 @@ services:
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:${MONGO_PORT}/test --quiet
       interval: 10s
+      timeout: 5s
       retries: 5
     restart: unless-stopped
 
@@ -49,8 +50,9 @@ services:
     volumes:
       - neo4j_data:/data
     healthcheck:
-      test: wget --no-verbose --tries=1 --spider http://localhost:${NEO4J_BROWSER_PORT} || exit 1
+      test: ["CMD", "curl", "-f", "http://localhost:${NEO4J_BROWSER_PORT}/"]
       interval: 10s
+      timeout: 5s
       retries: 5
     restart: unless-stopped
 
@@ -82,6 +84,11 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${WORLDBUILDING_PORT}/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
 
   # --- 5. Core API (.NET) ---
@@ -95,7 +102,8 @@ services:
       - "${CORE_PORT_HTTP}:${CORE_PORT_HTTP}"
     environment:
       - ASPNETCORE_URLS=https://+:${CORE_PORT_HTTPS};http://+:${CORE_PORT_HTTP}
-      - PORT=${CORE_PORT_HTTPS}
+      - CORE_PORT_HTTPS=${CORE_PORT_HTTPS}
+      - CORE_PORT_HTTP=${CORE_PORT_HTTP}
       - JwtSettings__Secret=${JWT_SECRET}
       - JwtSettings__Issuer=${JWT_ISSUER}
       - JwtSettings__Audience=${JWT_AUDIENCE}
@@ -106,6 +114,9 @@ services:
       - RabbitMQ__Port=${RABBIT_PORT}
       - RabbitMQ__UserName=${RABBIT_USER}
       - RabbitMQ__Password=${RABBIT_PASSWORD}
+      - DOTNET_USE_POLLING_FILE_WATCHER=1
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - DOTNET_SKIP_FIRST_TIME_EXPERIENCE=true
     depends_on:
       sqlserver:
         condition: service_healthy
@@ -128,6 +139,7 @@ services:
     healthcheck:
       test: rabbitmq-diagnostics -q ping
       interval: 10s
+      timeout: 5s
       retries: 5
     restart: unless-stopped
 
@@ -143,16 +155,14 @@ services:
     environment:
       - WEB_PORT_HTTPS=${WEB_PORT_HTTPS}
       - WEB_PORT_HTTP=${WEB_PORT_HTTP}
+      - DOTNET_USE_POLLING_FILE_WATCHER=1
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - DOTNET_SKIP_FIRST_TIME_EXPERIENCE=true
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:${WEB_PORT_HTTP}/health"]
-      timeout: 10s
       interval: 10s
+      timeout: 5s
       retries: 5
-    depends_on:
-      sqlserver:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
     restart: unless-stopped
 
 volumes:

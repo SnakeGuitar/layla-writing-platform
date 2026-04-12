@@ -9,3 +9,11 @@ docker-compose*
 README.md
 wwwroot/service-worker.js
 .env
+node_modules
+bin
+obj
+.git
+Dockerfile
+docker-compose*
+*.log
+dist

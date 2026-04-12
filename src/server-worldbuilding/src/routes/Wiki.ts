@@ -12,25 +12,25 @@ router.use(asyncHandler(requireProjectAccess()));
 router.get("/:projectId/entries", asyncHandler(WikiController.listEntries));
 
 router.get(
-  "/:projectId/entries/:entityId",
-  asyncHandler(WikiController.getEntry),
+	"/:projectId/entries/:entityId",
+	asyncHandler(WikiController.getEntry),
 );
 
 router.post("/:projectId/entries", asyncHandler(WikiController.createEntry));
 
 router.put(
-  "/:projectId/entries/:entityId",
-  asyncHandler(WikiController.updateEntry),
+	"/:projectId/entries/:entityId",
+	asyncHandler(WikiController.updateEntry),
 );
 
 router.delete(
-  "/:projectId/entries/:entityId",
-  asyncHandler(WikiController.deleteEntry),
+	"/:projectId/entries/:entityId",
+	asyncHandler(WikiController.deleteEntry),
 );
 
 router.get(
-  "/:projectId/entries/:entityId/appearances",
-  asyncHandler(WikiController.getEntityAppearances),
+	"/:projectId/entries/:entityId/appearances",
+	asyncHandler(WikiController.getEntityAppearances),
 );
 
 export default router;

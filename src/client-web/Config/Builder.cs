@@ -11,7 +11,7 @@ public static class Builder
         builder.Logging.AddConsole(); // Esto imprime en consola
         builder.Logging.SetMinimumLevel(LogLevel.Trace);
         builder.WebHost.UseUrls(
-            $"https://localhost:{Secrets.RequireConfig(builder, "WEB_PORT_HTTPS")};http://localhost:{Secrets.RequireConfig(builder, "WEB_PORT_HTTP")};");
+            $"https://localhost:{RequireConfig(builder, "WEB_PORT_HTTPS")};http://localhost:{RequireConfig(builder, "WEB_PORT_HTTP")};");
 
     }
 
