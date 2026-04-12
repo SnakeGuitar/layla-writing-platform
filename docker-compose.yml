@@ -41,16 +41,16 @@ services:
   neo4j:
     image: neo4j:5
     container_name: layla-neo4j
-    environment:
-      - NEO4J_AUTH=${NEO4J_USERNAME}/${NEO4J_PASSWORD}
-      - NEO4J_PLUGINS=["apoc"]
     ports:
       - "${NEO4J_BROWSER_PORT}:${NEO4J_BROWSER_PORT}"
       - "${NEO4J_BOLT_PORT}:${NEO4J_BOLT_PORT}"
+    environment:
+      - NEO4J_AUTH=${NEO4J_USERNAME}/${NEO4J_PASSWORD}
+      - NEO4J_PLUGINS=["apoc"]
     volumes:
       - neo4j_data:/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${NEO4J_BROWSER_PORT}/"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:${NEO4J_BROWSER_PORT}/ || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -109,7 +109,7 @@ services:
       - JwtSettings__Audience=${JWT_AUDIENCE}
       - JwtSettings__ExpirationInMinutes=${JWT_ACCESS_TOKEN_EXPIRY}
       - ASPNETCORE_ENVIRONMENT=${CORE_ENVIRONMENT}
-      - ConnectionStrings__DefaultConnection=Server=sqlserver:${SQL_PORT};Database=${SQL_DATABASE};User Id=${SQL_USERNAME};Password=${SQL_PASSWORD};TrustServerCertificate=True;
+      - ConnectionStrings__DefaultConnection=Server=${SQL_SERVER}:${SQL_PORT};Database=${SQL_DATABASE};User Id=${SQL_USERNAME};Password=${SQL_PASSWORD};TrustServerCertificate=True;
       - RabbitMQ__HostName=${RABBIT_HostName}
       - RabbitMQ__Port=${RABBIT_PORT}
       - RabbitMQ__UserName=${RABBIT_USER}
