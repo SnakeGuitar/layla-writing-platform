@@ -21,19 +21,19 @@ Collaborative creative-writing and worldbuilding platform. Multiple authors can 
 │                    │   │  /api/manuscripts           │
 │  /api/tokens       │   │  /api/wiki                  │
 │  /api/users        │   │  /api/graph                 │
-│  /api/projects     │   │  /api-docs  ← Swagger UI    │
-│  /hubs/voice       │   └──────────────┬──────────────┘
-│  /hubs/presence    │                  │
-│  /swagger  ← UI    │          ┌───────▼──────────┐
-└────────┬───────────┘          │   MongoDB        │
-         │                      │   (manuscripts,  │
-         │  RabbitMQ events     │   wiki entries)  │
-         │  (project.created)   └──────────────────┘
-         ▼                      ┌───────────────────┐
-┌────────────────┐              │   Neo4j           │
-│   SQL Server   │              │ (narrative graph) │
-│  (users,       │              └───────────────────┘
-│   projects,    │
+│  /api/projects     │   │  /api/health                │
+│  /hubs/voice       │   │  /api-docs  ← Swagger UI    │
+│  /hubs/presence    │   └──────────────┬──────────────┘
+│  /swagger  ← UI    │                  │
+└────────┬───────────┘          ┌───────▼──────────┐
+         │                      │   MongoDB        │
+         │  RabbitMQ events     │   (manuscripts,  │
+         │  (project.created)   │   wiki entries)  │
+         ▼                      └──────────────────┘
+┌────────────────┐              ┌───────────────────┐
+│   SQL Server   │              │   Neo4j           │
+│  (users,       │              │ (narrative graph) │
+│   projects,    │              └───────────────────┘
 │   roles)       │       ┌─────────────────────────────────┐
 └────────────────┘       │     RabbitMQ                    │
                          │  Exchange: worldbuilding.events │
@@ -116,6 +116,12 @@ Collaborative creative-writing and worldbuilding platform. Multiple authors can 
 
 ### server-worldbuilding  (`http://localhost:3000`)
 
+#### Health
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/api/health` | Service health check — returns `OK` |
+
 #### Manuscripts
 
 | Method | Path | Description |
@@ -165,6 +171,23 @@ Collaborative creative-writing and worldbuilding platform. Multiple authors can 
 | `EDITOR` | Read + write manuscripts and wiki |
 | `READER` | Read-only access |
 
+Roles are managed through the `ProjectRoles` constant class (`Layla.Core/Constants/ProjectRoles.cs`), which provides `IsValid(role)` and `Normalize(role)` methods for case-insensitive validation.
+
+---
+
+## Error Handling
+
+All services and controllers use the typed `ErrorCode` enum (`Layla.Core/Common/ErrorCode.cs`) instead of magic strings. Controllers map errors to HTTP status codes automatically via `RespondWithError(ErrorCode?)`.
+
+| ErrorCode Category | HTTP Status | Examples |
+|---|---|---|
+| Validation / Input | 400 | `InvalidInput` |
+| Authentication | 401 | `InvalidCredentials`, `SessionExpired` |
+| Authorization | 403 | `Forbidden` |
+| Not found | 404 | `ProjectNotFound`, `UserNotFound` |
+| Conflict | 409 | `DuplicateEmail` |
+| Server errors | 500 | `InternalError` |
+
 ---
 
 ## Setup
@@ -179,7 +202,7 @@ Collaborative creative-writing and worldbuilding platform. Multiple authors can 
 ### Docker (recommended)
 
 ```bash
-cp .env.example .env   # fill in secrets
+cp .env.Development .env   # fill in secrets
 docker compose up -d
 ```
 
@@ -202,7 +225,7 @@ dotnet run --project Layla.Api
 #### server-worldbuilding
 
 ```bash
-cd src/server-worldbuilding/Layla.Worldbuilding
+cd src/server-worldbuilding
 pnpm install
 pnpm run dev
 ```
@@ -216,28 +239,76 @@ dotnet run
 
 #### Desktop client
 
-Open `src/client-desktop/Layla.Desktop.sln` in Visual Studio and run.
+Open `src/client-desktop/Layla.Desktop/Layla.Desktop.sln` in Visual Studio and run.
 
 ---
 
 ## Environment Variables
 
-Copy `.env.example` to `.env` and fill in all values before starting.
+Copy `.env.Development` to `.env` and fill in all values before starting.
 
-| Variable | Service | Description |
-|---|---|---|
-| `SQL_SA_PASSWORD` | server-core | SQL Server SA password |
-| `MONGO_INITDB_ROOT_USERNAME` | worldbuilding | MongoDB root user |
-| `MONGO_INITDB_ROOT_PASSWORD` | worldbuilding | MongoDB root password |
-| `MONGO_URI` | worldbuilding | Full MongoDB connection string |
-| `NEO4J_AUTH` | worldbuilding | `neo4j/<password>` |
-| `NEO4J_URI` | worldbuilding | Bolt URI (e.g. `bolt://neo4j:7687`) |
-| `RABBITMQ_DEFAULT_USER` | both | RabbitMQ username |
-| `RABBITMQ_DEFAULT_PASS` | both | RabbitMQ password |
-| `JWT_SECRET` | server-core | Signing key (min 32 chars) |
-| `JWT_ISSUER` | server-core | Token issuer claim |
-| `JWT_AUDIENCE` | server-core | Token audience claim |
-| `JWT_EXPIRY_MINUTES` | server-core | Token lifetime (default 1440 = 24 h) |
+### SQL Server
+
+| Variable | Description |
+|---|---|
+| `SQL_USERNAME` | SQL Server admin username |
+| `SQL_PASSWORD` | SQL Server SA password |
+| `SQL_DATABASE` | Database name |
+| `SQL_PORT` | SQL Server port |
+| `MSSQL_MEM_LIMIT` | SQL Server memory limit |
+
+### MongoDB
+
+| Variable | Description |
+|---|---|
+| `MONGO_INITDB_ROOT_USERNAME` | MongoDB root user |
+| `MONGO_INITDB_ROOT_PASSWORD` | MongoDB root password |
+| `MONGO_PORT` | MongoDB port |
+
+### Neo4j
+
+| Variable | Description |
+|---|---|
+| `NEO4J_USERNAME` | Neo4j username |
+| `NEO4J_PASSWORD` | Neo4j password |
+| `NEO4J_BROWSER_PORT` | Neo4j browser HTTP port |
+| `NEO4J_BOLT_PORT` | Neo4j Bolt protocol port |
+
+### Worldbuilding
+
+| Variable | Description |
+|---|---|
+| `WORLDBUILDING_PORT` | HTTP port |
+| `WORLDBUILDING_ALLOWED_ORIGINS` | Comma-separated CORS origins |
+
+### Core API
+
+| Variable | Description |
+|---|---|
+| `CORE_PORT_1` | HTTPS port |
+| `CORE_PORT_2` | HTTP port |
+| `CORE_ENVIRONMENT` | ASP.NET environment (`Development`, `Production`) |
+
+### RabbitMQ
+
+| Variable | Description |
+|---|---|
+| `RABBIT_HostName` | RabbitMQ hostname |
+| `RABBIT_USER` | RabbitMQ username |
+| `RABBIT_PASSWORD` | RabbitMQ password |
+| `RABBIT_PORT` | AMQP port |
+| `RABBIT_MANAGEMENT_PORT` | Management UI port |
+
+### Security (JWT)
+
+| Variable | Description |
+|---|---|
+| `JWT_SECRET` | Signing key (min 32 chars, validated at startup) |
+| `JWT_SECRET_REFRESH` | Refresh token signing key (min 32 chars) |
+| `JWT_ISSUER` | Token issuer claim |
+| `JWT_AUDIENCE` | Token audience claim |
+| `JWT_ACCESS_TOKEN_EXPIRY` | Access token lifetime |
+| `JWT_REFRESH_TOKEN_EXPIRY` | Refresh token lifetime |
 
 ---
 
@@ -250,6 +321,62 @@ server-core publishes to the `worldbuilding.events` RabbitMQ Topic exchange.
 | `project.created` | `{ projectId, ownerUserId, title, createdAt }` | New project created |
 
 server-worldbuilding consumes this event to bootstrap Neo4j graph nodes and MongoDB manuscript documents.
+
+> **Note**: Events are published **after** the database commit (outbox pattern) to prevent inconsistency between SQL Server state and downstream consumers.
+
+---
+
+## Internal Architecture
+
+### server-core — Modular Bootstrap (`Layla.Api/Config/`)
+
+`Program.cs` delegates configuration to four focused modules:
+
+| Module | Responsibility |
+|---|---|
+| `Secrets.cs` | Fail-fast validation of critical secrets (JWT, DB, RabbitMQ) |
+| `Builder.cs` | Controllers, Swagger, SignalR, infrastructure DI |
+| `Services.cs` | Singleton services (VoiceRoomManager, PresenceTracker) |
+| `Secure.cs` | CORS, JWT Bearer auth, rate limiting, token version validation |
+
+### server-core — Middleware & Filters
+
+| Component | Path | Purpose |
+|---|---|---|
+| `GlobalExceptionMiddleware` | `Middleware/` | Catches unhandled exceptions, logs and returns 500 |
+| `TokenVersionValidator` | `Middleware/` | Validates JWT token version against DB (session invalidation) |
+| `RequireUserIdFilter` | `Filters/` | Action filter ensuring user ID is present in claims |
+| `ApiControllerBase` | `Controllers/` | Base controller with `RespondWithError(ErrorCode?)` helper |
+
+### server-core — Clean Architecture Layers
+
+```
+Layla.Api          → Controllers, Hubs, Middleware, Config
+Layla.Core         → Entities, Interfaces, Services, DTOs, ErrorCode, Constants
+Layla.Infrastructure → EF Core repos, AuthService, PresenceTracker, RabbitMQ
+```
+
+### server-worldbuilding — TypeScript Path Aliases
+
+The project uses `@/` path aliases mapped to `src/` via `tsconfig.json`. All imports use `@/config/env`, `@/db/mongoose`, etc.
+
+The service implements graceful shutdown — `SIGTERM` and `SIGINT` handlers close HTTP, RabbitMQ, and Neo4j connections in order.
+
+---
+
+## Solution File
+
+`Layla.Core.slnx` contains only the server-core projects:
+
+```xml
+<Solution>
+  <Project Path="Layla.Api/Layla.Api.csproj" />
+  <Project Path="Layla.Core/Layla.Core.csproj" />
+  <Project Path="Layla.Infrastructure/Layla.Infrastructure.csproj" />
+</Solution>
+```
+
+Client projects (`client-desktop`, `client-web`) have their own independent `.sln` files.
 
 ---
 
@@ -265,10 +392,10 @@ server-worldbuilding consumes this event to bootstrap Neo4j graph nodes and Mong
 | CU-06 | Manage collaborators | Writer (OWNER) | server-core | ✅ |
 | CU-07 | Configure privacy | Writer (OWNER) | server-core | ✅ |
 | CU-08 | Edit manuscript | Editor / Writer | worldbuilding | ✅ |
-| CU-09 | Manage wiki (nodes) | Editor / Writer | worldbuilding | 🔧 |
-| CU-10 | Visualize narrative graph | Reader / Editor | worldbuilding | 🔧 |
-| CU-11 | Voice session (speak) | Writer | server-core | 🔧 |
-| CU-12 | Join as listener | Reader | server-core | 🔧 |
+| CU-09 | Manage wiki (nodes) | Editor / Writer | worldbuilding | ✅ |
+| CU-10 | Visualize narrative graph | Reader / Editor | worldbuilding | ✅ |
+| CU-11 | Voice session (speak) | Writer | server-core | ✅ |
+| CU-12 | Join as listener | Reader | server-core | ✅ |
 | CU-13 | Read full story | Reader | worldbuilding | ❌ |
 | CU-14 | System reports | Admin | server-core | ❌ |
 | CU-15 | Manage users (ban/roles) | Admin | server-core | ✅ |
