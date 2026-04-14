@@ -1,11 +1,10 @@
 .vs
 .vs/
 .vscode/
-bin
+.agents/
+.claude/
 bin/
-obj
 obj/
-node_modules
 node_modules/
 !appsettings.Development.json
 appsettings.json

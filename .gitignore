@@ -1,14 +1,17 @@
 ## Secrets files
 .env
 .env.*
-!.env.Development
 .env.*.*
+!.env.Development
 appsettings.json
+appsettings.*.json
 !appsettings.Development.json
 
 ## Visual Studio / .NET
 bin/
 obj/
+.vs/
+.vscode/
 *.user
 *.suo
 *.userosscache
@@ -69,7 +72,5 @@ local.properties
 ## OS
 .DS_Store
 Thumbs.db
-/src/client-desktop/Layla.Desktop/.vs
-/src/server-core/.vs
 
 .fake
