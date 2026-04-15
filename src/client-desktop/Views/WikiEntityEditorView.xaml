@@ -72,6 +72,9 @@
                                                 <DataTrigger Binding="{Binding EntityType}" Value="Object">
                                                     <Setter Property="Background" Value="#CE93D8"/>
                                                 </DataTrigger>
+                                                <DataTrigger Binding="{Binding EntityType}" Value="Concept">
+                                                    <Setter Property="Background" Value="#90A4AE"/>
+                                                </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
@@ -168,6 +171,10 @@
 
             <!-- Buttons -->
             <StackPanel Grid.Row="12" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="View in Graph" Width="110" Height="35" Margin="0,0,10,0"
+                        Background="Transparent" Foreground="{DynamicResource AccentColor}"
+                        BorderBrush="{DynamicResource AccentColor}" BorderThickness="1" Cursor="Hand"
+                        Command="{Binding ViewInGraphCommand}"/>
                 <Button Content="Delete" Width="90" Height="35" Margin="0,0,10,0"
                         Background="Transparent" Foreground="IndianRed"
                         BorderBrush="IndianRed" BorderThickness="1" Cursor="Hand"
@@ -197,7 +204,8 @@
                 </Border>
 
                 <ListBox Grid.Row="1" ItemsSource="{Binding Appearances}"
-                         Background="Transparent" BorderThickness="0" Padding="5,5">
+                         Background="Transparent" BorderThickness="0" Padding="5,5"
+                         SelectionChanged="AppearanceListBox_SelectionChanged">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
                             <Border Padding="6,5" Margin="0,1" CornerRadius="4"

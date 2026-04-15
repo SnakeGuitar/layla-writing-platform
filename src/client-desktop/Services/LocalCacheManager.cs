@@ -5,6 +5,11 @@ using System.Threading.Tasks;
 
 namespace Layla.Desktop.Services
 {
+    /// <summary>
+    /// File-based offline cache for chapter RTF content.
+    /// Used by the manuscript editor as a fallback when the API is unreachable
+    /// so in-flight writing is not lost on network errors or app crashes.
+    /// </summary>
     public class LocalCacheManager
     {
         private readonly string _cacheDirectory;
@@ -12,28 +17,32 @@ namespace Layla.Desktop.Services
 
         public LocalCacheManager()
         {
-            string tempPath = Path.GetTempPath();
-            _cacheDirectory = Path.Combine(tempPath, "LaylaLocalCache");
+            _cacheDirectory = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "Layla",
+                "chapter-cache");
 
             if (!Directory.Exists(_cacheDirectory))
-            {
                 Directory.CreateDirectory(_cacheDirectory);
-            }
         }
 
+        private string GetChapterPath(string manuscriptId, string chapterId)
+            => Path.Combine(_cacheDirectory, $"{manuscriptId}_{chapterId}.rtf");
+
         /// <summary>
-        /// Saves the manuscript content locally simulating a "Last Write Wins" offline policy.
-        /// Thread-safe via SemaphoreSlim to prevent file locking across quick typing strokes.
+        /// Writes the chapter's RTF content to the local cache.
+        /// Thread-safe via SemaphoreSlim to prevent file locking across rapid typing.
         /// </summary>
-        public async Task SaveManuscriptAsync(string manuscriptId, string content)
+        public async Task SaveChapterAsync(string manuscriptId, string chapterId, string content)
         {
-            string filePath = Path.Combine(_cacheDirectory, $"{manuscriptId}.rtf");
+            var filePath = GetChapterPath(manuscriptId, chapterId);
 
             await _fileSemaphore.WaitAsync();
             try
             {
                 await File.WriteAllTextAsync(filePath, content);
             }
+            catch { /* Best-effort offline persistence — never crash the editor */ }
             finally
             {
                 _fileSemaphore.Release();
@@ -41,25 +50,39 @@ namespace Layla.Desktop.Services
         }
 
         /// <summary>
-        /// Loads the most recent cached manuscript string.
+        /// Loads cached RTF content for the given chapter, or <c>null</c> if no cache exists.
         /// </summary>
-        public async Task<string> LoadManuscriptAsync(string manuscriptId)
+        public async Task<string?> LoadChapterAsync(string manuscriptId, string chapterId)
         {
-            string filePath = Path.Combine(_cacheDirectory, $"{manuscriptId}.rtf");
+            var filePath = GetChapterPath(manuscriptId, chapterId);
 
             await _fileSemaphore.WaitAsync();
             try
             {
-                if (File.Exists(filePath))
-                {
-                    return await File.ReadAllTextAsync(filePath);
-                }
-                return string.Empty;
+                return File.Exists(filePath) ? await File.ReadAllTextAsync(filePath) : null;
+            }
+            catch
+            {
+                return null;
             }
             finally
             {
                 _fileSemaphore.Release();
             }
+        }
+
+        /// <summary>
+        /// Deletes the cached copy of a chapter after a successful server save,
+        /// so the cache only contains unsaved work.
+        /// </summary>
+        public void ClearChapter(string manuscriptId, string chapterId)
+        {
+            try
+            {
+                var filePath = GetChapterPath(manuscriptId, chapterId);
+                if (File.Exists(filePath)) File.Delete(filePath);
+            }
+            catch { /* Best-effort */ }
         }
     }
 }

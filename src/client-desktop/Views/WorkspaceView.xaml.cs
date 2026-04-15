@@ -10,6 +10,9 @@ namespace Layla.Desktop.Views
     public partial class WorkspaceView : Page
     {
         private readonly WorkspaceViewModel _viewModel;
+        private ManuscriptEditorView? _editorView;
+        private WikiEntityEditorView? _wikiView;
+        private NarrativeGraphView? _graphView;
 
         public WorkspaceView(Project currentProject)
         {
@@ -23,6 +26,7 @@ namespace Layla.Desktop.Views
             _viewModel.OnSettings += (s, e) => NavigationService.Navigate(new SettingsView());
 
             this.Loaded += WorkspaceView_Loaded;
+            this.Unloaded += WorkspaceView_Unloaded;
         }
 
         private void WorkspaceView_Loaded(object sender, RoutedEventArgs e)
@@ -30,9 +34,13 @@ namespace Layla.Desktop.Views
             if (_viewModel.CurrentProject != null)
             {
                 var projectId = _viewModel.CurrentProject.Id;
-                EditorFrame.Navigate(new ManuscriptEditorView(projectId));
-                WikiFrame.Navigate(new WikiEntityEditorView(projectId));
-                GraphFrame.Navigate(new NarrativeGraphView(projectId));
+                _editorView = new ManuscriptEditorView(projectId);
+                _wikiView = new WikiEntityEditorView(projectId);
+                _graphView = new NarrativeGraphView(projectId);
+
+                EditorFrame.Navigate(_editorView);
+                WikiFrame.Navigate(_wikiView);
+                GraphFrame.Navigate(_graphView);
                 VoiceFrame.Navigate(new VoicePanelView(projectId));
             }
 
@@ -44,6 +52,73 @@ namespace Layla.Desktop.Views
                 }
             }
             catch { }
+
+            // Subscribe to cross-tab navigation events
+            WorkspaceMediator.NavigateToWikiEntry += OnNavigateToWikiEntry;
+            WorkspaceMediator.NavigateToChapter += OnNavigateToChapter;
+            WorkspaceMediator.NavigateToGraph += OnNavigateToGraph;
+        }
+
+        private void WorkspaceView_Unloaded(object sender, RoutedEventArgs e)
+        {
+            WorkspaceMediator.NavigateToWikiEntry -= OnNavigateToWikiEntry;
+            WorkspaceMediator.NavigateToChapter -= OnNavigateToChapter;
+            WorkspaceMediator.NavigateToGraph -= OnNavigateToGraph;
+        }
+
+        private void OnNavigateToWikiEntry(string entityId)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                // Switch to Wiki tab (index 1)
+                var tabControl = FindTabControl();
+                if (tabControl != null)
+                    tabControl.SelectedIndex = 1;
+
+                _wikiView?.SelectEntityById(entityId);
+            });
+        }
+
+        private void OnNavigateToChapter(string manuscriptId, string chapterId)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                // Switch to Editor tab (index 0)
+                var tabControl = FindTabControl();
+                if (tabControl != null)
+                    tabControl.SelectedIndex = 0;
+
+                _editorView?.NavigateToChapter(manuscriptId, chapterId);
+            });
+        }
+
+        private void OnNavigateToGraph(string? entityId)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                // Switch to Graph tab (index 2)
+                var tabControl = FindTabControl();
+                if (tabControl != null)
+                    tabControl.SelectedIndex = 2;
+            });
+        }
+
+        private TabControl? FindTabControl()
+        {
+            return FindChild<TabControl>(this);
+        }
+
+        private static T? FindChild<T>(DependencyObject parent) where T : DependencyObject
+        {
+            int count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent);
+            for (int i = 0; i < count; i++)
+            {
+                var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+                if (child is T found) return found;
+                var result = FindChild<T>(child);
+                if (result != null) return result;
+            }
+            return null;
         }
     }
 }

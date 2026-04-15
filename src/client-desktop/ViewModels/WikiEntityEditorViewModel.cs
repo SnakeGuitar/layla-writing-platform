@@ -50,7 +50,7 @@ namespace Layla.Desktop.ViewModels
         public ObservableCollection<AppearanceRecord> Appearances { get; } = new();
 
         /// <summary>Available entity types for the ComboBox.</summary>
-        public string[] EntityTypes { get; } = { "Character", "Location", "Event", "Object" };
+        public string[] EntityTypes { get; } = { "Character", "Location", "Event", "Object", "Concept" };
 
         public WikiEntityEditorViewModel(IWikiApiService wikiApi)
         {
@@ -169,6 +169,14 @@ namespace Layla.Desktop.ViewModels
             SelectedEntry = null;
             ClearForm();
             Appearances.Clear();
+        }
+
+        /// <summary>Navigates to the Graph tab highlighting the selected entity.</summary>
+        [RelayCommand]
+        public void ViewInGraph()
+        {
+            if (SelectedEntry == null) return;
+            Services.WorkspaceMediator.RequestNavigateToGraph(SelectedEntry.EntityId);
         }
 
         private void ClearForm()

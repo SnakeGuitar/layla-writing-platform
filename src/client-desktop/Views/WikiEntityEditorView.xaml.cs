@@ -2,6 +2,7 @@ using Layla.Desktop.Models;
 using Layla.Desktop.Services;
 using Layla.Desktop.ViewModels;
 using System;
+using System.Linq;
 using System.Windows.Controls;
 
 namespace Layla.Desktop.Views
@@ -25,6 +26,33 @@ namespace Layla.Desktop.Views
         {
             if (sender is ListBox lb && lb.SelectedItem is WikiEntry entry)
             {
+                await _viewModel.SelectEntryCommand.ExecuteAsync(entry);
+            }
+        }
+
+        /// <summary>
+        /// When the user clicks an appearance record, navigate to that chapter
+        /// in the Manuscript Editor tab.
+        /// </summary>
+        private void AppearanceListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is ListBox lb && lb.SelectedItem is AppearanceRecord appearance)
+            {
+                WorkspaceMediator.RequestNavigateToChapter(appearance.ManuscriptId, appearance.ChapterId);
+                lb.SelectedItem = null;
+            }
+        }
+
+        /// <summary>
+        /// Called by <see cref="WorkspaceView"/> when cross-tab navigation requests
+        /// selection of a specific wiki entity.
+        /// </summary>
+        public async void SelectEntityById(string entityId)
+        {
+            var entry = _viewModel.Entries.FirstOrDefault(e => e.EntityId == entityId);
+            if (entry != null)
+            {
+                _viewModel.SelectedEntry = entry;
                 await _viewModel.SelectEntryCommand.ExecuteAsync(entry);
             }
         }
