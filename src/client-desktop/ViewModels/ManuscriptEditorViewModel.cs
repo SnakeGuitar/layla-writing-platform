@@ -19,6 +19,7 @@ namespace Layla.Desktop.ViewModels
     public partial class ManuscriptEditorViewModel : ObservableObject
     {
         private readonly IManuscriptApiService _apiService;
+        private readonly LocalCacheManager _cache;
         private Guid _projectId;
 
         /// <summary><c>true</c> while the initial manuscript list is being fetched.</summary>
@@ -28,6 +29,14 @@ namespace Layla.Desktop.ViewModels
         /// <summary><c>true</c> while a chapter auto-save is in progress.</summary>
         [ObservableProperty]
         private bool _isSaving;
+
+        /// <summary>
+        /// <c>true</c> when the last auto-save could not reach the API and the chapter was
+        /// persisted to the local cache instead. Cleared as soon as the next save succeeds.
+        /// Bindable by the view to show an offline/unsaved indicator in the editor footer.
+        /// </summary>
+        [ObservableProperty]
+        private bool _hasUnsavedOfflineChanges;
 
         /// <summary>Formatted word count shown in the editor footer (e.g. "342 words").</summary>
         [ObservableProperty]
@@ -61,9 +70,10 @@ namespace Layla.Desktop.ViewModels
         public event Action? ContentReloadRequested;
 
         /// <summary>Initialises the ViewModel via dependency injection.</summary>
-        public ManuscriptEditorViewModel(IManuscriptApiService apiService)
+        public ManuscriptEditorViewModel(IManuscriptApiService apiService, LocalCacheManager cache)
         {
             _apiService = apiService;
+            _cache = cache;
         }
 
         /// <summary>
@@ -156,12 +166,31 @@ namespace Layla.Desktop.ViewModels
         /// <summary>
         /// Fetches the full chapter content from the API and sets <see cref="CurrentChapter"/>,
         /// then raises <see cref="ContentReloadRequested"/> so the view reloads the editor.
+        /// Falls back to the offline cache when the API is unreachable so any unsaved work
+        /// from a previous session is not lost.
         /// </summary>
         private async Task SelectChapterAsync(Chapter chapterIndex)
         {
             if (SelectedManuscript == null) return;
 
             var fullChapter = await _apiService.GetChapterAsync(_projectId, SelectedManuscript.ManuscriptId, chapterIndex.ChapterId);
+
+            // Offline fallback: if the API is unreachable, try the local cache so the user
+            // can keep editing the most recent offline copy.
+            if (fullChapter == null)
+            {
+                var cached = await _cache.LoadChapterAsync(SelectedManuscript.ManuscriptId, chapterIndex.ChapterId.ToString());
+                if (cached != null)
+                {
+                    chapterIndex.Content = cached;
+                    HasUnsavedOfflineChanges = true;
+                }
+            }
+            else
+            {
+                HasUnsavedOfflineChanges = false;
+            }
+
             CurrentChapter = fullChapter ?? chapterIndex;
             SelectedChapterItem = chapterIndex;
 
@@ -287,7 +316,10 @@ namespace Layla.Desktop.ViewModels
 
         /// <summary>
         /// Persists <paramref name="rtfContent"/> to the API for <see cref="CurrentChapter"/>.
-        /// Guards against concurrent saves with <see cref="IsSaving"/>.
+        /// Guards against concurrent saves with <see cref="IsSaving"/>. On network failure the
+        /// content is written to the local cache and <see cref="HasUnsavedOfflineChanges"/>
+        /// is raised so the view can display an offline indicator. On success the cache entry
+        /// is cleared so it only ever contains work that has not reached the server.
         /// </summary>
         [RelayCommand]
         public async Task SaveContentAsync(string rtfContent)
@@ -295,27 +327,44 @@ namespace Layla.Desktop.ViewModels
             if (IsSaving || CurrentChapter == null || SelectedManuscript == null) return;
             IsSaving = true;
 
+            var manuscriptId = SelectedManuscript.ManuscriptId;
+            var chapterId = CurrentChapter.ChapterId.ToString();
+
             try
             {
                 var saved = await _apiService.UpdateChapterAsync(
                     _projectId,
-                    SelectedManuscript.ManuscriptId,
+                    manuscriptId,
                     CurrentChapter.ChapterId,
                     CurrentChapter.Title,
                     rtfContent,
                     CurrentChapter.Order
                 );
 
-                if (saved?.Mentions != null)
+                if (saved == null)
+                {
+                    // API reachable but returned no result — treat as a soft failure and cache.
+                    await _cache.SaveChapterAsync(manuscriptId, chapterId, rtfContent);
+                    HasUnsavedOfflineChanges = true;
+                    return;
+                }
+
+                if (saved.Mentions != null)
                 {
                     CurrentMentions.Clear();
                     foreach (var mention in saved.Mentions)
                         CurrentMentions.Add(mention);
                 }
+
+                // Successful server save — drop any stale offline copy.
+                _cache.ClearChapter(manuscriptId, chapterId);
+                HasUnsavedOfflineChanges = false;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Auto-save failed: {ex.Message}");
+                await _cache.SaveChapterAsync(manuscriptId, chapterId, rtfContent);
+                HasUnsavedOfflineChanges = true;
             }
             finally
             {
@@ -327,6 +376,26 @@ namespace Layla.Desktop.ViewModels
         public void UpdateWordCount(int count)
         {
             WordCountText = $"{count} word{(count != 1 ? "s" : "")}";
+        }
+
+        /// <summary>
+        /// Programmatically navigates to a specific chapter within a specific manuscript.
+        /// Called by the workspace mediator when cross-tab navigation is requested
+        /// (e.g. clicking an appearance in the wiki panel).
+        /// </summary>
+        public async Task NavigateToChapterAsync(string manuscriptId, string chapterId)
+        {
+            // Switch manuscript if needed
+            var targetMs = Manuscripts.FirstOrDefault(m => m.ManuscriptId == manuscriptId);
+            if (targetMs == null) return;
+
+            if (SelectedManuscript?.ManuscriptId != manuscriptId)
+                await SelectManuscriptAsync(targetMs);
+
+            // Switch chapter
+            var targetCh = CurrentChapters.FirstOrDefault(c => c.ChapterId.ToString() == chapterId);
+            if (targetCh != null)
+                await SelectChapterAsync(targetCh);
         }
     }
 }

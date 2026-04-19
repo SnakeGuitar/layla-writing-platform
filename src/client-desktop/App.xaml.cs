@@ -140,6 +140,7 @@ namespace Layla.Desktop
             services.AddSingleton<IAuthService, AuthService>();
             services.AddSingleton<IWikiApiService, WikiApiService>();
             services.AddSingleton<IGraphApiService, GraphApiService>();
+            services.AddSingleton<LocalCacheManager>();
 
             services.AddTransient<ViewModels.ManuscriptEditorViewModel>();
             services.AddTransient<ViewModels.ProjectListViewModel>();

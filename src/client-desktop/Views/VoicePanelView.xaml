@@ -123,7 +123,7 @@
                             <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
                                 <TextBlock Text="PTT" FontSize="24" FontWeight="Bold"
                                            Foreground="White" HorizontalAlignment="Center"/>
-                                <TextBlock x:Name="PttHint" Text="Hold to talk" FontSize="11"
+                                <TextBlock x:Name="PttHint" Text="Hold to talk (or Space)" FontSize="11"
                                            Foreground="#B0BEC5" HorizontalAlignment="Center" Margin="0,4,0,0"/>
                             </StackPanel>
                         </Border>

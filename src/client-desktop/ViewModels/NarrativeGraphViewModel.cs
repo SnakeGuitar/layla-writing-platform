@@ -13,8 +13,8 @@ namespace Layla.Desktop.ViewModels
 {
     /// <summary>
     /// ViewModel for the narrative graph viewer.
-    /// Loads nodes and edges from the worldbuilding API and arranges them
-    /// on a canvas using a simple force-directed layout.
+    /// Loads nodes and edges from the worldbuilding API, arranges them
+    /// on a canvas, and supports relationship creation/deletion.
     /// </summary>
     public partial class NarrativeGraphViewModel : ObservableObject
     {
@@ -31,6 +31,42 @@ namespace Layla.Desktop.ViewModels
 
         /// <summary>Edges on the graph canvas.</summary>
         public ObservableCollection<GraphEdge> Edges { get; } = new();
+
+        // ── Relationship creation dialog state ──
+
+        /// <summary>Controls visibility of the "Add Relationship" dialog.</summary>
+        [ObservableProperty]
+        private bool _isAddRelationshipVisible;
+
+        /// <summary>All wiki entries available as source/target for new relationships.</summary>
+        public ObservableCollection<WikiEntry> AvailableEntities { get; } = new();
+
+        /// <summary>Source entity selected in the dialog.</summary>
+        [ObservableProperty]
+        private WikiEntry? _newRelSource;
+
+        /// <summary>Target entity selected in the dialog.</summary>
+        [ObservableProperty]
+        private WikiEntry? _newRelTarget;
+
+        /// <summary>Relationship type for the new edge.</summary>
+        [ObservableProperty]
+        private string _newRelType = "RELATED_TO";
+
+        /// <summary>Human-readable label for the new edge.</summary>
+        [ObservableProperty]
+        private string _newRelLabel = string.Empty;
+
+        /// <summary>Error message for the relationship dialog.</summary>
+        [ObservableProperty]
+        private string _addRelError = string.Empty;
+
+        /// <summary>Available relationship types for the ComboBox.</summary>
+        public string[] RelationshipTypes { get; } =
+        {
+            "RELATED_TO", "BELONGS_TO", "KNOWS", "LOVES", "HATES",
+            "LOCATED_IN", "PART_OF", "CAUSES", "PRECEDES", "FOLLOWS"
+        };
 
         public NarrativeGraphViewModel(IGraphApiService graphApi, IWikiApiService wikiApi)
         {
@@ -62,7 +98,7 @@ namespace Layla.Desktop.ViewModels
 
                 var nodeMap = new Dictionary<string, GraphNode>();
 
-                ArrangeCircular(result.Nodes, 600, 400, Math.Min(300, result.Nodes.Count * 30));
+                ArrangeCircular(result.Nodes, 600, 400, Math.Min(300, Math.Max(120, result.Nodes.Count * 35)));
 
                 foreach (var node in result.Nodes)
                 {
@@ -89,6 +125,97 @@ namespace Layla.Desktop.ViewModels
             {
                 IsLoading = false;
             }
+        }
+
+        /// <summary>
+        /// Opens the "Add Relationship" dialog after loading available wiki entities.
+        /// </summary>
+        [RelayCommand]
+        public async Task OpenAddRelationshipAsync()
+        {
+            AddRelError = string.Empty;
+            NewRelSource = null;
+            NewRelTarget = null;
+            NewRelType = "RELATED_TO";
+            NewRelLabel = string.Empty;
+
+            try
+            {
+                var entries = await _wikiApi.GetEntriesAsync(_projectId);
+                AvailableEntities.Clear();
+                if (entries != null)
+                {
+                    foreach (var e in entries.OrderBy(e => e.Name))
+                        AvailableEntities.Add(e);
+                }
+            }
+            catch { }
+
+            IsAddRelationshipVisible = true;
+        }
+
+        /// <summary>Closes the "Add Relationship" dialog without creating.</summary>
+        [RelayCommand]
+        public void CancelAddRelationship()
+        {
+            IsAddRelationshipVisible = false;
+        }
+
+        /// <summary>Creates the relationship and refreshes the graph.</summary>
+        [RelayCommand]
+        public async Task ConfirmAddRelationshipAsync()
+        {
+            if (NewRelSource == null || NewRelTarget == null)
+            {
+                AddRelError = "Select both source and target entities.";
+                return;
+            }
+            if (NewRelSource.EntityId == NewRelTarget.EntityId)
+            {
+                AddRelError = "Source and target must be different entities.";
+                return;
+            }
+
+            var label = string.IsNullOrWhiteSpace(NewRelLabel) ? NewRelType : NewRelLabel;
+            var success = await _graphApi.CreateRelationshipAsync(
+                _projectId, NewRelSource.EntityId, NewRelTarget.EntityId, NewRelType, label);
+
+            if (success)
+            {
+                IsAddRelationshipVisible = false;
+                await LoadGraphAsync();
+            }
+            else
+            {
+                AddRelError = "Failed to create relationship.";
+            }
+        }
+
+        /// <summary>Deletes a relationship edge and refreshes the graph.</summary>
+        [RelayCommand]
+        public async Task DeleteRelationshipAsync(GraphEdge? edge)
+        {
+            if (edge == null) return;
+
+            var confirm = MessageBox.Show(
+                $"Delete relationship \"{edge.Label}\" between nodes?",
+                "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (confirm != MessageBoxResult.Yes) return;
+
+            var success = await _graphApi.DeleteRelationshipAsync(
+                _projectId, edge.SourceId, edge.TargetId);
+
+            if (success)
+                await LoadGraphAsync();
+        }
+
+        /// <summary>
+        /// Handles a node click — navigates to the wiki entry for that node.
+        /// </summary>
+        public void OnNodeClicked(string entityId)
+        {
+            WorkspaceMediator.RequestNavigateToWikiEntry(entityId);
         }
 
         /// <summary>

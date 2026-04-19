@@ -7,6 +7,10 @@
       d:DesignHeight="600" d:DesignWidth="800"
       Title="NarrativeGraphView" Background="{DynamicResource WindowBackground}">
 
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Page.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -36,10 +40,19 @@
                         <Border Width="10" Height="10" CornerRadius="5" Background="#FFB74D" Margin="0,0,4,0" VerticalAlignment="Center"/>
                         <TextBlock Text="Event" FontSize="10" Foreground="{DynamicResource SecondaryText}" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,16,0">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
                         <Border Width="10" Height="10" CornerRadius="5" Background="#CE93D8" Margin="0,0,4,0" VerticalAlignment="Center"/>
                         <TextBlock Text="Object" FontSize="10" Foreground="{DynamicResource SecondaryText}" VerticalAlignment="Center"/>
                     </StackPanel>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,16,0">
+                        <Border Width="10" Height="10" CornerRadius="5" Background="#90A4AE" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Concept" FontSize="10" Foreground="{DynamicResource SecondaryText}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <Button Content="+ Relationship" Command="{Binding OpenAddRelationshipCommand}"
+                            Padding="10,4" Margin="0,0,8,0"
+                            Background="Transparent" Foreground="{DynamicResource AccentColor}"
+                            BorderBrush="{DynamicResource AccentColor}" BorderThickness="1"
+                            Cursor="Hand" FontSize="12"/>
                     <Button Content="Refresh" Command="{Binding LoadGraphCommand}"
                             Padding="10,4" Background="{DynamicResource AccentColor}" Foreground="White"
                             BorderThickness="0" Cursor="Hand" FontSize="12"/>
@@ -49,7 +62,71 @@
 
         <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
             <Canvas x:Name="GraphCanvas" Width="1200" Height="800"
-                    Background="{DynamicResource ControlBackground}" Margin="20"/>
+                    Background="{DynamicResource ControlBackground}" Margin="20"
+                    MouseLeftButtonDown="GraphCanvas_MouseLeftButtonDown"
+                    MouseMove="GraphCanvas_MouseMove"
+                    MouseLeftButtonUp="GraphCanvas_MouseLeftButtonUp"/>
         </ScrollViewer>
+
+        <!-- ═══ Add Relationship Modal ═══ -->
+        <Border Visibility="{Binding IsAddRelationshipVisible, Converter={StaticResource BoolToVis}}"
+                Background="#CC000000" Panel.ZIndex="100" Grid.RowSpan="2">
+            <Border Background="{DynamicResource WindowBackground}" Width="420"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Padding="20" CornerRadius="8">
+                <StackPanel>
+                    <TextBlock Text="Add Relationship" FontSize="18" FontWeight="Bold"
+                               Foreground="{DynamicResource PrimaryText}" Margin="0,0,0,15"/>
+
+                    <TextBlock Text="Source Entity:" FontSize="12" FontWeight="Medium"
+                               Foreground="{DynamicResource SecondaryText}" Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding AvailableEntities}"
+                              SelectedItem="{Binding NewRelSource}"
+                              DisplayMemberPath="Name" Height="30" Margin="0,0,0,10"
+                              Background="{DynamicResource ControlBackground}"
+                              Foreground="{DynamicResource PrimaryText}"
+                              BorderBrush="{DynamicResource BorderColor}"/>
+
+                    <TextBlock Text="Target Entity:" FontSize="12" FontWeight="Medium"
+                               Foreground="{DynamicResource SecondaryText}" Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding AvailableEntities}"
+                              SelectedItem="{Binding NewRelTarget}"
+                              DisplayMemberPath="Name" Height="30" Margin="0,0,0,10"
+                              Background="{DynamicResource ControlBackground}"
+                              Foreground="{DynamicResource PrimaryText}"
+                              BorderBrush="{DynamicResource BorderColor}"/>
+
+                    <TextBlock Text="Relationship Type:" FontSize="12" FontWeight="Medium"
+                               Foreground="{DynamicResource SecondaryText}" Margin="0,0,0,4"/>
+                    <ComboBox ItemsSource="{Binding RelationshipTypes}"
+                              SelectedItem="{Binding NewRelType}" Height="30" Margin="0,0,0,10"
+                              Background="{DynamicResource ControlBackground}"
+                              Foreground="{DynamicResource PrimaryText}"
+                              BorderBrush="{DynamicResource BorderColor}"/>
+
+                    <TextBlock Text="Label (optional):" FontSize="12" FontWeight="Medium"
+                               Foreground="{DynamicResource SecondaryText}" Margin="0,0,0,4"/>
+                    <TextBox Text="{Binding NewRelLabel, UpdateSourceTrigger=PropertyChanged}"
+                             Height="28" Padding="5,3" Margin="0,0,0,10"
+                             Background="{DynamicResource ControlBackground}"
+                             Foreground="{DynamicResource PrimaryText}"
+                             BorderBrush="{DynamicResource BorderColor}"/>
+
+                    <TextBlock Text="{Binding AddRelError}" Foreground="IndianRed" FontSize="12"
+                               Margin="0,0,0,8" TextWrapping="Wrap"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Cancel" Padding="15,6" Margin="0,0,8,0"
+                                Background="Transparent" Foreground="{DynamicResource SecondaryText}"
+                                BorderThickness="0" Cursor="Hand"
+                                Command="{Binding CancelAddRelationshipCommand}"/>
+                        <Button Content="Create" Padding="15,6"
+                                Background="{DynamicResource AccentColor}" Foreground="White"
+                                BorderThickness="0" Cursor="Hand" FontWeight="SemiBold"
+                                Command="{Binding ConfirmAddRelationshipCommand}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Border>
     </Grid>
 </Page>

@@ -64,9 +64,11 @@ namespace Layla.Desktop.ViewModels
 
                 if (response.IsSuccess && response.Response != null)
                 {
-                    SessionManager.CurrentToken = response.Response.Token;
-                    SessionManager.CurrentEmail = response.Response.Email;
-                    SessionManager.CurrentDisplayName = response.Response.DisplayName;
+                    SessionManager.SaveSession(
+                        response.Response.Token,
+                        response.Response.Email,
+                        response.Response.DisplayName,
+                        response.Response.UserId);
                     OnRegistrationSuccess?.Invoke(this, EventArgs.Empty);
                 }
                 else
