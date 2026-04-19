@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ── Fail-fast on missing critical secrets ─────────────────────────────────────
+// -- Fail-fast on missing critical secrets -------------------------------------
 // Secrets MUST be supplied via environment variables, dotnet user-secrets, or a
 // secret store — NEVER committed to appsettings.json. Without this guard the
 // app would boot with null!/empty strings and crash deep in JWT validation
