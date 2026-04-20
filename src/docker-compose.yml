@@ -69,6 +69,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - JWT_SECRET_REFRESH=${JWT_SECRET_REFRESH}
       - JWT_ACCESS_TOKEN_EXPIRY=${JWT_ACCESS_TOKEN_EXPIRY}
+      - JWT_REFRESH_TOKEN_EXPIRY=${JWT_REFRESH_TOKEN_EXPIRY}
       - ALLOWED_ORIGINS=${WORLDBUILDING_ALLOWED_ORIGINS}
       - MONGODB_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:${MONGO_PORT}/layla_worldbuilding?authSource=admin
       - NEO4J_URI=bolt://neo4j:${NEO4J_BOLT_PORT}
@@ -164,7 +165,7 @@ services:
       - "${WEB_PORT_HTTPS}:${WEB_PORT_HTTPS}"
       - "${WEB_PORT_HTTP}:${WEB_PORT_HTTP}"
     environment:
-      - Ports__HTTPS=${WEB_PORT_HTTPs}
+      - Ports__HTTPS=${WEB_PORT_HTTPS}
       - Ports__HTTP=${WEB_PORT_HTTP}
       - DOTNET_USE_POLLING_FILE_WATCHER=1
       - DOTNET_RUNNING_IN_CONTAINER=true
@@ -176,6 +177,31 @@ services:
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:${WEB_PORT_HTTP}/health"]
       interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # --- 8. API Gateway (YARP) ---
+  layla-api-gateway:
+    build:
+      context: ./infraestructure-api_gateway
+      dockerfile: Dockerfile
+    container_name: layla-api-gateway
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5000
+      - Ports__HTTP=5000
+      - Ports__HTTPS=5001
+    depends_on:
+      server-core:
+        condition: service_started
+      layla-worldbuilding:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 15s
       timeout: 5s
       retries: 5
     restart: unless-stopped
