@@ -40,11 +40,11 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(apiLimiter);
 
-app.get("api/health", (req, res) => res.send("OK"));
+app.get("/health", (_req, res) => res.send("OK"));
 
-app.use("/api/Manuscripts", ManuscriptsRouter);
-app.use("/api/Wiki", WikiRouter);
-app.use("/api/Graph", GraphRouter);
+app.use("/api/manuscripts", ManuscriptsRouter);
+app.use("/api/wiki", WikiRouter);
+app.use("/api/graph", GraphRouter);
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get("/api-docs.json", (_req, res) => res.json(swaggerSpec));

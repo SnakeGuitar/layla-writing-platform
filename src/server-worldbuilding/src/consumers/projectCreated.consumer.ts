@@ -1,6 +1,7 @@
 import type { Channel, ChannelModel } from "amqplib";
 import amqplib from "amqplib";
 import { z } from "zod";
+import { v4 as uuidv4 } from "uuid";
 import { getNeo4jDriver } from "@/db/neo4j";
 import { ManuscriptModel } from "@/models/Manuscript.model";
 import { config } from "@/config/env";
@@ -61,15 +62,26 @@ const initializeProjectInNeo4j = async (
 };
 
 /**
- * Creates an empty {@link Manuscript} document in MongoDB for the project if
+ * Creates a default {@link Manuscript} document in MongoDB for the project if
  * one does not already exist (idempotent).
+ *
+ * Both `manuscriptId` and `title` are required by the schema.
+ * We generate a UUID for `manuscriptId` and use the project title so the
+ * document passes Mongoose validation.
  */
 const initializeManuscriptInMongo = async (
 	projectId: string,
+	projectTitle: string,
 ): Promise<void> => {
 	const exists = await ManuscriptModel.exists({ projectId });
 	if (!exists) {
-		await ManuscriptModel.create({ projectId, chapters: [] });
+		await ManuscriptModel.create({
+			manuscriptId: uuidv4(),
+			projectId,
+			title: projectTitle,
+			order: 0,
+			chapters: [],
+		});
 	}
 };
 
@@ -148,7 +160,7 @@ export const startProjectCreatedConsumer = async (): Promise<void> => {
 			}
 			const payload: ProjectCreatedPayload = parseResult.data;
 			await initializeProjectInNeo4j(payload);
-			await initializeManuscriptInMongo(payload.projectId);
+			await initializeManuscriptInMongo(payload.projectId, payload.title);
 			channel.ack(msg);
 			console.log(
 				`[RabbitMQ] Project ${payload.projectId} initialized in Neo4j and MongoDB`,
