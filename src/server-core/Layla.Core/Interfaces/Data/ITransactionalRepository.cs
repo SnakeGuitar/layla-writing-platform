@@ -14,4 +14,13 @@ public interface ITransactionalRepository
 
     /// <summary>Rolls back the current transaction, discarding any pending changes.</summary>
     Task RollbackTransactionAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Executes <paramref name="operation"/> inside a retriable transaction managed by
+    /// EF Core's execution strategy. Use this instead of
+    /// <see cref="BeginTransactionAsync"/>/<see cref="CommitTransactionAsync"/> when the
+    /// DbContext is configured with <c>EnableRetryOnFailure</c> (e.g. SqlServerRetryingExecutionStrategy),
+    /// which does not support user-initiated transactions opened outside the strategy scope.
+    /// </summary>
+    Task ExecuteInTransactionAsync(Func<CancellationToken, Task> operation, CancellationToken cancellationToken = default);
 }
