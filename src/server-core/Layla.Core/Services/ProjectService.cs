@@ -76,28 +76,29 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
     /// </returns>
     public async Task<Result<ProjectResponseDto>> CreateProjectAsync(CreateProjectRequestDto request, string userId, CancellationToken cancellationToken = default)
     {
-        Project? project = null;
+        var project = BuildProject(request);
+        var projectRole = BuildOwnerRole(project.Id, userId);
+
         try
         {
-            await _projectRepository.BeginTransactionAsync(cancellationToken);
-            project = BuildProject(request);
-            var projectRole = BuildOwnerRole(project.Id, userId);
-
-            await _projectRepository.AddProjectAsync(project, cancellationToken);
-            await _projectRepository.AddProjectRoleAsync(projectRole, cancellationToken);
-            await _projectRepository.CommitTransactionAsync(cancellationToken);
+            // ExecuteInTransactionAsync wraps the work inside CreateExecutionStrategy().ExecuteAsync(),
+            // which is required when SqlServerRetryingExecutionStrategy is active.
+            await _projectRepository.ExecuteInTransactionAsync(async ct =>
+            {
+                await _projectRepository.AddProjectAsync(project, ct);
+                await _projectRepository.AddProjectRoleAsync(projectRole, ct);
+            }, cancellationToken);
         }
         catch (Exception ex)
         {
-            await _projectRepository.RollbackTransactionAsync(cancellationToken);
             Logger.LogError(ex, "Failed to create project for user {UserId}", userId);
             return Result<ProjectResponseDto>.Failure(MapException(ex));
         }
 
-        await PublishProjectCreatedEventsAsync(project!, userId, cancellationToken);
+        await PublishProjectCreatedEventsAsync(project, userId, cancellationToken);
 
-        Logger.LogInformation("Project {ProjectId} created successfully by user {UserId}", project!.Id, userId);
-        return Result<ProjectResponseDto>.Success(MapToResponseDto(project!, ProjectRoles.Owner));
+        Logger.LogInformation("Project {ProjectId} created successfully by user {UserId}", project.Id, userId);
+        return Result<ProjectResponseDto>.Success(MapToResponseDto(project, ProjectRoles.Owner));
     }
 
     public Task<Result<IEnumerable<ProjectResponseDto>>> GetUserProjectsAsync(string userId, CancellationToken cancellationToken = default) =>
