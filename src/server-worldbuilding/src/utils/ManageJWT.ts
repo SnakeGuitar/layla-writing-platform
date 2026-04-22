@@ -13,7 +13,7 @@ import { config } from "@/config/env";
  */
 export const verifyAccessJWTToken = (token: string): JwtPayloadCustom => {
 	const decoded = jwt.verify(token, config.jwt.secret, {
-		algorithms: ["HS256"],
+		algorithms: ["HS512"],
 	} as VerifyOptions) as Record<string, unknown>;
 
 	// Prefer an explicit 'id' claim; fall back to the standard 'sub' claim that
