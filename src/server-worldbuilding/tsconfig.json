@@ -6,7 +6,7 @@
     "outDir": "./dist",
 
     // Environment Settings
-    "module": "ESNext",
+    "module": "CommonJS",
     "target": "ES2022",
     "lib": ["ES2022"],
     "skipLibCheck": true,

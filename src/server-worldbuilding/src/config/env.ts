@@ -1,5 +1,10 @@
 import process from "node:process";
-import "dotenv/config";
+import { config as loadEnv } from "dotenv";
+
+// In local development the env file is .env.development.
+// In Docker/production the variables are injected directly — dotenv is a no-op.
+loadEnv({ path: ".env.development", override: false });
+loadEnv({ override: false }); // fallback to .env if present
 
 /**
  * Required environment variables.

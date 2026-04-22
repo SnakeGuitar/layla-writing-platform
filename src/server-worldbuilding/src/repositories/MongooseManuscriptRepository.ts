@@ -116,6 +116,10 @@ export class MongooseManuscriptRepository implements IManuscriptRepository {
     if (!chapter) return null;
 
     Object.assign(chapter, data);
+    // Object.assign mutates the subdocument directly, bypassing Mongoose setters.
+    // markModified forces Mongoose to include the entire 'chapters' array in the
+    // next $set so the changes actually reach MongoDB.
+    manuscript.markModified("chapters");
     await manuscript.save();
     return manuscript.toObject() as unknown as IManuscript;
   }

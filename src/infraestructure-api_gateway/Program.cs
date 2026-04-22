@@ -65,7 +65,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // ──  Exposition of ports ─────────────────────────────────────────────────────
 // TODO
 builder.WebHost.UseUrls(
-    $"https://localhost:{builder.Configuration["Ports:HTTPS"]};http://localhost:{builder.Configuration["Ports:HTTP"]};");
+    $"https://+:{builder.Configuration["Ports:HTTPS"]};http://+:{builder.Configuration["Ports:HTTP"]};");
 
 WebApplication? app = builder.Build();
 

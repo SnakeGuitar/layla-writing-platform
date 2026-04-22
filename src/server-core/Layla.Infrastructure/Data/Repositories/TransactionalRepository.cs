@@ -59,4 +59,29 @@ public abstract class TransactionalRepository : ITransactionalRepository
             CurrentTransaction = null;
         }
     }
+
+    /// <inheritdoc/>
+    public async Task ExecuteInTransactionAsync(Func<CancellationToken, Task> operation, CancellationToken cancellationToken = default)
+    {
+        // CreateExecutionStrategy() returns the configured strategy (e.g. SqlServerRetryingExecutionStrategy).
+        // Wrapping the transaction inside ExecuteAsync allows the strategy to retry the entire
+        // unit-of-work on transient failures without conflicting with the retry policy.
+        var strategy = DbContext.Database.CreateExecutionStrategy();
+
+        await strategy.ExecuteAsync(async () =>
+        {
+            await using var tx = await DbContext.Database.BeginTransactionAsync(cancellationToken);
+            try
+            {
+                await operation(cancellationToken);
+                await DbContext.SaveChangesAsync(cancellationToken);
+                await tx.CommitAsync(cancellationToken);
+            }
+            catch
+            {
+                await tx.RollbackAsync(cancellationToken);
+                throw;
+            }
+        });
+    }
 }
