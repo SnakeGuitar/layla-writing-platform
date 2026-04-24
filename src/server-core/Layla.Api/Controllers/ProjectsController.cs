@@ -1,3 +1,4 @@
+using Layla.Core.Common;
 using Layla.Core.Constants;
 using Layla.Core.Contracts.Project;
 using Layla.Core.Interfaces.Services;
@@ -38,12 +39,13 @@ public class ProjectsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> CreateProject([FromBody] CreateProjectRequestDto request, CancellationToken cancellationToken)
     {
-        var result = await _projectService.CreateProjectAsync(request, CurrentUserId, cancellationToken);
+        Result<ProjectResponseDto> result =
+            await _projectService.CreateProjectAsync(request, CurrentUserId, cancellationToken);
 
         if (!result.IsSuccess)
             return RespondWithError(result.ErrorCode);
 
-        var project = result.Data!;
+        ProjectResponseDto? project = result.Data!;
         return CreatedAtAction(nameof(GetProjectById), new { id = project.Id }, project);
     }
 
