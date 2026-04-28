@@ -4,7 +4,7 @@ using Layla.Core.Contracts.Project;
 using Layla.Core.Entities;
 using Layla.Core.Events;
 using Layla.Core.Interfaces.Data;
-using Layla.Core.Interfaces.Messaging;
+using Layla.Core.Interfaces.Queue;
 using Layla.Core.Interfaces.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -335,7 +335,8 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
             CreatedAt = project.CreatedAt
         };
 
-        if (!_eventPublisher.Publish(integrationEvent, exchangeName: ExchangeName, routingKey: ProjectCreatedRoutingKey))
+        if (!_eventPublisher.Publish(integrationEvent, exchangeName: ExchangeName,
+                                    routingKey: ProjectCreatedRoutingKey))
             Logger.LogWarning("Integration event not published for project {ProjectId}. Node.js worldbuilding service may be out of sync.", project.Id);
     }
 

@@ -1,4 +1,4 @@
-namespace Layla.Core.Interfaces.Messaging;
+namespace Layla.Core.Interfaces.Queue;
 
 /// <summary>
 /// Extends IEventBus with async publishing capabilities.

@@ -1,10 +1,10 @@
 using Layla.Core.Entities;
 using Layla.Core.Interfaces.Data;
-using Layla.Core.Interfaces.Messaging;
+using Layla.Core.Interfaces.Queue;
 using Layla.Core.Interfaces.Services;
 using Layla.Infrastructure.Data;
 using Layla.Infrastructure.Data.Repositories;
-using Layla.Infrastructure.Messaging;
+using Layla.Infrastructure.Queue;
 using Layla.Infrastructure.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -61,9 +61,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAppUserRepository, AppUserRepository>();
 
         // Register EventBus as a single instance shared by both interfaces
-        services.AddSingleton<EventBus>();
-        services.AddSingleton<IEventPublisher>(sp => sp.GetRequiredService<EventBus>());
-        services.AddSingleton<IEventBus>(sp => sp.GetRequiredService<EventBus>());
+        services.AddSingleton<Connection>();
+        services.AddSingleton<IPublisher>(sp => sp.GetRequiredService<Publisher>());
+
 
         services.AddScoped<IAuthService, AuthService>();
 
