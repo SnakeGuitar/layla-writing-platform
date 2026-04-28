@@ -1,4 +1,3 @@
-using System.Net.Http;
 using Microsoft.AspNetCore.SignalR.Client;
 using NAudio.Wave;
 using System.Windows;
@@ -41,12 +40,6 @@ public class VoiceConnection : IAsyncDisposable
             .WithUrl($"{BaseUrl}/hubs/voice", options =>
             {
                 options.AccessTokenProvider = () => Task.FromResult<string?>(token);
-                options.HttpMessageHandlerFactory = handler =>
-                {
-                    if (handler is HttpClientHandler clientHandler)
-                        clientHandler.ServerCertificateCustomValidationCallback = (_, _, _, _) => true;
-                    return handler;
-                };
             })
             .WithAutomaticReconnect()
             .Build();
@@ -187,9 +180,9 @@ public class VoiceConnection : IAsyncDisposable
                 Array.Copy(e.Buffer, buffer, e.BytesRecorded);
                 await _hub.InvokeAsync("SendAudio", _currentProjectId, buffer);
             }
-            catch
+            catch (Exception ex)
             {
-                // Ignore transient send failures during active speech
+                System.Diagnostics.Debug.WriteLine($"Audio send failed: {ex.Message}");
             }
         };
 
