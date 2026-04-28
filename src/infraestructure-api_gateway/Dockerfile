@@ -18,7 +18,7 @@ RUN dotnet publish "./api-gateway.csproj" -c $BUILD_CONFIGURATION -o /app/publis
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
 WORKDIR /app
 EXPOSE 5000
-COPY --from=publish --chown=app:app /app/publish .
+COPY --from=publish --chown=app:app --chmod=555 /app/publish .
 
 # Drop privileges: the aspnet base image ships with a non-root "app" user.
 USER app

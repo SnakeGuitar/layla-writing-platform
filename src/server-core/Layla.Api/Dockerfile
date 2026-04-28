@@ -22,7 +22,7 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 EXPOSE 5288
 EXPOSE 5287
-COPY --from=publish --chown=app:app /app/publish .
+COPY --from=publish --chown=app:app --chmod=555 /app/publish .
 
 # TLS certificate is expected to be mounted at runtime (e.g. via docker secret
 # or volume) and its password injected through env vars by the orchestrator.

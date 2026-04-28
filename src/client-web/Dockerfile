@@ -25,7 +25,7 @@ WORKDIR /app
 EXPOSE 7126
 EXPOSE 5233
 
-COPY --from=build --chown=app:app /app/publish .
+COPY --from=build --chown=app:app --chmod=555 /app/publish .
 
 # TLS certificate is expected to be mounted at runtime (e.g. via docker secret
 # or volume) and its password injected through env vars by the orchestrator.
