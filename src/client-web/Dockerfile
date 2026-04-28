@@ -4,7 +4,7 @@ WORKDIR /app
 
 RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get update \
-    && apt-get install -y nodejs \
+    && apt-get install -y --no-install-recommends nodejs \
     && npm install -g pnpm \
     && rm -rf /var/lib/apt/lists/*
 
@@ -14,10 +14,6 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 ENV CI=true
 RUN pnpm run build:frontend
-
-# Certificados
-RUN mkdir -p /app/certs \
-    && dotnet dev-certs https -ep /app/certs/aspnetapp.pfx -p YourStrongPasswordAF
 
 # Publish
 RUN dotnet publish "client-web.csproj" -c Release -o /app/publish /p:UseAppHost=false
@@ -29,10 +25,13 @@ WORKDIR /app
 EXPOSE 7126
 EXPOSE 5233
 
-COPY --from=build /app/publish .
-COPY --from=build /app/certs /app/certs
+COPY --from=build --chown=app:app /app/publish .
 
-ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/app/certs/aspnetapp.pfx
-ENV ASPNETCORE_Kestrel__Certificates__Default__Password=YourStrongPasswordAF
+# TLS certificate is expected to be mounted at runtime (e.g. via docker secret
+# or volume) and its password injected through env vars by the orchestrator.
+ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/run/secrets/aspnetapp.pfx
+
+# Drop privileges: the aspnet base image ships with a non-root "app" user.
+USER app
 
 ENTRYPOINT ["dotnet", "client-web.dll"]

@@ -1,29 +1,47 @@
-using System.Collections.Generic;
+using System;
 using System.Text.RegularExpressions;
 
 namespace Layla.Desktop.Services.Validation
 {
     public static class ValidationService
     {
+        private const int MaxEmailLength = 254;
+        private const int MaxPasswordLength = 128;
+        private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(100);
+
+        private static readonly Regex EmailRegex = new(
+            @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
+            RegexTimeout);
+
         public static bool IsValidEmail(string email)
         {
-            if (string.IsNullOrWhiteSpace(email)) return false;
+            if (string.IsNullOrWhiteSpace(email) || email.Length > MaxEmailLength) return false;
 
-            var pattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
-            return Regex.IsMatch(email, pattern, RegexOptions.IgnoreCase);
+            try
+            {
+                return EmailRegex.IsMatch(email);
+            }
+            catch (RegexMatchTimeoutException)
+            {
+                return false;
+            }
         }
 
         public static bool IsStrongPassword(string password)
         {
-            if (string.IsNullOrWhiteSpace(password)) return false;
+            if (string.IsNullOrWhiteSpace(password) || password.Length > MaxPasswordLength) return false;
+            if (password.Length < 6) return false;
 
-            var hasMinimumChars = new Regex(@".{6,}");
-            var hasNumber = new Regex(@"[0-9]+");
-            var hasUpperChar = new Regex(@"[A-Z]+");
-
-            return hasMinimumChars.IsMatch(password) && 
-                   hasNumber.IsMatch(password) && 
-                   hasUpperChar.IsMatch(password);
+            bool hasNumber = false;
+            bool hasUpper = false;
+            foreach (char c in password)
+            {
+                if (char.IsDigit(c)) hasNumber = true;
+                else if (char.IsUpper(c)) hasUpper = true;
+                if (hasNumber && hasUpper) return true;
+            }
+            return false;
         }
 
         public static bool IsRequired(string value)

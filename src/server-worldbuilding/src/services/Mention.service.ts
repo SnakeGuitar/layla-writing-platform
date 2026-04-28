@@ -2,6 +2,11 @@ import type { IMention } from "@/interfaces/manuscript/IManuscript";
 import type { IWikiEntryNoDescription } from "@/interfaces/wiki/IWikiEntry";
 import { container } from "./container";
 
+/** Hard limits to mitigate ReDoS and runaway regex evaluation. */
+const MAX_RTF_LENGTH = 5_000_000;
+const MAX_PLAIN_TEXT_LENGTH = 1_000_000;
+const MAX_ENTITY_NAME_LENGTH = 200;
+
 /** Escapes special regex characters in a string. */
 const escapeRegex = (str: string): string =>
   str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -20,9 +25,9 @@ const escapeRegex = (str: string): string =>
  */
 export const stripRtf = (rtf: string): string => {
   if (!rtf) return "";
-  if (!rtf.startsWith("{\\rtf")) return rtf.replace(/\s+/g, " ").trim();
-
-  let s = rtf;
+  // Cap input size to avoid pathological regex evaluation on huge documents.
+  let s = rtf.length > MAX_RTF_LENGTH ? rtf.slice(0, MAX_RTF_LENGTH) : rtf;
+  if (!s.startsWith("{\\rtf")) return s.replace(/\s+/g, " ").trim();
 
   // 1. Strip binary data sections.
   s = s.replace(/\\bin\d+\s?[\s\S]*?(?=\\|\}|$)/g, " ");
@@ -61,8 +66,18 @@ export const extractMentions = (
   entries: IWikiEntryNoDescription[],
 ): IMention[] => {
   const found = new Map<string, IMention>();
+  const text =
+    plainText.length > MAX_PLAIN_TEXT_LENGTH
+      ? plainText.slice(0, MAX_PLAIN_TEXT_LENGTH)
+      : plainText;
 
-  const patterns = entries.map((entry) => ({
+  // Skip entries with empty or pathologically long names that could trigger
+  // expensive regex compilation/matching.
+  const safeEntries = entries.filter(
+    (e) => e.name && e.name.length > 0 && e.name.length <= MAX_ENTITY_NAME_LENGTH,
+  );
+
+  const patterns = safeEntries.map((entry) => ({
     entry,
     regex: new RegExp(`\\b${escapeRegex(entry.name)}\\b`, "i"),
   }));
@@ -70,7 +85,7 @@ export const extractMentions = (
   for (const { entry, regex } of patterns) {
     if (found.has(entry.entityId)) continue;
 
-    if (regex.test(plainText)) {
+    if (regex.test(text)) {
       found.set(entry.entityId, {
         entityId: entry.entityId,
         name: entry.name,

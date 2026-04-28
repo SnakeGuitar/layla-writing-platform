@@ -11,14 +11,10 @@ RUN dotnet restore "Layla.Api/Layla.Api.csproj"
 # Copy everything else and build
 COPY . .
 WORKDIR "/src/Layla.Api"
-RUN mkdir -p /src/certs \
-    && dotnet dev-certs https -ep /src/certs/aspnetapp.pfx -p YourStrongPasswordAF
 RUN dotnet build "Layla.Api.csproj" -c Release -o /app/build
 
 # Publish Stage
 FROM build AS publish
-RUN mkdir -p /src/certs \
-    && dotnet dev-certs https -ep /src/certs/aspnetapp.pfx -p YourStrongPasswordAF
 RUN dotnet publish "Layla.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Runtime Stage
@@ -26,8 +22,14 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 EXPOSE 5288
 EXPOSE 5287
-COPY --from=publish /app/publish .
-COPY --from=publish /src/certs /app/certs
-ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/app/certs/aspnetapp.pfx
-ENV ASPNETCORE_Kestrel__Certificates__Default__Password=YourStrongPasswordAF
+COPY --from=publish --chown=app:app /app/publish .
+
+# TLS certificate is expected to be mounted at runtime (e.g. via docker secret
+# or volume) and its password injected through env vars by the orchestrator.
+# Path defaults to /run/secrets/aspnetapp.pfx; override via compose/k8s if needed.
+ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/run/secrets/aspnetapp.pfx
+
+# Drop privileges: the aspnet base image ships with a non-root "app" user.
+USER app
+
 ENTRYPOINT ["dotnet", "Layla.Api.dll"]
