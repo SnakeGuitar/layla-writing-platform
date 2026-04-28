@@ -19,14 +19,23 @@ namespace Layla.Desktop.Views
             _viewModel.Initialize(projectId);
             DataContext = _viewModel;
 
-            Loaded += async (_, _) => await _viewModel.LoadEntriesCommand.ExecuteAsync(null);
+            Loaded += async (_, _) =>
+            {
+                try { await _viewModel.LoadEntriesCommand.ExecuteAsync(null); }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"LoadEntries failed: {ex.Message}"); }
+            };
         }
 
         private async void EntryListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (sender is ListBox lb && lb.SelectedItem is WikiEntry entry)
+            if (sender is not ListBox lb || lb.SelectedItem is not WikiEntry entry) return;
+            try
             {
                 await _viewModel.SelectEntryCommand.ExecuteAsync(entry);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"EntryListBox_SelectionChanged failed: {ex.Message}");
             }
         }
 

@@ -34,8 +34,6 @@ namespace Layla.Desktop.Views
         private Image? _selectedImage;
 
         private bool _isPickingFontColor = true;
-        private Color _currentFontColor = Colors.Black;
-        private Color _currentHighlightColor = Colors.Yellow;
 
         private static readonly double[] FontSizes = { 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72 };
 
@@ -69,18 +67,25 @@ namespace Layla.Desktop.Views
 
         private async void OnLoaded(object sender, RoutedEventArgs e)
         {
-            InitializeFontFamilyComboBox();
-            InitializeFontSizeComboBox();
-
-            await _viewModel.LoadManuscriptCommand.ExecuteAsync(null);
-            LoadCurrentChapterContent();
-            _isLoaded = true;
-
-            if (_isReadOnly)
+            try
             {
-                EditorRichTextBox.IsReadOnly = true;
-                foreach (var child in GetVisualChildren<ToolBarTray>(this))
-                    child.Visibility = Visibility.Collapsed;
+                InitializeFontFamilyComboBox();
+                InitializeFontSizeComboBox();
+
+                await _viewModel.LoadManuscriptCommand.ExecuteAsync(null);
+                LoadCurrentChapterContent();
+                _isLoaded = true;
+
+                if (_isReadOnly)
+                {
+                    EditorRichTextBox.IsReadOnly = true;
+                    foreach (var child in GetVisualChildren<ToolBarTray>(this))
+                        child.Visibility = Visibility.Collapsed;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"OnLoaded failed: {ex.Message}");
             }
         }
 
@@ -153,17 +158,29 @@ namespace Layla.Desktop.Views
         private async void ManuscriptComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!_isLoaded) return;
-            var selected = ManuscriptComboBox.SelectedItem as Manuscript;
-            if (selected != null)
-                await _viewModel.SelectManuscriptItemCommand.ExecuteAsync(selected);
+            try
+            {
+                if (ManuscriptComboBox.SelectedItem is Manuscript selected)
+                    await _viewModel.SelectManuscriptItemCommand.ExecuteAsync(selected);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ManuscriptComboBox_SelectionChanged failed: {ex.Message}");
+            }
         }
 
         private async void ChapterListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!_isLoaded) return;
-            var selected = ChapterListBox.SelectedItem as Chapter;
-            if (selected != null)
-                await _viewModel.SelectChapterItemCommand.ExecuteAsync(selected);
+            try
+            {
+                if (ChapterListBox.SelectedItem is Chapter selected)
+                    await _viewModel.SelectChapterItemCommand.ExecuteAsync(selected);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"ChapterListBox_SelectionChanged failed: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -366,14 +383,13 @@ namespace Layla.Desktop.Views
                 {
                     EditorRichTextBox.Selection.ApplyPropertyValue(TextElement.ForegroundProperty, brush);
                     FontColorIndicator.Background = brush;
-                    _currentFontColor = color;
+
                 }
                 else
                 {
                     EditorRichTextBox.Selection.ApplyPropertyValue(TextElement.BackgroundProperty, brush);
                     HighlightColorIndicator.Background = brush;
                     HighlightPreviewBrush.Color = color;
-                    _currentHighlightColor = color;
                 }
 
                 ColorPickerPopup.IsOpen = false;
