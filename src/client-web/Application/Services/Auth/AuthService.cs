@@ -1,5 +1,6 @@
 using client_web.Application.Schemas.Auth;
 using client_web.Application.Config.Http;
+using client_web.Application.Services.Auth;
 
 namespace client_web.Services;
 

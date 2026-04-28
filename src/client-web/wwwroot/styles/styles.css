@@ -1348,10 +1348,10 @@
       }
     }
   }
-  .hover\:\[box-shadow\:08px24pxrgba\(0\,0\,0\,0\.18\)\] {
+  .hover\:\[box-shadow\:0_8px_24px_rgba\(0\,0\,0\,0\.18\)\] {
     &:hover {
       @media (hover: hover) {
-        box-shadow: 08px24pxrgba(0,0,0,0.18);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.18);
       }
     }
   }
@@ -1366,24 +1366,14 @@
       box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
     }
   }
-  .focus\:\[box-shadow\:0\,0\,0\,3pxrgba\(26\,26\,26\,0\.08\)\] {
+  .focus\:\[box-shadow\:0_0_0_3px_rgba\(26\,26\,26\,0\.08\)\] {
     &:focus {
-      box-shadow: 0,0,0,3pxrgba(26,26,26,0.08);
-    }
-  }
-  .focus\:\[box-shadow\:0003pxrgba\(26\,26\,26\,0\.08\)\] {
-    &:focus {
-      box-shadow: 0003pxrgba(26,26,26,0.08);
+      box-shadow: 0 0 0 3px rgba(26,26,26,0.08);
     }
   }
   .focus\:ring-amber-500 {
     &:focus {
       --tw-ring-color: var(--color-amber-500);
-    }
-  }
-  .focus\:outline-\[none\] {
-    &:focus {
-      outline-color: none;
     }
   }
   .focus\:outline-none {
@@ -1622,16 +1612,6 @@ p {
   from {
     opacity: 0;
     transform: translateY(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
   }
   to {
     opacity: 1;

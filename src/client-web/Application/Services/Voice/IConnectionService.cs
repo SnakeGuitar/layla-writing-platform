@@ -16,7 +16,7 @@ public interface IConnectionService : IAsyncDisposable
     /// <summary>
     /// Indica si la conexión está activa.
     /// </summary>
-    bool IsConnected { get; set; }
+    bool IsConnected { get; }
 
     /// <summary>
     /// Evento que notifica cambios en el estado de la conexión.

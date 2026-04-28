@@ -43,7 +43,7 @@
                     type="User"
                     @bind="_email"
                     placeholder="email@company.com"
-                    class="input-field w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 text-stone-900 text-sm placeholder-stone-300 [transition:border-color, 0.2s,box-shadow0.2s] focus:outline-[none] focus:border-[#1a1a1a] focus:[box-shadow:0,0,0,3pxrgba(26,26,26,0.08)]" />
+                    class="input-field w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 text-stone-900 text-sm placeholder-stone-300 [transition:border-color_0.2s,box-shadow_0.2s] focus:outline-none focus:border-[#1a1a1a] focus:[box-shadow:0_0_0_3px_rgba(26,26,26,0.08)]" />
             </div>
 
             <!-- Password -->
@@ -60,7 +60,7 @@
                     type="password"
                     @bind="_password"
                     placeholder="••••••••"
-                    class="input-field w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 text-stone-900 text-sm placeholder-stone-300 [transition:border-color, 0.2s,box-shadow0.2s] focus:outline-[none] focus:border-[#1a1a1a] focus:[box-shadow:0003pxrgba(26,26,26,0.08)]" />
+                    class="input-field w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 text-stone-900 text-sm placeholder-stone-300 [transition:border-color_0.2s,box-shadow_0.2s] focus:outline-none focus:border-[#1a1a1a] focus:[box-shadow:0_0_0_3px_rgba(26,26,26,0.08)]" />
             </div>
 
             <!-- Error -->
@@ -79,7 +79,7 @@
                 <button
                     @onclick="HandleLogin"
                     disabled="@_isLoading"
-                    class="w-full py-3.5 rounded-xl bg-stone-900 text-white text-sm font-medium tracking-wide disabled:opacity-50 disabled:cursor-not-allowed [transition:background, 0.2s,transform0.1s,box-shadow0.2s] hover:bg-[#111] hover:[box-shadow:08px24pxrgba(0,0,0,0.18)] hover:-translate-y-px active:translate-y-">
+                    class="w-full py-3.5 rounded-xl bg-stone-900 text-white text-sm font-medium tracking-wide disabled:opacity-50 disabled:cursor-not-allowed [transition:background_0.2s,transform_0.1s,box-shadow_0.2s] hover:bg-[#111] hover:[box-shadow:0_8px_24px_rgba(0,0,0,0.18)] hover:-translate-y-px active:translate-y-px">
                     @if (_isLoading)
                     {
                         <span class="flex items-center justify-center gap-2">

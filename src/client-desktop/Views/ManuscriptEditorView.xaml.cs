@@ -138,8 +138,9 @@ namespace Layla.Desktop.Views
                     EditorRichTextBox.Document.Blocks.Add(new Paragraph(new Run("Start writing your amazing story here...")));
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"Failed to load chapter content: {ex.Message}");
                 EditorRichTextBox.Document.Blocks.Clear();
                 EditorRichTextBox.Document.Blocks.Add(new Paragraph(new Run("")));
             }
@@ -177,8 +178,14 @@ namespace Layla.Desktop.Views
             int wordCount = countRange.Text.Split(new char[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
             _viewModel.UpdateWordCount(wordCount);
 
-            _debounceTimer?.Change(System.Threading.Timeout.Infinite, 0);
-            _debounceTimer = new System.Threading.Timer(async _ => await SaveContentInternalAsync(), null, 1000, System.Threading.Timeout.Infinite);
+            if (_debounceTimer != null)
+            {
+                _debounceTimer.Change(1000, System.Threading.Timeout.Infinite);
+            }
+            else
+            {
+                _debounceTimer = new System.Threading.Timer(async _ => await SaveContentInternalAsync(), null, 1000, System.Threading.Timeout.Infinite);
+            }
         }
 
         /// <summary>
@@ -437,7 +444,7 @@ namespace Layla.Desktop.Views
                         ToolTip = System.IO.Path.GetFileName(openFileDialog.FileName),
                     };
 
-                    var container = new InlineUIContainer(image, EditorRichTextBox.CaretPosition);
+                    _ = new InlineUIContainer(image, EditorRichTextBox.CaretPosition);
                     EditorRichTextBox.Focus();
                 }
                 catch (Exception ex)
@@ -514,7 +521,14 @@ namespace Layla.Desktop.Views
         /// </summary>
         public async void NavigateToChapter(string manuscriptId, string chapterId)
         {
-            await _viewModel.NavigateToChapterAsync(manuscriptId, chapterId);
+            try
+            {
+                await _viewModel.NavigateToChapterAsync(manuscriptId, chapterId);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"NavigateToChapter failed: {ex.Message}");
+            }
         }
 
         /// <summary>

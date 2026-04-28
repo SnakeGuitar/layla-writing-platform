@@ -49,11 +49,18 @@ namespace Layla.Desktop.Views
         /// </summary>
         public async void SelectEntityById(string entityId)
         {
-            var entry = _viewModel.Entries.FirstOrDefault(e => e.EntityId == entityId);
-            if (entry != null)
+            try
             {
-                _viewModel.SelectedEntry = entry;
-                await _viewModel.SelectEntryCommand.ExecuteAsync(entry);
+                var entry = _viewModel.Entries.FirstOrDefault(e => e.EntityId == entityId);
+                if (entry != null)
+                {
+                    _viewModel.SelectedEntry = entry;
+                    await _viewModel.SelectEntryCommand.ExecuteAsync(entry);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"SelectEntityById failed: {ex.Message}");
             }
         }
     }

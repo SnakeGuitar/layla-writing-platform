@@ -132,7 +132,6 @@
             if (_jsModule != null)
                 await _jsModule.InvokeVoidAsync("initPlayback");
 
-            VoiceService.IsConnected = true;
         }
         catch (Exception ex)
         {
@@ -195,7 +194,6 @@
         if (_jsModule != null)
             await _jsModule.InvokeVoidAsync("disposePlayback");
 
-        VoiceService.IsConnected = false;
         _participants.Clear();
         StateHasChanged();
     }
@@ -246,7 +244,6 @@
 
     private async void OnConnectionChanged(object? sender, HubConnectionState state)
     {
-        VoiceService.IsConnected = state == HubConnectionState.Connected;
         await InvokeAsync(StateHasChanged);
     }
 

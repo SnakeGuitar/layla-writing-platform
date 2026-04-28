@@ -48,20 +48,10 @@ public class VoiceService : IVoiceService
         _handlersRegistered = true;
     }
 
-    // ISignalRClient -------------------------------------------------------------------;
-    private HubConnectionState _state;
-    public HubConnectionState State
-    {
-        get => _client.Hub!.State;
-        set => _state = value;
-    }
+    // ISignalRClient -------------------------------------------------------------------
+    public HubConnectionState State => _client.Hub!.State;
 
-    private bool _isConnected;
-    public bool IsConnected
-    {
-        get => _client.IsConnected;
-        set => _isConnected = value;
-    }
+    public bool IsConnected => _client.IsConnected;
 
     private void Notify(HubConnectionState state)
     {
@@ -77,7 +67,7 @@ public class VoiceService : IVoiceService
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Error calling {method}: {ex.Message}");
+            _logger.LogError(ex, "Error calling {Method}", method);
         }
     }
 
