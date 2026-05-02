@@ -12,8 +12,11 @@ public static class Services
     {
         builder.Services.AddSingleton<IVoiceRoomManager, VoiceRoomManager>();
         builder.Services.AddSingleton<IPresenceTracker, PresenceTracker>();
-        builder.Services.AddSingleton<IPublisher, Publisher>();
-        builder.Services.AddSingleton<ConsumerBase>();
+        // RabbitMQ services (Connection, Publisher, IEventPublisher adapter) are
+        // registered inside AddInfrastructureServices(). ConsumerBase is abstract
+        // — concrete subclasses (when added) should be registered as IHostedService.
+        // server-core currently only publishes events; consumption lives in
+        // server-worldbuilding (Node.js).
         builder.Services.AddCoreServices(builder.Configuration);
     }
 }

@@ -117,6 +117,8 @@ services:
       - RabbitMQ__Port=${RABBIT_PORT}
       - RabbitMQ__UserName=${RABBIT_USER}
       - RabbitMQ__Password=${RABBIT_PASSWORD}
+      - RabbitMQ__VirtualHost=/
+      - RabbitMQ__Exchange=worldbuilding.events
       - DOTNET_USE_POLLING_FILE_WATCHER=1
       - DOTNET_RUNNING_IN_CONTAINER=true
       - DOTNET_SKIP_FIRST_TIME_EXPERIENCE=true

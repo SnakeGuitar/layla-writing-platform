@@ -60,9 +60,16 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<IAppUserRepository, AppUserRepository>();
 
-        // Register EventBus as a single instance shared by both interfaces
+        // RabbitMQ infrastructure:
+        // - Connection: low-level RabbitMQ connection wrapper (singleton, auto-reconnect)
+        // - Publisher: implements IPublisher, owns the exchange declaration
+        // - EventBusAdapter: bridges legacy IEventPublisher / IEventBus consumers
+        //   (e.g. ProjectService) onto the new IPublisher API.
         services.AddSingleton<Connection>();
+        services.AddSingleton<Publisher>();
         services.AddSingleton<IPublisher>(sp => sp.GetRequiredService<Publisher>());
+        services.AddSingleton<IEventPublisher, EventBusAdapter>();
+        services.AddSingleton<IEventBus>(sp => sp.GetRequiredService<IEventPublisher>());
 
 
         services.AddScoped<IAuthService, AuthService>();
