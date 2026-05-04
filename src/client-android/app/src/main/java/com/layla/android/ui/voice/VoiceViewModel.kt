@@ -23,7 +23,7 @@ data class VoiceUiState(
 
 class VoiceViewModel(
     private val token: String,
-    private val baseUrl: String = "https://10.0.2.2:5288" // Android emulator -> host localhost
+    private val baseUrl: String = "http://localhost:5287" // Voice hub is on the C# server
 ) : ViewModel() {
 
     private val signalRClient = VoiceSignalRClient(baseUrl)
