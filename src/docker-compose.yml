@@ -7,7 +7,7 @@ services:
     environment:
       - ACCEPT_EULA=Y
       - SA_PASSWORD=${SQL_PASSWORD}
-      - MSSQL_MEM_LIMIT=${MSSQL_MEM_LIMIT}
+      - MSSQL_MEM_LIMIT=${SQL_MEM_LIMIT}
     ports:
       - "${SQL_PORT}:${SQL_PORT}"
     volumes:
@@ -63,9 +63,11 @@ services:
       dockerfile: Dockerfile
     container_name: layla-worldbuilding
     ports:
-      - "${WORLDBUILDING_PORT}:${WORLDBUILDING_PORT}"
+      - "${WORLDBUILDING_PORT_HTTP}:${WORLDBUILDING_PORT_HTTP}"
+      - "${WORLDBUILDING_PORT_HTTPS}:${WORLDBUILDING_PORT_HTTPS}"
     environment:
-      - PORT=${WORLDBUILDING_PORT}
+      - PORT_HTTP=${WORLDBUILDING_PORT_HTTP}
+      - PORT_HTTPS=${WORLDBUILDING_PORT_HTTPS}
       - JWT_SECRET=${JWT_SECRET}
       - JWT_SECRET_REFRESH=${JWT_SECRET_REFRESH}
       - JWT_ACCESS_TOKEN_EXPIRY=${JWT_ACCESS_TOKEN_EXPIRY}
