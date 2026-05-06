@@ -1,7 +1,6 @@
 using Layla.Desktop.ViewModels;
-using System.Windows.Controls;
 using System.Windows;
-using System;
+using System.Windows.Controls;
 
 namespace Layla.Desktop.Views
 {

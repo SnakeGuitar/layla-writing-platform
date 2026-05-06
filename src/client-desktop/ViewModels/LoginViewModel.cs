@@ -2,8 +2,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Layla.Desktop.Models.Authentication;
 using Layla.Desktop.Services;
-using System;
-using System.Threading.Tasks;
 
 namespace Layla.Desktop.ViewModels
 {
@@ -50,7 +48,7 @@ namespace Layla.Desktop.ViewModels
                         response.Response.Email,
                         response.Response.DisplayName,
                         response.Response.UserId);
-                    
+
                     // Fire an event or use a navigation service to signal success
                     OnLoginSuccess?.Invoke(this, EventArgs.Empty);
                 }
