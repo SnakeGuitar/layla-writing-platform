@@ -8,12 +8,6 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// -- Fail-fast on missing critical secrets -------------------------------------
-// Secrets MUST be supplied via environment variables, dotnet user-secrets, or a
-// secret store — NEVER committed to appsettings.json. Without this guard the
-// app would boot with null!/empty strings and crash deep in JWT validation
-// or DB connection paths.
-
 if (builder.Environment.IsProduction())
 {
     Secrets.Configure(builder);
@@ -51,13 +45,13 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     try
     {
-        var context = services.GetRequiredService<ApplicationDbContext>();
+        ApplicationDbContext? context = services.GetRequiredService<ApplicationDbContext>();
         await context.Database.MigrateAsync();
 
-        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-        var roles = AppRoles.All;
+        RoleManager<IdentityRole> roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        string[] roles = AppRoles.All;
 
-        foreach (var role in roles)
+        foreach (String role in roles)
         {
             if (!await roleManager.RoleExistsAsync(role))
             {
