@@ -36,34 +36,72 @@ public class ApiClient
 
         var raw = await response.Content.ReadAsStringAsync(ct);
 
+        // server-core returns DTOs directly (`return Ok(result.Data)`), not wrapped
+        // in any envelope. Treat the HTTP status code as the success/error signal
+        // and deserialize the body straight into T.
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new APIException(
+                ExtractErrorMessage(raw) ?? $"HTTP {(int)response.StatusCode}",
+                (int)response.StatusCode,
+                raw
+            );
+        }
+
+        if (response.StatusCode == System.Net.HttpStatusCode.NoContent || string.IsNullOrWhiteSpace(raw))
+        {
+            return default!;
+        }
+
         if (response.Content.Headers.ContentType?.MediaType != "application/json")
         {
             throw new APIException("Respuesta no es JSON", (int)response.StatusCode, raw);
         }
 
-        APIResponse<T>? apiResponse;
-
         try
         {
-            apiResponse = JsonSerializer.Deserialize<APIResponse<T>>(raw);
+            var data = JsonSerializer.Deserialize<T>(raw, JsonOptions);
+            return data
+                ?? throw new APIException("Respuesta sin datos", (int)response.StatusCode);
         }
-        catch (Exception ex)
+        catch (JsonException ex)
         {
-            _logger.LogError(ex, "Error deserializando respuesta");
+            _logger.LogError(ex, "Error deserializando respuesta de {Endpoint}", request.Endpoint);
             throw new APIException("Respuesta inválida", (int)response.StatusCode, raw);
         }
+    }
 
-        if (!response.IsSuccessStatusCode || apiResponse?.IsError == true)
+    /// <summary>JSON options matching ASP.NET Core defaults (camelCase, case-insensitive).</summary>
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+    };
+
+    /// <summary>
+    /// Best-effort extraction of an error message from a server response. Tries
+    /// common shapes (ProblemDetails, plain string, anonymous object with a
+    /// 'message'/'error'/'title' field) and falls back to null on failure.
+    /// </summary>
+    private static string? ExtractErrorMessage(string raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+        try
         {
-            throw new APIException(
-                apiResponse?.Message ?? "Error en la solicitud",
-                (int)response.StatusCode,
-                apiResponse
-            );
+            using var doc = JsonDocument.Parse(raw);
+            var root = doc.RootElement;
+            if (root.ValueKind == JsonValueKind.String) return root.GetString();
+            foreach (var key in new[] { "message", "title", "error", "detail" })
+            {
+                if (root.TryGetProperty(key, out var prop) && prop.ValueKind == JsonValueKind.String)
+                    return prop.GetString();
+            }
         }
-
-        return apiResponse!.Data
-            ?? throw new APIException("Respuesta sin datos", (int)response.StatusCode);
+        catch
+        {
+            // Body was not JSON — fall through.
+        }
+        return null;
     }
 
     private HttpRequestMessage BuildHttpRequest(APIRequest request)
@@ -86,7 +124,9 @@ public class ApiClient
 
         if (request.Body != null)
         {
-            var json = JsonSerializer.Serialize(request.Body);
+            // Use camelCase + ASP.NET-Core-friendly options so the body shape
+            // matches what the controllers expect.
+            var json = JsonSerializer.Serialize(request.Body, JsonOptions);
             httpRequest.Content = new System.Net.Http.StringContent(json, Encoding.UTF8, "application/json");
         }
 

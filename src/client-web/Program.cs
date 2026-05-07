@@ -21,6 +21,11 @@ if (!app.Environment.IsDevelopment())
 app.MapHealthChecks("/health");
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+// Authentication / authorization middleware must run before Antiforgery and
+// before MapRazorComponents so the AuthorizationMiddlewareResultHandler has
+// IAuthenticationService available when challenging unauthenticated requests.
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
