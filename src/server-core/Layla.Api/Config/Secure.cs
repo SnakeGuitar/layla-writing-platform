@@ -11,7 +11,7 @@ namespace Layla.Api.Config;
 
 public static class Secure
 {
-    const int MinJwtSecretLength = 32;
+    const int MIN_JWT_SECRET_LENGTH = 32;
 
     public static void Configure(WebApplicationBuilder builder)
     {
@@ -19,8 +19,8 @@ public static class Secure
         builder.Services.AddScoped<TokenVersionValidator>();
         builder.Services.AddScoped<RequireUserIdFilter>();
         string jwtSecret = builder.Configuration["JwtSettings:Secret"]!;
-        if (jwtSecret == null || jwtSecret.Length < MinJwtSecretLength)
-            throw new InvalidOperationException($"'JwtSettings:Secret' must be at least {MinJwtSecretLength} characters for HS256 security.");
+        if (String.IsNullOrEmpty(jwtSecret) || jwtSecret.Length < MIN_JWT_SECRET_LENGTH)
+            throw new InvalidOperationException($"'JwtSettings:Secret' must be at least {MIN_JWT_SECRET_LENGTH} characters for HS256 security.");
 
         builder.Services.AddAuthentication(options =>
         {

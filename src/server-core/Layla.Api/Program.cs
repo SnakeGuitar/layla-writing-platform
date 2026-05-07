@@ -14,7 +14,11 @@ var builder = WebApplication.CreateBuilder(args);
 // app would boot with null!/empty strings and crash deep in JWT validation
 // or DB connection paths.
 
-Secrets.Configure(builder);
+if (builder.Environment.IsProduction())
+{
+    Secrets.Configure(builder);
+}
+
 Builder.Configure(builder);
 Services.Configure(builder);
 Secure.Configure(builder);
