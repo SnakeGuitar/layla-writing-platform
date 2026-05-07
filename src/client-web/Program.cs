@@ -3,6 +3,11 @@ using client_web.UI;
 
 WebApplicationBuilder? builder = WebApplication.CreateBuilder(args);
 
+
+if (builder.Environment.IsProduction())
+{
+    Secrets.Configure(builder);
+}
 HttpClientConfig.Configure(builder.Services, builder);
 Builder.Configure(builder.Services, builder);
 Services.Configure(builder.Services);
