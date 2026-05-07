@@ -1,0 +1,17 @@
+@inject NavigationManager Navigation
+
+@code {
+    /// <summary>
+    /// Redirects the browser to the login page, preserving the original
+    /// destination as a query parameter so the user can be sent back after
+    /// signing in. Used as the <c>NotAuthorized</c> fragment in
+    /// <c>AuthorizeRouteView</c>.
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        var returnUrl = Uri.EscapeDataString(new Uri(Navigation.Uri).PathAndQuery);
+        // forceLoad: true matches the no-enhanced-nav policy applied across
+        // the app — see NavMenu.razor and Login/Register footers.
+        Navigation.NavigateTo($"/auth/login?returnUrl={returnUrl}", forceLoad: true);
+    }
+}

@@ -1,4 +1,4 @@
-@* 
+@*
     DESKTOP (lg+):
       - "Layla" fijo en la esquina superior-izquierda (dentro del sidebar)
       - Navbar siempre visible debajo
@@ -6,6 +6,13 @@
     MÓVIL (<lg):
       - Barra fija con "Layla" a la izquierda y botón hamburguesa a la derecha
       - Navbar desplegable al activar el checkbox
+
+    NOTE: every NavLink carries data-enhance-nav="false". Without it Blazor's
+    enhanced navigation intercepts the click, swaps the URL with pushState,
+    fetches the new server-rendered HTML and tries to *patch* the existing
+    DOM — but with InteractiveServer rendermode + streaming SSR the patch
+    silently fails to apply, leaving the URL changed and the content stale.
+    Forcing a full-page load per nav click sidesteps that interaction.
 *@
 
 <!-- ─── DESKTOP: bloque completo del sidebar ─── -->
@@ -17,7 +24,8 @@
 ">
     <!-- Brand / logo -->
     <div class="h-14 flex items-center px-5 border-b border-white/10 shrink-0">
-        <a href="" class="text-white font-semibold tracking-widest uppercase text-sm hover:text-cyan-400 transition-colors duration-200">
+        <a href="/home" data-enhance-nav="false"
+           class="text-white font-semibold tracking-widest uppercase text-sm hover:text-cyan-400 transition-colors duration-200">
             Layla
         </a>
     </div>
@@ -30,25 +38,25 @@
 
         <div class="px-2 space-y-0.5">
             <div class="nav-item px-1">
-                <NavLink href="/home" Match="NavLinkMatch.All" class="nav-link">
+                <NavLink href="/home" Match="NavLinkMatch.All" class="nav-link" data-enhance-nav="false">
                     <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span>
                     Home
                 </NavLink>
             </div>
             <div class="nav-item px-1">
-                <NavLink href="/projects/my-projects" class="nav-link">
+                <NavLink href="/projects/my-projects" class="nav-link" data-enhance-nav="false">
                     <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span>
                     My Projects
                 </NavLink>
             </div>
             <div class="nav-item px-1">
-                <NavLink href="/admin/dashboard" class="nav-link">
+                <NavLink href="/admin/dashboard" class="nav-link" data-enhance-nav="false">
                     <span class="bi bi-admin-nav-menu" aria-hidden="true"></span>
                     Administration
                 </NavLink>
             </div>
             <div class="nav-item px-1">
-                <NavLink href="/admin/manage-users" class="nav-link">
+                <NavLink href="/admin/manage-users" class="nav-link" data-enhance-nav="false">
                     <span class="bi bi-admin-nav-menu" aria-hidden="true"></span>
                     User Management
                 </NavLink>
@@ -75,7 +83,8 @@
         border-b border-white/10 sm:border-0
         shadow-[0_4px_24px_rgba(0,0,0,0.4)]
     ">
-        <a href="" class="text-white font-semibold tracking-widest uppercase text-sm hover:text-cyan-400 transition-colors duration-200">
+        <a href="/home" data-enhance-nav="false"
+           class="text-white font-semibold tracking-widest uppercase text-sm hover:text-cyan-400 transition-colors duration-200">
             Layla
         </a>
 
@@ -107,25 +116,25 @@
 
         <div class="px-2 space-y-0.5">
             <div class="nav-item px-1">
-                <NavLink href="/home" Match="NavLinkMatch.All" class="nav-link">
+                <NavLink href="/home" Match="NavLinkMatch.All" class="nav-link" data-enhance-nav="false">
                     <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span>
                     Home
                 </NavLink>
             </div>
             <div class="nav-item px-1">
-                <NavLink href="/projects/my-projects" class="nav-link">
+                <NavLink href="/projects/my-projects" class="nav-link" data-enhance-nav="false">
                     <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span>
                     My Projects
                 </NavLink>
             </div>
             <div class="nav-item px-1">
-                <NavLink href="/admin/dashboard" class="nav-link">
+                <NavLink href="/admin/dashboard" class="nav-link" data-enhance-nav="false">
                     <span class="bi bi-admin-nav-menu" aria-hidden="true"></span>
                     Administration
                 </NavLink>
             </div>
             <div class="nav-item px-1">
-                <NavLink href="/admin/manage-users" class="nav-link">
+                <NavLink href="/admin/manage-users" class="nav-link" data-enhance-nav="false">
                     <span class="bi bi-admin-nav-menu" aria-hidden="true"></span>
                     User Management
                 </NavLink>

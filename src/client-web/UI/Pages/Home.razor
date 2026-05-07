@@ -1,16 +1,17 @@
 @page "/"
 @page "/home"
+@rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR.Client
-@using Microsoft.Extensions.Http
-@using client_web.Application.Config.Http
-@using client_web.Application.Config.SignalR
-@using client_web.Application.Services.Projects
-@using client_web.UI.Components
 @using client_web.Application.Services.ActiveStatusAuthor
+@using client_web.Application.Services.Projects
+@using client_web.Application.Services.Session
+@using client_web.UI.Components
 @inject IPresenceService PresenceService
 @inject IProjectService ProjectService
+@inject ISessionManager Session
 @inject ILogger<Home> Logger
 @implements IAsyncDisposable
+
 <PageTitle>Home</PageTitle>
 
 @* Header *@
@@ -23,69 +24,92 @@
 </header>
 
 @* Feed Grid *@
-@if (projects == null)
+@if (_projects is null)
 {
-    <p class="text-stone-500 text-sm">Loading...</p>
+    <p class="text-stone-500 text-sm">Loading…</p>
 }
-else if (!projects.Any())
+else if (_projects.Count == 0)
 {
     <p class="text-stone-500 text-sm">No projects available.</p>
 }
 else
 {
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px">
-        @foreach (ProjectViewModel project in projects)
+        @foreach (var project in _projects)
         {
             <div>
-                <ProjectCard Id="@project.Id" Title="@project.Title" Synopsis="@project.Synopsis"
-                             LiteraryGenre="@project.LiteraryGenre" CoverImageUrl="@project.CoverImageUrl" UpdatedAt="@project.UpdatedAt"
-                             IsAuthorActive="@project.IsAuthorActive" OnCardClick="HandleCardClick" />
+                <ProjectCard Id="@project.Id"
+                             Title="@project.Title"
+                             Synopsis="@project.Synopsis"
+                             LiteraryGenre="@project.LiteraryGenre"
+                             CoverImageUrl="@project.CoverImageUrl"
+                             UpdatedAt="@project.UpdatedAt"
+                             IsAuthorActive="@project.IsAuthorActive"
+                             OnCardClick="HandleCardClick" />
             </div>
         }
     </div>
 }
 
 @code {
-    private string _token = "";
-    private List<ProjectViewModel>? projects;
+    private List<ProjectViewModel>? _projects;
+    private bool _presenceConnected;
 
     protected override async Task OnInitializedAsync()
     {
         PresenceService.OnAuthorStatusChanged += HandleAuthorStatusChanged;
 
-        List<PublicProjectDto>? dtos = await ProjectService.GetPublicProjectsAsync();
-        projects = dtos.Select(p => new ProjectViewModel
+        var dtos = await ProjectService.GetPublicProjectsAsync();
+        _projects = dtos.Select(p => new ProjectViewModel
         {
             Id = p.Id,
             Title = p.Title,
             Synopsis = p.Synopsis,
             LiteraryGenre = p.LiteraryGenre,
             CoverImageUrl = p.CoverImageUrl,
-            UpdatedAt = p.UpdatedAt
+            UpdatedAt = p.UpdatedAt,
         }).ToList();
+    }
 
-        await PresenceService.ConnectAsync(_token);
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
 
-        if (PresenceService.IsConnected)
-            foreach (ProjectViewModel p in projects)
-                await PresenceService.WatchProjectAsync(p.Id);
+        // Hydrate the session from browser storage now that JS interop is
+        // available. Connect the presence hub with the resolved token (or
+        // anonymously if there isn't one).
+        await Session.InitializeAsync();
+
+        if (_presenceConnected) return;
+        try
+        {
+            await PresenceService.ConnectAsync(Session.CurrentToken ?? string.Empty);
+            _presenceConnected = PresenceService.IsConnected;
+
+            if (_presenceConnected && _projects is not null)
+            {
+                foreach (var p in _projects)
+                    await PresenceService.WatchProjectAsync(p.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Could not connect to the presence hub.");
+        }
     }
 
     private void HandleAuthorStatusChanged(object? sender, AuthorStatusChangedEventArgs e)
     {
-        ProjectViewModel? project = projects?.FirstOrDefault(p => p.Id == e.ProjectId);
-
-        if (project != null)
-        {
-            project.IsAuthorActive = e.IsActive;
-            InvokeAsync(StateHasChanged);
-        }
+        var project = _projects?.FirstOrDefault(p => p.Id == e.ProjectId);
+        if (project is null) return;
+        project.IsAuthorActive = e.IsActive;
+        InvokeAsync(StateHasChanged);
     }
 
     private void HandleCardClick(Guid projectId)
     {
         // TODO: NavigationManager.NavigateTo($"/projects/{projectId}");
-        Console.WriteLine(value: $"Clicked project: {projectId}");
+        Logger.LogInformation("Clicked project: {ProjectId}", projectId);
     }
 
     public async ValueTask DisposeAsync()

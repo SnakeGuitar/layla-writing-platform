@@ -1,55 +1,71 @@
 @inherits LayoutComponentBase
+@using client_web.Application.Services.Session
+@inject ISessionManager Session
+@inject NavigationManager Navigation
 
-<!-- 
+<!--
     DESKTOP (lg+): Layout en "L"
     - Columna izquierda fija: "Layla" arriba + Navbar debajo
-    - Columna derecha: Header "About" arriba fijo + contenido
-
-    MÓVIL/TABLET (<lg):
-    - Barra superior fija: "Layla" a la izquierda + botón hamburguesa a la derecha
-    - Navbar desplegable debajo de la barra
-    - Header "About" debajo del navbar
-    - Contenido de la página
+    - Columna derecha: header sticky (sesión + about) + contenido scrollable
 -->
 
-<div class="lg:flex lg:h-screen lg:overflow-hidden">
+<div class="lg:flex lg:h-screen lg:overflow-hidden bg-base-gray-1 min-h-screen">
 
-    <!-- ═══════════════════════════════════════════
-         SIDEBAR — visible en desktop como columna izquierda
-         En móvil se colapsa dentro del NavMenu
-    ═══════════════════════════════════════════ -->
     <aside class="lg:w-64 lg:shrink-0 lg:flex lg:flex-col lg:h-screen lg:overflow-y-auto lg:sticky lg:top-0">
         <NavMenu />
     </aside>
 
-    <!-- ═══════════════════════════════════════════
-         COLUMNA DERECHA: header + contenido
-    ═══════════════════════════════════════════ -->
     <div class="flex-1 flex flex-col lg:overflow-y-auto lg:h-screen">
 
-        <!-- Header "About" — sticky en desktop, sigue al navbar en móvil -->
+        <!-- Top header: session info + about -->
         <header class="
             lg:sticky lg:top-0 lg:z-30
             px-6 sm:px-8 h-14 min-h-14
             bg-linear-to-r from-base-blue-3 to-base-purple-1
             border-b border-white/10
-            flex items-center justify-end
+            flex items-center justify-end gap-6
             shadow-sm
         ">
-            <a
-                href="https://learn.microsoft.com/aspnet/core/"
-                target="_blank"
-                class="text-white/70 text-sm font-medium tracking-wide no-underline hover:text-white hover:underline transition-colors duration-200">
+            <AuthorizeView>
+                <Authorized>
+                    <span class="text-white/70 text-sm tracking-wide">
+                        Signed in as <span class="text-white font-medium">@(context.User.Identity?.Name ?? Session.CurrentDisplayName)</span>
+                    </span>
+                    <button @onclick="HandleLogoutAsync"
+                            class="text-amber-300 hover:text-amber-200 text-sm font-medium tracking-wide transition-colors">
+                        Logout
+                    </button>
+                </Authorized>
+                <NotAuthorized>
+                    <a href="/auth/login" data-enhance-nav="false"
+                       class="text-amber-300 hover:text-amber-200 text-sm font-medium tracking-wide transition-colors">
+                        Login
+                    </a>
+                </NotAuthorized>
+            </AuthorizeView>
+
+            <a href="/about" data-enhance-nav="false"
+               class="text-white/70 text-sm font-medium tracking-wide hover:text-white transition-colors">
                 About
             </a>
         </header>
 
-        <!-- Contenido principal -->
-        <main class="flex-1">
-            <article class="content bg-base-gray-1 px-6 py-6">
+        <!-- Page content — fills the remaining viewport so we don't show a white gap -->
+        <main class="flex-1 min-h-[calc(100vh-3.5rem)]">
+            <article class="content bg-base-gray-1 px-6 py-6 min-h-full">
                 @Body
             </article>
         </main>
 
     </div>
 </div>
+
+@code {
+    private async Task HandleLogoutAsync()
+    {
+        await Session.ClearAsync();
+        // Full reload so the new circuit picks up the cleared session and
+        // <AuthorizeView> re-evaluates against the anonymous identity.
+        Navigation.NavigateTo("/home", forceLoad: true);
+    }
+}
