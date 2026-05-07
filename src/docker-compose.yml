@@ -88,7 +88,7 @@ services:
       rabbitmq:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "https://localhost:${WORLDBUILDING_PORT}/health"]
+      test: ["CMD", "curl", "-f", "https://localhost:${WORLDBUILDING_PORT_HTTPS}/health"]
       interval: 10s
       timeout: 5s
       retries: 5
