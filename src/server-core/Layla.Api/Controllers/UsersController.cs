@@ -42,6 +42,23 @@ public class UsersController : ApiControllerBase
     }
 
     /// <summary>
+    /// Verify user email with a PIN.
+    /// </summary>
+    [HttpPost("verify-email")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(object), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequestDto request)
+    {
+        var result = await _authService.VerifyEmailAsync(request.Email, request.Pin);
+
+        if (!result.IsSuccess)
+            return RespondWithError(result.ErrorCode);
+
+        return Ok(result.Data);
+    }
+
+    /// <summary>
     /// Get all users (Admin only).
     /// </summary>
     [HttpGet]
