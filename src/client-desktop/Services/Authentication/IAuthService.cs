@@ -7,5 +7,6 @@ namespace Layla.Desktop.Services
     {
         Task<AuthResult> LoginAsync(LoginRequest request);
         Task<AuthResult> RegisterAsync(RegisterRequest request);
+        Task<AuthResult> VerifyEmailAsync(VerifyEmailRequest request);
     }
 }

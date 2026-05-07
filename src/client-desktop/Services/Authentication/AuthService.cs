@@ -102,5 +102,34 @@ namespace Layla.Desktop.Services
                 return AuthResult.Fail("Network error. Could not connect to the server.");
             }
         }
+
+        public async Task<AuthResult> VerifyEmailAsync(VerifyEmailRequest request)
+        {
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("/api/users/verify-email", request);
+                if (response.IsSuccessStatusCode)
+                {
+                    var data = await response.Content.ReadFromJsonAsync<AuthResponse>();
+                    if (data != null)
+                    {
+                        return AuthResult.Success(data);
+                    }
+                    return AuthResult.Fail("Invalid response from server.");
+                }
+
+                if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
+                {
+                    return AuthResult.Fail("Invalid PIN.");
+                }
+
+                return AuthResult.Fail("The service is temporarily unavailable. Please try again later.");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Verification failed: {ex.Message}");
+                return AuthResult.Fail("Network error. Could not connect to the server.");
+            }
+        }
     }
 }
