@@ -30,6 +30,18 @@ namespace Layla.Desktop.ViewModels
         [ObservableProperty]
         private string _signUpButtonContent = "Sign Up";
 
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsSignUpStep))]
+        private bool _isVerificationStep;
+
+        public bool IsSignUpStep => !IsVerificationStep;
+
+        [ObservableProperty]
+        private string _verificationPin = string.Empty;
+
+        [ObservableProperty]
+        private string _verifyButtonContent = "Verify Email";
+
         public event EventHandler? OnRegistrationSuccess;
         public event EventHandler? OnNavigateToLogin;
 
@@ -62,14 +74,10 @@ namespace Layla.Desktop.ViewModels
 
                 var response = await _authService.RegisterAsync(request);
 
-                if (response.IsSuccess && response.Response != null)
+                if (response.IsSuccess)
                 {
-                    SessionManager.SaveSession(
-                        response.Response.Token,
-                        response.Response.Email,
-                        response.Response.DisplayName,
-                        response.Response.UserId);
-                    OnRegistrationSuccess?.Invoke(this, EventArgs.Empty);
+                    IsVerificationStep = true;
+                    StatusMessage = "A verification PIN has been sent to your email.";
                 }
                 else
                 {
@@ -88,6 +96,54 @@ namespace Layla.Desktop.ViewModels
             {
                 IsBusy = false;
                 SignUpButtonContent = "Sign Up";
+            }
+        }
+
+        [RelayCommand]
+        private async Task VerifyAsync()
+        {
+            if (string.IsNullOrWhiteSpace(VerificationPin))
+            {
+                StatusMessage = "Please enter the verification PIN.";
+                return;
+            }
+
+            IsBusy = true;
+            VerifyButtonContent = "Verifying...";
+            StatusMessage = string.Empty;
+
+            try
+            {
+                var request = new VerifyEmailRequest
+                {
+                    Email = Email,
+                    Pin = VerificationPin
+                };
+
+                var response = await _authService.VerifyEmailAsync(request);
+
+                if (response.IsSuccess && response.Response != null)
+                {
+                    SessionManager.SaveSession(
+                        response.Response.Token,
+                        response.Response.Email,
+                        response.Response.DisplayName,
+                        response.Response.UserId);
+                    OnRegistrationSuccess?.Invoke(this, EventArgs.Empty);
+                }
+                else
+                {
+                    StatusMessage = response.ErrorMessage ?? "Failed to verify PIN.";
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error: {ex.Message}";
+            }
+            finally
+            {
+                IsBusy = false;
+                VerifyButtonContent = "Verify Email";
             }
         }
 

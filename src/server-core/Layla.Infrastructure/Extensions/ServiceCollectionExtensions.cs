@@ -1,3 +1,4 @@
+using Layla.Core.Configuration;
 using Layla.Core.Entities;
 using Layla.Core.Interfaces.Data;
 using Layla.Core.Interfaces.Queue;
@@ -73,6 +74,9 @@ public static class ServiceCollectionExtensions
 
 
         services.AddScoped<IAuthService, AuthService>();
+
+        services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
+        services.AddScoped<IEmailService, EmailService>();
 
         return services;
     }

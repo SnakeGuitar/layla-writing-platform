@@ -1,6 +1,25 @@
-﻿<Router AppAssembly="typeof(Program).Assembly">
+@using Microsoft.AspNetCore.Components.Authorization
+
+@*
+    CascadingAuthenticationState makes the current user's identity available to
+    every <AuthorizeView> / [Authorize] attribute in the component tree.
+
+    AuthorizeRouteView (instead of plain RouteView) honours [Authorize] on
+    individual @page components and renders the configured NotAuthorized
+    fragment when access is denied.
+*@
+<Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
-        <!--<FocusOnNavigate RouteData="routeData" Selector="h1" />-->
+        <AuthorizeRouteView RouteData="routeData"
+                            DefaultLayout="typeof(Layout.MainLayout)">
+            <NotAuthorized>
+                <RedirectToLogin />
+            </NotAuthorized>
+        </AuthorizeRouteView>
     </Found>
+    <NotFound>
+        <LayoutView Layout="typeof(Layout.MainLayout)">
+            <p class="text-stone-300">Page not found.</p>
+        </LayoutView>
+    </NotFound>
 </Router>

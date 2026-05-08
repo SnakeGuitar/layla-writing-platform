@@ -26,31 +26,50 @@
                         <TextBlock Text="Create your author account" FontSize="14" 
                                    HorizontalAlignment="Center" Foreground="{DynamicResource SecondaryText}" Margin="0,0,0,30"/>
 
-                        <TextBlock Text="EMAIL" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SecondaryText}" Margin="0,0,0,5"/>
-                        <TextBox x:Name="EmailTextBox" Padding="10" Background="Transparent" 
-                                 Foreground="{DynamicResource PrimaryText}" BorderBrush="{DynamicResource BorderColor}" Margin="0,0,0,15"
-                                 materialDesign:HintAssist.Hint="hello@layla.app" Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                 Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"/>
+                        <StackPanel Visibility="{Binding IsSignUpStep, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="EMAIL" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SecondaryText}" Margin="0,0,0,5"/>
+                            <TextBox x:Name="EmailTextBox" Padding="10" Background="Transparent" 
+                                     Foreground="{DynamicResource PrimaryText}" BorderBrush="{DynamicResource BorderColor}" Margin="0,0,0,15"
+                                     materialDesign:HintAssist.Hint="hello@layla.app" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"/>
 
-                        <TextBlock Text="DISPLAY NAME" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SecondaryText}" Margin="0,0,0,5"/>
-                        <TextBox x:Name="DisplayNameTextBox" Padding="10" Background="Transparent" 
-                                 Foreground="{DynamicResource PrimaryText}" BorderBrush="{DynamicResource BorderColor}" Margin="0,0,0,15"
-                                 materialDesign:HintAssist.Hint="Author Name" Style="{StaticResource MaterialDesignOutlinedTextBox}"
-                                 Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}"/>
+                            <TextBlock Text="DISPLAY NAME" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SecondaryText}" Margin="0,0,0,5"/>
+                            <TextBox x:Name="DisplayNameTextBox" Padding="10" Background="Transparent" 
+                                     Foreground="{DynamicResource PrimaryText}" BorderBrush="{DynamicResource BorderColor}" Margin="0,0,0,15"
+                                     materialDesign:HintAssist.Hint="Author Name" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}"/>
 
-                        <TextBlock Text="PASSWORD" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SecondaryText}" Margin="0,0,0,5"/>
-                        <PasswordBox x:Name="PasswordBox" Padding="10" Background="Transparent" 
+                            <TextBlock Text="PASSWORD" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SecondaryText}" Margin="0,0,0,5"/>
+                            <PasswordBox x:Name="PasswordBox" Padding="10" Background="Transparent" 
+                                         Foreground="{DynamicResource PrimaryText}" BorderBrush="{DynamicResource BorderColor}" Margin="0,0,0,25"
+                                         materialDesign:HintAssist.Hint="••••••••" Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
+                                         PasswordChanged="PasswordBox_PasswordChanged"/>
+                        </StackPanel>
+
+                        <StackPanel Visibility="{Binding IsVerificationStep, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="VERIFICATION PIN" FontSize="10" FontWeight="Bold" Foreground="{DynamicResource SecondaryText}" Margin="0,0,0,5"/>
+                            <TextBox x:Name="PinTextBox" Padding="10" Background="Transparent" MaxLength="6"
                                      Foreground="{DynamicResource PrimaryText}" BorderBrush="{DynamicResource BorderColor}" Margin="0,0,0,25"
-                                     materialDesign:HintAssist.Hint="••••••••" Style="{StaticResource MaterialDesignOutlinedPasswordBox}"
-                                     PasswordChanged="PasswordBox_PasswordChanged"/>
+                                     materialDesign:HintAssist.Hint="123456" Style="{StaticResource MaterialDesignOutlinedTextBox}"
+                                     Text="{Binding VerificationPin, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
 
-                        <TextBlock x:Name="StatusText" Visibility="{Binding StatusMessage, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}" TextWrapping="Wrap"
+                        <TextBlock x:Name="StatusText" TextWrapping="Wrap"
                                    HorizontalAlignment="Center" Margin="0,0,0,10" TextAlignment="Center"
+                                   Foreground="{DynamicResource ErrorText}"
                                    Text="{Binding StatusMessage}"/>
 
                         <Button x:Name="SignUpButton" Content="{Binding SignUpButtonContent}" Height="45" FontSize="16" FontWeight="SemiBold"
                                 Background="{DynamicResource AccentColor}" Foreground="White" 
                                 BorderThickness="0" Cursor="Hand" Command="{Binding SignUpCommand}"
+                                Visibility="{Binding IsSignUpStep, Converter={StaticResource BoolToVis}}"
+                                Style="{StaticResource MaterialDesignRaisedButton}" 
+                                materialDesign:ButtonAssist.CornerRadius="8"/>
+
+                        <Button x:Name="VerifyButton" Content="{Binding VerifyButtonContent}" Height="45" FontSize="16" FontWeight="SemiBold"
+                                Background="{DynamicResource AccentColor}" Foreground="White" 
+                                BorderThickness="0" Cursor="Hand" Command="{Binding VerifyCommand}"
+                                Visibility="{Binding IsVerificationStep, Converter={StaticResource BoolToVis}}"
                                 Style="{StaticResource MaterialDesignRaisedButton}" 
                                 materialDesign:ButtonAssist.CornerRadius="8"/>
 

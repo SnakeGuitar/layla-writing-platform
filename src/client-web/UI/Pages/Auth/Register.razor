@@ -1,4 +1,238 @@
 @page "/auth/register"
 @layout client_web.UI.Layout.LayoutEmpty
+@rendermode InteractiveServer
+@using client_web.Application.Schemas.Auth
+@using client_web.Application.Services.Auth
+@using client_web.Application.Services.Session
+@inject IAuthService AuthService
+@inject ISessionManager Session
+@inject NavigationManager Navigation
 
-<p>Register</p>
+
+<PageTitle>Register</PageTitle>
+
+<main class="flex items-center justify-center px-4 min-h-screen bg-linear-to-t from-base-purple-1 to-base-blue-2">
+
+    <div class="fixed inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-32 -right-32 size-50 rounded-full bg-amber-100 opacity-40 blur-3xl"></div>
+        <div class="absolute -bottom-24 -left-24 size-50 rounded-full bg-stone-200 opacity-60 blur-3xl"></div>
+    </div>
+
+    <div class="relative h-auto w-sm px-8 py-10 bg-stone-50 rounded-2xl animate-[fadeInUp_0.5s_ease_both]">
+
+        @if (!_verificationStep)
+        {
+            <!-- ─── STAGE 1 — collect credentials ─────────────────────────────── -->
+            <header class="mb-8 animate-[fadeInUp_0.5s_ease_both] [animation-delay:0.1s]">
+                <img type="image/png" src="./favicon.png" class="mx-auto" />
+                <h1 class="text-3xl text-center text-stone-900 leading-tight">Create account</h1>
+                <p class="text-sm text-center text-stone-400 font-light">Start writing in minutes</p>
+            </header>
+
+            <div class="space-y-5">
+
+                <div class="animate-[fadeInUp_0.5s_ease_both] [animation-delay:0.15s]">
+                    <label class="block text-xs font-medium text-stone-500 uppercase tracking-widest mb-2">Display name</label>
+                    <input type="text"
+                           @bind="_displayName"
+                           placeholder="Jane Author"
+                           class="input-field w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 text-stone-900 text-sm placeholder-stone-300 focus:outline-none focus:border-[#1a1a1a]" />
+                    @if (_fieldErrors.TryGetValue("DisplayName", out var nameErrors))
+                    {
+                        <p class="mt-1 text-xs text-red-600">@string.Join(' ', nameErrors)</p>
+                    }
+                </div>
+
+                <div class="animate-[fadeInUp_0.5s_ease_both] [animation-delay:0.2s]">
+                    <label class="block text-xs font-medium text-stone-500 uppercase tracking-widest mb-2">Email</label>
+                    <input type="email"
+                           @bind="_email"
+                           placeholder="email@company.com"
+                           class="input-field w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 text-stone-900 text-sm placeholder-stone-300 focus:outline-none focus:border-[#1a1a1a]" />
+                    @if (_fieldErrors.TryGetValue("Email", out var emailErrors))
+                    {
+                        <p class="mt-1 text-xs text-red-600">@string.Join(' ', emailErrors)</p>
+                    }
+                </div>
+
+                <div class="animate-[fadeInUp_0.5s_ease_both] [animation-delay:0.3s]">
+                    <label class="block text-xs font-medium text-stone-500 uppercase tracking-widest mb-2">Password</label>
+                    <input type="password"
+                           @bind="_password"
+                           @onkeyup="@(e => { if (e.Key == "Enter") _ = HandleRegister(); })"
+                           placeholder="••••••••"
+                           class="input-field w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 text-stone-900 text-sm placeholder-stone-300 focus:outline-none focus:border-[#1a1a1a]" />
+                    @if (_fieldErrors.TryGetValue("Password", out var pwErrors))
+                    {
+                        <p class="mt-1 text-xs text-red-600">@string.Join(' ', pwErrors)</p>
+                    }
+                    else
+                    {
+                        <p class="mt-1 text-xs text-stone-400">At least 6 chars, one number, one uppercase letter.</p>
+                    }
+                </div>
+
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <div class="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
+                        @_errorMessage
+                    </div>
+                }
+
+                <div class="animate-[fadeInUp_0.5s_ease_both] [animation-delay:0.4s] pt-2">
+                    <button @onclick="HandleRegister"
+                            disabled="@_isLoading"
+                            class="w-full py-3.5 rounded-xl bg-stone-900 text-white text-sm font-medium tracking-wide disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#111]">
+                        @(_isLoading ? "Creating account..." : "Create account →")
+                    </button>
+                </div>
+            </div>
+
+            <footer class="mt-8 text-center text-sm text-stone-300">
+                Already have an account?
+                <a href="/auth/login" data-enhance-nav="false" class="text-stone-500 hover:text-stone-800 font-medium">Login</a>
+            </footer>
+        }
+        else
+        {
+            <!-- ─── STAGE 2 — submit the email PIN ───────────────────────────── -->
+            <header class="mb-8 animate-[fadeInUp_0.5s_ease_both]">
+                <img type="image/png" src="./favicon.png" class="mx-auto" />
+                <h1 class="text-3xl text-center text-stone-900 leading-tight">Verify your email</h1>
+                <p class="text-sm text-center text-stone-400 font-light">
+                    We sent a PIN to <span class="font-medium text-stone-600">@_email</span>
+                </p>
+            </header>
+
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-xs font-medium text-stone-500 uppercase tracking-widest mb-2">Verification PIN</label>
+                    <input type="text"
+                           inputmode="numeric"
+                           autocomplete="one-time-code"
+                           @bind="_pin"
+                           @onkeyup="@(e => { if (e.Key == "Enter") _ = HandleVerify(); })"
+                           placeholder="123456"
+                           class="input-field w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 text-stone-900 text-base text-center tracking-widest placeholder-stone-300 focus:outline-none focus:border-[#1a1a1a]" />
+                </div>
+
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <div class="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
+                        @_errorMessage
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(_infoMessage))
+                {
+                    <div class="flex items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-100 rounded-xl text-sm text-amber-700">
+                        @_infoMessage
+                    </div>
+                }
+
+                <button @onclick="HandleVerify"
+                        disabled="@_isLoading"
+                        class="w-full py-3.5 rounded-xl bg-stone-900 text-white text-sm font-medium tracking-wide disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#111]">
+                    @(_isLoading ? "Verifying..." : "Verify email →")
+                </button>
+
+                <button @onclick="BackToForm"
+                        class="w-full text-center text-xs text-stone-400 hover:text-stone-600">
+                    ← Use a different email
+                </button>
+            </div>
+        }
+
+    </div>
+</main>
+
+@code {
+    private string _displayName = string.Empty;
+    private string _email = string.Empty;
+    private string _password = string.Empty;
+    private string _pin = string.Empty;
+
+    private string? _errorMessage;
+    private string? _infoMessage;
+    private bool _isLoading;
+    private bool _verificationStep;
+    private Dictionary<string, List<string>> _fieldErrors = new();
+
+    private async Task HandleRegister()
+    {
+        _errorMessage = null;
+        _infoMessage = null;
+        _fieldErrors = new();
+        _isLoading = true;
+
+        try
+        {
+            var request = new RegisterRequest
+            {
+                DisplayName = _displayName,
+                Email = _email,
+                Password = _password,
+            };
+            var result = await AuthService.RegisterAsync(request);
+
+            if (result.IsSuccess)
+            {
+                // Server-core no longer issues a JWT on register — it sends a
+                // PIN to the user's inbox first. Flip the form into stage 2
+                // (PIN entry) and clear the password from memory.
+                _verificationStep = true;
+                _password = string.Empty;
+                _infoMessage = "We sent a verification PIN to your inbox.";
+                return;
+            }
+
+            _errorMessage = result.ErrorMessage ?? "Registration failed.";
+            _fieldErrors = result.ValidationErrors;
+        }
+        catch (Exception)
+        {
+            _errorMessage = "An unexpected error occurred.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task HandleVerify()
+    {
+        _errorMessage = null;
+        _isLoading = true;
+
+        try
+        {
+            var request = new VerifyEmailRequest { Email = _email, Pin = _pin };
+            var result = await AuthService.VerifyEmailAsync(request);
+
+            if (result.IsSuccess && result.Response is not null)
+            {
+                await Session.SaveAsync(result.Response);
+                Navigation.NavigateTo("/home", forceLoad: true);
+                return;
+            }
+
+            _errorMessage = result.ErrorMessage ?? "Could not verify your email.";
+        }
+        catch (Exception)
+        {
+            _errorMessage = "An unexpected error occurred.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void BackToForm()
+    {
+        _verificationStep = false;
+        _pin = string.Empty;
+        _errorMessage = null;
+        _infoMessage = null;
+    }
+}

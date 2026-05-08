@@ -1,7 +1,14 @@
 @page "/projects/my-projects"
+@using client_web.Application.Services.Projects
+@using client_web.Application.Services.Session
+@using client_web.Models
 @using client_web.UI.Components
+@inject IProjectService ProjectService
+@inject ISessionManager Session
+@inject NavigationManager Navigation
 
-@* Header *@
+<PageTitle>My Projects</PageTitle>
+
 <header class="max-w-5xl mx-auto mb-12">
     <h2 class="text-amber-500 text-xs font-bold tracking-[0.3em] uppercase mb-3">Projects</h2>
     <h1 class="text-stone-100 font-serif text-4xl md:text-5xl font-light tracking-tight">
@@ -10,102 +17,85 @@
     <div class="mt-4 w-16 h-px bg-amber-500"></div>
 </header>
 
-@if (projects == null || !projects.Any())
-    {
-        <p class="text-stone-500 text-sm">No projects have been created yet.</p>
-    }
-    else
-    {
-        <div class="grid md:grid-cols-2 sm:grid-cols-1 gap-1 bg-transparent">
-            @foreach (ProjectViewModel project in projects)
-            {
-                <div>
-                    <ProjectCard2 Id="@project.Id" Title="@project.Title"
-                                    Synopsis="@project.Synopsis"
-                                    LiteraryGenre="@project.LiteraryGenre"
-                                    CoverImageUrl="@project.CoverImageUrl"
-                                    UpdatedAt="@project.UpdatedAt"
-                                    OnCardClick="HandleCardClick" />
-                </div>
-            }
-        </div>
-    }
+<AuthorizeView>
+    <Authorized>
+        @if (_loading)
+        {
+            <p class="text-stone-500 text-sm">Loading your projects…</p>
+        }
+        else if (_projects is null || _projects.Count == 0)
+        {
+            <p class="text-stone-500 text-sm">No projects have been created yet.</p>
+        }
+        else
+        {
+            <div class="grid md:grid-cols-2 sm:grid-cols-1 gap-1 bg-transparent">
+                @foreach (var project in _projects)
+                {
+                    <div>
+                        <ProjectCard2 Id="@project.Id"
+                                      Title="@project.Title"
+                                      Synopsis="@project.Synopsis"
+                                      LiteraryGenre="@project.LiteraryGenre"
+                                      CoverImageUrl="@project.CoverImageUrl"
+                                      UpdatedAt="@project.UpdatedAt"
+                                      OnCardClick="HandleCardClick" />
+                    </div>
+                }
+            </div>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <p class="text-stone-300">
+            Please <a href="/auth/login" class="text-amber-400 underline hover:text-amber-300">sign in</a>
+            to see your projects.
+        </p>
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
-    private List<ProjectViewModel>? projects;
+    private List<Project>? _projects;
+    private bool _loading = true;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        // Replace with your actual data service call, e.g.:
-        // projects = await ProjectService.GetAllAsync();
+        await LoadProjectsAsync();
+    }
 
-        projects = new List<ProjectViewModel>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        var hadToken = Session.IsAuthenticated;
+        var restored = await Session.InitializeAsync();
+        if (restored && !hadToken)
         {
-            new ProjectViewModel() {
-                Id = Guid.NewGuid(),
-                Title = "The Last Garden of Dreams",
-                Synopsis = "A story about memory, dreams, and the secret gardens we keep deep within our minds.",
-                LiteraryGenre = "Fantasy",
-                CoverImageUrl = null,
-                UpdatedAt = DateTime.Now.AddDays(-3)
-            },
-            new ProjectViewModel() {
-                Id = Guid.NewGuid(),
-                Title = "The Last Garden of Dreams",
-                Synopsis = "A story about memory, dreams, and the secret gardens we keep deep within our minds.",
-                LiteraryGenre = "Fantasy",
-                CoverImageUrl = null,
-                UpdatedAt = DateTime.Now.AddDays(-3)
-            },
-            new ProjectViewModel() {
-                Id = Guid.NewGuid(),
-                Title = "The Last Garden of Dreams",
-                Synopsis = "A story about memory, dreams, and the secret gardens we keep deep within our minds.",
-                LiteraryGenre = "Fantasy",
-                CoverImageUrl = null,
-                UpdatedAt = DateTime.Now.AddDays(-3)
-            },
-            new ProjectViewModel() {
-                Id = Guid.NewGuid(),
-                Title = "The Last Garden of Dreams",
-                Synopsis = "A story about memory, dreams, and the secret gardens we keep deep within our minds.",
-                LiteraryGenre = "Fantasy",
-                CoverImageUrl = null,
-                UpdatedAt = DateTime.Now.AddDays(-3)
-            },
-            new ProjectViewModel() {
-                Id = Guid.NewGuid(),
-                Title = "The Last Garden of Dreams",
-                Synopsis = "A story about memory, dreams, and the secret gardens we keep deep within our minds.",
-                LiteraryGenre = "Fantasy",
-                CoverImageUrl = null,
-                UpdatedAt = DateTime.Now.AddDays(-3)
-            },
-            new ProjectViewModel() {
-                Id = Guid.NewGuid(),
-                Title = "The Last Garden of Dreams",
-                Synopsis = "A story about memory, dreams, and the secret gardens we keep deep within our minds.",
-                LiteraryGenre = "Fantasy",
-                CoverImageUrl = null,
-                UpdatedAt = DateTime.Now.AddDays(-3)
+            await LoadProjectsAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadProjectsAsync()
+    {
+        _loading = true;
+        try
+        {
+            if (!Session.IsAuthenticated)
+            {
+                _projects = new List<Project>();
+                return;
             }
-        };
+            var result = await ProjectService.GetMyProjectsAsync();
+            _projects = result.ToList();
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 
     private void HandleCardClick(Guid projectId)
     {
-        // Navigate to project detail, e.g.:
-        // NavigationManager.NavigateTo($"/projects/{projectId}");
-        Console.WriteLine($"Clicked project: {projectId}");
-    }
-
-    private class ProjectViewModel
-    {
-        public Guid Id { get; set; }
-        public string Title { get; set; } = string.Empty;
-        public string Synopsis { get; set; } = string.Empty;
-        public string LiteraryGenre { get; set; } = string.Empty;
-        public string? CoverImageUrl { get; set; }
-        public DateTime UpdatedAt { get; set; }
+        Navigation.NavigateTo($"/projects/{projectId}", forceLoad: true);
     }
 }

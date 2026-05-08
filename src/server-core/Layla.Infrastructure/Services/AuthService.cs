@@ -47,6 +47,7 @@ public class AuthService(
     UserManager<AppUser> userManager,
     SignInManager<AppUser> signInManager,
     ITokenService tokenService,
+    IEmailService emailService,
     IOptions<JwtSettings> jwtSettings,
     ILogger<AuthService> logger) : BaseService<AuthService>(logger), IAuthService
 {
@@ -105,8 +106,32 @@ public class AuthService(
 
             await userManager.AddToRoleAsync(user, AppRoles.Writer);
 
-            return await GenerateUserResultAsync(user);
+            var pin = await userManager.GenerateTwoFactorTokenAsync(user, "Email");
+            await emailService.SendVerificationEmailAsync(user.Email!, pin);
+
+            return Result<AuthResponseDto>.Success(new AuthResponseDto
+            {
+                UserId = user.Id,
+                Email = user.Email,
+                DisplayName = user.DisplayName,
+                Token = ""
+            });
         }, "Failed to register user {Email}", request.Email);
+
+    public Task<Result<AuthResponseDto>> VerifyEmailAsync(string email, string pin) =>
+        ExecuteAsync(async () =>
+        {
+            var user = await userManager.FindByEmailAsync(email);
+            if (user == null) return Result<AuthResponseDto>.Failure(ErrorCode.NotFound, "User not found");
+
+            var isValid = await userManager.VerifyTwoFactorTokenAsync(user, "Email", pin);
+            if (!isValid) return Result<AuthResponseDto>.Failure(ErrorCode.ValidationFailed, "Invalid PIN");
+
+            user.EmailConfirmed = true;
+            await userManager.UpdateAsync(user);
+
+            return await GenerateUserResultAsync(user);
+        }, "Failed to verify email for {Email}", email);
 
     private async Task<Result<AuthResponseDto>> GenerateUserResultAsync(AppUser user)
     {

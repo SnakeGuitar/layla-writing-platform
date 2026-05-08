@@ -15,7 +15,20 @@
 
 <body>
     <Routes @rendermode="InteractiveServer"/>
-    <script src="_framework/blazor.web.js"></script>
+    <!--
+        autostart=false + Blazor.start({...}) lets us disable Blazor's
+        "enhanced navigation". With enhanced nav on, clicking a NavLink only
+        changed the URL and never re-applied the new server-rendered HTML
+        (a known interaction between InteractiveServer rendermode and the
+        streaming SSR pipeline). Disabling it makes each navigation a normal
+        full-page load — reliable and predictable.
+    -->
+    <script src="_framework/blazor.web.js" autostart="false"></script>
+    <script>
+        Blazor.start({
+            ssr: { disableDomPreservation: true }
+        });
+    </script>
 </body>
 
 </html>
