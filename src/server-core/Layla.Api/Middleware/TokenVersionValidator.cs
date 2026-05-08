@@ -2,7 +2,6 @@ using Layla.Core.Constants;
 using Layla.Core.Entities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 
 namespace Layla.Api.Middleware;

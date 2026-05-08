@@ -2,7 +2,6 @@
 using Layla.Core.Constants;
 using Layla.Core.Entities;
 using Layla.Core.Interfaces.Services;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;

@@ -1,6 +1,5 @@
 using Layla.Api.Extensions;
 using Layla.Core.Constants;
-using Layla.Core.Contracts;
 using Layla.Core.Interfaces;
 using Layla.Core.Interfaces.Data;
 using Microsoft.AspNetCore.Authorization;

@@ -1,6 +1,5 @@
-using Layla.Core.Contracts.Project;
-using Layla.Core.Entities;
 using Layla.Core.Common;
+using Layla.Core.Contracts.Project;
 
 namespace Layla.Core.Interfaces.Services;
 

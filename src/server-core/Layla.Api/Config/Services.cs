@@ -1,7 +1,5 @@
 using Layla.Core.Extensions;
 using Layla.Core.Interfaces;
-using Layla.Core.Interfaces.Queue;
-using Layla.Infrastructure.Queue;
 using Layla.Infrastructure.Services;
 
 namespace Layla.Api.Config;

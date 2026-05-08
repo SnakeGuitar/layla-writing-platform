@@ -1,9 +1,6 @@
-using Layla.Api.Extensions;
-using Layla.Core.Common;
 using Layla.Core.Constants;
 using Layla.Core.Contracts.AppUser;
 using Layla.Core.Contracts.Auth;
-using Layla.Core.Entities;
 using Layla.Core.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

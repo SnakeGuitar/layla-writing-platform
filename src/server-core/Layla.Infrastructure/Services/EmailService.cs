@@ -31,7 +31,7 @@ public class EmailService(IOptions<EmailSettings> emailSettings, ILogger<EmailSe
             await client.AuthenticateAsync(_settings.Username, _settings.Password);
             await client.SendAsync(message);
             await client.DisconnectAsync(true);
-            
+
             logger.LogInformation("Verification email sent to {Email}", toEmail);
         }
         catch (Exception ex)

@@ -1,7 +1,5 @@
 using Layla.Core.Common;
 using Layla.Core.Contracts.AppUser;
-using Layla.Core.Contracts.Project;
-using Layla.Core.Entities;
 
 namespace Layla.Core.Interfaces.Services
 {
