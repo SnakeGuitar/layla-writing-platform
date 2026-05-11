@@ -75,7 +75,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IAuthService, AuthService>();
 
-        services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
+        services.Configure<EmailSettings>(configuration.GetSection("EmailConfigs"));
         services.AddScoped<IEmailService, EmailService>();
 
         return services;

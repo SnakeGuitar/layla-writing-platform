@@ -1,0 +1,7 @@
+﻿c:\Users\snake\Desktop\Layla\src\client-desktop\Layla.Desktop\App.xaml.cs(115,13): error CS0246: El nombre del tipo o del espacio de nombres 'ITheme' no se encontr├│ (┬┐falta una directiva using o una referencia de ensamblado?) [c:\Users\snake\Desktop\Layla\src\client-desktop\Layla.Desktop\Layla.Desktop_qghnbhr0_wpftmp.csproj]
+
+ERROR al compilar.
+    0 Advertencia(s)
+    1 Errores
+
+Tiempo transcurrido 00:00:01.94
