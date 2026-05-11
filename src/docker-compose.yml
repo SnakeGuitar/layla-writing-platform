@@ -140,26 +140,7 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  # --- 6. RabbitMQ (Message Queue) ---
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: layla-rabbit
-    ports:
-      - "${RABBIT_PORT}:${RABBIT_PORT}"
-      - "${RABBIT_MANAGEMENT_PORT}:${RABBIT_MANAGEMENT_PORT}"
-    environment:
-      - RABBITMQ_DEFAULT_USER=${RABBIT_USER}
-      - RABBITMQ_DEFAULT_PASS=${RABBIT_PASSWORD}
-    volumes:
-      - rabbit_data:/var/lib/rabbitmq
-    healthcheck:
-      test: rabbitmq-diagnostics -q ping
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
-
-  # --- 7. Web app - (.NET) ---
+  # --- 6. Web app - (.NET) ---
   layla-web:
     build:
       context: ./client-web
@@ -175,17 +156,17 @@ services:
       - DOTNET_RUNNING_IN_CONTAINER=true
       - DOTNET_SKIP_FIRST_TIME_EXPERIENCE=true
       - ASPNETCORE_ENVIRONMENT=${CORE_ENVIRONMENT}
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/src/certs/aspnetapp.pfx
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/app/certs/aspnetapp.pfx
       - ASPNETCORE_Kestrel__Certificates__Default__Password=YourStrongPasswordAF
       - ASPNETCORE_URLS=https://+:${WEB_PORT_HTTPS};http://+:${WEB_PORT_HTTP}
     healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:${WEB_PORT_HTTP}/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD", "curl", "-f", "http://localhost:${WEB_PORT_HTTP}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     restart: unless-stopped
 
-  # --- 8. API Gateway (YARP) ---
+  # --- 7. API Gateway (YARP) ---
   layla-api-gateway:
     build:
       context: ./infraestructure-api_gateway
@@ -206,6 +187,25 @@ services:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 15s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+    # --- 8. RabbitMQ (Message Queue) ---
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: layla-rabbit
+    ports:
+      - "${RABBIT_PORT}:${RABBIT_PORT}"
+      - "${RABBIT_MANAGEMENT_PORT}:${RABBIT_MANAGEMENT_PORT}"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBIT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBIT_PASSWORD}
+    volumes:
+      - rabbit_data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
       timeout: 5s
       retries: 5
     restart: unless-stopped

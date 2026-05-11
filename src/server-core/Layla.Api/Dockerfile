@@ -1,4 +1,4 @@
-# Build Stage
+# -------- BUILD --------
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
@@ -15,16 +15,16 @@ RUN mkdir -p /src/certs \
     && dotnet dev-certs https -ep /src/certs/aspnetapp.pfx -p YourStrongPasswordAF
 RUN dotnet build "Layla.Api.csproj" -c Release -o /app/build
 
-# Publish Stage
+# -------- PUBLISH --------
 FROM build AS publish
 RUN mkdir -p /src/certs \
     && dotnet dev-certs https -ep /src/certs/aspnetapp.pfx -p YourStrongPasswordAF
 RUN dotnet publish "Layla.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-# Runtime Stage
+# -------- RUNTIME --------
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
-EXPOSE 5288
+EXPOSE 7166
 EXPOSE 5287
 COPY --from=publish /app/publish .
 COPY --from=publish /src/certs /app/certs
