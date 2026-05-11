@@ -30,10 +30,10 @@ Collaborative creative-writing and worldbuilding platform. Multiple authors can 
 ---
 # Services and components description
 ## General architecture
-![General architecture](./assets/General_architecture2.jpg)
+![General architecture](./assets/General_architecture2.png)
 
 ## Comunication between components
-![Comunication between components](./assets/Comunication.jpg)
+![Comunication between components](./assets/Comunication.png)
 
 ## Services
 | Service                | Tech                | Port                   | Databases      | Purpose |
