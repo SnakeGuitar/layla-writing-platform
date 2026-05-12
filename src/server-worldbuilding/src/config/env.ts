@@ -11,7 +11,6 @@ loadEnv({ override: false }); // fallback to .env if present
  * The application will throw at startup if any of these are missing.
  */
 const required = [
-	"ALLOWED_ORIGINS",
 	"JWT_SECRET",
 	"JWT_SECRET_REFRESH",
 	"JWT_ACCESS_TOKEN_EXPIRY",
@@ -67,9 +66,6 @@ if (tooShort.length > 0) {
  * via the non-null assertion operator (`!`).
  */
 export const config = {
-	/** Allowed origin for CORS policies. */
-	allowedOrigins: process.env["ALLOWED_ORIGINS"]!,
-
 	/** HTTP server port. Defaults to `3000` if `PORT` is not set. */
 	port: process.env["PORT"]!,
 

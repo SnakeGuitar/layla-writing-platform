@@ -72,14 +72,13 @@ services:
       - JWT_SECRET_REFRESH=${JWT_SECRET_REFRESH}
       - JWT_ACCESS_TOKEN_EXPIRY=${JWT_ACCESS_TOKEN_EXPIRY}
       - JWT_REFRESH_TOKEN_EXPIRY=${JWT_REFRESH_TOKEN_EXPIRY}
-      - ALLOWED_ORIGINS=${WORLDBUILDING_ALLOWED_ORIGINS}
       - MONGODB_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:${MONGO_PORT}/layla_worldbuilding?authSource=admin
       - NEO4J_URI=bolt://neo4j:${NEO4J_BOLT_PORT}
       - NEO4J_USERNAME=${NEO4J_USERNAME}
       - NEO4J_PASSWORD=${NEO4J_PASSWORD}
       - RABBITMQ_URL=amqp://${RABBIT_USER}:${RABBIT_PASSWORD}@rabbitmq:${RABBIT_PORT}
-      - RABBITMQ_EXCHANGE=worldbuilding.events
-      - RABBITMQ_QUEUE=worldbuilding.node.queue
+      - RABBITMQ_EXCHANGE=${RABBIT_EXCHANGE}
+      - RABBITMQ_QUEUE=${RABBIT_QUEUE}
     depends_on:
       mongodb:
         condition: service_healthy
