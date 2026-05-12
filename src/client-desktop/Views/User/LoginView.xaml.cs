@@ -21,7 +21,7 @@ namespace Layla.Desktop.Views
             NavigationService.Navigate(new ProjectListView());
         }
 
-        private void NavigateToSignUp_Click(object sender, System.Windows.RoutedEventArgs e)
+        private void NavigateToSignUp_Click(object sender, RoutedEventArgs e)
         {
             NavigationService.Navigate(new SignUpView());
         }
