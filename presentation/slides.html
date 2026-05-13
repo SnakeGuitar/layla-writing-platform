@@ -1,0 +1,1001 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=1280, initial-scale=1">
+  <title>Layla — Luis Donaldo Ortiz García</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reset.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/monokai.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg:           #161413;
+      --bg2:          #1c1a18;
+      --surface:      #1e1b19;
+      --shadow-light: #2b2724;
+      --shadow-dark:  #110f0e;
+      --text:         #e8e4df;
+      --text-muted:   #a49992;
+      --code-green:   #7ca881;
+      --accent:       #b3a491;
+      --accent2:      #c4b0a2;
+      --grad1:        #5e544b;
+      --grad2:        #524757;
+      --grad3:        #4b545a;
+      --border-subtle: rgba(255, 255, 255, 0.05);
+    }
+
+    html, body, .reveal { background: var(--bg); }
+    .reveal {
+      font-family: 'DM Mono', monospace;
+      color: var(--text);
+      font-weight: 300;
+    }
+
+    .reveal .slides section {
+      text-align: left;
+      padding: 1em 2em;
+    }
+
+    /* ── HEADINGS ── */
+    .reveal h1, .reveal h2, .reveal h3 {
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 300;
+      letter-spacing: -0.01em;
+      line-height: 1.1;
+      color: var(--text);
+      text-transform: none;
+      margin-bottom: 0.4em;
+    }
+    .reveal h1 { font-size: 4em; }
+    .reveal h2 { font-size: 2.6em; }
+    .reveal h3 { font-size: 1.6em; }
+    .reveal h1 em, .reveal h2 em, .reveal h3 em {
+      font-style: italic;
+      color: var(--accent2);
+    }
+
+    .reveal p, .reveal li {
+      font-size: 0.7em;
+      line-height: 1.85;
+      color: var(--text-muted);
+      font-weight: 300;
+    }
+    .reveal strong {
+      color: var(--text);
+      font-weight: 400;
+    }
+    .reveal em {
+      font-style: italic;
+      color: var(--accent2);
+      font-weight: 400;
+    }
+
+    /* ── SECTION LABELS (portfolio style) ── */
+    .section-label {
+      font-size: 0.55em;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 2em;
+      display: flex;
+      align-items: center;
+      gap: 1em;
+    }
+    .section-label::before {
+      content: '';
+      display: inline-block;
+      width: 36px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    /* ── NEUMORPHISM ── */
+    .neu {
+      background: var(--surface);
+      border-radius: 18px;
+      padding: 1.6em 2em;
+      box-shadow:
+        6px 6px 14px var(--shadow-dark),
+        -6px -6px 14px var(--shadow-light);
+      margin: 0.6em 0;
+    }
+    .neu-inset {
+      background: var(--surface);
+      border-radius: 14px;
+      padding: 1.2em 1.5em;
+      box-shadow:
+        inset 4px 4px 10px var(--shadow-dark),
+        inset -4px -4px 10px var(--shadow-light);
+    }
+    .neu-sm {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 0.9em 1.2em;
+      box-shadow:
+        4px 4px 10px var(--shadow-dark),
+        -4px -4px 10px var(--shadow-light);
+    }
+
+    /* ── PILLS / CHIPS ── */
+    .pill {
+      display: inline-block;
+      padding: 0.45em 1.1em;
+      font-size: 0.6em;
+      letter-spacing: 0.1em;
+      color: var(--text-muted);
+      border-radius: 20px;
+      background: var(--surface);
+      box-shadow:
+        3px 3px 7px var(--shadow-dark),
+        -3px -3px 7px var(--shadow-light);
+      margin: 0.2em;
+      font-family: 'DM Mono', monospace;
+    }
+    .pill.accent { color: var(--accent2); }
+
+    /* ── TITLE SLIDE ── */
+    .title-slide {
+      text-align: center !important;
+      position: relative;
+      overflow: hidden;
+    }
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .blob1 { width: 500px; height: 500px; background: radial-gradient(circle, var(--grad2), transparent); top: -100px; right: -100px; }
+    .blob2 { width: 400px; height: 400px; background: radial-gradient(circle, var(--grad3), transparent); bottom: -80px; left: 10%; }
+    .blob3 { width: 300px; height: 300px; background: radial-gradient(circle, var(--grad1), transparent); top: 40%; left: 40%; }
+
+    .title-slide > * { position: relative; z-index: 2; }
+
+    .title-slide .tag {
+      display: inline-block;
+      font-size: 0.55em;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 1.5em;
+    }
+    .title-slide h1 {
+      font-size: 6em;
+      line-height: 1.0;
+      margin-bottom: 0.3em;
+    }
+    .title-slide .handle {
+      font-size: 0.75em;
+      letter-spacing: 0.3em;
+      color: var(--text-muted);
+      margin-bottom: 2em;
+      text-transform: uppercase;
+    }
+    .title-slide .handle span { color: var(--code-green); }
+    .title-slide .meta {
+      margin-top: 3em;
+      font-size: 0.6em;
+      color: var(--text-muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    /* ── SECTION DIVIDER ── */
+    .section-slide {
+      text-align: center !important;
+      position: relative;
+    }
+    .section-slide .section-num {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65em;
+      color: var(--text-muted);
+      letter-spacing: 0.5em;
+      margin-bottom: 1.5em;
+      text-transform: uppercase;
+    }
+    .section-slide h1 {
+      font-size: 4.5em;
+      color: var(--text);
+    }
+    .section-slide h1 em {
+      color: var(--accent2);
+    }
+
+    /* ── CARDS GRID ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.4em; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.4em; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1em; }
+
+    .card {
+      background: var(--surface);
+      border-radius: 18px;
+      padding: 1.6em 1.4em;
+      box-shadow:
+        6px 6px 14px var(--shadow-dark),
+        -6px -6px 14px var(--shadow-light);
+    }
+    .card h3 {
+      font-size: 1.2em;
+      color: var(--accent2);
+      margin-bottom: 0.3em;
+    }
+    .card .card-tag {
+      font-size: 0.5em;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.8em;
+    }
+    .card p { font-size: 0.65em; margin: 0; }
+
+    /* ── BIG STATS ── */
+    .stat {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 5em;
+      font-weight: 300;
+      color: var(--text);
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+    .stat em { font-style: italic; color: var(--accent2); }
+    .stat-caption {
+      font-size: 0.55em;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-top: 0.5em;
+    }
+
+    /* ── CODE ── */
+    .reveal pre {
+      background: var(--bg2) !important;
+      box-shadow:
+        inset 3px 3px 8px var(--shadow-dark),
+        inset -3px -3px 8px var(--shadow-light);
+      border-radius: 14px;
+      width: 90%;
+      margin: 0.8em auto;
+      padding: 0.4em;
+    }
+    .reveal pre code {
+      background: transparent !important;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.5em;
+      line-height: 1.55;
+      padding: 0.8em 1.2em;
+      max-height: 500px;
+    }
+    .mono {
+      font-family: 'DM Mono', monospace;
+      color: var(--accent2);
+    }
+
+    /* ── TABLES ── */
+    .reveal table {
+      margin: 1em auto;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.65em;
+      width: 90%;
+    }
+    .reveal table th, .reveal table td {
+      padding: 0.7em 1em;
+      border: none;
+      border-bottom: 1px solid var(--border-subtle);
+      text-align: left;
+      color: var(--text-muted);
+    }
+    .reveal table th {
+      color: var(--accent);
+      font-weight: 400;
+      font-size: 0.85em;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+    .reveal table td strong { color: var(--text); }
+
+    /* ── ARROW / DIVIDER ── */
+    .arrow {
+      color: var(--accent);
+      font-size: 1.6em;
+      align-self: center;
+      text-align: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+    }
+    .divider-line {
+      height: 1px;
+      background: var(--border-subtle);
+      margin: 1.5em 0;
+    }
+
+    /* ── CENTER UTIL ── */
+    .center { text-align: center !important; }
+    .muted { color: var(--text-muted); }
+    .small { font-size: 0.85em; }
+    .xsmall { font-size: 0.7em; }
+
+    /* ── REVEAL UI ── */
+    .reveal .progress { color: var(--accent); }
+    .reveal .slide-number {
+      color: var(--text-muted);
+      background: transparent;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.7em;
+      letter-spacing: 0.2em;
+    }
+    .reveal .controls { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <div class="reveal">
+    <div class="slides">
+
+      <!-- ═══════════════ PORTADA ═══════════════ -->
+
+      <section class="title-slide">
+        <div class="blob blob1"></div>
+        <div class="blob blob2"></div>
+        <div class="blob blob3"></div>
+        <div class="tag">Proyecto final · Despliegue de Software</div>
+        <h1><em>Layla</em></h1>
+        <div class="handle"><span>·</span> escribir mundos, juntos <span>·</span></div>
+        <div class="meta">Luis Donaldo Ortiz García · Mayo 2026</div>
+      </section>
+
+      <!-- ═══════════════ ¿QUÉ ES LAYLA? ═══════════════ -->
+
+      <section class="section-slide">
+        <div class="section-num">— 01 —</div>
+        <h1>¿Qué es <em>Layla</em>?</h1>
+      </section>
+
+      <section>
+        <div class="section-label">El pitch</div>
+        <h2>Plataforma colaborativa de <em>escritura creativa</em></h2>
+        <div class="neu">
+          <p>Múltiples autores escriben novelas juntos,<br>
+          gestionan wikis de su universo,<br>
+          visualizan grafos narrativos<br>
+          y se comunican por voz <em>en tiempo real</em>.</p>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-label">El problema</div>
+        <h2>Escribir una novela en equipo es <em>un caos</em></h2>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-tag">Hoy</div>
+            <p>Google Docs para el texto.<br>
+            Discord para hablar.<br>
+            Notion para personajes.<br>
+            Hojas de cálculo para la cronología.</p>
+          </div>
+          <div class="card">
+            <div class="card-tag">Resultado</div>
+            <p><em>Cuatro herramientas</em> que no se hablan.<br>
+            Cambios que se pierden.<br>
+            Personajes que se contradicen.<br>
+            Capítulos que no encajan.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-label">La idea</div>
+        <h2>Un solo espacio de trabajo para <em>todo</em></h2>
+        <div class="neu center">
+          <p style="font-size: 0.95em;">Manuscrito · Wiki · Grafo · Voz · Roles</p>
+          <p class="xsmall">en tiempo real, con permisos finos por proyecto.</p>
+        </div>
+      </section>
+
+      <!-- ═══════════════ FUNCIONALIDADES ═══════════════ -->
+
+      <section class="section-slide">
+        <div class="section-num">— 02 —</div>
+        <h1>Qué puede <em>hacer</em></h1>
+      </section>
+
+      <section>
+        <div class="section-label">Casos de uso · 15 en total</div>
+        <h3 class="muted">Para cada actor del sistema</h3>
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-tag">Público</div>
+            <p>· Explorar catálogo<br>· Previsualizar sinopsis<br>· Leer historias</p>
+          </div>
+          <div class="card">
+            <div class="card-tag">Escritor</div>
+            <p>· Crear proyecto<br>· Editar manuscrito<br>· Gestionar colaboradores<br>· Hablar por voz</p>
+          </div>
+          <div class="card">
+            <div class="card-tag">Admin</div>
+            <p>· Gestionar usuarios<br>· Banear · Asignar roles<br>· Reportes del sistema</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-label">Funcionalidad principal · 01</div>
+        <h2>Editar el <em>manuscrito</em></h2>
+        <div class="neu">
+          <p>Editor de texto enriquecido (RTF) con sincronización <em>en vivo</em>.<br>
+          Múltiples autores pueden trabajar en el mismo capítulo a la vez.<br>
+          Estrategia <strong>Last-Write-Wins</strong> para resolver conflictos.</p>
+        </div>
+        <p class="xsmall center muted">CU-08 · backend: <span class="mono">server-worldbuilding</span></p>
+      </section>
+
+      <section>
+        <div class="section-label">Funcionalidad principal · 02</div>
+        <h2>Construir el <em>mundo</em></h2>
+        <div class="neu">
+          <p>Una <strong>wiki interna</strong> del universo de la novela.<br>
+          Personajes, lugares, objetos, eventos, organizaciones.<br>
+          Cada entrada es un nodo que se puede vincular con otros.</p>
+        </div>
+        <p class="xsmall center muted">CU-09 · datos: <span class="mono">MongoDB</span></p>
+      </section>
+
+      <section>
+        <div class="section-label">Funcionalidad principal · 03</div>
+        <h2>Visualizar el <em>grafo</em></h2>
+        <div class="neu">
+          <p>El universo de tu novela como un <em>grafo navegable</em>:<br>
+          personajes conectados a lugares, eventos a personajes,<br>
+          relaciones entre facciones, líneas temporales.</p>
+        </div>
+        <p class="xsmall center muted">CU-10 · datos: <span class="mono">Neo4j</span></p>
+      </section>
+
+      <section>
+        <div class="section-label">Funcionalidad principal · 04</div>
+        <h2>Hablar por <em>voz</em></h2>
+        <div class="neu">
+          <p><strong>Push-to-talk</strong> en sala de proyecto.<br>
+          Un escritor habla, los demás escuchan en tiempo real.<br>
+          Útil para sesiones de brainstorming y rol.</p>
+        </div>
+        <p class="xsmall center muted">CU-11, CU-12 · protocolo: <span class="mono">SignalR / WebSockets</span></p>
+      </section>
+
+      <section>
+        <div class="section-label">Permisos</div>
+        <h2>Tres roles por <em>proyecto</em></h2>
+        <table>
+          <thead><tr><th>Rol</th><th>Permisos</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Owner</strong></td><td>Control total · gestiona colaboradores y privacidad</td></tr>
+            <tr><td><strong>Editor</strong></td><td>Lee y escribe en manuscrito y wiki</td></tr>
+            <tr><td><strong>Reader</strong></td><td>Solo lectura</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ═══════════════ ARQUITECTURA ═══════════════ -->
+
+      <section class="section-slide">
+        <div class="section-num">— 03 —</div>
+        <h1>Cómo está <em>construido</em></h1>
+      </section>
+
+      <section>
+        <div class="section-label">Vista general</div>
+        <h2>Tres capas, <em>una historia</em></h2>
+        <div class="grid-3">
+          <div class="card center">
+            <div class="card-tag">Capa 1</div>
+            <h3>Clientes</h3>
+            <p>Desktop · Web · Android</p>
+          </div>
+          <div class="card center">
+            <div class="card-tag">Capa 2</div>
+            <h3>Servicios</h3>
+            <p>2 backends<br>1 API gateway</p>
+          </div>
+          <div class="card center">
+            <div class="card-tag">Capa 3</div>
+            <h3>Datos</h3>
+            <p>3 bases<br>1 mensajería</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-label">Capa 1 · Clientes</div>
+        <h2>Un cliente por <em>caso de uso</em></h2>
+        <table>
+          <thead><tr><th>Cliente</th><th>Tecnología</th><th>Rol</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Desktop</strong></td><td><span class="mono">WPF · .NET 9</span></td><td>Workspace principal de escritura</td></tr>
+            <tr><td><strong>Web</strong></td><td><span class="mono">Blazor Server · .NET 9</span></td><td>Catálogo público y panel de admin</td></tr>
+            <tr><td><strong>Android</strong></td><td><span class="mono">Kotlin + Compose</span></td><td>Compañero móvil · voz · wiki</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section>
+        <div class="section-label">Capa 2 · Backends</div>
+        <h2>División por <em>dominio</em>, no por feature</h2>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-tag">Backend A</div>
+            <h3>server-core</h3>
+            <p class="xsmall mono">ASP.NET Core 10</p>
+            <p>Identidad, usuarios, proyectos, roles, SignalR.<br>Habla SQL.</p>
+          </div>
+          <div class="card">
+            <div class="card-tag">Backend B</div>
+            <h3>server-worldbuilding</h3>
+            <p class="xsmall mono">Node.js · Express 5 · TypeScript</p>
+            <p>Manuscritos, wiki, grafo narrativo.<br>Habla MongoDB + Neo4j.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-label">Capa 3 · Datos</div>
+        <h2>Cada base para <em>lo que sabe hacer mejor</em></h2>
+        <div class="grid-3">
+          <div class="card center">
+            <h3>SQL Server</h3>
+            <p>Usuarios, proyectos, roles.<br>Relacional, transaccional.</p>
+          </div>
+          <div class="card center">
+            <h3>MongoDB</h3>
+            <p>Manuscritos, capítulos, wiki.<br>Documentos flexibles.</p>
+          </div>
+          <div class="card center">
+            <h3>Neo4j</h3>
+            <p>Grafo narrativo.<br>Recorridos eficientes.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-label">Mensajería</div>
+        <h2>Los dos backends se hablan por <em>eventos</em></h2>
+        <div class="neu">
+          <p><strong>RabbitMQ</strong> · exchange <span class="mono">worldbuilding.events</span></p>
+          <div class="divider-line"></div>
+          <p>Cuando server-core <em>commitea</em> un nuevo proyecto en SQL,<br>
+          publica <span class="mono">project.created</span> al exchange.</p>
+          <p>server-worldbuilding consume el evento y <em>inicializa</em><br>
+          el documento en MongoDB y los nodos en Neo4j.</p>
+        </div>
+        <p class="xsmall center muted">Outbox pattern · publicar <em>después</em> del commit, nunca antes</p>
+      </section>
+
+      <section>
+        <div class="section-label">Punto de entrada</div>
+        <h2>Un <em>solo</em> portón al sistema</h2>
+        <div class="neu">
+          <p><strong>API Gateway YARP</strong> en <span class="mono">:5000</span></p>
+          <div class="divider-line"></div>
+          <p class="xsmall mono">/api/users, /api/projects, /hubs/voice  →  server-core</p>
+          <p class="xsmall mono">/api/wiki, /api/graph, /api/manuscripts  →  server-worldbuilding</p>
+          <div class="divider-line"></div>
+          <p>Rate limiting · forward de WebSockets · transformaciones de header.<br>
+          Los clientes <em>nunca</em> saben que hay dos backends.</p>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-label">Stack técnico</div>
+        <h2>Lo que <em>vive</em> dentro</h2>
+        <div style="margin: 1em 0;">
+          <span class="pill">.NET 10</span>
+          <span class="pill">.NET 9</span>
+          <span class="pill">Node 22</span>
+          <span class="pill">TypeScript</span>
+          <span class="pill">Kotlin</span>
+          <span class="pill">Jetpack Compose</span>
+        </div>
+        <div style="margin: 1em 0;">
+          <span class="pill accent">ASP.NET Core</span>
+          <span class="pill accent">Blazor Server</span>
+          <span class="pill accent">Express 5</span>
+          <span class="pill accent">EF Core</span>
+          <span class="pill accent">YARP</span>
+          <span class="pill accent">SignalR</span>
+        </div>
+        <div style="margin: 1em 0;">
+          <span class="pill">SQL Server 2022</span>
+          <span class="pill">MongoDB</span>
+          <span class="pill">Neo4j 5</span>
+          <span class="pill">RabbitMQ 3</span>
+        </div>
+        <div style="margin: 1em 0;">
+          <span class="pill accent">Docker</span>
+          <span class="pill accent">Vagrant</span>
+          <span class="pill accent">Puppet</span>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-label">Patrones aplicados</div>
+        <h2>Decisiones de <em>diseño</em></h2>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-tag">Estructura</div>
+            <p><strong>Clean Architecture</strong><br>Api · Core · Infrastructure</p>
+          </div>
+          <div class="card">
+            <div class="card-tag">Errores</div>
+            <p><strong>Result&lt;T&gt; + ErrorCode</strong><br>sin magic strings, sin excepciones a la UI</p>
+          </div>
+          <div class="card">
+            <div class="card-tag">Sesiones</div>
+            <p><strong>JWT + TokenVersion</strong><br>invalidación de sesión vía DB</p>
+          </div>
+          <div class="card">
+            <div class="card-tag">Eventos</div>
+            <p><strong>Outbox after commit</strong><br>nada de proyectos fantasma</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ═══════════════ DESPLIEGUE ═══════════════ -->
+
+      <section class="section-slide">
+        <div class="section-num">— 04 —</div>
+        <h1>Cómo se <em>despliega</em></h1>
+      </section>
+
+      <section>
+        <div class="section-label">El reto</div>
+        <h2>Llevar Layla a <em>3 máquinas virtuales</em></h2>
+        <div class="neu">
+          <p><strong>De tres maneras distintas</strong>, mostrando la progresión<br>
+          desde lo artesanal hasta la <em>infraestructura como código</em>.</p>
+        </div>
+        <div class="grid-3">
+          <div class="neu-sm center"><p class="xsmall"><strong>Modo 1</strong><br>Manual</p></div>
+          <div class="neu-sm center"><p class="xsmall"><strong>Modo 2</strong><br>Docker</p></div>
+          <div class="neu-sm center"><p class="xsmall"><strong>Modo 3</strong><br>Vagrant + Puppet</p></div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-label">Topología</div>
+        <h2>Tres VMs, <em>una arquitectura</em></h2>
+        <div class="grid-3">
+          <div class="card">
+            <div class="card-tag">VM 1 · 192.168.56.10</div>
+            <h3>layla-data</h3>
+            <p>SQL Server<br>MongoDB<br>Neo4j<br>RabbitMQ</p>
+          </div>
+          <div class="card">
+            <div class="card-tag">VM 2 · 192.168.56.11</div>
+            <h3>layla-apps</h3>
+            <p>server-core<br>worldbuilding<br>client-web</p>
+          </div>
+          <div class="card">
+            <div class="card-tag">VM 3 · 192.168.56.12</div>
+            <h3>layla-edge</h3>
+            <p>API Gateway<br><span class="xsmall muted">único expuesto</span></p>
+          </div>
+        </div>
+        <p class="xsmall center muted">Separación por capas: datos · lógica · borde</p>
+      </section>
+
+      <section>
+        <div class="section-label">Modo 1</div>
+        <h2>A <em>mano</em></h2>
+        <div class="neu">
+          <p>Crear las VMs en VirtualBox. Instalar Ubuntu. Configurar red.<br>
+          Añadir repos APT. Instalar SQL Server, MongoDB, Neo4j, RabbitMQ.<br>
+          Publicar las apps. Escribir <span class="mono">systemd units</span>. Configurar firewall.</p>
+        </div>
+        <div class="grid-2">
+          <div class="neu-inset center">
+            <div class="stat"><em>~60</em></div>
+            <div class="stat-caption">comandos</div>
+          </div>
+          <div class="neu-inset center">
+            <div class="stat"><em>~6h</em></div>
+            <div class="stat-caption">la primera vez</div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-label">Modo 1 · ejemplo</div>
+        <h3>Solo para instalar SQL Server...</h3>
+        <pre><code class="language-bash" data-trim>
+curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
+  | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
+curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/mssql-server-2022.list \
+  | sudo tee /etc/apt/sources.list.d/mssql.list
+
+sudo apt update && sudo apt install -y mssql-server
+sudo /opt/mssql/bin/mssql-conf setup    # interactivo
+sudo systemctl enable --now mssql-server
+
+sudo ACCEPT_EULA=Y apt install -y mssql-tools18
+sqlcmd -S localhost -U sa -P '***' -C -Q "CREATE DATABASE LaylaCore"
+        </code></pre>
+        <p class="xsmall center muted">Y eso es <em>solo</em> SQL Server.</p>
+      </section>
+
+      <section>
+        <div class="section-label">Modo 2</div>
+        <h2>Con <em>contenedores</em></h2>
+        <div class="neu">
+          <p>Las VMs siguen existiendo. Pero adentro solo corre <strong>Docker</strong>.<br>
+          Cada servicio es una <em>imagen</em>: versionada, sin instalación interactiva.</p>
+        </div>
+        <pre><code class="language-yaml" data-trim>
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${SQL_PASSWORD}
+    restart: unless-stopped
+  mongodb:
+    image: mongo:4.4
+  neo4j:
+    image: neo4j:5
+  rabbitmq:
+    image: rabbitmq:3-management
+        </code></pre>
+      </section>
+
+      <section>
+        <div class="section-label">Modo 2 · resultado</div>
+        <h3>Un <em>solo</em> comando por VM</h3>
+        <pre><code class="language-bash" data-trim>
+docker compose up -d
+        </code></pre>
+        <p class="center muted">~30 segundos · 4 servicios · healthchecks · auto-restart</p>
+        <div class="neu-inset" style="margin-top: 2em;">
+          <p class="xsmall mono center">
+            CONTAINER     STATUS                   PORTS<br>
+            layla-sql     Up 30s (healthy)         1433/tcp<br>
+            layla-mongo   Up 30s (healthy)         27017/tcp<br>
+            layla-neo4j   Up 30s (healthy)         7474, 7687<br>
+            layla-rabbit  Up 30s (healthy)         5672, 15672
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-label">Lo que Docker no resuelve</div>
+        <h2>Faltan <em>las VMs</em></h2>
+        <div class="neu">
+          <p>Docker te quita el dolor de instalar runtimes.</p>
+          <p>Pero <em>seguís</em> creando las VMs a mano.<br>
+          Y <em>seguís</em> instalando Docker mismo a mano.</p>
+          <p>El siguiente compañero, otra vez, abre VirtualBox.</p>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-label">Modo 3</div>
+        <h2>Infraestructura como <em>código</em></h2>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-tag">Vagrant</div>
+            <p>Crea las VMs desde una <em>imagen base reusable</em>.<br>Define red, recursos, port forwarding.</p>
+          </div>
+          <div class="card">
+            <div class="card-tag">Puppet</div>
+            <p>Instala y configura todo <em>dentro</em> de cada VM.<br>Declarativo: dice <em>qué</em>, no <em>cómo</em>.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-label">Modo 3 · Vagrantfile</div>
+        <h3>Las 3 VMs en un solo archivo</h3>
+        <pre><code class="language-ruby" data-trim>
+config.vm.box = "bento/ubuntu-22.04"
+config.vm.synced_folder "..", "/vagrant"
+
+config.vm.define "data" do |m|
+  m.vm.hostname = "layla-data"
+  m.vm.network "private_network", ip: "192.168.56.10"
+  m.vm.provider("virtualbox") { |vb|
+    vb.memory = 3072; vb.cpus = 2
+  }
+  m.vm.provision "puppet" do |p|
+    p.manifest_file = "data.pp"
+  end
+end
+# ... mismo patrón para apps y edge
+        </code></pre>
+      </section>
+
+      <section>
+        <div class="section-label">Modo 3 · Puppet</div>
+        <h3>El manifiesto de cada VM: <em>4 líneas</em></h3>
+        <pre><code class="language-puppet" data-trim>
+# data.pp — TODO el manifiesto de la VM de datos
+include laylacommon::docker_install
+
+laylacommon::stack { 'data':
+  compose_source => '/vagrant/deploy/files/compose/compose.data.yml',
+  env_source     => '/vagrant/deploy/files/env/.env.shared',
+}
+        </code></pre>
+        <p class="xsmall center muted">La lógica reusable vive en el módulo <span class="mono">laylacommon</span></p>
+      </section>
+
+      <section>
+        <div class="section-label">Modo 3 · Puppet declarativo</div>
+        <h3>Le dices <em>qué</em>, no <em>cómo</em></h3>
+        <pre><code class="language-puppet" data-trim>
+package { 'docker-ce':
+  ensure  => installed,
+}
+
+service { 'docker':
+  ensure  => running,
+  enable  => true,
+  require => Package['docker-ce'],
+}
+        </code></pre>
+        <p class="xsmall center muted">Puppet descubre el "cómo" para Ubuntu, RedHat, lo que sea.</p>
+      </section>
+
+      <section class="center">
+        <div class="section-label center" style="justify-content: center;">Y para desplegar todo...</div>
+        <div class="neu-inset" style="margin: 2em auto; max-width: 55%;">
+          <p class="mono" style="font-size: 1.7em; color: var(--accent2); text-align: center; margin: 0.3em 0; letter-spacing: 0.05em;">
+            vagrant up
+          </p>
+        </div>
+        <p>3 VMs creadas · Docker instalado · <em>8 contenedores</em> corriendo</p>
+        <p class="xsmall muted">~10 minutos en frío · ~2 minutos con imágenes cacheadas</p>
+      </section>
+
+      <section>
+        <div class="section-label">Demo · end-to-end</div>
+        <h3>El recorrido completo del request</h3>
+        <pre><code class="language-powershell" data-trim>
+PS> curl http://localhost:5000/api/projects/public
+
+StatusCode        : 200
+StatusDescription : OK
+Content           : []
+Server            : Kestrel
+        </code></pre>
+        <p class="xsmall center muted">
+          Windows · port-forward → VM3 (Gateway) → VM2 (server-core) → VM1 (SQL Server)
+        </p>
+      </section>
+
+      <section>
+        <div class="section-label">Bonus</div>
+        <h2>5 bugs que la automatización <em>expuso</em></h2>
+        <table>
+          <tbody>
+            <tr><td><strong>#1</strong></td><td><span class="mono">UseUrls("localhost:...")</span> pisaba <span class="mono">ASPNETCORE_URLS</span></td></tr>
+            <tr><td><strong>#2</strong></td><td><span class="mono">UseHttpsRedirection()</span> rompía el proxy YARP</td></tr>
+            <tr><td><strong>#3</strong></td><td>Node leía <span class="mono">PORT</span>, compose seteaba <span class="mono">PORT_HTTP</span></td></tr>
+            <tr><td><strong>#4</strong></td><td>Gateway llamaba <span class="mono">UseAuthentication()</span> sin registrarla</td></tr>
+            <tr><td><strong>#5</strong></td><td>MongoDB 7+ requiere AVX · VirtualBox no la expone</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="center">
+        <h2>La automatización no <em>esconde</em> los problemas</h2>
+        <h2><em>Los expone.</em></h2>
+        <p class="muted small">Y eso es lo mejor que te puede pasar.</p>
+      </section>
+
+      <!-- ═══════════════ COMPARATIVA ═══════════════ -->
+
+      <section>
+        <div class="section-label">Los tres modos</div>
+        <h2>Comparativa <em>final</em></h2>
+        <table>
+          <thead>
+            <tr><th>Aspecto</th><th>Manual</th><th>Docker</th><th>Vagrant+Puppet</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Crear VMs</td><td>Manual</td><td>Manual</td><td><strong>Automático</strong></td></tr>
+            <tr><td>Instalar runtimes</td><td>apt-get</td><td>docker install</td><td><strong>Puppet</strong></td></tr>
+            <tr><td>Levantar servicios</td><td>systemd</td><td>docker compose</td><td><strong>Puppet + Docker</strong></td></tr>
+            <tr><td>Reproducible</td><td>❌</td><td>⚠ Parcial</td><td><strong>✅ Total</strong></td></tr>
+            <tr><td>Tiempo total</td><td>~6 h</td><td>~30 min</td><td><strong>~10 min</strong></td></tr>
+            <tr><td>Comandos</td><td>~60</td><td>~5</td><td><strong>1</strong></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ═══════════════ CIERRE ═══════════════ -->
+
+      <section class="section-slide">
+        <div class="section-num">— 05 —</div>
+        <h1>Estado <em>actual</em></h1>
+      </section>
+
+      <section>
+        <div class="section-label">Lo que ya está</div>
+        <h2>Implementado <em>de punta a punta</em></h2>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-tag">Backend</div>
+            <p>Auth · usuarios · proyectos · roles · SignalR<br>
+            Manuscritos · wiki · grafo<br>
+            Mensajería entre servicios · Outbox</p>
+          </div>
+          <div class="card">
+            <div class="card-tag">Infraestructura</div>
+            <p>Docker compose monolítico<br>
+            Vagrant + Puppet (3 VMs)<br>
+            API Gateway con rate limiting</p>
+          </div>
+        </div>
+        <p class="xsmall center muted">12 de 15 casos de uso implementados</p>
+      </section>
+
+      <section>
+        <div class="section-label">Lo que sigue</div>
+        <h2><em>Roadmap</em></h2>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-tag">Clientes</div>
+            <p>Cliente Android: pantallas restantes<br>
+            Editor RTF del cliente WPF<br>
+            Visualizador del grafo en WPF</p>
+          </div>
+          <div class="card">
+            <div class="card-tag">Sistema</div>
+            <p>Lectura pública de novelas terminadas<br>
+            Reportes del sistema (admin)<br>
+            CI/CD sobre Vagrant + Puppet</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="center">
+        <div class="section-label center" style="justify-content: center;">Conclusión</div>
+        <h2>El despliegue <em>es código</em>.</h2>
+        <p class="muted">Que se versiona.<br>Que se revisa.<br>Que se prueba.<br>Que se <em>reproduce</em>.</p>
+      </section>
+
+      <section class="title-slide">
+        <div class="blob blob1"></div>
+        <div class="blob blob2"></div>
+        <div class="blob blob3"></div>
+        <h1><em>Preguntas</em></h1>
+        <div class="meta">Luis Donaldo Ortiz García · Layla 2026</div>
+      </section>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/dist/reveal.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/reveal.js@5.1.0/plugin/highlight/highlight.js"></script>
+  <script>
+    Reveal.initialize({
+      hash: true,
+      progress: true,
+      slideNumber: 'c/t',
+      transition: 'fade',
+      transitionSpeed: 'default',
+      backgroundTransition: 'fade',
+      controls: true,
+      width: 1280,
+      height: 800,
+      margin: 0.06,
+      plugins: [ RevealHighlight ]
+    });
+  </script>
+</body>
+</html>

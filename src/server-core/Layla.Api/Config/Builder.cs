@@ -55,8 +55,9 @@ public static class Builder
 
         builder.Services.AddInfrastructureServices(builder.Configuration);
         builder.Services.AddSignalR();
+        string bindHost = builder.Environment.IsProduction() ? "+" : "localhost";
         builder.WebHost.UseUrls(
-            $"https://localhost:{builder.Configuration["Ports:HTTPS"]};http://localhost:{builder.Configuration["Ports:HTTP"]};");
+            $"https://{bindHost}:{builder.Configuration["Ports:HTTPS"]};http://{bindHost}:{builder.Configuration["Ports:HTTP"]};");
         builder.Services.AddHealthChecks();
     }
 }

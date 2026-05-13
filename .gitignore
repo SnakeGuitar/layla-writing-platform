@@ -2,10 +2,12 @@
 .env
 .env.*
 !.env.example
+!.env.shared.example
 **/appsettings.Development.json
 **/appsettings.Local.json
 **/.env.development
 **/.env.local
+deploy/files/env/.env.shared
 
 # ----- Build artefacts -----
 build.log
@@ -27,7 +29,12 @@ Thumbs.db
 
 # ----- Claude / tooling -----
 .antigravityrules
-.claude/settings.local.json
+.claude/
+
+# ----- Presentation build artifacts -----
+presentation/node_modules/
+presentation/package*.json
+presentation/*.pdf
 
 # ----- Node -----
 node_modules/

@@ -1,0 +1,16 @@
+# VM3: layla-edge (192.168.56.12)
+# Punto único de entrada — API Gateway (YARP).
+services:
+  api-gateway:
+    build:
+      context: /vagrant/src/infraestructure-api_gateway
+      dockerfile: Dockerfile
+    container_name: layla-api-gateway
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5000
+      - ReverseProxy__Clusters__core-cluster__Destinations__primary__Address=http://192.168.56.11:${CORE_PORT_HTTP}
+      - ReverseProxy__Clusters__worldbuilding-cluster__Destinations__primary__Address=http://192.168.56.11:${WORLDBUILDING_PORT_HTTP}
+    restart: unless-stopped
