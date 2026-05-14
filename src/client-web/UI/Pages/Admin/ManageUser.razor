@@ -1,10 +1,16 @@
 @page "/admin/manage-users"
-@inject IJSRuntime JS
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@using client_web.Application.Services.Admin
+@using client_web.Application.Services.Session
+@inject IAdminService AdminService
+@inject ISessionManager Session
+@inject ILogger<ManageUser> Logger
+
+<PageTitle>User Management</PageTitle>
 
 <header class="max-w-5xl mx-auto mb-12">
-    <h2 class="text-amber-500 text-xs font-bold tracking-[0.3em] uppercase mb-3">
-        Administration
-    </h2>
+    <h2 class="text-amber-500 text-xs font-bold tracking-[0.3em] uppercase mb-3">Administration</h2>
     <h1 class="text-stone-100 font-serif text-4xl md:text-5xl font-light tracking-tight">
         User Management
     </h1>
@@ -12,75 +18,67 @@
 </header>
 
 <section class="max-w-5xl mx-auto mb-8">
-    <div class="bg-stone-950 border border-stone-800 rounded-lg p-6 shadow">
-        <h3 class="text-stone-200 font-semibold mb-4">Search Filters</h3>
+    <div class="bg-base-gray-2 rounded-lg p-6 shadow">
+        <h3 class="text-stone-200 font-semibold mb-4">Filters</h3>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            @* Search by name/ID *@
-            <div class="col-span-1 md:col-span-2 flex items-center gap-2">
-                <input type="search"
-                       placeholder="Search user by name or ID..."
-                       class="flex-1 px-4 py-2 rounded-md bg-stone-900 border border-stone-700 text-stone-200 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-500 transition" />
-                <button class="px-4 py-2 bg-amber-500 text-stone-950 font-semibold rounded-md hover:bg-amber-400 transition">
-                    Search
-                </button>
+            <div class="md:col-span-2">
+                <label class="block text-xs text-stone-400 mb-1">Search by name, email or ID</label>
+                <input type="search" @bind="_search" @bind:event="oninput"
+                       placeholder="Anything…"
+                       class="w-full px-4 py-2 rounded-md bg-stone-900 border border-stone-700 text-stone-200 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-500 transition" />
             </div>
 
-            @* Género *@
             <div>
-                <label class="block text-xs text-stone-400 mb-1">Gender</label>
-                <select class="w-full px-3 py-2 rounded-md bg-stone-900 border border-stone-700 text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
+                <label class="block text-xs text-stone-400 mb-1">Status</label>
+                <select @bind="_status"
+                        class="w-full px-3 py-2 rounded-md bg-stone-900 border border-stone-700 text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
                     <option value="">All</option>
-                    <option value="M">Male</option>
-                    <option value="F">Female</option>
+                    <option value="active">Active</option>
+                    <option value="banned">Banned</option>
                 </select>
             </div>
 
-            @* Actividad este mes *@
-            <div>
-                <label class="block text-xs text-stone-400 mb-1">Monthly Activity</label>
-                <select class="w-full px-3 py-2 rounded-md bg-stone-900 border border-stone-700 text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
-                    <option value="">All</option>
-                    <option value="true">Active</option>
-                    <option value="false">Inactive</option>
-                </select>
-            </div>
-
-            @* Rango de fechas *@
             <div class="md:col-span-2 flex gap-3">
                 <div class="flex-1">
                     <label class="block text-xs text-stone-400 mb-1">Registered from</label>
-                    <input type="date"
+                    <input type="date" @bind="_from"
                            class="w-full px-3 py-2 rounded-md bg-stone-900 border border-stone-700 text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition" />
                 </div>
                 <div class="flex-1">
                     <label class="block text-xs text-stone-400 mb-1">To</label>
-                    <input type="date"
+                    <input type="date" @bind="_to"
                            class="w-full px-3 py-2 rounded-md bg-stone-900 border border-stone-700 text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition" />
                 </div>
             </div>
         </div>
 
-        @* Botones de acción *@
         <div class="mt-6 flex justify-end gap-3">
-            <button class="px-4 py-2 bg-stone-800 text-stone-300 rounded-md hover:bg-stone-700 transition">
-                Clear filters
+            <button @onclick="ClearFilters"
+                    class="px-4 py-2 bg-stone-800 text-stone-300 rounded-md hover:bg-stone-700 transition">
+                Clear
             </button>
-            <button class="px-4 py-2 bg-amber-500 text-stone-950 font-semibold rounded-md hover:bg-amber-400 transition">
-                Apply filters
+            <button @onclick="LoadAsync"
+                    class="px-4 py-2 bg-amber-500 text-stone-950 font-semibold rounded-md hover:bg-amber-400 transition">
+                Refresh
             </button>
         </div>
     </div>
 </section>
 
-
 <main class="max-w-5xl mx-auto">
-    <div class="bg-stone-950 border border-stone-800 rounded-lg overflow-hidden shadow">
-        @if (users == null || !users.Any())
+    <div class="bg-base-gray-2 rounded-lg overflow-hidden shadow">
+        @if (_loading)
         {
-            <div class="p-6 text-center text-stone-400">
-                Use the filters section
-            </div>
+            <div class="p-6 text-center text-stone-400">Loading users…</div>
+        }
+        else if (_error is not null)
+        {
+            <div class="p-6 text-center text-red-400">@_error</div>
+        }
+        else if (Filtered.Count == 0)
+        {
+            <div class="p-6 text-center text-stone-400">No users match the current filters.</div>
         }
         else
         {
@@ -89,32 +87,46 @@
                     <thead class="bg-stone-900 text-stone-400 uppercase text-xs tracking-wide">
                         <tr>
                             <th class="px-4 py-3">UID</th>
-                            <th class="px-4 py-3">Full Name</th>
-                            <th class="px-4 py-3">Gender</th>
-                            <th class="px-4 py-3">Last Activity</th>
-                            <th class="px-4 py-3">Monthly Activity</th>
+                            <th class="px-4 py-3">Display Name</th>
+                            <th class="px-4 py-3">Email</th>
                             <th class="px-4 py-3">Registered</th>
+                            <th class="px-4 py-3">Status</th>
+                            <th class="px-4 py-3 text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-stone-800">
-                        @foreach (UserViewModel user in users)
+                        @foreach (var user in Filtered)
                         {
                             <tr class="hover:bg-stone-900 transition">
-                                <td class="px-4 py-3 font-mono text-xs">@user.UserId</td>
-                                <td class="px-4 py-3">@user.FullName</td>
-                                <td class="px-4 py-3">@user.Genre</td>
-                                <td class="px-4 py-3">@user.LastActivity</td>
+                                <td class="px-4 py-3 font-mono text-xs text-stone-500">@user.Id.ToString()[..8]</td>
+                                <td class="px-4 py-3">@user.DisplayName</td>
+                                <td class="px-4 py-3 text-stone-400">@user.Email</td>
+                                <td class="px-4 py-3 text-stone-400">@user.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd")</td>
                                 <td class="px-4 py-3">
-                                    @if (user.WithActivityThisMonth)
+                                    @if (user.IsBanned)
                                     {
-                                        <span class="text-amber-500 font-semibold">Yes</span>
+                                        <span class="px-2 py-0.5 rounded text-xs bg-red-900/50 text-red-200">Banned</span>
                                     }
                                     else
                                     {
-                                        <span class="text-stone-500">No</span>
+                                        <span class="px-2 py-0.5 rounded text-xs bg-stone-800 text-stone-300">Active</span>
                                     }
                                 </td>
-                                <td class="px-4 py-3">@user.RegisteredAt</td>
+                                <td class="px-4 py-3 text-right">
+                                    @if (!user.IsBanned)
+                                    {
+                                        <button @onclick="() => BanAsync(user)"
+                                                disabled="@(_busyId == user.Id)"
+                                                class="text-xs px-3 py-1 rounded border border-amber-500/40 text-amber-300 hover:bg-amber-500/10 transition disabled:opacity-50">
+                                            @(_busyId == user.Id ? "Banning…" : "Ban")
+                                        </button>
+                                    }
+                                    <button @onclick="() => DeleteAsync(user)"
+                                            disabled="@(_busyId == user.Id)"
+                                            class="ml-2 text-xs px-3 py-1 rounded border border-red-500/40 text-red-300 hover:bg-red-500/10 transition disabled:opacity-50">
+                                        Delete
+                                    </button>
+                                </td>
                             </tr>
                         }
                     </tbody>
@@ -122,67 +134,131 @@
             </div>
         }
     </div>
+
+    @if (!string.IsNullOrEmpty(_statusMessage))
+    {
+        <p class="mt-4 text-sm text-stone-400">@_statusMessage</p>
+    }
 </main>
 
-
-
 @code {
-    private List<UserViewModel>? users = new List<UserViewModel>();
+    private List<AdminUser> _users = new();
+    private bool _loading = true;
+    private string? _error;
+    private string? _statusMessage;
+    private Guid? _busyId;
 
-    protected override void OnInitialized()
+    // Filter state (server has no filter endpoints yet — we filter in memory).
+    private string _search = string.Empty;
+    private string _status = string.Empty; // "", "active", "banned"
+    private DateTime? _from;
+    private DateTime? _to;
+
+    private List<AdminUser> Filtered =>
+        _users
+            .Where(u => string.IsNullOrWhiteSpace(_search)
+                        || u.DisplayName.Contains(_search, StringComparison.OrdinalIgnoreCase)
+                        || u.Email.Contains(_search, StringComparison.OrdinalIgnoreCase)
+                        || u.Id.ToString().StartsWith(_search, StringComparison.OrdinalIgnoreCase))
+            .Where(u => _status switch
+            {
+                "active" => !u.IsBanned,
+                "banned" => u.IsBanned,
+                _ => true,
+            })
+            .Where(u => !_from.HasValue || u.CreatedAt >= _from.Value)
+            .Where(u => !_to.HasValue   || u.CreatedAt <  _to.Value.AddDays(1))
+            .OrderByDescending(u => u.CreatedAt)
+            .ToList();
+
+    protected override async Task OnInitializedAsync()
     {
-        // Replace with your actual data service call, e.g.:
-        // projects = await ProjectService.GetAllAsync();
-
-        users = new List<UserViewModel>
-        {
-            new UserViewModel() {
-                Id = Guid.NewGuid(),
-                UserId = "IDÚnico",
-                FullName = "Nombre completo",
-                Genre = 'M',
-                LastActivity = DateTime.Now,
-                WithActivityThisMonth = true,
-                RegisteredAt = DateTime.Now,
-            },
-            new UserViewModel() {
-                Id = Guid.NewGuid(),
-                UserId = "UniqueID",
-                FullName = "Full Name",
-                Genre = 'M',
-                LastActivity = DateTime.Now,
-                WithActivityThisMonth = true,
-                RegisteredAt = DateTime.Now,
-            },
-            new UserViewModel() {
-                Id = Guid.NewGuid(),
-                UserId = "UniqueID",
-                FullName = "Full Name",
-                Genre = 'M',
-                LastActivity = DateTime.Now,
-                WithActivityThisMonth = true,
-                RegisteredAt = DateTime.Now,
-            },
-            new UserViewModel() {
-                Id = Guid.NewGuid(),
-                UserId = "UniqueID",
-                FullName = "Full Name",
-                Genre = 'M',
-                LastActivity = DateTime.Now,
-                WithActivityThisMonth = true,
-                RegisteredAt = DateTime.Now,
-            }
-        };
+        await Session.InitializeAsync();
+        await LoadAsync();
     }
 
-    private class UserViewModel 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        public Guid Id { get; set; }
-        public string UserId { get; set; } = string.Empty;  
-        public string FullName { get; set; } = string.Empty;
-        public char Genre { get; set; }
-        public DateTime LastActivity { get; set; }
-        public bool WithActivityThisMonth { get; set; }
-        public DateTime RegisteredAt { get; set; }
+        if (!firstRender) return;
+        var hadToken = Session.IsAuthenticated;
+        await Session.InitializeAsync();
+        if (!hadToken && Session.IsAuthenticated)
+        {
+            await LoadAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        _statusMessage = null;
+        try
+        {
+            var users = await AdminService.GetUsersAsync();
+            _users = users.ToList();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load users.");
+            _error = "Could not load the user list.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void ClearFilters()
+    {
+        _search = string.Empty;
+        _status = string.Empty;
+        _from = null;
+        _to = null;
+    }
+
+    private async Task BanAsync(AdminUser user)
+    {
+        _busyId = user.Id;
+        try
+        {
+            var ok = await AdminService.BanUserAsync(user.Id);
+            if (ok)
+            {
+                user.IsBanned = true;
+                _statusMessage = $"{user.DisplayName} has been banned.";
+            }
+            else
+            {
+                _statusMessage = $"Could not ban {user.DisplayName}.";
+            }
+        }
+        finally
+        {
+            _busyId = null;
+        }
+    }
+
+    private async Task DeleteAsync(AdminUser user)
+    {
+        _busyId = user.Id;
+        try
+        {
+            var ok = await AdminService.DeleteUserAsync(user.Id);
+            if (ok)
+            {
+                _users.Remove(user);
+                _statusMessage = $"{user.DisplayName} was deleted.";
+            }
+            else
+            {
+                _statusMessage = $"Could not delete {user.DisplayName}.";
+            }
+        }
+        finally
+        {
+            _busyId = null;
+        }
     }
 }
