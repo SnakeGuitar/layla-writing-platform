@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -8,27 +8,24 @@
     <link rel="stylesheet" href="@Assets["styles/styles.css"]" />
     <link rel="stylesheet" href="@Assets["client-web.styles.css"]" />
     <link rel="icon" type="image/png" href="favicon.png" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <HeadOutlet />
+    <HeadOutlet @rendermode="InteractiveServer" />
     <ImportMap />
 </head>
 
 <body>
     <Routes @rendermode="InteractiveServer"/>
     <!--
-        autostart=false + Blazor.start({...}) lets us disable Blazor's
-        "enhanced navigation". With enhanced nav on, clicking a NavLink only
-        changed the URL and never re-applied the new server-rendered HTML
-        (a known interaction between InteractiveServer rendermode and the
-        streaming SSR pipeline). Disabling it makes each navigation a normal
-        full-page load — reliable and predictable.
+        Let Blazor boot with its default config. The previous override
+        (`autostart=false` + Blazor.start({ssr:{disableDomPreservation:true}}))
+        was passing an option the WebAssembly/Server bootstrapper does not
+        recognise on .NET 10, which silently broke client-side circuit start
+        in some paths — the URL changed on NavLink clicks but the page
+        content never updated until a manual reload. Default startup +
+        InteractiveServer on <Routes/> gives reliable in-circuit navigation.
     -->
-    <script src="_framework/blazor.web.js" autostart="false"></script>
-    <script>
-        Blazor.start({
-            ssr: { disableDomPreservation: true }
-        });
-    </script>
+    <script src="_framework/blazor.web.js"></script>
+    <script src="js/chart.umd.min.js"></script>
+    <script src="js/chartInterop.js"></script>
 </body>
 
 </html>

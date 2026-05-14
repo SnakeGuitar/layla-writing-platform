@@ -1,5 +1,14 @@
 @page "/admin/dashboard"
+@rendermode InteractiveServer
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@using client_web.Application.Services.Admin
+@using client_web.Application.Services.Session
+@inject IAdminService AdminService
+@inject ISessionManager Session
 @inject IJSRuntime JS
+@inject ILogger<Dashboard> Logger
+
+<PageTitle>Administration</PageTitle>
 
 <header class="max-w-5xl mx-auto mb-12">
     <h2 class="text-amber-500 text-xs font-bold tracking-[0.3em] uppercase mb-3">Administration</h2>
@@ -9,55 +18,93 @@
     <div class="mt-4 w-16 h-px bg-amber-500"></div>
 </header>
 
-@* General Data *@
-<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-4 text-center">
-    <div class="bg-base-gray-2 shadow rounded-lg p-4 flex flex-col justify-center">
-        <h3 class="text-stone-300 text-xl">Total Users</h3>
-        <p class="">@ActiveUsers</p>
+@if (_loading)
+{
+    <p class="text-stone-500 text-sm">Loading…</p>
+}
+else if (_error is not null)
+{
+    <p class="text-red-400 text-sm">@_error</p>
+}
+else if (_stats is not null)
+{
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 mb-8 max-w-5xl mx-auto">
+        <StatCard Label="Total Users"            Value="@_stats.TotalUsers" />
+        <StatCard Label="New Users This Month"   Value="@_stats.NewUsersThisMonth" />
+        <StatCard Label="Banned Users"           Value="@_stats.BannedUsers" />
+        <StatCard Label="Total Projects"         Value="@_stats.TotalProjects" />
+        <StatCard Label="Modified Today"         Value="@_stats.ProjectsModifiedToday" />
+        <StatCard Label="Public Projects"        Value="@_stats.PublicProjects" />
     </div>
 
-    <div class="bg-base-gray-2 shadow rounded-lg p-4 flex flex-col justify-center">
-        <h3 class="text-stone-300 text-xl">Monthly Active Users</h3>
-        <p class="">@ActiveUsers</p>
+    <div class="max-w-5xl mx-auto bg-base-gray-2 rounded-lg p-6 shadow">
+        <h3 class="text-stone-200 text-sm font-semibold tracking-wide uppercase mb-4">
+            New users — last 12 months
+        </h3>
+        <canvas id="adminUsersChart" width="800" height="280"></canvas>
     </div>
-
-    <div class="bg-base-gray-2 shadow rounded-lg p-4 flex flex-col justify-center">
-        <h3 class="text-stone-300 text-xl">New Users This Month</h3>
-        <p class="">@ActiveUsers</p>
-    </div>
-
-    <div class="bg-base-gray-2 shadow rounded-lg p-4 flex flex-col justify-center">
-        <h3 class="text-stone-300 text-xl">Banned Users</h3>
-        <p class="">@ActiveProjects</p>
-    </div>
-
-    <div class="bg-base-gray-2 shadow rounded-lg p-4 flex flex-col justify-center">
-        <h3 class="text-stone-300 text-xl">Projects Modified Today</h3>
-        <p class="">@ActiveProjects</p>
-    </div>
-
-    <div class="bg-base-gray-2 shadow rounded-lg p-4 lg:col-span-1 md:col-span-4 sm:col-span-2 flex flex-col justify-center">
-        <h3 class="text-stone-300 text-xl">Other thing...</h3>
-        <p class="">@ActiveProjects</p>
-    </div>
-</div>
-
-<div class="text-white">
-    <canvas id="myChart" width="400" height="200"></canvas>
-</div>
-
-<script src="@Assets["js/chart.umd.min.js"]"></script>
-<script src="@Assets["js/chartInterop.js"]"></script>
+}
 
 @code {
-    public int ActiveUsers = 124;
-    public int ActiveProjects = 38;
-    public int ChaptersToday = 56;
-    public int PendingReports = 3;
-    public int[] newUsersPerMonth = {
-        10, 20, 15, 30, 25, 40, 35, 50, 45, 60, 55, 70
-    };
+    private DashboardStats? _stats;
+    private bool _loading = true;
+    private string? _error;
+    private bool _chartRendered;
 
-    protected override async Task OnAfterRenderAsync (bool firstRender) =>
-        await JS.InvokeVoidAsync("createBarChart", "myChart", newUsersPerMonth);
+    protected override async Task OnInitializedAsync()
+    {
+        // Hydrate the session early so the JWT is on hand when LoadAsync hits
+        // /api/users (Authorize=Admin). InitializeAsync is no-op during the
+        // prerender pass and replays from OnAfterRenderAsync via StateHasChanged.
+        await Session.InitializeAsync();
+        await LoadAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // ProtectedSessionStorage isn't available during prerender — retry.
+            var hadToken = Session.IsAuthenticated;
+            await Session.InitializeAsync();
+            if (!hadToken && Session.IsAuthenticated)
+            {
+                await LoadAsync();
+                StateHasChanged();
+            }
+        }
+
+        if (_stats is not null && !_chartRendered)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("createBarChart", "adminUsersChart", _stats.NewUsersPerMonth);
+                _chartRendered = true;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Could not render the dashboard chart.");
+            }
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            _stats = await AdminService.GetDashboardStatsAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to load dashboard stats.");
+            _error = "Could not load dashboard data.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
 }

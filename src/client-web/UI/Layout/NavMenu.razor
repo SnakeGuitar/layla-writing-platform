@@ -1,145 +1,96 @@
 @*
-    DESKTOP (lg+):
-      - "Layla" fijo en la esquina superior-izquierda (dentro del sidebar)
-      - Navbar siempre visible debajo
+    Sidebar / top-bar de la app.
+      - Desktop (lg+): columna fija a la izquierda.
+      - Mobile (<lg): barra superior + menú desplegable por checkbox.
 
-    MÓVIL (<lg):
-      - Barra fija con "Layla" a la izquierda y botón hamburguesa a la derecha
-      - Navbar desplegable al activar el checkbox
-
-    NOTE: every NavLink carries data-enhance-nav="false". Without it Blazor's
-    enhanced navigation intercepts the click, swaps the URL with pushState,
-    fetches the new server-rendered HTML and tries to *patch* the existing
-    DOM — but with InteractiveServer rendermode + streaming SSR the patch
-    silently fails to apply, leaving the URL changed and the content stale.
-    Forcing a full-page load per nav click sidesteps that interaction.
+    Nota: ya NO se usa data-enhance-nav="false" en los NavLinks. Con
+    `<Routes @rendermode="InteractiveServer"/>` la navegación la maneja el
+    router interactivo de Blazor y los clicks se resuelven dentro del mismo
+    circuito SignalR — sin recargas completas.
 *@
 
-<!-- ─── DESKTOP: bloque completo del sidebar ─── -->
-<div class="
-    hidden lg:flex lg:flex-col
-    h-full w-full
-    bg-linear-to-t from-base-purple-1 to-base-blue-3
-    border-r border-white/10
-">
-    <!-- Brand / logo -->
-    <div class="h-14 flex items-center px-5 border-b border-white/10 shrink-0">
-        <a href="/home" data-enhance-nav="false"
-           class="text-white font-semibold tracking-widest uppercase text-sm hover:text-cyan-400 transition-colors duration-200">
+@* ─── DESKTOP sidebar ─────────────────────────────────────────────────── *@
+<div class="hidden lg:flex lg:flex-col h-full w-full bg-base-blue-3 border-r border-white/5">
+    <div class="h-14 flex items-center px-5 border-b border-white/5 shrink-0">
+        <a href="/home" class="text-stone-100 font-semibold tracking-widest uppercase text-sm hover:text-stone-300 transition-colors">
             Layla
         </a>
     </div>
 
-    <!-- Navigation -->
     <nav class="flex-1 flex flex-col py-4 overflow-y-auto">
         <div class="px-4 pb-2">
-            <span class="text-[10px] uppercase tracking-[0.2em] text-white/30 font-semibold">Menu</span>
+            <span class="text-[10px] uppercase tracking-[0.2em] text-stone-500 font-semibold">Menu</span>
         </div>
 
         <div class="px-2 space-y-0.5">
             <div class="nav-item px-1">
-                <NavLink href="/home" Match="NavLinkMatch.All" class="nav-link" data-enhance-nav="false">
-                    <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span>
-                    Home
-                </NavLink>
+                <NavLink href="/home" Match="NavLinkMatch.All" class="nav-link">Home</NavLink>
             </div>
             <div class="nav-item px-1">
-                <NavLink href="/projects/my-projects" class="nav-link" data-enhance-nav="false">
-                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span>
-                    My Projects
-                </NavLink>
+                <NavLink href="/projects/my-projects" class="nav-link">My Projects</NavLink>
             </div>
-            <div class="nav-item px-1">
-                <NavLink href="/admin/dashboard" class="nav-link" data-enhance-nav="false">
-                    <span class="bi bi-admin-nav-menu" aria-hidden="true"></span>
-                    Administration
-                </NavLink>
-            </div>
-            <div class="nav-item px-1">
-                <NavLink href="/admin/manage-users" class="nav-link" data-enhance-nav="false">
-                    <span class="bi bi-admin-nav-menu" aria-hidden="true"></span>
-                    User Management
-                </NavLink>
-            </div>
+            <AuthorizeView Roles="Admin">
+                <Authorized>
+                    <div class="nav-item px-1">
+                        <NavLink href="/admin/dashboard" class="nav-link">Administration</NavLink>
+                    </div>
+                    <div class="nav-item px-1">
+                        <NavLink href="/admin/manage-users" class="nav-link">User Management</NavLink>
+                    </div>
+                </Authorized>
+            </AuthorizeView>
         </div>
 
-        <!-- Version at bottom -->
-        <div class="mt-auto px-5 py-4 border-t border-white/10">
-            <span class="text-xs text-white/30">v1.0.0</span>
+        <div class="mt-auto px-5 py-4 border-t border-white/5">
+            <span class="text-xs text-stone-500">v1.0.0</span>
         </div>
     </nav>
 </div>
 
 
-<!-- ─── MOBILE: top bar + collapsible menu ─── -->
-<div class="lg:hidden bg-linear-to-r from-base-blue-3 to-base-purple-1">
+@* ─── MOBILE top-bar + dropdown ──────────────────────────────────────── *@
+<div class="lg:hidden bg-base-blue-3">
 
-    <!-- Fixed bar: "Layla" left | hamburger right -->
-    <div class="
-        sticky top-0 z-50
-        flex items-center justify-between
-        px-5 h-14
-        bg-black/60 backdrop-blur-md
-        border-b border-white/10 sm:border-0
-        shadow-[0_4px_24px_rgba(0,0,0,0.4)]
-    ">
-        <a href="/home" data-enhance-nav="false"
-           class="text-white font-semibold tracking-widest uppercase text-sm hover:text-cyan-400 transition-colors duration-200">
+    @* Checkbox FIRST so the peer-checked:* utilities applied to its siblings
+       below actually match — the previous version had the checkbox inside the
+       label, which broke the hamburger animation. *@
+    <input type="checkbox" id="navbar-toggler" class="peer hidden" />
+
+    <div class="sticky top-0 z-50 flex items-center justify-between px-5 h-14 bg-base-blue-3 border-b border-white/5">
+        <a href="/home" class="text-stone-100 font-semibold tracking-widest uppercase text-sm hover:text-stone-300 transition-colors">
             Layla
         </a>
 
-        <!-- Hamburger button — hidden checkbox label -->
-        <label for="navbar-toggler"
-               aria-label="Open navigation menu"
-               class="cursor-pointer flex flex-col justify-center gap-1.5 p-2 rounded-md border border-white/10 hover:bg-white/10 active:scale-95 transition-all duration-200">
-            <span class="block w-5 h-0.5 bg-white/80 rounded-full transition-transform duration-300 peer-checked:rotate-45 peer-checked:translate-y-2"></span>
-            <span class="block w-5 h-0.5 bg-white/80 rounded-full transition-opacity duration-300 peer-checked:opacity-0"></span>
-            <span class="block w-5 h-0.5 bg-white/80 rounded-full transition-transform duration-300 peer-checked:-rotate-45 peer-checked:-translate-y-2"></span>
+        <label for="navbar-toggler" aria-label="Open navigation menu"
+               class="cursor-pointer flex flex-col justify-center gap-1.5 p-2 rounded-md border border-white/10 hover:bg-white/5 active:scale-95 transition-all">
+            <span class="block w-5 h-0.5 bg-stone-300 rounded-full"></span>
+            <span class="block w-5 h-0.5 bg-stone-300 rounded-full"></span>
+            <span class="block w-5 h-0.5 bg-stone-300 rounded-full"></span>
         </label>
     </div>
 
-    <!-- Hidden checkbox that controls the menu -->
-    <input type="checkbox" id="navbar-toggler" class="peer hidden" />
-
-    <!-- Dropdown menu -->
-    <nav class="
-        hidden peer-checked:flex flex-col
-        py-3
-        bg-black/70 backdrop-blur-md
-        border-b border-white/10
-        shadow-[0_8px_32px_rgba(0,0,0,0.5)]
-        animate-[slideDown_0.2s_ease-out]
-    ">
+    <nav class="hidden peer-checked:flex flex-col py-3 bg-base-blue-3 border-b border-white/5">
         <div class="px-4 pt-1 pb-2">
-            <span class="text-[10px] uppercase tracking-[0.2em] text-white/30 font-semibold">Menu</span>
+            <span class="text-[10px] uppercase tracking-[0.2em] text-stone-500 font-semibold">Menu</span>
         </div>
 
         <div class="px-2 space-y-0.5">
             <div class="nav-item px-1">
-                <NavLink href="/home" Match="NavLinkMatch.All" class="nav-link" data-enhance-nav="false">
-                    <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span>
-                    Home
-                </NavLink>
+                <NavLink href="/home" Match="NavLinkMatch.All" class="nav-link">Home</NavLink>
             </div>
             <div class="nav-item px-1">
-                <NavLink href="/projects/my-projects" class="nav-link" data-enhance-nav="false">
-                    <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span>
-                    My Projects
-                </NavLink>
+                <NavLink href="/projects/my-projects" class="nav-link">My Projects</NavLink>
             </div>
-            <div class="nav-item px-1">
-                <NavLink href="/admin/dashboard" class="nav-link" data-enhance-nav="false">
-                    <span class="bi bi-admin-nav-menu" aria-hidden="true"></span>
-                    Administration
-                </NavLink>
-            </div>
-            <div class="nav-item px-1">
-                <NavLink href="/admin/manage-users" class="nav-link" data-enhance-nav="false">
-                    <span class="bi bi-admin-nav-menu" aria-hidden="true"></span>
-                    User Management
-                </NavLink>
-            </div>
+            <AuthorizeView Roles="Admin">
+                <Authorized>
+                    <div class="nav-item px-1">
+                        <NavLink href="/admin/dashboard" class="nav-link">Administration</NavLink>
+                    </div>
+                    <div class="nav-item px-1">
+                        <NavLink href="/admin/manage-users" class="nav-link">User Management</NavLink>
+                    </div>
+                </Authorized>
+            </AuthorizeView>
         </div>
     </nav>
-
 </div>

@@ -1,6 +1,7 @@
 using client_web.Application.Config.Http;
 using client_web.Application.Config.SignalR;
 using client_web.Application.Services.ActiveStatusAuthor;
+using client_web.Application.Services.Admin;
 using client_web.Application.Services.Auth;
 using client_web.Application.Services.Projects;
 using client_web.Application.Services.Session;
@@ -45,6 +46,7 @@ public static class Services
         // ── Domain services ──────────────────────────────────────────────────
         services.AddScoped<IPresenceService, PresenceService>();
         services.AddScoped<IProjectService, ProjectService>();
+        services.AddScoped<IAdminService, AdminService>();
 
         // ── Voice (transient SignalR-based stack) ────────────────────────────
         services.AddSingleton<ISignalRClient, SignalRClient>();

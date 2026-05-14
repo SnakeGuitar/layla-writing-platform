@@ -88,6 +88,7 @@ public class AppUserService : BaseService<AppUserService>, IAppUserService
         Email = user.Email,
         DisplayName = user.DisplayName,
         Bio = user.Bio,
-        CreatedAt = user.CreatedAt
+        CreatedAt = user.CreatedAt,
+        LockoutEnd = user.LockoutEnd
     };
 }
