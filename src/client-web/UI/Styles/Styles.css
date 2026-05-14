@@ -1,20 +1,27 @@
 ﻿@import "tailwindcss";
 
+/*
+ * Paleta sobria y uniforme.
+ * Reemplaza los tonos púrpura/azul brillantes anteriores por una escala neutra
+ * de grises antracita. Las clases gradient (from-base-purple-1, etc.) siguen
+ * existiendo en la salida compilada y resuelven a tonos casi imperceptibles,
+ * dando un look uniforme sin tener que reescribir cada plantilla.
+ */
 @theme {
-  --color-base-purple-1: #3a0647;
-  --color-base-purple-2: #36064d;
-  --color-base-blue-1: #03091a;
-  --color-base-blue-2: #041333;
-  --color-base-blue-3: #02040d;
-  --color-base-blue-4: #71a6ca;
-  --color-base-orange-1: #fe9a00;
-  --color-base-green-1: #43af4b;
-  --color-base-green-2: #54d198;
-  --color-base-gray-1: #1f1f1f;
-  --color-base-gray-2: #292929;
-  --color-base-gray-3: #111111;
-  --color-base-gray-4: #454545;
-  --color-base-gray-5: #5d5d5d;
+  --color-base-purple-1: #15161a;
+  --color-base-purple-2: #16171b;
+  --color-base-blue-1: #0e0f12;
+  --color-base-blue-2: #0c0d10;
+  --color-base-blue-3: #0a0b0e;
+  --color-base-blue-4: #8a9099;
+  --color-base-orange-1: #c0884a;
+  --color-base-green-1: #5a8a64;
+  --color-base-green-2: #7aa886;
+  --color-base-gray-1: #16171a;
+  --color-base-gray-2: #1d1e22;
+  --color-base-gray-3: #111214;
+  --color-base-gray-4: #2a2b30;
+  --color-base-gray-5: #4a4c52;
 }
 
 :root {
