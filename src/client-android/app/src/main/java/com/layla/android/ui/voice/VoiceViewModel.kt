@@ -3,11 +3,14 @@ package com.layla.android.ui.voice
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.layla.android.data.api.ConnectionState
+import com.layla.android.data.api.NetworkConfig
 import com.layla.android.data.api.ParticipantInfo
 import com.layla.android.data.api.VoiceSignalRClient
 import com.layla.android.data.audio.AudioCaptureManager
 import com.layla.android.data.audio.AudioPlaybackManager
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,10 +26,15 @@ data class VoiceUiState(
 
 class VoiceViewModel(
     private val token: String,
-    private val baseUrl: String = "http://localhost:5287" // Voice hub is on the C# server
+    private val baseUrl: String = NetworkConfig.VOICE_HUB_BASE_URL
 ) : ViewModel() {
 
     private val signalRClient = VoiceSignalRClient(baseUrl)
+
+    // Scope independent of viewModelScope so cleanup work in onCleared() can
+    // actually run — viewModelScope is already cancelled by the time onCleared
+    // fires, so any coroutine launched there is a no-op.
+    private val cleanupScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val audioCaptureManager = AudioCaptureManager()
     private val audioPlaybackManager = AudioPlaybackManager()
 
@@ -113,7 +121,7 @@ class VoiceViewModel(
         super.onCleared()
         audioCaptureManager.stopCapture()
         audioPlaybackManager.stop()
-        viewModelScope.launch(Dispatchers.IO) {
+        cleanupScope.launch {
             try { signalRClient.disconnect() } catch (_: Exception) {}
         }
     }
