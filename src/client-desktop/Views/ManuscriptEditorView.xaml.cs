@@ -63,6 +63,17 @@ namespace Layla.Desktop.Views
             _viewModel.Initialize(projectId);
             _viewModel.ContentReloadRequested += OnContentReloadRequested;
             this.Loaded += OnLoaded;
+            this.Unloaded += OnUnloaded;
+        }
+
+        private void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            // The debounce timer can fire AFTER the view is detached and try
+            // to touch EditorRichTextBox on the dispatcher — dispose it here
+            // and clear the reload subscription that retains this view.
+            _debounceTimer?.Dispose();
+            _debounceTimer = null;
+            _viewModel.ContentReloadRequested -= OnContentReloadRequested;
         }
 
         private async void OnLoaded(object sender, RoutedEventArgs e)
