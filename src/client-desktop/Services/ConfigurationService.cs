@@ -18,7 +18,12 @@ namespace Layla.Desktop.Services
 
         public static HttpClient CreateHttpClient(string baseUrl)
         {
-            var client = new HttpClient { BaseAddress = new Uri(baseUrl) };
+            // AuthMessageHandler attaches the bearer per request, avoiding
+            // the racy DefaultRequestHeaders.Authorization mutation pattern.
+            var client = new HttpClient(new AuthMessageHandler())
+            {
+                BaseAddress = new Uri(baseUrl)
+            };
             client.DefaultRequestHeaders.Accept.Clear();
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
             return client;

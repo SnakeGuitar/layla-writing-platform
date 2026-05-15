@@ -23,22 +23,9 @@ namespace Layla.Desktop.Services
             _httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.WorldbuildingApiUrl);
         }
 
-        /// <summary>
-        /// Attaches the current session's Bearer token to the outgoing request,
-        /// or clears the header when the session is not authenticated.
-        /// </summary>
-        private void AddAuthorizationHeader()
-        {
-            if (SessionManager.IsAuthenticated)
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", SessionManager.CurrentToken);
-            else
-                _httpClient.DefaultRequestHeaders.Authorization = null;
-        }
-
-        /// <inheritdoc/>
+/// <inheritdoc/>
         public async Task<List<Manuscript>?> GetManuscriptsByProjectAsync(Guid projectId)
         {
-            AddAuthorizationHeader();
             try
             {
                 var response = await _httpClient.GetAsync($"/api/manuscripts/{projectId}");
@@ -55,7 +42,6 @@ namespace Layla.Desktop.Services
         /// <inheritdoc/>
         public async Task<Manuscript?> GetManuscriptAsync(Guid projectId, string manuscriptId)
         {
-            AddAuthorizationHeader();
             try
             {
                 var response = await _httpClient.GetAsync($"/api/manuscripts/{projectId}/{manuscriptId}");
@@ -72,7 +58,6 @@ namespace Layla.Desktop.Services
         /// <inheritdoc/>
         public async Task<Manuscript?> CreateManuscriptAsync(Guid projectId, string title, int order)
         {
-            AddAuthorizationHeader();
             try
             {
                 var payload = new { title, order };
@@ -90,7 +75,6 @@ namespace Layla.Desktop.Services
         /// <inheritdoc/>
         public async Task<Manuscript?> UpdateManuscriptAsync(Guid projectId, string manuscriptId, string? title, int? order)
         {
-            AddAuthorizationHeader();
             try
             {
                 var payload = new { title, order };
@@ -108,7 +92,6 @@ namespace Layla.Desktop.Services
         /// <inheritdoc/>
         public async Task<bool> DeleteManuscriptAsync(Guid projectId, string manuscriptId)
         {
-            AddAuthorizationHeader();
             try
             {
                 var response = await _httpClient.DeleteAsync($"/api/manuscripts/{projectId}/{manuscriptId}");
@@ -124,7 +107,6 @@ namespace Layla.Desktop.Services
         /// <inheritdoc/>
         public async Task<Chapter?> GetChapterAsync(Guid projectId, string manuscriptId, Guid chapterId)
         {
-            AddAuthorizationHeader();
             try
             {
                 var response = await _httpClient.GetAsync($"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}");
@@ -141,7 +123,6 @@ namespace Layla.Desktop.Services
         /// <inheritdoc/>
         public async Task<Chapter?> CreateChapterAsync(Guid projectId, string manuscriptId, string title, string content, int order)
         {
-            AddAuthorizationHeader();
             try
             {
                 var payload = new { title, content, order };
@@ -159,7 +140,6 @@ namespace Layla.Desktop.Services
         /// <inheritdoc/>
         public async Task<Chapter?> UpdateChapterAsync(Guid projectId, string manuscriptId, Guid chapterId, string title, string content, int order, DateTime? clientTimestamp = null)
         {
-            AddAuthorizationHeader();
             try
             {
                 var payload = new
@@ -183,7 +163,6 @@ namespace Layla.Desktop.Services
         /// <inheritdoc/>
         public async Task<bool> DeleteChapterAsync(Guid projectId, string manuscriptId, Guid chapterId)
         {
-            AddAuthorizationHeader();
             try
             {
                 var response = await _httpClient.DeleteAsync($"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}");

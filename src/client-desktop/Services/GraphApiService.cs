@@ -17,20 +17,11 @@ namespace Layla.Desktop.Services
             _httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.WorldbuildingApiUrl);
         }
 
-        private void AddAuthorizationHeader()
-        {
-            _httpClient.DefaultRequestHeaders.Authorization =
-                SessionManager.IsAuthenticated
-                    ? new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", SessionManager.CurrentToken)
-                    : null;
-        }
-
-        /// <inheritdoc />
+/// <inheritdoc />
         public async Task<GraphResult?> GetGraphAsync(Guid projectId, string? entityType = null)
         {
             try
             {
-                AddAuthorizationHeader();
                 var url = $"/api/graph/{projectId}";
                 if (!string.IsNullOrEmpty(entityType))
                     url += $"?type={Uri.EscapeDataString(entityType)}";
@@ -49,7 +40,6 @@ namespace Layla.Desktop.Services
         {
             try
             {
-                AddAuthorizationHeader();
                 var payload = new { sourceEntityId, targetEntityId, type, label = label ?? type };
                 var response = await _httpClient.PostAsJsonAsync($"/api/graph/{projectId}/relationships", payload);
                 return response.IsSuccessStatusCode;
@@ -66,7 +56,6 @@ namespace Layla.Desktop.Services
         {
             try
             {
-                AddAuthorizationHeader();
                 var request = new HttpRequestMessage(HttpMethod.Delete, $"/api/graph/{projectId}/relationships")
                 {
                     Content = JsonContent.Create(new { sourceEntityId, targetEntityId })

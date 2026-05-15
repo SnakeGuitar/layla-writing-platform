@@ -18,20 +18,12 @@ namespace Layla.Desktop.Services
             _httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.WorldbuildingApiUrl);
         }
 
-        private void AddAuthorizationHeader()
-        {
-            _httpClient.DefaultRequestHeaders.Authorization =
-                SessionManager.IsAuthenticated
-                    ? new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", SessionManager.CurrentToken)
-                    : null;
-        }
 
         /// <inheritdoc />
         public async Task<List<WikiEntry>?> GetEntriesAsync(Guid projectId, string? entityType = null)
         {
             try
             {
-                AddAuthorizationHeader();
                 var url = $"/api/wiki/{projectId}/entries";
                 if (!string.IsNullOrEmpty(entityType))
                     url += $"?type={Uri.EscapeDataString(entityType)}";
@@ -50,7 +42,6 @@ namespace Layla.Desktop.Services
         {
             try
             {
-                AddAuthorizationHeader();
                 return await _httpClient.GetFromJsonAsync<WikiEntry>($"/api/wiki/{projectId}/entries/{entityId}");
             }
             catch (Exception ex)
@@ -65,7 +56,6 @@ namespace Layla.Desktop.Services
         {
             try
             {
-                AddAuthorizationHeader();
                 var payload = new { name, entityType, description = description ?? "", tags = tags ?? new List<string>() };
                 var response = await _httpClient.PostAsJsonAsync($"/api/wiki/{projectId}/entries", payload);
                 response.EnsureSuccessStatusCode();
@@ -83,7 +73,6 @@ namespace Layla.Desktop.Services
         {
             try
             {
-                AddAuthorizationHeader();
                 var payload = new Dictionary<string, object>();
                 if (name != null) payload["name"] = name;
                 if (entityType != null) payload["entityType"] = entityType;
@@ -106,7 +95,6 @@ namespace Layla.Desktop.Services
         {
             try
             {
-                AddAuthorizationHeader();
                 var response = await _httpClient.DeleteAsync($"/api/wiki/{projectId}/entries/{entityId}");
                 return response.IsSuccessStatusCode;
             }
@@ -122,7 +110,6 @@ namespace Layla.Desktop.Services
         {
             try
             {
-                AddAuthorizationHeader();
                 return await _httpClient.GetFromJsonAsync<List<AppearanceRecord>>(
                     $"/api/wiki/{projectId}/entries/{entityId}/appearances");
             }

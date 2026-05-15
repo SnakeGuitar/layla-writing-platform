@@ -24,21 +24,8 @@ namespace Layla.Desktop.Services
             _httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.ServerCoreUrl);
         }
 
-        private void AddAuthorizationHeader()
+public async Task<IEnumerable<Project>?> GetMyProjectsAsync()
         {
-            if (SessionManager.IsAuthenticated)
-            {
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", SessionManager.CurrentToken);
-            }
-            else
-            {
-                _httpClient.DefaultRequestHeaders.Authorization = null;
-            }
-        }
-
-        public async Task<IEnumerable<Project>?> GetMyProjectsAsync()
-        {
-            AddAuthorizationHeader();
             try
             {
                 var response = await _httpClient.GetAsync("/api/projects");
@@ -54,7 +41,6 @@ namespace Layla.Desktop.Services
 
         public async Task<Project?> CreateProjectAsync(CreateProjectRequest request)
         {
-            AddAuthorizationHeader();
             try
             {
                 var response = await _httpClient.PostAsJsonAsync("/api/projects", request);
@@ -66,7 +52,6 @@ namespace Layla.Desktop.Services
 
         public async Task<Project?> UpdateProjectAsync(Guid id, UpdateProjectRequest request)
         {
-            AddAuthorizationHeader();
             try
             {
                 var response = await _httpClient.PutAsJsonAsync($"/api/projects/{id}", request);
@@ -78,7 +63,6 @@ namespace Layla.Desktop.Services
 
         public async Task<bool> DeleteProjectAsync(Guid id)
         {
-            AddAuthorizationHeader();
             try
             {
                 var response = await _httpClient.DeleteAsync($"/api/projects/{id}");
@@ -101,7 +85,6 @@ namespace Layla.Desktop.Services
 
         public async Task<Project?> GetProjectByIdAsync(Guid id)
         {
-            AddAuthorizationHeader();
             try
             {
                 var response = await _httpClient.GetAsync($"/api/projects/{id}");
@@ -113,7 +96,6 @@ namespace Layla.Desktop.Services
 
         public async Task<Collaborator?> JoinPublicProjectAsync(Guid projectId)
         {
-            AddAuthorizationHeader();
             try
             {
                 var response = await _httpClient.PostAsync($"/api/projects/{projectId}/join", null);
@@ -125,7 +107,6 @@ namespace Layla.Desktop.Services
 
         public async Task<Collaborator?> InviteCollaboratorAsync(Guid projectId, InviteCollaboratorRequest request)
         {
-            AddAuthorizationHeader();
             try
             {
                 var response = await _httpClient.PostAsJsonAsync($"/api/projects/{projectId}/collaborators", request);
@@ -137,7 +118,6 @@ namespace Layla.Desktop.Services
 
         public async Task<IEnumerable<Collaborator>?> GetCollaboratorsAsync(Guid projectId)
         {
-            AddAuthorizationHeader();
             try
             {
                 var response = await _httpClient.GetAsync($"/api/projects/{projectId}/collaborators");
@@ -149,7 +129,6 @@ namespace Layla.Desktop.Services
 
         public async Task<bool> RemoveCollaboratorAsync(Guid projectId, string collaboratorUserId)
         {
-            AddAuthorizationHeader();
             try
             {
                 var response = await _httpClient.DeleteAsync($"/api/projects/{projectId}/collaborators/{collaboratorUserId}");
@@ -183,9 +162,7 @@ namespace Layla.Desktop.Services
             await _presenceHub.StartAsync();
         }
 
-        public async Task ConnectVoiceHubAsync(Guid projectId) { await Task.CompletedTask; }
-
-        public async Task WatchProjectAsync(Guid projectId)
+public async Task WatchProjectAsync(Guid projectId)
         {
             if (_presenceHub?.State == HubConnectionState.Connected)
                 await _presenceHub.InvokeAsync("WatchProject", projectId);
