@@ -1,6 +1,7 @@
 package com.layla.android.ui.workspace
 
 import androidx.lifecycle.ViewModel
+import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.layla.android.data.api.ManuscriptApiService
 import com.layla.android.data.model.ChapterDto
@@ -95,8 +96,12 @@ class ManuscriptEditorViewModel(
                     val full = response.body() ?: chapter
                     val ready = _state.value as? ManuscriptState.Ready ?: return@launch
                     _state.value = ready.copy(currentChapter = full)
+                } else {
+                    Log.w("ManuscriptEditor", "getChapter ${chapter.chapterId} → ${response.code()}")
                 }
-            } catch (_: Exception) {}
+            } catch (e: Exception) {
+                Log.w("ManuscriptEditor", "getChapter ${chapter.chapterId} failed", e)
+            }
         }
     }
 

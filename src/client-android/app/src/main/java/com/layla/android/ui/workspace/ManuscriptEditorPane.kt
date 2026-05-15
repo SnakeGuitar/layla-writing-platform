@@ -58,13 +58,29 @@ private fun ManuscriptReadyPane(
     ready: ManuscriptState.Ready,
     viewModel: ManuscriptEditorViewModel
 ) {
-    var currentContent by remember(ready.currentChapter?.chapterId) {
-        mutableStateOf(ready.currentChapter?.content ?: "")
+    // The editor's local text state is seeded from the chapter. We must re-seed
+    // when EITHER the selected chapter changes OR the fetched content arrives
+    // (loadChapterContent updates `currentChapter.content` while keeping the
+    // same chapterId — keying remember on chapterId alone would keep the stale
+    // empty string).
+    val chapterId = ready.currentChapter?.chapterId
+    val incomingContent = ready.currentChapter?.content ?: ""
+    var currentContent by remember(chapterId) { mutableStateOf(incomingContent) }
+    var isUserEditing by remember(chapterId) { mutableStateOf(false) }
+
+    // When the server-fetched body arrives, sync it into the editor unless the
+    // user has already started typing locally.
+    LaunchedEffect(chapterId, incomingContent) {
+        if (!isUserEditing && incomingContent != currentContent) {
+            currentContent = incomingContent
+        }
     }
 
-    // Auto-save with 3-second debounce
-    LaunchedEffect(currentContent) {
-        if (currentContent.isBlank()) return@LaunchedEffect
+    // Auto-save with 3-second debounce. We DO want to persist a fully-cleared
+    // chapter (deleting all text is a legitimate edit), so don't guard on
+    // isBlank — but skip the very first composition when nothing has changed.
+    LaunchedEffect(chapterId, currentContent) {
+        if (!isUserEditing) return@LaunchedEffect
         delay(3_000)
         viewModel.saveContent(currentContent)
     }
@@ -214,7 +230,10 @@ private fun ManuscriptReadyPane(
             if (ready.currentChapter != null) {
                 TextField(
                     value = currentContent,
-                    onValueChange = { currentContent = it },
+                    onValueChange = {
+                        isUserEditing = true
+                        currentContent = it
+                    },
                     modifier = Modifier
                         .fillMaxSize()
                         .weight(1f),
