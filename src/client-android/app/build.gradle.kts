@@ -15,9 +15,21 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Default backend host for emulator. Override via -PbackendHost=<ip>
+        // (or by editing a local gradle.properties) to point at a real LAN
+        // address when running on a physical device.
+        val backendHost: String = (project.findProperty("backendHost") as? String) ?: "10.0.2.2"
+        buildConfigField("String", "BACKEND_HOST", "\"$backendHost\"")
+        buildConfigField("String", "BACKEND_SCHEME", "\"http\"")
+        buildConfigField("int",    "PORT_CORE", "5287")
+        buildConfigField("int",    "PORT_WB",   "3000")
     }
 
     buildTypes {
+        debug {
+            isMinifyEnabled = false
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -32,6 +44,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
