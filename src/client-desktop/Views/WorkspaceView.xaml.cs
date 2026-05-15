@@ -64,6 +64,10 @@ namespace Layla.Desktop.Views
             WorkspaceMediator.NavigateToWikiEntry -= OnNavigateToWikiEntry;
             WorkspaceMediator.NavigateToChapter -= OnNavigateToChapter;
             WorkspaceMediator.NavigateToGraph -= OnNavigateToGraph;
+
+            // Releases the WorkspaceViewModel's subscription on the Singleton
+            // IProjectApiService and stops the heartbeat timer.
+            _viewModel.Dispose();
         }
 
         private void OnNavigateToWikiEntry(string entityId)

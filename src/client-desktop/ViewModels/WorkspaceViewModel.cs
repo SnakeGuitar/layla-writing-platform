@@ -9,7 +9,7 @@ using System.Windows;
 
 namespace Layla.Desktop.ViewModels
 {
-    public partial class WorkspaceViewModel : ObservableObject
+    public partial class WorkspaceViewModel : ObservableObject, IDisposable
     {
         private readonly IProjectApiService _projectApiService;
 
@@ -82,6 +82,7 @@ namespace Layla.Desktop.ViewModels
         [RelayCommand]
         private void Logout()
         {
+            StopHeartbeat();
             Services.SessionManager.ClearSession();
             OnLogout?.Invoke(this, EventArgs.Empty);
         }
@@ -89,7 +90,27 @@ namespace Layla.Desktop.ViewModels
         [RelayCommand]
         private void BackToProjects()
         {
+            StopHeartbeat();
             OnBackToProjects?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void StopHeartbeat()
+        {
+            if (_heartbeatTimer != null)
+            {
+                _heartbeatTimer.Stop();
+                _heartbeatTimer = null;
+            }
+        }
+
+        // The IProjectApiService is a Singleton and we subscribe to its
+        // SessionDisplaced event in the ctor — without explicit Dispose the
+        // Singleton retains every WorkspaceViewModel (Transient) forever.
+        public void Dispose()
+        {
+            StopHeartbeat();
+            _projectApiService.SessionDisplaced -= OnSessionDisplaced;
+            GC.SuppressFinalize(this);
         }
 
         [RelayCommand]
