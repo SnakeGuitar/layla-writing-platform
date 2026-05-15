@@ -11,10 +11,11 @@ using System.Windows.Media;
 
 namespace Layla.Desktop.ViewModels
 {
-    public partial class VoicePanelViewModel : ObservableObject
+    public partial class VoicePanelViewModel : ObservableObject, IDisposable
     {
         private Guid _projectId;
         private VoiceConnection? _voice;
+        private IProjectApiService? _subscribedApi;
 
         [ObservableProperty]
         private ObservableCollection<VoiceParticipantViewModel> _participants = new();
@@ -70,6 +71,7 @@ namespace Layla.Desktop.ViewModels
                 if (api == null) return;
 
                 api.ParticipantsUpdated += OnParticipantsUpdated;
+                _subscribedApi = api;
 
                 await api.ConnectPresenceHubAsync();
                 await api.WatchProjectAsync(_projectId);
@@ -247,6 +249,23 @@ namespace Layla.Desktop.ViewModels
                 await _voice.DisposeAsync();
                 _voice = null;
             }
+        }
+
+        // ProjectApiService is a Singleton; without unsubscribing it retains
+        // this Transient VoicePanelViewModel for the rest of the app lifetime.
+        public void Dispose()
+        {
+            if (_subscribedApi != null)
+            {
+                _subscribedApi.ParticipantsUpdated -= OnParticipantsUpdated;
+                _subscribedApi = null;
+            }
+            if (_voice != null)
+            {
+                _ = _voice.DisposeAsync();
+                _voice = null;
+            }
+            GC.SuppressFinalize(this);
         }
     }
 }

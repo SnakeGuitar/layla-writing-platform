@@ -9,7 +9,7 @@ using System.Windows;
 
 namespace Layla.Desktop.ViewModels
 {
-    public partial class ProjectListViewModel : ObservableObject
+    public partial class ProjectListViewModel : ObservableObject, IDisposable
     {
         private readonly IProjectApiService _projectApiService;
 
@@ -212,6 +212,12 @@ namespace Layla.Desktop.ViewModels
                 if (deleted) await LoadProjectsAsync();
                 else MessageBox.Show("Failed to delete project.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
+        }
+
+        public void Dispose()
+        {
+            _projectApiService.SessionDisplaced -= OnSessionDisplaced;
+            GC.SuppressFinalize(this);
         }
     }
 }

@@ -8,7 +8,7 @@ using System.Windows;
 
 namespace Layla.Desktop.ViewModels
 {
-    public partial class ReaderWorkspaceViewModel : ObservableObject
+    public partial class ReaderWorkspaceViewModel : ObservableObject, IDisposable
     {
         private readonly IProjectApiService _projectApiService;
 
@@ -87,6 +87,15 @@ namespace Layla.Desktop.ViewModels
         {
             SessionManager.ClearSession();
             OnLogout?.Invoke(this, EventArgs.Empty);
+        }
+
+        // Singleton IProjectApiService retains this Transient VM if events
+        // remain subscribed.
+        public void Dispose()
+        {
+            _projectApiService.SessionDisplaced -= OnSessionDisplaced;
+            _projectApiService.AuthorStatusChanged -= OnAuthorStatusChanged;
+            GC.SuppressFinalize(this);
         }
     }
 }

@@ -24,6 +24,7 @@ namespace Layla.Desktop.Views
             this.PreviewKeyDown += OnKeyDown;
             this.PreviewKeyUp += OnKeyUp;
             this.Loaded += (_, _) => this.Focus();
+            this.Unloaded += (_, _) => _viewModel.Dispose();
         }
 
         private async void PttButton_MouseDown(object sender, MouseButtonEventArgs e)

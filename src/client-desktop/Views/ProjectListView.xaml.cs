@@ -21,6 +21,7 @@ namespace Layla.Desktop.Views
                 NavigationService.Navigate(new LoginView());
             };
             this.Loaded += Page_Loaded;
+            this.Unloaded += (_, _) => _viewModel.Dispose();
         }
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)

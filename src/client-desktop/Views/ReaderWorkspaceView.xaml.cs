@@ -22,6 +22,7 @@ namespace Layla.Desktop.Views
             _viewModel.OnLogout += (s, e) => NavigationService.Navigate(new LoginView());
 
             this.Loaded += ReaderWorkspaceView_Loaded;
+            this.Unloaded += (_, _) => _viewModel.Dispose();
         }
 
         private async void ReaderWorkspaceView_Loaded(object sender, RoutedEventArgs e)
