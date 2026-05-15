@@ -8,14 +8,17 @@ import com.layla.android.data.api.PresenceSignalRClient
 import com.layla.android.data.api.ProjectApiService
 import com.layla.android.data.api.WikiApiService
 import com.layla.android.data.model.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
 
 // ─── Collaborators state ──────────────────────────────────────────────────────
 
@@ -42,6 +45,10 @@ class WorkspaceViewModel(
     // ─── Presence (heartbeat) ─────────────────────────────────────────────────
     private val presenceClient = PresenceSignalRClient(baseUrl)
     private var heartbeatJob: Job? = null
+
+    // Cleanup scope: viewModelScope is already cancelled when onCleared() runs,
+    // so any coroutine launched there is a no-op and the SignalR hub leaks.
+    private val cleanupScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     // ─── Collaborators ────────────────────────────────────────────────────────
     private val _collab = MutableStateFlow(CollaboratorsUiState())
@@ -74,6 +81,13 @@ class WorkspaceViewModel(
             while (isActive) {
                 try {
                     presenceClient.sendHeartbeat(project.id)
+                } catch (e: HttpException) {
+                    if (e.code() == 401) {
+                        // Token revoked / replaced from another device: the
+                        // displaced-session UI listens to this flag.
+                        _sessionDisplaced.value = true
+                        return@launch
+                    }
                 } catch (_: Exception) {}
                 delay(30_000)
             }
@@ -160,7 +174,7 @@ class WorkspaceViewModel(
     override fun onCleared() {
         super.onCleared()
         heartbeatJob?.cancel()
-        viewModelScope.launch(Dispatchers.IO) {
+        cleanupScope.launch {
             try { presenceClient.disconnect() } catch (_: Exception) {}
         }
     }
