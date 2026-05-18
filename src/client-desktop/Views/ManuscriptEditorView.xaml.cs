@@ -66,42 +66,56 @@ namespace Layla.Desktop.Views
             this.Unloaded += OnUnloaded;
         }
 
-        private void OnUnloaded(object sender, RoutedEventArgs e)
+        private async void OnUnloaded(object sender, RoutedEventArgs e)
         {
-            // Critical: a debounced save may still be pending (the timer fires
-            // 1 second after the last keystroke). If we just dispose the timer
-            // the user's most recent edits are silently dropped — exactly the
-            // "writing is lost when going back to projects" bug. Flush a final
-            // synchronous save BEFORE disposing.
-            _debounceTimer?.Dispose();
-            _debounceTimer = null;
-
-            if (_isLoaded && _viewModel.CurrentChapter != null && !_isReadOnly)
+            // Belt-and-suspenders: a Page hosted inside a Frame does not always
+            // get its Unloaded raised reliably when the OUTER page navigates
+            // away — that is why WorkspaceView ALSO explicitly calls
+            // FlushPendingSavesAsync before navigating. Keep this path so
+            // direct navigation away from the editor still flushes.
+            try
             {
-                try
-                {
-                    // Pull the current RTF off the dispatcher thread we're on
-                    // (Unloaded runs on the UI thread) and block on the flush.
-                    // FlushSaveAsync — unlike SaveContentCommand — waits for any
-                    // in-progress debounced save instead of being dropped by
-                    // the IsSaving guard. The View is being torn down so
-                    // blocking the UI for a few seconds is acceptable; losing
-                    // the user's last paragraph is not.
-                    var textRange = new TextRange(
-                        EditorRichTextBox.Document.ContentStart,
-                        EditorRichTextBox.Document.ContentEnd);
-                    using var ms = new MemoryStream();
-                    textRange.Save(ms, DataFormats.Rtf);
-                    var rtf = System.Text.Encoding.UTF8.GetString(ms.ToArray());
-                    _viewModel.FlushSaveAsync(rtf).Wait(TimeSpan.FromSeconds(5));
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Final save on Unloaded failed: {ex.Message}");
-                }
+                await FlushPendingSavesAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Unloaded flush failed: {ex.Message}");
             }
 
+            _debounceTimer?.Dispose();
+            _debounceTimer = null;
             _viewModel.ContentReloadRequested -= OnContentReloadRequested;
+        }
+
+        /// <summary>
+        /// Forces a final write of the current editor content to the server.
+        /// Called by the host workspace BEFORE it navigates away so that the
+        /// user's typing survives even when the Unloaded chain on the nested
+        /// Page does not fire (a known WPF Frame edge case). Idempotent —
+        /// safe to call repeatedly.
+        /// </summary>
+        public async Task FlushPendingSavesAsync()
+        {
+            if (!_isLoaded || _isReadOnly || _viewModel.CurrentChapter == null)
+                return;
+
+            string rtf;
+            try
+            {
+                var textRange = new TextRange(
+                    EditorRichTextBox.Document.ContentStart,
+                    EditorRichTextBox.Document.ContentEnd);
+                using var ms = new MemoryStream();
+                textRange.Save(ms, DataFormats.Rtf);
+                rtf = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"FlushPendingSavesAsync: extract RTF failed: {ex.Message}");
+                return;
+            }
+
+            await _viewModel.FlushSaveAsync(rtf);
         }
 
         private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -198,14 +212,14 @@ namespace Layla.Desktop.Views
         {
             if (sender is not Button btn || btn.Tag is not Chapter chapter) return;
 
-            if (_viewModel.CurrentChapters.Count <= 1)
-            {
-                _viewModel.StatusMessage = "Cannot delete the last chapter of a manuscript.";
-                return;
-            }
+            // Deleting the last chapter is allowed — the ViewModel auto-creates
+            // a fresh empty Chapter 1 so the manuscript never ends up unusable.
+            var lastChapterNote = _viewModel.CurrentChapters.Count <= 1
+                ? "\n\nThis is the only chapter; a new empty Chapter 1 will be created."
+                : string.Empty;
 
             var confirm = MessageBox.Show(
-                $"Delete the chapter \"{chapter.Title}\"?\n\nThis cannot be undone.",
+                $"Delete the chapter \"{chapter.Title}\"?{lastChapterNote}\n\nThis cannot be undone.",
                 "Delete chapter",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning,
@@ -231,14 +245,16 @@ namespace Layla.Desktop.Views
                 _viewModel.StatusMessage = "No manuscript selected.";
                 return;
             }
-            if (_viewModel.Manuscripts.Count <= 1)
-            {
-                _viewModel.StatusMessage = "Cannot delete the last manuscript.";
-                return;
-            }
+
+            // Deleting the last manuscript is allowed — the ViewModel auto-
+            // creates a fresh empty Manuscript 1 with Chapter 1 so the editor
+            // always has somewhere to write.
+            var lastNote = _viewModel.Manuscripts.Count <= 1
+                ? "\n\nThis is the only manuscript; a new empty Manuscript 1 will be created in its place."
+                : string.Empty;
 
             var confirm = MessageBox.Show(
-                $"Permanently delete the manuscript \"{target.Title}\" and all of its chapters?\n\nThis cannot be undone.",
+                $"Permanently delete the manuscript \"{target.Title}\" and all of its chapters?{lastNote}\n\nThis cannot be undone.",
                 "Delete manuscript",
                 MessageBoxButton.YesNo,
                 MessageBoxImage.Warning,

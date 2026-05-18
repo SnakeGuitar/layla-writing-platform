@@ -21,9 +21,24 @@ namespace Layla.Desktop.Views
             DataContext = _viewModel;
             _viewModel.Initialize(currentProject);
 
-            _viewModel.OnLogout += (s, e) => NavigationService.Navigate(new LoginView());
-            _viewModel.OnBackToProjects += (s, e) => NavigationService.Navigate(new ProjectListView());
-            _viewModel.OnSettings += (s, e) => NavigationService.Navigate(new SettingsView());
+            // Flush any pending editor changes BEFORE navigating — the
+            // nested Page's Unloaded event is not reliable across all
+            // WPF Frame navigation paths, so we don't depend on it.
+            _viewModel.OnLogout += async (s, e) =>
+            {
+                await FlushEditorAsync();
+                NavigationService.Navigate(new LoginView());
+            };
+            _viewModel.OnBackToProjects += async (s, e) =>
+            {
+                await FlushEditorAsync();
+                NavigationService.Navigate(new ProjectListView());
+            };
+            _viewModel.OnSettings += async (s, e) =>
+            {
+                await FlushEditorAsync();
+                NavigationService.Navigate(new SettingsView());
+            };
 
             this.Loaded += WorkspaceView_Loaded;
             this.Unloaded += WorkspaceView_Unloaded;
@@ -110,6 +125,19 @@ namespace Layla.Desktop.Views
         private TabControl? FindTabControl()
         {
             return FindChild<TabControl>(this);
+        }
+
+        private async System.Threading.Tasks.Task FlushEditorAsync()
+        {
+            if (_editorView == null) return;
+            try
+            {
+                await _editorView.FlushPendingSavesAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"FlushEditorAsync failed: {ex.Message}");
+            }
         }
 
         private static T? FindChild<T>(DependencyObject parent) where T : DependencyObject
