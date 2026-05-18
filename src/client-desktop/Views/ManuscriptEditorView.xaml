@@ -221,6 +221,12 @@
                     <Button Command="EditingCommands.IncreaseIndentation" Content="Indent"/>
                     <Separator/>
                     <Button x:Name="InsertImageButton" Content="Image" ToolTip="Insert Image" Click="InsertImageButton_Click"/>
+                    <Separator/>
+                    <Button x:Name="SaveButton" Content="💾 Save"
+                            ToolTip="Save the current chapter now (Ctrl+S)"
+                            Background="{DynamicResource AccentColor}" Foreground="White"
+                            BorderThickness="0" Padding="10,4" FontWeight="SemiBold"
+                            Cursor="Hand" Click="SaveButton_Click"/>
                 </ToolBar>
             </ToolBarTray>
 
@@ -253,6 +259,7 @@
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="{Binding IsSaving, Converter={StaticResource BoolToVis}, FallbackValue=''}"
                                Foreground="{DynamicResource SecondaryText}" FontSize="11"
@@ -272,7 +279,14 @@
                                Foreground="{DynamicResource AccentColor}" FontSize="11"
                                HorizontalAlignment="Left" Margin="12,0,0,0"
                                TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                    <TextBlock Grid.Column="2" HorizontalAlignment="Right"
+                    <Border Grid.Column="2" Padding="6,2" Margin="0,0,12,0" CornerRadius="3"
+                            Background="#7A4A1A" VerticalAlignment="Center"
+                            Visibility="{Binding HasUnsavedOfflineChanges, Converter={StaticResource BoolToVis}}"
+                            ToolTip="Last save did not reach the worldbuilding service. Press Ctrl+S to retry.">
+                        <TextBlock Text="⚠ OFFLINE" FontSize="10" FontWeight="Bold"
+                                   Foreground="White"/>
+                    </Border>
+                    <TextBlock Grid.Column="3" HorizontalAlignment="Right"
                                Foreground="{DynamicResource SecondaryText}"
                                FontSize="12" FontFamily="Segoe UI"
                                Text="{Binding WordCountText}"/>

@@ -64,6 +64,24 @@ namespace Layla.Desktop.Views
             _viewModel.ContentReloadRequested += OnContentReloadRequested;
             this.Loaded += OnLoaded;
             this.Unloaded += OnUnloaded;
+
+            // Ctrl+S triggers the manual save. The KeyBinding lives on the page
+            // so the shortcut works no matter which child control has focus.
+            var saveBinding = new KeyBinding(
+                new RelayCommandWrapper(async () => await ManualSaveAsync()),
+                Key.S, ModifierKeys.Control);
+            this.InputBindings.Add(saveBinding);
+        }
+
+        // Tiny ICommand adapter so we can wire Ctrl+S via KeyBinding without
+        // pulling in CommunityToolkit.Mvvm's RelayCommand for a one-off use.
+        private sealed class RelayCommandWrapper : System.Windows.Input.ICommand
+        {
+            private readonly Func<Task> _action;
+            public RelayCommandWrapper(Func<Task> action) => _action = action;
+            public event EventHandler? CanExecuteChanged { add { } remove { } }
+            public bool CanExecute(object? parameter) => true;
+            public async void Execute(object? parameter) => await _action();
         }
 
         private async void OnUnloaded(object sender, RoutedEventArgs e)
@@ -205,6 +223,46 @@ namespace Layla.Desktop.Views
             finally
             {
                 _suppressToolbarSync = false;
+            }
+        }
+
+        private async void SaveButton_Click(object sender, RoutedEventArgs e)
+        {
+            await ManualSaveAsync();
+        }
+
+        /// <summary>
+        /// User-triggered save. Bypasses the 1 s auto-save debounce, waits for
+        /// any in-flight auto-save to finish, then forces a fresh write of the
+        /// current editor content. Surfaces the outcome (success / offline /
+        /// error) through StatusMessage so the user gets immediate feedback.
+        /// </summary>
+        private async Task ManualSaveAsync()
+        {
+            if (!_isLoaded || _isReadOnly || _viewModel.CurrentChapter == null)
+            {
+                _viewModel.StatusMessage = "Nothing to save yet — load a chapter first.";
+                return;
+            }
+
+            _viewModel.StatusMessage = "Saving...";
+
+            try
+            {
+                await FlushPendingSavesAsync();
+
+                if (_viewModel.HasUnsavedOfflineChanges)
+                {
+                    _viewModel.StatusMessage = "Saved locally (offline). The worldbuilding service rejected or dropped the request — content will sync the next time you open this chapter while the server is up.";
+                }
+                else
+                {
+                    _viewModel.StatusMessage = $"Saved \"{_viewModel.CurrentChapter.Title}\" ✓";
+                }
+            }
+            catch (Exception ex)
+            {
+                _viewModel.StatusMessage = $"Save failed: {ex.Message}";
             }
         }
 
