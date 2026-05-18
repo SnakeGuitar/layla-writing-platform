@@ -1,27 +1,24 @@
-using Layla.Desktop.ViewModels;
-using System.Windows;
+using Layla.Desktop.Services.User;
+using Layla.Desktop.ViewModels.User;
 using System.Windows.Controls;
-using System;
-using Layla.Desktop.Services;
 
-namespace Layla.Desktop.Views
+namespace Layla.Desktop.Views.User;
+
+public partial class SettingsView : Page
 {
-    public partial class SettingsView : Page
-    {
-        private readonly SettingsViewModel _viewModel;
+    private readonly SettingsViewModel _viewModel;
 
-        public SettingsView()
+    public SettingsView()
+    {
+        InitializeComponent();
+        _viewModel = ServiceLocator.GetService<SettingsViewModel>() ?? throw new InvalidOperationException("ViewModel not found");
+        DataContext = _viewModel;
+        _viewModel.OnRequestGoBack += (s, e) =>
         {
-            InitializeComponent();
-            _viewModel = ServiceLocator.GetService<SettingsViewModel>() ?? throw new InvalidOperationException("ViewModel not found");
-            DataContext = _viewModel;
-            _viewModel.OnRequestGoBack += (s, e) => 
+            if (NavigationService.CanGoBack)
             {
-                if (NavigationService.CanGoBack)
-                {
-                    NavigationService.GoBack();
-                }
-            };
-        }
+                NavigationService.GoBack();
+            }
+        };
     }
 }

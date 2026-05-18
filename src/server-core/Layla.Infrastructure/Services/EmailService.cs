@@ -16,7 +16,7 @@ public class EmailService(IOptions<EmailSettings> emailSettings, ILogger<EmailSe
     {
         try
         {
-            var message = new MimeMessage();
+            MimeMessage message = new MimeMessage();
             message.From.Add(new MailboxAddress(_settings.FromName, _settings.FromEmail));
             message.To.Add(new MailboxAddress("", toEmail));
             message.Subject = "Layla - Your Verification PIN";

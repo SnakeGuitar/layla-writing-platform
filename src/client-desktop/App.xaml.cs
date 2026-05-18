@@ -1,163 +1,171 @@
-using System.Configuration;
-using System.Data;
-using System.Windows;
+using Layla.Desktop.Services.Graphs;
+using Layla.Desktop.Services.Manuscripts;
+using Layla.Desktop.Services.Projetcs;
+using Layla.Desktop.Services.User;
+using Layla.Desktop.Services.User.Authentication;
+using Layla.Desktop.Services.Wikis;
+using Layla.Desktop.ViewModels.Manuscripts;
+using Layla.Desktop.ViewModels.Projects;
+using Layla.Desktop.ViewModels.User;
+using Layla.Desktop.ViewModels.Wikis;
 using MaterialDesignThemes.Wpf;
 using Microsoft.Extensions.DependencyInjection;
-using Layla.Desktop.Services;
+using System.IO;
+using System.Windows;
+using System.Windows.Input;
 
-namespace Layla.Desktop
+namespace Layla.Desktop;
+
+/// <summary>
+/// Interaction logic for App.xaml
+/// </summary>
+public partial class App : Application
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
-    public partial class App : Application
+
+    private string ConfigPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Layla", "theme.txt");
+    public string CurrentTheme { get; private set; } = "SpaceTheme";
+
+    protected override void OnStartup(StartupEventArgs e)
     {
-
-        private string ConfigPath => System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Layla", "theme.txt");
-        public string CurrentTheme { get; private set; } = "SpaceTheme";
-
-        protected override void OnStartup(StartupEventArgs e)
+        for (int i = 0; i < e.Args.Length; i++)
         {
-            for (int i = 0; i < e.Args.Length; i++)
+            if (e.Args[i].StartsWith("--profile="))
             {
-                if (e.Args[i].StartsWith("--profile="))
-                {
-                    SessionManager.ProfileName = e.Args[i].Replace("--profile=", "session_");
-                }
-                else if ((e.Args[i] == "-p" || e.Args[i] == "--profile") && i + 1 < e.Args.Length)
-                {
-                    SessionManager.ProfileName = "session_" + e.Args[i + 1];
-                    i++;
-                }
+                SessionManager.ProfileName = e.Args[i].Replace("--profile=", "session_");
             }
-
-            SessionManager.LoadSession();
-            base.OnStartup(e);
-
-            var services = new ServiceCollection();
-            ConfigureServices(services);
-            var provider = services.BuildServiceProvider();
-            ServiceLocator.Initialize(provider);
-
-            string theme = "SpaceTheme";
-            try 
+            else if ((e.Args[i] == "-p" || e.Args[i] == "--profile") && i + 1 < e.Args.Length)
             {
-                if (System.IO.File.Exists(ConfigPath))
-                    theme = System.IO.File.ReadAllText(ConfigPath).Trim();
-            } 
-            catch {}
-            ChangeTheme(theme);
-
-            this.Dispatcher.InvokeAsync(() =>
-            {
-                if (this.MainWindow != null)
-                {
-                    this.MainWindow.KeyDown += MainWindow_KeyDown;
-                }
-            });
-        }
-
-        private bool _isFullscreen = false;
-        private WindowStyle _previousWindowStyle = WindowStyle.SingleBorderWindow;
-        private WindowState _previousWindowState = WindowState.Normal;
-
-        public bool IsFullscreen => _isFullscreen;
-
-        public void SetFullscreen(bool isFullscreen)
-        {
-            if (this.MainWindow == null) return;
-            if (_isFullscreen == isFullscreen) return;
-
-            if (isFullscreen)
-            {
-                _previousWindowStyle = this.MainWindow.WindowStyle;
-                _previousWindowState = this.MainWindow.WindowState;
-
-                this.MainWindow.WindowStyle = WindowStyle.None;
-                this.MainWindow.WindowState = WindowState.Maximized;
-                _isFullscreen = true;
-            }
-            else
-            {
-                this.MainWindow.WindowStyle = _previousWindowStyle;
-                this.MainWindow.WindowState = _previousWindowState;
-                _isFullscreen = false;
+                SessionManager.ProfileName = "session_" + e.Args[i + 1];
+                i++;
             }
         }
 
-        private void MainWindow_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        SessionManager.LoadSession();
+        base.OnStartup(e);
+
+        var services = new ServiceCollection();
+        ConfigureServices(services);
+        var provider = services.BuildServiceProvider();
+        ServiceLocator.Initialize(provider);
+
+        string theme = "SpaceTheme";
+        try
         {
-            if (this.MainWindow == null) return;
-
-            if (e.Key == System.Windows.Input.Key.F11)
-            {
-                SetFullscreen(!_isFullscreen);
-            }
-            else if (e.Key == System.Windows.Input.Key.Escape && _isFullscreen)
-            {
-                SetFullscreen(false);
-            }
+            if (File.Exists(ConfigPath))
+                theme = File.ReadAllText(ConfigPath).Trim();
         }
+        catch { }
+        ChangeTheme(theme);
 
-        public void ChangeTheme(string theme)
+        this.Dispatcher.InvokeAsync(() =>
         {
-            CurrentTheme = theme;
-            try 
+            if (this.MainWindow != null)
             {
-                var dir = System.IO.Path.GetDirectoryName(ConfigPath);
-                if (!System.IO.Directory.Exists(dir)) System.IO.Directory.CreateDirectory(dir!);
-                System.IO.File.WriteAllText(ConfigPath, theme);
-            } 
-            catch {}
-
-            var existingTheme = Resources.MergedDictionaries.FirstOrDefault(d => d.Source != null && d.Source.OriginalString.StartsWith("Themes/"));
-            if (existingTheme != null)
-            {
-                Resources.MergedDictionaries.Remove(existingTheme);
+                this.MainWindow.KeyDown += MainWindow_KeyDown;
             }
-            Resources.MergedDictionaries.Add(new ResourceDictionary
-            { 
-                Source = new Uri($"Themes/{theme}.xaml", UriKind.Relative) 
-            });
+        });
+    }
 
-            PaletteHelper paletteHelper = new PaletteHelper();
-            var materialTheme = paletteHelper.GetTheme();
-            if (theme == "LightTheme")
-            {
-                materialTheme.SetBaseTheme(BaseTheme.Light);
-            }
-            else
-            {
-                materialTheme.SetBaseTheme(BaseTheme.Dark);
-            }
-            paletteHelper.SetTheme(materialTheme);
-        }
+    private bool _isFullscreen = false;
+    private WindowStyle _previousWindowStyle = WindowStyle.SingleBorderWindow;
+    private WindowState _previousWindowState = WindowState.Normal;
 
-        private void ConfigureServices(IServiceCollection services)
+    public bool IsFullscreen => _isFullscreen;
+
+    public void SetFullscreen(bool isFullscreen)
+    {
+        if (this.MainWindow == null) return;
+        if (_isFullscreen == isFullscreen) return;
+
+        if (isFullscreen)
         {
-            services.AddSingleton<IManuscriptApiService, ManuscriptApiService>();
-            services.AddSingleton<IProjectApiService, ProjectApiService>();
-            services.AddSingleton<IAuthService, AuthService>();
-            services.AddSingleton<IWikiApiService, WikiApiService>();
-            services.AddSingleton<IGraphApiService, GraphApiService>();
-            services.AddSingleton<LocalCacheManager>();
+            _previousWindowStyle = this.MainWindow.WindowStyle;
+            _previousWindowState = this.MainWindow.WindowState;
 
-            services.AddTransient<ViewModels.ManuscriptEditorViewModel>();
-            services.AddTransient<ViewModels.ProjectListViewModel>();
-            services.AddTransient<ViewModels.LoginViewModel>();
-            services.AddTransient<ViewModels.WorkspaceViewModel>();
-            services.AddTransient<ViewModels.SettingsViewModel>();
-            services.AddTransient<ViewModels.SignUpViewModel>();
-            services.AddTransient<ViewModels.WikiEntityEditorViewModel>();
-            services.AddTransient<ViewModels.VoicePanelViewModel>();
-            services.AddTransient<ViewModels.NarrativeGraphViewModel>();
-            services.AddTransient<ViewModels.PublicProjectsViewModel>();
-            services.AddTransient<ViewModels.ReaderWorkspaceViewModel>();
+            this.MainWindow.WindowStyle = WindowStyle.None;
+            this.MainWindow.WindowState = WindowState.Maximized;
+            _isFullscreen = true;
         }
-
-        protected override void OnExit(ExitEventArgs e)
+        else
         {
-            base.OnExit(e);
+            this.MainWindow.WindowStyle = _previousWindowStyle;
+            this.MainWindow.WindowState = _previousWindowState;
+            _isFullscreen = false;
         }
+    }
+
+    private void MainWindow_KeyDown(object sender, KeyEventArgs e)
+    {
+        if (this.MainWindow == null) return;
+
+        if (e.Key == Key.F11)
+        {
+            SetFullscreen(!_isFullscreen);
+        }
+        else if (e.Key == Key.Escape && _isFullscreen)
+        {
+            SetFullscreen(false);
+        }
+    }
+
+    public void ChangeTheme(string theme)
+    {
+        CurrentTheme = theme;
+        try
+        {
+            var dir = Path.GetDirectoryName(ConfigPath);
+            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir!);
+            File.WriteAllText(ConfigPath, theme);
+        }
+        catch { }
+
+        var existingTheme = Resources.MergedDictionaries.FirstOrDefault(d => d.Source != null && d.Source.OriginalString.StartsWith("Themes/"));
+        if (existingTheme != null)
+        {
+            Resources.MergedDictionaries.Remove(existingTheme);
+        }
+        Resources.MergedDictionaries.Add(new ResourceDictionary
+        {
+            Source = new Uri($"Themes/{theme}.xaml", UriKind.Relative)
+        });
+
+        PaletteHelper paletteHelper = new PaletteHelper();
+        var materialTheme = paletteHelper.GetTheme();
+        if (theme == "LightTheme")
+        {
+            materialTheme.SetBaseTheme(BaseTheme.Light);
+        }
+        else
+        {
+            materialTheme.SetBaseTheme(BaseTheme.Dark);
+        }
+        paletteHelper.SetTheme(materialTheme);
+    }
+
+    private void ConfigureServices(IServiceCollection services)
+    {
+        services.AddSingleton<IManuscriptApiService, ManuscriptApiService>();
+        services.AddSingleton<IProjectApiService, ProjectApiService>();
+        services.AddSingleton<IAuthService, AuthService>();
+        services.AddSingleton<IWikiApiService, WikiApiService>();
+        services.AddSingleton<IGraphApiService, GraphApiService>();
+        services.AddSingleton<LocalCacheManager>();
+
+        services.AddTransient<ManuscriptEditorViewModel>();
+        services.AddTransient<ProjectListViewModel>();
+        services.AddTransient<LoginViewModel>();
+        services.AddTransient<WorkspaceViewModel>();
+        services.AddTransient<SettingsViewModel>();
+        services.AddTransient<SignUpViewModel>();
+        services.AddTransient<WikiEntityEditorViewModel>();
+        services.AddTransient<VoicePanelViewModel>();
+        services.AddTransient<NarrativeGraphViewModel>();
+        services.AddTransient<PublicProjectsViewModel>();
+        services.AddTransient<ReaderWorkspaceViewModel>();
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        base.OnExit(e);
     }
 }

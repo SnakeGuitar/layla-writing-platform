@@ -1,37 +1,39 @@
-using Layla.Desktop.ViewModels;
+using Layla.Desktop.Services.User;
+using Layla.Desktop.ViewModels.User;
+using Layla.Desktop.Views.Projects;
 using System.Windows;
 using System.Windows.Controls;
 
-namespace Layla.Desktop.Views
+namespace Layla.Desktop.Views.User;
+
+public partial class LoginView : Page
 {
-    public partial class LoginView : Page
+    private readonly LoginViewModel _viewModel;
+
+    public LoginView()
     {
-        private readonly LoginViewModel _viewModel;
+        InitializeComponent();
+        _viewModel = ServiceLocator.GetService<LoginViewModel>() ?? throw new InvalidOperationException("ViewModel not found");
+        DataContext = _viewModel;
+        _viewModel.OnLoginSuccess += OnLoginSuccess;
+    }
 
-        public LoginView()
-        {
-            InitializeComponent();
-            _viewModel = Services.ServiceLocator.GetService<LoginViewModel>() ?? throw new InvalidOperationException("ViewModel not found");
-            DataContext = _viewModel;
-            _viewModel.OnLoginSuccess += OnLoginSuccess;
-        }
+    private void OnLoginSuccess(object? sender, EventArgs e)
+    {
+        NavigationService.Navigate(new ProjectListView());
+    }
 
-        private void OnLoginSuccess(object? sender, EventArgs e)
-        {
-            NavigationService.Navigate(new ProjectListView());
-        }
+    private void NavigateToSignUp_Click(object sender, RoutedEventArgs e)
+    {
+        NavigationService.Navigate(new SignUpView());
+    }
 
-        private void NavigateToSignUp_Click(object sender, RoutedEventArgs e)
+    private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is LoginViewModel viewModel)
         {
-            NavigationService.Navigate(new SignUpView());
-        }
-
-        private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
-        {
-            if (DataContext is LoginViewModel viewModel)
-            {
-                viewModel.Password = ((PasswordBox)sender).Password;
-            }
+            viewModel.Password = ((PasswordBox)sender).Password;
         }
     }
 }
+

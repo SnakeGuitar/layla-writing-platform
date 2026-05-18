@@ -1,36 +1,42 @@
-using Layla.Desktop.ViewModels;
-using System.Windows.Controls;
-using System;
-using Layla.Desktop.Services;
+using Layla.Desktop.Services.Logger;
+using Layla.Desktop.Services.User;
+using Layla.Desktop.ViewModels.User;
+using Layla.Desktop.Views.Projects;
+using Microsoft.Extensions.Logging;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Input;
 
-namespace Layla.Desktop.Views
+namespace Layla.Desktop.Views.User;
+
+public partial class SignUpView : Page
 {
-    public partial class SignUpView : Page
+    private readonly SignUpViewModel _viewModel;
+    private readonly ILogger<SignUpView> _logger;
+
+    public SignUpView()
     {
-        private readonly SignUpViewModel _viewModel;
+        InitializeComponent();
+        _viewModel = ServiceLocator.GetService<SignUpViewModel>() ?? throw new InvalidOperationException("ViewModel not found");
+        DataContext = _viewModel;
 
-        public SignUpView()
-        {
-            InitializeComponent();
-            _viewModel = ServiceLocator.GetService<SignUpViewModel>() ?? throw new InvalidOperationException("ViewModel not found");
-            DataContext = _viewModel;
+        _viewModel.OnRegistrationSuccess += (s, e) => NavigationService?.Navigate(new ProjectListView());
+        _viewModel.OnNavigateToLogin += (s, e) => NavigationService?.Navigate(new LoginView());
 
-            _viewModel.OnRegistrationSuccess += (s, e) => NavigationService?.Navigate(new ProjectListView());
-            _viewModel.OnNavigateToLogin += (s, e) => NavigationService?.Navigate(new LoginView());
-        }
+        _logger = Log.For<SignUpView>();
+    }
 
-        private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
-        {
-            if (DataContext is SignUpViewModel viewModel)
-            {
-                viewModel.Password = ((PasswordBox)sender).Password;
-            }
-        }
+    private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
+    {
+        _logger.LogTrace("SignUpView - PasswordBox_PasswordChanged: Content changed.");
+        if (DataContext is SignUpViewModel viewModel)
+            viewModel.Password = ((PasswordBox)sender).Password;
 
-        private void NavigateToLogin_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            _viewModel.NavigateToLoginCommand.Execute(null);
-        }
+    }
+
+    private void NavigateToLogin_Click(object sender, MouseButtonEventArgs e)
+    {
+        _logger.LogTrace("SignUpView - NavigateToLogin_Click: Button clicked.");
+        _viewModel.NavigateToLoginCommand.Execute(null);
     }
 }

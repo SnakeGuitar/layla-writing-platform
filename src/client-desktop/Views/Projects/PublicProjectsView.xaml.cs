@@ -1,33 +1,31 @@
-using Layla.Desktop.Services;
-using Layla.Desktop.ViewModels;
-using System;
-using System.Windows;
+using Layla.Desktop.Models.Projects;
+using Layla.Desktop.Services.User;
+using Layla.Desktop.ViewModels.Projects;
 using System.Windows.Controls;
 
-namespace Layla.Desktop.Views
+namespace Layla.Desktop.Views.Projects;
+
+public partial class PublicProjectsView : Page
 {
-    public partial class PublicProjectsView : Page
+    private readonly PublicProjectsViewModel _viewModel;
+
+    public PublicProjectsView()
     {
-        private readonly PublicProjectsViewModel _viewModel;
+        InitializeComponent();
+        _viewModel = ServiceLocator.GetService<PublicProjectsViewModel>() ?? throw new InvalidOperationException("ViewModel not found");
+        DataContext = _viewModel;
 
-        public PublicProjectsView()
+        _viewModel.OnBackToMyProjects += (s, e) => NavigationService.Navigate(new ProjectListView());
+        _viewModel.OnOpenProject += (s, project) => NavigationService.Navigate(new ReaderWorkspaceView(project));
+
+        this.Loaded += async (s, e) => await _viewModel.LoadPublicProjectsCommand.ExecuteAsync(null);
+    }
+
+    private void PublicProjectsList_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (PublicProjectsList.SelectedItem is Project selectedProject)
         {
-            InitializeComponent();
-            _viewModel = ServiceLocator.GetService<PublicProjectsViewModel>() ?? throw new InvalidOperationException("ViewModel not found");
-            DataContext = _viewModel;
-
-            _viewModel.OnBackToMyProjects += (s, e) => NavigationService.Navigate(new ProjectListView());
-            _viewModel.OnOpenProject += (s, project) => NavigationService.Navigate(new ReaderWorkspaceView(project));
-
-            this.Loaded += async (s, e) => await _viewModel.LoadPublicProjectsCommand.ExecuteAsync(null);
-        }
-
-        private void PublicProjectsList_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
-        {
-            if (PublicProjectsList.SelectedItem is Models.Project selectedProject)
-            {
-                NavigationService.Navigate(new ReaderWorkspaceView(selectedProject));
-            }
+            NavigationService.Navigate(new ReaderWorkspaceView(selectedProject));
         }
     }
 }
