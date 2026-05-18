@@ -24,8 +24,13 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="Narrative Graph" FontSize="18" FontWeight="SemiBold"
-                           Foreground="{DynamicResource PrimaryText}" VerticalAlignment="Center"/>
+                <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                    <TextBlock Text="Narrative Graph" FontSize="18" FontWeight="SemiBold"
+                               Foreground="{DynamicResource PrimaryText}"/>
+                    <TextBlock Text="{Binding StatusMessage}"
+                               Foreground="{DynamicResource AccentColor}" FontSize="11"
+                               TextTrimming="CharacterEllipsis"/>
+                </StackPanel>
                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                     <!-- Legend -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,12,0">

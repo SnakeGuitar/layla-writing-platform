@@ -68,6 +68,13 @@ namespace Layla.Desktop.ViewModels
             "LOCATED_IN", "PART_OF", "CAUSES", "PRECEDES", "FOLLOWS"
         };
 
+        /// <summary>
+        /// Last user-visible status message. Surfaces command outcomes so the
+        /// view does not appear unresponsive on backend failures.
+        /// </summary>
+        [ObservableProperty]
+        private string _statusMessage = string.Empty;
+
         public NarrativeGraphViewModel(IGraphApiService graphApi, IWikiApiService wikiApi)
         {
             _graphApi = graphApi;
@@ -88,10 +95,15 @@ namespace Layla.Desktop.ViewModels
         public async Task LoadGraphAsync()
         {
             IsLoading = true;
+            StatusMessage = string.Empty;
             try
             {
                 var result = await _graphApi.GetGraphAsync(_projectId);
-                if (result == null) return;
+                if (result == null)
+                {
+                    StatusMessage = "Worldbuilding service unreachable. Start it with: cd src/server-worldbuilding && pnpm run dev";
+                    return;
+                }
 
                 Nodes.Clear();
                 Edges.Clear();
@@ -119,6 +131,7 @@ namespace Layla.Desktop.ViewModels
             }
             catch (Exception ex)
             {
+                StatusMessage = $"Load failed: {ex.Message}";
                 System.Diagnostics.Debug.WriteLine($"[NarrativeGraphVM] Load failed: {ex.Message}");
             }
             finally
@@ -148,8 +161,18 @@ namespace Layla.Desktop.ViewModels
                     foreach (var e in entries.OrderBy(e => e.Name))
                         AvailableEntities.Add(e);
                 }
+
+                if (AvailableEntities.Count < 2)
+                {
+                    StatusMessage = "Create at least two wiki entries before adding a relationship.";
+                    return;
+                }
             }
-            catch { }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Could not load entities: {ex.Message}";
+                return;
+            }
 
             IsAddRelationshipVisible = true;
         }
