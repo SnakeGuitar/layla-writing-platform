@@ -81,16 +81,19 @@ namespace Layla.Desktop.Views
                 try
                 {
                     // Pull the current RTF off the dispatcher thread we're on
-                    // (Unloaded runs on the UI thread) and block briefly on the
-                    // save. The View is being torn down so blocking the UI for
-                    // a second is acceptable — better than losing content.
+                    // (Unloaded runs on the UI thread) and block on the flush.
+                    // FlushSaveAsync — unlike SaveContentCommand — waits for any
+                    // in-progress debounced save instead of being dropped by
+                    // the IsSaving guard. The View is being torn down so
+                    // blocking the UI for a few seconds is acceptable; losing
+                    // the user's last paragraph is not.
                     var textRange = new TextRange(
                         EditorRichTextBox.Document.ContentStart,
                         EditorRichTextBox.Document.ContentEnd);
                     using var ms = new MemoryStream();
                     textRange.Save(ms, DataFormats.Rtf);
                     var rtf = System.Text.Encoding.UTF8.GetString(ms.ToArray());
-                    _viewModel.SaveContentCommand.ExecuteAsync(rtf).Wait(TimeSpan.FromSeconds(3));
+                    _viewModel.FlushSaveAsync(rtf).Wait(TimeSpan.FromSeconds(5));
                 }
                 catch (Exception ex)
                 {
@@ -188,6 +191,68 @@ namespace Layla.Desktop.Views
             finally
             {
                 _suppressToolbarSync = false;
+            }
+        }
+
+        private async void DeleteChapterButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is not Button btn || btn.Tag is not Chapter chapter) return;
+
+            if (_viewModel.CurrentChapters.Count <= 1)
+            {
+                _viewModel.StatusMessage = "Cannot delete the last chapter of a manuscript.";
+                return;
+            }
+
+            var confirm = MessageBox.Show(
+                $"Delete the chapter \"{chapter.Title}\"?\n\nThis cannot be undone.",
+                "Delete chapter",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning,
+                MessageBoxResult.No);
+
+            if (confirm != MessageBoxResult.Yes) return;
+
+            try
+            {
+                await _viewModel.DeleteChapterCommand.ExecuteAsync(chapter);
+            }
+            catch (Exception ex)
+            {
+                _viewModel.StatusMessage = $"Delete failed: {ex.Message}";
+            }
+        }
+
+        private async void DeleteManuscriptButton_Click(object sender, RoutedEventArgs e)
+        {
+            var target = _viewModel.SelectedManuscript;
+            if (target == null)
+            {
+                _viewModel.StatusMessage = "No manuscript selected.";
+                return;
+            }
+            if (_viewModel.Manuscripts.Count <= 1)
+            {
+                _viewModel.StatusMessage = "Cannot delete the last manuscript.";
+                return;
+            }
+
+            var confirm = MessageBox.Show(
+                $"Permanently delete the manuscript \"{target.Title}\" and all of its chapters?\n\nThis cannot be undone.",
+                "Delete manuscript",
+                MessageBoxButton.YesNo,
+                MessageBoxImage.Warning,
+                MessageBoxResult.No);
+
+            if (confirm != MessageBoxResult.Yes) return;
+
+            try
+            {
+                await _viewModel.DeleteManuscriptCommand.ExecuteAsync(target);
+            }
+            catch (Exception ex)
+            {
+                _viewModel.StatusMessage = $"Delete failed: {ex.Message}";
             }
         }
 

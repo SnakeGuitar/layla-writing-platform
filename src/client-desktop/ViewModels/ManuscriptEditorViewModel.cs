@@ -5,6 +5,7 @@ using Layla.Desktop.Services;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Layla.Desktop.ViewModels
@@ -21,6 +22,13 @@ namespace Layla.Desktop.ViewModels
         private readonly IManuscriptApiService _apiService;
         private readonly LocalCacheManager _cache;
         private Guid _projectId;
+
+        // Serialises saves so two in-flight calls cannot interleave on the
+        // same chapter — but still allows a forced flush to wait for the
+        // current save instead of being silently dropped (the old `IsSaving`
+        // boolean guard discarded the flush on Unloaded, which was the root
+        // cause of "rich text is lost when leaving the editor").
+        private readonly SemaphoreSlim _saveLock = new(1, 1);
 
         /// <summary><c>true</c> while the initial manuscript list is being fetched.</summary>
         [ObservableProperty]
@@ -375,9 +383,27 @@ namespace Layla.Desktop.ViewModels
         /// is cleared so it only ever contains work that has not reached the server.
         /// </summary>
         [RelayCommand]
-        public async Task SaveContentAsync(string rtfContent)
+        public Task SaveContentAsync(string rtfContent) => SaveContentInternalAsync(rtfContent, force: false);
+
+        /// <summary>
+        /// Like <see cref="SaveContentAsync"/> but waits for any in-progress save
+        /// to complete before issuing its own write, instead of being dropped.
+        /// Called from the view's <c>Unloaded</c> handler so the user's last
+        /// edits are always flushed before navigating away.
+        /// </summary>
+        public Task FlushSaveAsync(string rtfContent) => SaveContentInternalAsync(rtfContent, force: true);
+
+        private async Task SaveContentInternalAsync(string rtfContent, bool force)
         {
-            if (IsSaving || CurrentChapter == null || SelectedManuscript == null) return;
+            if (CurrentChapter == null || SelectedManuscript == null) return;
+
+            // Non-forced (debounced auto-save) skips when a save is already in
+            // flight — the in-flight call already has the latest content the
+            // user typed up to ~1 second ago, so a second write would be wasted.
+            // Forced flush always waits, ensuring no edits are lost on unload.
+            if (!force && IsSaving) return;
+
+            await _saveLock.WaitAsync();
             IsSaving = true;
 
             var manuscriptId = SelectedManuscript.ManuscriptId;
@@ -409,7 +435,9 @@ namespace Layla.Desktop.ViewModels
                         CurrentMentions.Add(mention);
                 }
 
-                // Successful server save — drop any stale offline copy.
+                // Successful server save — drop any stale offline copy and the
+                // in-memory chapter content so a subsequent re-load reflects it.
+                CurrentChapter.Content = rtfContent;
                 _cache.ClearChapter(manuscriptId, chapterId);
                 HasUnsavedOfflineChanges = false;
             }
@@ -422,6 +450,7 @@ namespace Layla.Desktop.ViewModels
             finally
             {
                 IsSaving = false;
+                _saveLock.Release();
             }
         }
 
