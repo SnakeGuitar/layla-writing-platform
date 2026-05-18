@@ -68,11 +68,36 @@ namespace Layla.Desktop.Views
 
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
-            // The debounce timer can fire AFTER the view is detached and try
-            // to touch EditorRichTextBox on the dispatcher — dispose it here
-            // and clear the reload subscription that retains this view.
+            // Critical: a debounced save may still be pending (the timer fires
+            // 1 second after the last keystroke). If we just dispose the timer
+            // the user's most recent edits are silently dropped — exactly the
+            // "writing is lost when going back to projects" bug. Flush a final
+            // synchronous save BEFORE disposing.
             _debounceTimer?.Dispose();
             _debounceTimer = null;
+
+            if (_isLoaded && _viewModel.CurrentChapter != null && !_isReadOnly)
+            {
+                try
+                {
+                    // Pull the current RTF off the dispatcher thread we're on
+                    // (Unloaded runs on the UI thread) and block briefly on the
+                    // save. The View is being torn down so blocking the UI for
+                    // a second is acceptable — better than losing content.
+                    var textRange = new TextRange(
+                        EditorRichTextBox.Document.ContentStart,
+                        EditorRichTextBox.Document.ContentEnd);
+                    using var ms = new MemoryStream();
+                    textRange.Save(ms, DataFormats.Rtf);
+                    var rtf = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+                    _viewModel.SaveContentCommand.ExecuteAsync(rtf).Wait(TimeSpan.FromSeconds(3));
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Final save on Unloaded failed: {ex.Message}");
+                }
+            }
+
             _viewModel.ContentReloadRequested -= OnContentReloadRequested;
         }
 
