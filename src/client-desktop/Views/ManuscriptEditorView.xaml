@@ -59,12 +59,13 @@
                                     Background="{DynamicResource AccentColor}" Foreground="White"
                                     BorderThickness="0" FontWeight="Bold" Cursor="Hand"
                                     Command="{Binding AddManuscriptCommand}"/>
-                            <Button Grid.Column="2" Content="X" ToolTip="Delete manuscript"
+                            <Button Grid.Column="2" x:Name="DeleteManuscriptButton"
+                                    ToolTip="Delete the current manuscript and all its chapters"
                                     Width="26" Height="26" Margin="4,0,0,0"
-                                    Background="Transparent" Foreground="IndianRed"
+                                    Background="IndianRed" Foreground="White"
                                     BorderThickness="0" FontWeight="Bold" Cursor="Hand"
-                                    Command="{Binding DeleteManuscriptCommand}"
-                                    CommandParameter="{Binding SelectedManuscript}"/>
+                                    Content="🗑"
+                                    Click="DeleteManuscriptButton_Click"/>
                         </Grid>
                     </StackPanel>
                 </Border>
@@ -103,12 +104,12 @@
                                            Foreground="{DynamicResource PrimaryText}"
                                            VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                                            Padding="6,5"/>
-                                <Button Grid.Column="1" Content="X" FontSize="10"
+                                <Button Grid.Column="1" Content="🗑" FontSize="11"
                                         Background="Transparent" Foreground="IndianRed"
-                                        BorderThickness="0" Cursor="Hand" Padding="4,2"
-                                        VerticalAlignment="Center"
-                                        Command="{Binding DataContext.DeleteChapterCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
-                                        CommandParameter="{Binding}"/>
+                                        BorderThickness="0" Cursor="Hand" Padding="6,2"
+                                        VerticalAlignment="Center" ToolTip="Delete chapter"
+                                        Tag="{Binding}"
+                                        Click="DeleteChapterButton_Click"/>
                             </Grid>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
