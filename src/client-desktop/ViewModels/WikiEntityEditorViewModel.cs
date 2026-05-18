@@ -52,6 +52,13 @@ namespace Layla.Desktop.ViewModels
         /// <summary>Available entity types for the ComboBox.</summary>
         public string[] EntityTypes { get; } = { "Character", "Location", "Event", "Object", "Concept" };
 
+        /// <summary>
+        /// Last user-visible status message. Surfaces command outcomes (server
+        /// errors, validation failures) without throwing dialogs from the VM.
+        /// </summary>
+        [ObservableProperty]
+        private string _statusMessage = string.Empty;
+
         public WikiEntityEditorViewModel(IWikiApiService wikiApi)
         {
             _wikiApi = wikiApi;
@@ -68,15 +75,22 @@ namespace Layla.Desktop.ViewModels
         public async Task LoadEntriesAsync()
         {
             IsLoading = true;
+            StatusMessage = string.Empty;
             try
             {
                 var entries = await _wikiApi.GetEntriesAsync(_projectId);
-                Entries.Clear();
-                if (entries != null)
+                if (entries == null)
                 {
-                    foreach (var e in entries.OrderBy(e => e.EntityType).ThenBy(e => e.Name))
-                        Entries.Add(e);
+                    StatusMessage = "Worldbuilding service is unreachable.";
+                    return;
                 }
+                Entries.Clear();
+                foreach (var e in entries.OrderBy(e => e.EntityType).ThenBy(e => e.Name))
+                    Entries.Add(e);
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Failed to load wiki entries: {ex.Message}";
             }
             finally
             {
@@ -118,13 +132,18 @@ namespace Layla.Desktop.ViewModels
         [RelayCommand]
         public async Task SaveAsync()
         {
-            if (string.IsNullOrWhiteSpace(Name)) return;
+            if (string.IsNullOrWhiteSpace(Name))
+            {
+                StatusMessage = "Name is required.";
+                return;
+            }
 
             var tagList = Tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                               .ToList();
 
             if (SelectedEntry != null)
             {
+                StatusMessage = "Saving...";
                 var updated = await _wikiApi.UpdateEntryAsync(
                     _projectId, SelectedEntry.EntityId, Name, EntityType, Description, tagList);
                 if (updated != null)
@@ -132,16 +151,27 @@ namespace Layla.Desktop.ViewModels
                     var index = Entries.IndexOf(SelectedEntry);
                     if (index >= 0) Entries[index] = updated;
                     SelectedEntry = updated;
+                    StatusMessage = $"\"{updated.Name}\" updated.";
+                }
+                else
+                {
+                    StatusMessage = "Update failed. Worldbuilding service unreachable.";
                 }
             }
             else
             {
+                StatusMessage = "Creating...";
                 var created = await _wikiApi.CreateEntryAsync(
                     _projectId, Name, EntityType, Description, tagList);
                 if (created != null)
                 {
                     Entries.Add(created);
                     SelectedEntry = created;
+                    StatusMessage = $"\"{created.Name}\" created.";
+                }
+                else
+                {
+                    StatusMessage = "Create failed. Worldbuilding service unreachable.";
                 }
             }
         }
@@ -150,8 +180,13 @@ namespace Layla.Desktop.ViewModels
         [RelayCommand]
         public async Task DeleteAsync()
         {
-            if (SelectedEntry == null) return;
+            if (SelectedEntry == null)
+            {
+                StatusMessage = "Select an entry to delete first.";
+                return;
+            }
 
+            var name = SelectedEntry.Name;
             var deleted = await _wikiApi.DeleteEntryAsync(_projectId, SelectedEntry.EntityId);
             if (deleted)
             {
@@ -159,6 +194,11 @@ namespace Layla.Desktop.ViewModels
                 SelectedEntry = null;
                 ClearForm();
                 Appearances.Clear();
+                StatusMessage = $"\"{name}\" deleted.";
+            }
+            else
+            {
+                StatusMessage = "Delete failed. Worldbuilding service unreachable.";
             }
         }
 
@@ -169,13 +209,18 @@ namespace Layla.Desktop.ViewModels
             SelectedEntry = null;
             ClearForm();
             Appearances.Clear();
+            StatusMessage = "New entry — fill the form and click Save.";
         }
 
         /// <summary>Navigates to the Graph tab highlighting the selected entity.</summary>
         [RelayCommand]
         public void ViewInGraph()
         {
-            if (SelectedEntry == null) return;
+            if (SelectedEntry == null)
+            {
+                StatusMessage = "Select an entry to view its graph node.";
+                return;
+            }
             Services.WorkspaceMediator.RequestNavigateToGraph(SelectedEntry.EntityId);
         }
 

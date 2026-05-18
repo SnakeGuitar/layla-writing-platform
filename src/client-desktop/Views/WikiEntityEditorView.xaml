@@ -169,21 +169,31 @@
                      BorderBrush="{DynamicResource BorderColor}" BorderThickness="1"
                      Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"/>
 
-            <!-- Buttons -->
-            <StackPanel Grid.Row="12" Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="View in Graph" Width="110" Height="35" Margin="0,0,10,0"
-                        Background="Transparent" Foreground="{DynamicResource AccentColor}"
-                        BorderBrush="{DynamicResource AccentColor}" BorderThickness="1" Cursor="Hand"
-                        Command="{Binding ViewInGraphCommand}"/>
-                <Button Content="Delete" Width="90" Height="35" Margin="0,0,10,0"
-                        Background="Transparent" Foreground="IndianRed"
-                        BorderBrush="IndianRed" BorderThickness="1" Cursor="Hand"
-                        Command="{Binding DeleteCommand}"/>
-                <Button Content="Save" Width="100" Height="35"
-                        Background="{DynamicResource AccentColor}" Foreground="White"
-                        BorderThickness="0" Cursor="Hand" FontWeight="SemiBold"
-                        Command="{Binding SaveCommand}"/>
-            </StackPanel>
+            <!-- Buttons + status -->
+            <Grid Grid.Row="12" Grid.ColumnSpan="2">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="{Binding StatusMessage}"
+                           Foreground="{DynamicResource AccentColor}" FontSize="12"
+                           VerticalAlignment="Center" Margin="0,0,12,0"
+                           TextWrapping="Wrap"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Content="View in Graph" Width="110" Height="35" Margin="0,0,10,0"
+                            Background="Transparent" Foreground="{DynamicResource AccentColor}"
+                            BorderBrush="{DynamicResource AccentColor}" BorderThickness="1" Cursor="Hand"
+                            Command="{Binding ViewInGraphCommand}"/>
+                    <Button Content="Delete" Width="90" Height="35" Margin="0,0,10,0"
+                            Background="Transparent" Foreground="IndianRed"
+                            BorderBrush="IndianRed" BorderThickness="1" Cursor="Hand"
+                            Command="{Binding DeleteCommand}"/>
+                    <Button Content="Save" Width="100" Height="35"
+                            Background="{DynamicResource AccentColor}" Foreground="White"
+                            BorderThickness="0" Cursor="Hand" FontWeight="SemiBold"
+                            Command="{Binding SaveCommand}"/>
+                </StackPanel>
+            </Grid>
         </Grid>
 
         <GridSplitter Grid.Column="3" Width="2" HorizontalAlignment="Stretch"
