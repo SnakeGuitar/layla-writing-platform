@@ -274,24 +274,42 @@ namespace Layla.Desktop.ViewModels
         private async Task DeleteManuscriptAsync(Manuscript? manuscript)
         {
             if (manuscript == null) return;
-            if (Manuscripts.Count <= 1)
+
+            var deleted = await _apiService.DeleteManuscriptAsync(_projectId, manuscript.ManuscriptId);
+            if (!deleted)
             {
-                StatusMessage = "Cannot delete the last manuscript.";
+                StatusMessage = "Delete failed. Worldbuilding service unreachable.";
                 return;
             }
 
-            var deleted = await _apiService.DeleteManuscriptAsync(_projectId, manuscript.ManuscriptId);
-            if (deleted)
+            Manuscripts.Remove(manuscript);
+            var deletedTitle = manuscript.Title;
+
+            if (SelectedManuscript?.ManuscriptId == manuscript.ManuscriptId)
             {
-                Manuscripts.Remove(manuscript);
-                if (SelectedManuscript?.ManuscriptId == manuscript.ManuscriptId && Manuscripts.Any())
+                if (Manuscripts.Any())
+                {
                     await SelectManuscriptAsync(Manuscripts.First());
-                StatusMessage = $"Manuscript \"{manuscript.Title}\" deleted.";
+                }
+                else
+                {
+                    // Last manuscript gone — the project would be unusable
+                    // without one. Bootstrap a fresh default so the user
+                    // always has somewhere to write rather than landing on
+                    // an empty editor with no actions available.
+                    SelectedManuscript = null;
+                    CurrentChapters.Clear();
+                    CurrentChapter = null;
+                    SelectedChapterItem = null;
+                    CurrentMentions.Clear();
+                    ContentReloadRequested?.Invoke();
+                    await AddManuscriptAsync();
+                    StatusMessage = $"Manuscript \"{deletedTitle}\" deleted. Created a new empty manuscript.";
+                    return;
+                }
             }
-            else
-            {
-                StatusMessage = "Delete failed. Worldbuilding service unreachable.";
-            }
+
+            StatusMessage = $"Manuscript \"{deletedTitle}\" deleted.";
         }
 
         /// <summary>
@@ -352,24 +370,39 @@ namespace Layla.Desktop.ViewModels
         private async Task DeleteChapterAsync(Chapter? chapter)
         {
             if (chapter == null || SelectedManuscript == null) return;
-            if (CurrentChapters.Count <= 1)
+
+            var deleted = await _apiService.DeleteChapterAsync(_projectId, SelectedManuscript.ManuscriptId, chapter.ChapterId);
+            if (!deleted)
             {
-                StatusMessage = "Cannot delete the last chapter of a manuscript.";
+                StatusMessage = "Delete failed. Worldbuilding service unreachable.";
                 return;
             }
 
-            var deleted = await _apiService.DeleteChapterAsync(_projectId, SelectedManuscript.ManuscriptId, chapter.ChapterId);
-            if (deleted)
+            CurrentChapters.Remove(chapter);
+            var deletedTitle = chapter.Title;
+
+            if (CurrentChapter?.ChapterId == chapter.ChapterId)
             {
-                CurrentChapters.Remove(chapter);
-                if (CurrentChapter?.ChapterId == chapter.ChapterId && CurrentChapters.Any())
+                if (CurrentChapters.Any())
+                {
                     await SelectChapterAsync(CurrentChapters.First());
-                StatusMessage = $"Chapter \"{chapter.Title}\" deleted.";
+                }
+                else
+                {
+                    // Last chapter gone — same rationale as DeleteManuscriptAsync:
+                    // a manuscript with zero chapters is unusable, so bootstrap
+                    // a fresh empty Chapter 1 the user can start writing in.
+                    CurrentChapter = null;
+                    SelectedChapterItem = null;
+                    CurrentMentions.Clear();
+                    ContentReloadRequested?.Invoke();
+                    await AddChapterAsync();
+                    StatusMessage = $"Chapter \"{deletedTitle}\" deleted. Created a new empty chapter.";
+                    return;
+                }
             }
-            else
-            {
-                StatusMessage = "Delete failed. Worldbuilding service unreachable.";
-            }
+
+            StatusMessage = $"Chapter \"{deletedTitle}\" deleted.";
         }
 
         /// <summary><c>true</c> when a chapter is loaded and the editor can accept input.</summary>
