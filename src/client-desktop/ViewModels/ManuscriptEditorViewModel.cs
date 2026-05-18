@@ -42,6 +42,14 @@ namespace Layla.Desktop.ViewModels
         [ObservableProperty]
         private string _wordCountText = "0 words";
 
+        /// <summary>
+        /// Last user-visible status message. Set by commands to surface failures
+        /// (server unreachable, no manuscript selected, etc.) without throwing
+        /// dialogs from the ViewModel. Bound to the editor footer.
+        /// </summary>
+        [ObservableProperty]
+        private string _statusMessage = string.Empty;
+
         /// <summary>The chapter whose content is currently displayed in the editor, with full RTF.</summary>
         [ObservableProperty]
         private Chapter? _currentChapter;
@@ -92,14 +100,20 @@ namespace Layla.Desktop.ViewModels
         private async Task LoadManuscriptAsync()
         {
             IsLoading = true;
+            StatusMessage = string.Empty;
             try
             {
                 var manuscripts = await _apiService.GetManuscriptsByProjectAsync(_projectId);
+                if (manuscripts == null)
+                {
+                    StatusMessage = "Worldbuilding service is unreachable. Start it with: cd src/server-worldbuilding && pnpm run dev";
+                    return;
+                }
 
                 Manuscripts.Clear();
                 CurrentChapters.Clear();
 
-                if (manuscripts != null && manuscripts.Count > 0)
+                if (manuscripts.Count > 0)
                 {
                     foreach (var m in manuscripts.OrderBy(m => m.Order))
                         Manuscripts.Add(m);
@@ -109,19 +123,23 @@ namespace Layla.Desktop.ViewModels
                 else
                 {
                     var newMs = await _apiService.CreateManuscriptAsync(_projectId, "Manuscript 1", 0);
-                    if (newMs != null)
+                    if (newMs == null)
                     {
-                        var firstChapter = await _apiService.CreateChapterAsync(_projectId, newMs.ManuscriptId, "Chapter 1", string.Empty, 0);
-                        if (firstChapter != null)
-                            newMs.Chapters.Add(firstChapter);
-
-                        Manuscripts.Add(newMs);
-                        await SelectManuscriptAsync(newMs);
+                        StatusMessage = "Could not create the initial manuscript. The server returned an error.";
+                        return;
                     }
+
+                    var firstChapter = await _apiService.CreateChapterAsync(_projectId, newMs.ManuscriptId, "Chapter 1", string.Empty, 0);
+                    if (firstChapter != null)
+                        newMs.Chapters.Add(firstChapter);
+
+                    Manuscripts.Add(newMs);
+                    await SelectManuscriptAsync(newMs);
                 }
             }
             catch (Exception ex)
             {
+                StatusMessage = $"Failed to load manuscripts: {ex.Message}";
                 System.Diagnostics.Debug.WriteLine($"Failed to load manuscripts: {ex.Message}");
             }
             finally
@@ -222,17 +240,22 @@ namespace Layla.Desktop.ViewModels
         [RelayCommand]
         private async Task AddManuscriptAsync()
         {
+            StatusMessage = "Creating manuscript...";
             var order = Manuscripts.Count;
             var newMs = await _apiService.CreateManuscriptAsync(_projectId, $"Manuscript {order + 1}", order);
-            if (newMs != null)
+            if (newMs == null)
             {
-                var firstChapter = await _apiService.CreateChapterAsync(_projectId, newMs.ManuscriptId, "Chapter 1", string.Empty, 0);
-                if (firstChapter != null)
-                    newMs.Chapters.Add(firstChapter);
-
-                Manuscripts.Add(newMs);
-                await SelectManuscriptAsync(newMs);
+                StatusMessage = "Could not create manuscript. Worldbuilding service unreachable.";
+                return;
             }
+
+            var firstChapter = await _apiService.CreateChapterAsync(_projectId, newMs.ManuscriptId, "Chapter 1", string.Empty, 0);
+            if (firstChapter != null)
+                newMs.Chapters.Add(firstChapter);
+
+            Manuscripts.Add(newMs);
+            await SelectManuscriptAsync(newMs);
+            StatusMessage = $"Manuscript \"{newMs.Title}\" created.";
         }
 
         /// <summary>
@@ -242,7 +265,12 @@ namespace Layla.Desktop.ViewModels
         [RelayCommand]
         private async Task DeleteManuscriptAsync(Manuscript? manuscript)
         {
-            if (manuscript == null || Manuscripts.Count <= 1) return;
+            if (manuscript == null) return;
+            if (Manuscripts.Count <= 1)
+            {
+                StatusMessage = "Cannot delete the last manuscript.";
+                return;
+            }
 
             var deleted = await _apiService.DeleteManuscriptAsync(_projectId, manuscript.ManuscriptId);
             if (deleted)
@@ -250,6 +278,11 @@ namespace Layla.Desktop.ViewModels
                 Manuscripts.Remove(manuscript);
                 if (SelectedManuscript?.ManuscriptId == manuscript.ManuscriptId && Manuscripts.Any())
                     await SelectManuscriptAsync(Manuscripts.First());
+                StatusMessage = $"Manuscript \"{manuscript.Title}\" deleted.";
+            }
+            else
+            {
+                StatusMessage = "Delete failed. Worldbuilding service unreachable.";
             }
         }
 
@@ -279,8 +312,13 @@ namespace Layla.Desktop.ViewModels
         [RelayCommand]
         private async Task AddChapterAsync()
         {
-            if (SelectedManuscript == null) return;
+            if (SelectedManuscript == null)
+            {
+                StatusMessage = "Cannot add a chapter: no manuscript is loaded yet. Wait for the editor to finish loading.";
+                return;
+            }
 
+            StatusMessage = "Creating chapter...";
             var order = CurrentChapters.Count;
             var newChapter = await _apiService.CreateChapterAsync(
                 _projectId, SelectedManuscript.ManuscriptId,
@@ -290,6 +328,11 @@ namespace Layla.Desktop.ViewModels
             {
                 CurrentChapters.Add(newChapter);
                 await SelectChapterAsync(newChapter);
+                StatusMessage = $"Chapter \"{newChapter.Title}\" created.";
+            }
+            else
+            {
+                StatusMessage = "Could not create chapter. Check that the worldbuilding service is running.";
             }
         }
 
@@ -300,7 +343,12 @@ namespace Layla.Desktop.ViewModels
         [RelayCommand]
         private async Task DeleteChapterAsync(Chapter? chapter)
         {
-            if (chapter == null || SelectedManuscript == null || CurrentChapters.Count <= 1) return;
+            if (chapter == null || SelectedManuscript == null) return;
+            if (CurrentChapters.Count <= 1)
+            {
+                StatusMessage = "Cannot delete the last chapter of a manuscript.";
+                return;
+            }
 
             var deleted = await _apiService.DeleteChapterAsync(_projectId, SelectedManuscript.ManuscriptId, chapter.ChapterId);
             if (deleted)
@@ -308,6 +356,11 @@ namespace Layla.Desktop.ViewModels
                 CurrentChapters.Remove(chapter);
                 if (CurrentChapter?.ChapterId == chapter.ChapterId && CurrentChapters.Any())
                     await SelectChapterAsync(CurrentChapters.First());
+                StatusMessage = $"Chapter \"{chapter.Title}\" deleted.";
+            }
+            else
+            {
+                StatusMessage = "Delete failed. Worldbuilding service unreachable.";
             }
         }
 
