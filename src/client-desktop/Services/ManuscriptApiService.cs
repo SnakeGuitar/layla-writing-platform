@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Layla.Desktop.Models;
 
@@ -16,6 +18,17 @@ namespace Layla.Desktop.Services
     public class ManuscriptApiService : IManuscriptApiService
     {
         private readonly HttpClient _httpClient;
+
+        // Skip null properties when serialising request bodies. Required because
+        // the worldbuilding Zod schemas use `.optional()` (matches `undefined`)
+        // and reject explicit `null` with a 400 — so sending
+        // `{ clientTimestamp: null }` was silently breaking chapter saves and
+        // forcing every update into the offline-cache fallback.
+        private static readonly JsonSerializerOptions JsonOpts = new()
+        {
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        };
 
         /// <summary>Initialises the service with a pre-configured <see cref="HttpClient"/>.</summary>
         public ManuscriptApiService()
@@ -61,7 +74,7 @@ namespace Layla.Desktop.Services
             try
             {
                 var payload = new { title, order };
-                var response = await _httpClient.PostAsJsonAsync($"/api/manuscripts/{projectId}", payload);
+                var response = await _httpClient.PostAsJsonAsync($"/api/manuscripts/{projectId}", payload, JsonOpts);
                 if (response.IsSuccessStatusCode)
                     return await response.Content.ReadFromJsonAsync<Manuscript>();
             }
@@ -78,7 +91,7 @@ namespace Layla.Desktop.Services
             try
             {
                 var payload = new { title, order };
-                var response = await _httpClient.PutAsJsonAsync($"/api/manuscripts/{projectId}/{manuscriptId}", payload);
+                var response = await _httpClient.PutAsJsonAsync($"/api/manuscripts/{projectId}/{manuscriptId}", payload, JsonOpts);
                 if (response.IsSuccessStatusCode)
                     return await response.Content.ReadFromJsonAsync<Manuscript>();
             }
@@ -126,7 +139,7 @@ namespace Layla.Desktop.Services
             try
             {
                 var payload = new { title, content, order };
-                var response = await _httpClient.PostAsJsonAsync($"/api/manuscripts/{projectId}/{manuscriptId}/chapters", payload);
+                var response = await _httpClient.PostAsJsonAsync($"/api/manuscripts/{projectId}/{manuscriptId}/chapters", payload, JsonOpts);
                 if (response.IsSuccessStatusCode)
                     return await response.Content.ReadFromJsonAsync<Chapter>();
             }
@@ -149,9 +162,15 @@ namespace Layla.Desktop.Services
                     order,
                     clientTimestamp = clientTimestamp?.ToString("o")
                 };
-                var response = await _httpClient.PutAsJsonAsync($"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}", payload);
+                var response = await _httpClient.PutAsJsonAsync($"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}", payload, JsonOpts);
                 if (response.IsSuccessStatusCode)
                     return await response.Content.ReadFromJsonAsync<Chapter>();
+
+                // Surface the failure reason — otherwise every server rejection
+                // (400 from a malformed payload, 401 from an expired token,
+                // 404 from a stale chapterId) looked identical from the VM.
+                var body = await response.Content.ReadAsStringAsync();
+                System.Diagnostics.Debug.WriteLine($"Chapter UPDATE {response.StatusCode}: {body}");
             }
             catch (Exception ex)
             {
