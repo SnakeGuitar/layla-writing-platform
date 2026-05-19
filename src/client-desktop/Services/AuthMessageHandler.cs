@@ -16,7 +16,7 @@ namespace Layla.Desktop.Services
     {
         public AuthMessageHandler() : base(new HttpClientHandler()) { }
 
-        protected override Task<HttpResponseMessage> SendAsync(
+        protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request, CancellationToken cancellationToken)
         {
             if (request.Headers.Authorization is null && SessionManager.IsAuthenticated)
@@ -24,7 +24,22 @@ namespace Layla.Desktop.Services
                 request.Headers.Authorization = new AuthenticationHeaderValue(
                     "Bearer", SessionManager.CurrentToken);
             }
-            return base.SendAsync(request, cancellationToken);
+            
+            var response = await base.SendAsync(request, cancellationToken);
+
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                SessionManager.ClearSession();
+                System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    if (System.Windows.Application.Current.MainWindow is System.Windows.Navigation.NavigationWindow navWindow)
+                    {
+                        navWindow.Navigate(new System.Uri("Views/LoginView.xaml", System.UriKind.Relative));
+                    }
+                });
+            }
+
+            return response;
         }
     }
 }
