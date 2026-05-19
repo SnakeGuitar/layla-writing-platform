@@ -9,6 +9,7 @@ namespace Layla.Client.Shared.Models;
 public class ChapterVersionMeta
 {
     /// <summary>MongoDB ObjectId.</summary>
+    [System.Text.Json.Serialization.JsonPropertyName("_id")]
     public string Id { get; set; } = string.Empty;
     public string ChapterId { get; set; } = string.Empty;
     public string ProjectId { get; set; } = string.Empty;

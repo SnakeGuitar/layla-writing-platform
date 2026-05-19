@@ -23,6 +23,7 @@ public interface ICollaborationApiService
     Task<bool> AutosaveChapterAsync(
         Guid projectId, string manuscriptId, string chapterId,
         string content, IReadOnlyList<MentionPayload>? mentions = null,
+        bool isMilestone = false,
         CancellationToken ct = default);
 
     // ── Detectable Entities (Tokenizer feed) ────────────────────────────
@@ -42,11 +43,6 @@ public interface ICollaborationApiService
     /// <summary>Returns a specific version including full content.</summary>
     Task<ChapterVersionFull?> GetChapterVersionAsync(
         Guid projectId, string manuscriptId, string chapterId, string versionId,
-        CancellationToken ct = default);
-
-    /// <summary>Creates a named milestone (snapshot) of the current chapter state.</summary>
-    Task<ChapterVersionMeta?> CreateMilestoneAsync(
-        Guid projectId, string manuscriptId, string chapterId,
         CancellationToken ct = default);
 
     /// <summary>Restores a chapter to a specific version.</summary>

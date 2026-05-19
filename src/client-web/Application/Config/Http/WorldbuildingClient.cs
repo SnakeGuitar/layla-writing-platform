@@ -1,17 +1,18 @@
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Net.Http.Headers;
 using client_web.Application.Services.Session;
 
 namespace client_web.Application.Config.Http;
 
-public class ApiClient
+public class WorldbuildingClient
 {
     private readonly HttpClient _http;
-    private readonly ILogger<ApiClient> _logger;
+    private readonly ILogger<WorldbuildingClient> _logger;
     private readonly ISessionManager _session;
 
-    public ApiClient(HttpClient http, ILogger<ApiClient> logger, ISessionManager session)
+    public WorldbuildingClient(HttpClient http, ILogger<WorldbuildingClient> logger, ISessionManager session)
     {
         _http = http;
         _logger = logger;
@@ -39,14 +40,10 @@ public class ApiClient
 
         var raw = await response.Content.ReadAsStringAsync(ct);
 
-        // server-core returns DTOs directly (`return Ok(result.Data)`), not wrapped
-        // in any envelope. Treat the HTTP status code as the success/error signal
-        // and deserialize the body straight into T.
         if (!response.IsSuccessStatusCode)
         {
             if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
             {
-                // Trigger auto-logout on 401
                 await _session.ClearAsync();
             }
 
@@ -80,18 +77,14 @@ public class ApiClient
         }
     }
 
-    /// <summary>JSON options matching ASP.NET Core defaults (camelCase, case-insensitive).</summary>
+    // Notice we ignore nulls here, required by Node.js worldbuilding Zod schemas (.optional)
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
         PropertyNameCaseInsensitive = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
 
-    /// <summary>
-    /// Best-effort extraction of an error message from a server response. Tries
-    /// common shapes (ProblemDetails, plain string, anonymous object with a
-    /// 'message'/'error'/'title' field) and falls back to null on failure.
-    /// </summary>
     private static string? ExtractErrorMessage(string raw)
     {
         if (string.IsNullOrWhiteSpace(raw)) return null;
@@ -106,10 +99,7 @@ public class ApiClient
                     return prop.GetString();
             }
         }
-        catch
-        {
-            // Body was not JSON — fall through.
-        }
+        catch { }
         return null;
     }
 
@@ -133,8 +123,6 @@ public class ApiClient
 
         if (request.Body != null)
         {
-            // Use camelCase + ASP.NET-Core-friendly options so the body shape
-            // matches what the controllers expect.
             var json = JsonSerializer.Serialize(request.Body, JsonOptions);
             httpRequest.Content = new System.Net.Http.StringContent(json, Encoding.UTF8, "application/json");
         }

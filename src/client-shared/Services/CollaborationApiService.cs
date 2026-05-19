@@ -37,11 +37,12 @@ public class CollaborationApiService : ICollaborationApiService
     public async Task<bool> AutosaveChapterAsync(
         Guid projectId, string manuscriptId, string chapterId,
         string content, IReadOnlyList<MentionPayload>? mentions = null,
+        bool isMilestone = false,
         CancellationToken ct = default)
     {
         try
         {
-            var payload = new { content, mentions = mentions ?? (IReadOnlyList<MentionPayload>)Array.Empty<MentionPayload>() };
+            var payload = new { content, mentions = mentions ?? (IReadOnlyList<MentionPayload>)Array.Empty<MentionPayload>(), isMilestone };
             var response = await _httpClient.PutAsJsonAsync(
                 $"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/autosave",
                 payload, JsonOpts, ct);
@@ -105,24 +106,7 @@ public class CollaborationApiService : ICollaborationApiService
         }
     }
 
-    public async Task<ChapterVersionMeta?> CreateMilestoneAsync(
-        Guid projectId, string manuscriptId, string chapterId,
-        CancellationToken ct = default)
-    {
-        try
-        {
-            var response = await _httpClient.PostAsync(
-                $"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/versions/milestone",
-                null, ct);
-            if (response.IsSuccessStatusCode)
-                return await response.Content.ReadFromJsonAsync<ChapterVersionMeta>(cancellationToken: ct);
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"[CollaborationApiService] CreateMilestone failed: {ex.Message}");
-        }
-        return null;
-    }
+
 
     public async Task<bool> RestoreVersionAsync(
         Guid projectId, string manuscriptId, string chapterId, string versionId,

@@ -47,6 +47,7 @@ public static class Services
         services.AddScoped<IPresenceService, PresenceService>();
         services.AddScoped<IProjectService, ProjectService>();
         services.AddScoped<IAdminService, AdminService>();
+        services.AddScoped<client_web.Application.Services.Manuscripts.IManuscriptService, client_web.Application.Services.Manuscripts.ManuscriptService>();
 
         // ── Voice (transient SignalR-based stack) ────────────────────────────
         services.AddSingleton<ISignalRClient, SignalRClient>();

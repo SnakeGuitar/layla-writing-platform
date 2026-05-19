@@ -20,12 +20,21 @@ public static class HttpClientConfig
                 TimeSpan.FromMilliseconds(Math.Pow(2, attempt) * 100));
 
         string backendUrl = builder.Configuration["ApiUrls:BackendURL"] ?? throw new InvalidOperationException("ApiUrls:BackendURL no configurado");
+        string worldbuildingUrl = builder.Configuration["ApiUrls:WorldbuildingURL"] ?? throw new InvalidOperationException("ApiUrls:WorldbuildingURL no configurado");
 
         services.AddHttpClient();
-        // Typed client con retry policy aplicada directamente
+        
+        // Typed client con retry policy aplicada directamente (Server Core)
         services.AddHttpClient<ApiClient>(client =>
         {
             client.BaseAddress = new Uri(backendUrl);
+        })
+        .AddPolicyHandler(retryPolicy);
+
+        // Typed client para Worldbuilding (Node.js API)
+        services.AddHttpClient<WorldbuildingClient>(client =>
+        {
+            client.BaseAddress = new Uri(worldbuildingUrl);
         })
         .AddPolicyHandler(retryPolicy);
     }
