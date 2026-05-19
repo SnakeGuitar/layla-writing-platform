@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace Layla.Desktop.Services.User;
+namespace Layla.Desktop.Services;
 
 public static class SessionManager
 {
@@ -48,10 +48,10 @@ public static class SessionManager
 
         try
         {
-            var directory = Path.GetDirectoryName(SessionPath);
+            string? directory = Path.GetDirectoryName(SessionPath);
             if (!Directory.Exists(directory)) Directory.CreateDirectory(directory!);
 
-            var json = System.Text.Json.JsonSerializer.Serialize(new { CurrentToken, CurrentEmail, CurrentDisplayName, CurrentUserId });
+            string? json = System.Text.Json.JsonSerializer.Serialize(new { CurrentToken, CurrentEmail, CurrentDisplayName, CurrentUserId });
             File.WriteAllText(SessionPath, json);
         }
         catch { /* Redundancy/Logging */ }
@@ -63,8 +63,8 @@ public static class SessionManager
 
         try
         {
-            var json = File.ReadAllText(SessionPath);
-            var session = System.Text.Json.JsonSerializer.Deserialize<SessionData>(json);
+            string? json = File.ReadAllText(SessionPath);
+            SessionData? session = System.Text.Json.JsonSerializer.Deserialize<SessionData>(json);
             if (session != null)
             {
                 CurrentToken = session.CurrentToken;

@@ -5,9 +5,9 @@ public class ValidationResult
     public bool IsValid { get; set; }
     public Dictionary<string, List<string>> Errors { get; set; } = new();
 
-    public static ValidationResult Success() => new ValidationResult { IsValid = true };
+    public static ValidationResult Success() => new() { IsValid = true };
 
-    public static ValidationResult Failure(Dictionary<string, List<string>> errors) => new ValidationResult
+    public static ValidationResult Failure(Dictionary<string, List<string>> errors) => new()
     {
         IsValid = false,
         Errors = errors
@@ -18,7 +18,7 @@ public class ValidationResult
         IsValid = false;
         if (!Errors.ContainsKey(propertyName))
         {
-            Errors[propertyName] = new List<string>();
+            Errors[propertyName] = new();
         }
         Errors[propertyName].Add(errorMessage);
     }

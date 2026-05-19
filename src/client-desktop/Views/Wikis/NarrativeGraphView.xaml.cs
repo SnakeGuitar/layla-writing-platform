@@ -1,5 +1,5 @@
 using Layla.Desktop.Models.Graphs;
-using Layla.Desktop.Services.User;
+using Layla.Desktop.Services;
 using Layla.Desktop.ViewModels.Wikis;
 using System.Collections.Specialized;
 using System.Windows;
@@ -54,10 +54,10 @@ public partial class NarrativeGraphView : Page
         _nodeElements.Clear();
         _edgeElements.Clear();
 
-        foreach (var edge in _viewModel.Edges)
+        foreach (GraphEdge edge in _viewModel.Edges)
             DrawEdge(edge);
 
-        foreach (var node in _viewModel.Nodes)
+        foreach (GraphNode node in _viewModel.Nodes)
             DrawNode(node);
     }
 
@@ -65,7 +65,7 @@ public partial class NarrativeGraphView : Page
     {
         if (edge.Source == null || edge.Target == null) return;
 
-        var line = new Line
+        Line line = new()
         {
             X1 = edge.Source.Center.X,
             Y1 = edge.Source.Center.Y,
@@ -73,7 +73,7 @@ public partial class NarrativeGraphView : Page
             Y2 = edge.Target.Center.Y,
             Stroke = (Brush)FindResource("BorderColor"),
             StrokeThickness = 2,
-            StrokeDashArray = edge.Type == "APPEARS_IN" ? new DoubleCollection { 4, 2 } : null,
+            StrokeDashArray = edge.Type == "APPEARS_IN" ? new() { 4, 2 } : null,
             Cursor = Cursors.Hand,
             ToolTip = $"{edge.Type}: {edge.Label}\n(Right-click to delete)"
         };
@@ -96,13 +96,13 @@ public partial class NarrativeGraphView : Page
             double midX = (line.X1 + line.X2) / 2;
             double midY = (line.Y1 + line.Y2) / 2;
 
-            var border = new Border
+            Border border = new()
             {
                 Background = (Brush)FindResource("ControlBackground"),
                 BorderBrush = (Brush)FindResource("BorderColor"),
-                BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(4),
-                Padding = new Thickness(5, 2, 5, 2),
+                BorderThickness = new(1),
+                CornerRadius = new(4),
+                Padding = new(5, 2, 5, 2),
                 Cursor = Cursors.Hand,
                 ToolTip = $"Right-click to delete"
             };
@@ -122,9 +122,9 @@ public partial class NarrativeGraphView : Page
             };
 
             _edgeElements[border] = edge;
-            border.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            Canvas.SetLeft(border, midX - border.DesiredSize.Width / 2);
-            Canvas.SetTop(border, midY - border.DesiredSize.Height / 2);
+            border.Measure(new(double.PositiveInfinity, double.PositiveInfinity));
+            Canvas.SetLeft(border, midX - (border.DesiredSize.Width / 2));
+            Canvas.SetTop(border, midY - (border.DesiredSize.Height / 2));
             GraphCanvas.Children.Add(border);
         }
     }
@@ -134,27 +134,27 @@ public partial class NarrativeGraphView : Page
     {
         double dx = to.X - from.X;
         double dy = to.Y - from.Y;
-        double len = Math.Sqrt(dx * dx + dy * dy);
+        double len = Math.Sqrt((dx * dx) + (dy * dy));
         if (len < 1) return;
 
         // Point on the target node's edge
         double ux = dx / len;
         double uy = dy / len;
-        double tipX = to.X - ux * (nodeRadius + 2);
-        double tipY = to.Y - uy * (nodeRadius + 2);
+        double tipX = to.X - (ux * (nodeRadius + 2));
+        double tipY = to.Y - (uy * (nodeRadius + 2));
 
         double arrowLen = 10;
         double arrowWidth = 5;
-        double baseX = tipX - ux * arrowLen;
-        double baseY = tipY - uy * arrowLen;
+        double baseX = tipX - (ux * arrowLen);
+        double baseY = tipY - (uy * arrowLen);
 
-        var arrow = new Polygon
+        Polygon arrow = new()
         {
-            Points = new PointCollection
+            Points = new()
             {
-                new Point(tipX, tipY),
-                new Point(baseX + uy * arrowWidth, baseY - ux * arrowWidth),
-                new Point(baseX - uy * arrowWidth, baseY + ux * arrowWidth),
+                new(tipX, tipY),
+                new(baseX + (uy * arrowWidth), baseY - (ux * arrowWidth)),
+                new(baseX - (uy * arrowWidth), baseY + (ux * arrowWidth)),
             },
             Fill = (Brush)FindResource("BorderColor"),
             IsHitTestVisible = false
@@ -164,31 +164,31 @@ public partial class NarrativeGraphView : Page
 
     private void DrawNode(GraphNode node)
     {
-        var color = EntityColors.GetValueOrDefault(node.EntityType, Colors.Gray);
-        var brush = new SolidColorBrush(color);
+        Color color = EntityColors.GetValueOrDefault(node.EntityType, Colors.Gray);
+        SolidColorBrush brush = new(color);
 
         // Outer container for dragging and click detection
-        var nodeGroup = new Border
+        Border nodeGroup = new()
         {
             Width = node.Radius * 2,
             Height = node.Radius * 2,
-            CornerRadius = new CornerRadius(node.Radius),
+            CornerRadius = new(node.Radius),
             Background = brush,
             BorderBrush = (Brush)FindResource("BorderColor"),
-            BorderThickness = new Thickness(2),
+            BorderThickness = new(2),
             Opacity = 0.9,
             Cursor = Cursors.Hand,
             ToolTip = $"{node.Name} ({node.EntityType})\nDrag to move · Click to view in Wiki",
             Tag = node.EntityId
         };
 
-        var stack = new StackPanel
+        StackPanel stack = new()
         {
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Center
         };
 
-        stack.Children.Add(new TextBlock
+        stack.Children.Add(new TextBlock()
         {
             Text = node.Name,
             Foreground = Brushes.White,
@@ -199,7 +199,7 @@ public partial class NarrativeGraphView : Page
             MaxWidth = node.Radius * 1.8
         });
 
-        stack.Children.Add(new TextBlock
+        stack.Children.Add(new TextBlock()
         {
             Text = node.EntityType,
             Foreground = new SolidColorBrush(Color.FromArgb(180, 255, 255, 255)),
@@ -219,18 +219,18 @@ public partial class NarrativeGraphView : Page
 
     private void GraphCanvas_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        var pos = e.GetPosition(GraphCanvas);
-        var hit = VisualTreeHelper.HitTest(GraphCanvas, pos);
+        Point pos = e.GetPosition(GraphCanvas);
+        HitTestResult hit = VisualTreeHelper.HitTest(GraphCanvas, pos);
         if (hit?.VisualHit == null) return;
 
         // Walk up to find a Border node element
         DependencyObject? current = hit.VisualHit as DependencyObject;
         while (current != null && current != GraphCanvas)
         {
-            if (current is Border border && _nodeElements.TryGetValue(border, out var node))
+            if (current is Border border && _nodeElements.TryGetValue(border, out GraphNode? node))
             {
                 _dragNode = node;
-                _dragOffset = new Point(pos.X - node.Center.X, pos.Y - node.Center.Y);
+                _dragOffset = new(pos.X - node.Center.X, pos.Y - node.Center.Y);
                 _isDragging = false;
                 GraphCanvas.CaptureMouse();
                 e.Handled = true;
@@ -244,13 +244,13 @@ public partial class NarrativeGraphView : Page
     {
         if (_dragNode == null || e.LeftButton != MouseButtonState.Pressed) return;
 
-        var pos = e.GetPosition(GraphCanvas);
-        var newCenter = new Point(pos.X - _dragOffset.X, pos.Y - _dragOffset.Y);
+        Point pos = e.GetPosition(GraphCanvas);
+        Point newCenter = new(pos.X - _dragOffset.X, pos.Y - _dragOffset.Y);
 
         // Only start dragging after threshold to differentiate from clicks
         if (!_isDragging)
         {
-            var delta = newCenter - _dragNode.Center;
+            Vector delta = newCenter - _dragNode.Center;
             if (Math.Abs(delta.X) + Math.Abs(delta.Y) < 5) return;
             _isDragging = true;
         }

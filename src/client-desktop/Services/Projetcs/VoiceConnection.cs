@@ -1,4 +1,3 @@
-using Layla.Desktop.Services.User;
 using Microsoft.AspNetCore.SignalR.Client;
 using NAudio.Wave;
 using System.Windows;
@@ -7,11 +6,11 @@ namespace Layla.Desktop.Services.Projetcs;
 
 public class VoiceConnection : IAsyncDisposable
 {
-    private const string BaseUrl = "https://localhost:5288";
-    private const int SampleRate = 16000;
-    private const int Channels = 1;
-    private const int BitsPerSample = 16;
-    private const int FrameDurationMs = 20;
+    private const string BASE_URL = "https://localhost:5288";
+    private const int SAMPLE_RATE = 16000;
+    private const int CHANNELS = 1;
+    private const int BITS_PER_SAMPLE = 16;
+    private const int FRAME_DURATION_MS = 20;
 
     private HubConnection? _hub;
     private WaveInEvent? _waveIn;
@@ -20,12 +19,12 @@ public class VoiceConnection : IAsyncDisposable
     private Guid _currentProjectId;
     private bool _isSpeaking;
 
-    public event Action<string, string, bool, string>? ParticipantJoined;   // userId, displayName, isSpeaking, role
-    public event Action<string>? ParticipantLeft;                            // userId
-    public event Action<string, string>? SpeakerStarted;                    // userId, displayName
-    public event Action<string>? SpeakerStopped;                            // userId
-    public event Action<List<ParticipantInfo>>? RoomStateReceived;
-    public event Action<string>? ConnectionStateChanged;                     // "Connected", "Disconnected", "Reconnecting"
+    public event Action<string, string, bool, string>? ParticipantJoined;       // userId, displayName, isSpeaking, role
+    public event Action<string>? ParticipantLeft;                               // userId
+    public event Action<string, string>? SpeakerStarted;                        // userId, displayName
+    public event Action<string>? SpeakerStopped;                                // userId
+    public event Action<List<ParticipantInfo>>? RoomStateReceived;              // 
+    public event Action<string>? ConnectionStateChanged;                        // "Connected", "Disconnected", "Reconnecting"
 
     public bool IsConnected => _hub?.State == HubConnectionState.Connected;
 
@@ -33,12 +32,12 @@ public class VoiceConnection : IAsyncDisposable
     {
         if (_hub != null) return;
 
-        var token = SessionManager.CurrentToken;
+        string? token = SessionManager.CurrentToken;
         if (string.IsNullOrEmpty(token))
             throw new InvalidOperationException("Not authenticated.");
 
         _hub = new HubConnectionBuilder()
-            .WithUrl($"{BaseUrl}/hubs/voice", options =>
+            .WithUrl($"{BASE_URL}/hubs/voice", options =>
             {
                 options.AccessTokenProvider = () => Task.FromResult<string?>(token);
             })
@@ -149,13 +148,13 @@ public class VoiceConnection : IAsyncDisposable
 
     private void InitializeAudioPlayback()
     {
-        var format = new WaveFormat(SampleRate, BitsPerSample, Channels);
+        WaveFormat? format = new(SAMPLE_RATE, BITS_PER_SAMPLE, CHANNELS);
         _playbackBuffer = new BufferedWaveProvider(format)
         {
             BufferDuration = TimeSpan.FromSeconds(2),
             DiscardOnBufferOverflow = true
         };
-        _waveOut = new WaveOutEvent();
+        _waveOut = new();
         _waveOut.Init(_playbackBuffer);
         _waveOut.Play();
     }
@@ -166,8 +165,8 @@ public class VoiceConnection : IAsyncDisposable
 
         _waveIn = new WaveInEvent
         {
-            WaveFormat = new WaveFormat(SampleRate, BitsPerSample, Channels),
-            BufferMilliseconds = FrameDurationMs
+            WaveFormat = new WaveFormat(SAMPLE_RATE, BITS_PER_SAMPLE, CHANNELS),
+            BufferMilliseconds = FRAME_DURATION_MS
         };
 
         _waveIn.DataAvailable += async (sender, e) =>
@@ -177,7 +176,7 @@ public class VoiceConnection : IAsyncDisposable
 
             try
             {
-                var buffer = new byte[e.BytesRecorded];
+                byte[]? buffer = new byte[e.BytesRecorded];
                 Array.Copy(e.Buffer, buffer, e.BytesRecorded);
                 await _hub.InvokeAsync("SendAudio", _currentProjectId, buffer);
             }

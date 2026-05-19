@@ -7,19 +7,19 @@ public class AuthResult
     public string? ErrorMessage { get; set; }
     public Dictionary<string, List<string>> ValidationErrors { get; set; } = [];
 
-    public static AuthResult Success(AuthResponse response) => new AuthResult
+    public static AuthResult Success(AuthResponse response) => new()
     {
         IsSuccess = true,
         Response = response
     };
 
-    public static AuthResult Fail(string message) => new AuthResult
+    public static AuthResult Fail(string message) => new()
     {
         IsSuccess = false,
         ErrorMessage = message
     };
 
-    public static AuthResult ValidationError(Dictionary<string, List<string>> errors, string fallbackMessage = "Validation failed") => new AuthResult
+    public static AuthResult ValidationError(Dictionary<string, List<string>> errors, string fallbackMessage = "Validation failed") => new()
     {
         IsSuccess = false,
         ErrorMessage = fallbackMessage,

@@ -2,8 +2,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Layla.Desktop.Models.Manuscripts;
 using Layla.Desktop.Models.Wikis;
+using Layla.Desktop.Services;
 using Layla.Desktop.Services.Manuscripts;
-using Layla.Desktop.Services.User;
 using System.Collections.ObjectModel;
 
 namespace Layla.Desktop.ViewModels.Manuscripts;
@@ -93,24 +93,24 @@ public partial class ManuscriptEditorViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            var manuscripts = await _apiService.GetManuscriptsByProjectAsync(_projectId);
+            List<Manuscript>? manuscripts = await _apiService.GetManuscriptsByProjectAsync(_projectId);
 
             Manuscripts.Clear();
             CurrentChapters.Clear();
 
             if (manuscripts != null && manuscripts.Count > 0)
             {
-                foreach (var m in manuscripts.OrderBy(m => m.Order))
+                foreach (Manuscript? m in manuscripts.OrderBy(m => m.Order))
                     Manuscripts.Add(m);
 
                 await SelectManuscriptAsync(Manuscripts.First());
             }
             else
             {
-                var newMs = await _apiService.CreateManuscriptAsync(_projectId, "Manuscript 1", 0);
+                Manuscript? newMs = await _apiService.CreateManuscriptAsync(_projectId, "Manuscript 1", 0);
                 if (newMs != null)
                 {
-                    var firstChapter = await _apiService.CreateChapterAsync(_projectId, newMs.ManuscriptId, "Chapter 1", string.Empty, 0);
+                    Chapter? firstChapter = await _apiService.CreateChapterAsync(_projectId, newMs.ManuscriptId, "Chapter 1", string.Empty, 0);
                     if (firstChapter != null)
                         newMs.Chapters.Add(firstChapter);
 
@@ -138,10 +138,10 @@ public partial class ManuscriptEditorViewModel : ObservableObject
         SelectedManuscript = manuscript;
         CurrentChapters.Clear();
 
-        var fresh = await _apiService.GetManuscriptAsync(_projectId, manuscript.ManuscriptId);
+        Manuscript? fresh = await _apiService.GetManuscriptAsync(_projectId, manuscript.ManuscriptId);
         if (fresh != null)
         {
-            foreach (var ch in fresh.Chapters.OrderBy(c => c.Order))
+            foreach (Chapter? ch in fresh.Chapters.OrderBy(c => c.Order))
                 CurrentChapters.Add(ch);
         }
 
@@ -172,13 +172,13 @@ public partial class ManuscriptEditorViewModel : ObservableObject
     {
         if (SelectedManuscript == null) return;
 
-        var fullChapter = await _apiService.GetChapterAsync(_projectId, SelectedManuscript.ManuscriptId, chapterIndex.ChapterId);
+        Chapter? fullChapter = await _apiService.GetChapterAsync(_projectId, SelectedManuscript.ManuscriptId, chapterIndex.ChapterId);
 
         // Offline fallback: if the API is unreachable, try the local cache so the user
         // can keep editing the most recent offline copy.
         if (fullChapter == null)
         {
-            var cached = await _cache.LoadChapterAsync(SelectedManuscript.ManuscriptId, chapterIndex.ChapterId.ToString());
+            string? cached = await _cache.LoadChapterAsync(SelectedManuscript.ManuscriptId, chapterIndex.ChapterId.ToString());
             if (cached != null)
             {
                 chapterIndex.Content = cached;
@@ -196,7 +196,7 @@ public partial class ManuscriptEditorViewModel : ObservableObject
         CurrentMentions.Clear();
         if (CurrentChapter?.Mentions != null)
         {
-            foreach (var mention in CurrentChapter.Mentions)
+            foreach (Mention mention in CurrentChapter.Mentions)
                 CurrentMentions.Add(mention);
         }
 
@@ -221,11 +221,11 @@ public partial class ManuscriptEditorViewModel : ObservableObject
     [RelayCommand]
     private async Task AddManuscriptAsync()
     {
-        var order = Manuscripts.Count;
-        var newMs = await _apiService.CreateManuscriptAsync(_projectId, $"Manuscript {order + 1}", order);
+        int order = Manuscripts.Count;
+        Manuscript? newMs = await _apiService.CreateManuscriptAsync(_projectId, $"Manuscript {order + 1}", order);
         if (newMs != null)
         {
-            var firstChapter = await _apiService.CreateChapterAsync(_projectId, newMs.ManuscriptId, "Chapter 1", string.Empty, 0);
+            Chapter? firstChapter = await _apiService.CreateChapterAsync(_projectId, newMs.ManuscriptId, "Chapter 1", string.Empty, 0);
             if (firstChapter != null)
                 newMs.Chapters.Add(firstChapter);
 
@@ -243,7 +243,7 @@ public partial class ManuscriptEditorViewModel : ObservableObject
     {
         if (manuscript == null || Manuscripts.Count <= 1) return;
 
-        var deleted = await _apiService.DeleteManuscriptAsync(_projectId, manuscript.ManuscriptId);
+        bool deleted = await _apiService.DeleteManuscriptAsync(_projectId, manuscript.ManuscriptId);
         if (deleted)
         {
             Manuscripts.Remove(manuscript);
@@ -261,11 +261,11 @@ public partial class ManuscriptEditorViewModel : ObservableObject
     {
         if (SelectedManuscript == null || string.IsNullOrWhiteSpace(newTitle)) return;
 
-        var updated = await _apiService.UpdateManuscriptAsync(_projectId, SelectedManuscript.ManuscriptId, newTitle, null);
+        Manuscript? updated = await _apiService.UpdateManuscriptAsync(_projectId, SelectedManuscript.ManuscriptId, newTitle, null);
         if (updated != null)
         {
             SelectedManuscript.Title = newTitle;
-            var index = Manuscripts.IndexOf(SelectedManuscript);
+            int index = Manuscripts.IndexOf(SelectedManuscript);
             if (index >= 0)
                 Manuscripts[index] = SelectedManuscript;
         }
@@ -280,8 +280,8 @@ public partial class ManuscriptEditorViewModel : ObservableObject
     {
         if (SelectedManuscript == null) return;
 
-        var order = CurrentChapters.Count;
-        var newChapter = await _apiService.CreateChapterAsync(
+        int order = CurrentChapters.Count;
+        Chapter? newChapter = await _apiService.CreateChapterAsync(
             _projectId, SelectedManuscript.ManuscriptId,
             $"Chapter {order + 1}", string.Empty, order);
 
@@ -301,7 +301,7 @@ public partial class ManuscriptEditorViewModel : ObservableObject
     {
         if (chapter == null || SelectedManuscript == null || CurrentChapters.Count <= 1) return;
 
-        var deleted = await _apiService.DeleteChapterAsync(_projectId, SelectedManuscript.ManuscriptId, chapter.ChapterId);
+        bool deleted = await _apiService.DeleteChapterAsync(_projectId, SelectedManuscript.ManuscriptId, chapter.ChapterId);
         if (deleted)
         {
             CurrentChapters.Remove(chapter);
@@ -326,12 +326,12 @@ public partial class ManuscriptEditorViewModel : ObservableObject
         if (IsSaving || CurrentChapter == null || SelectedManuscript == null) return;
         IsSaving = true;
 
-        var manuscriptId = SelectedManuscript.ManuscriptId;
-        var chapterId = CurrentChapter.ChapterId.ToString();
+        string manuscriptId = SelectedManuscript.ManuscriptId;
+        string chapterId = CurrentChapter.ChapterId.ToString();
 
         try
         {
-            var saved = await _apiService.UpdateChapterAsync(
+            Chapter? saved = await _apiService.UpdateChapterAsync(
                 _projectId,
                 manuscriptId,
                 CurrentChapter.ChapterId,
@@ -351,7 +351,7 @@ public partial class ManuscriptEditorViewModel : ObservableObject
             if (saved.Mentions != null)
             {
                 CurrentMentions.Clear();
-                foreach (var mention in saved.Mentions)
+                foreach (Mention mention in saved.Mentions)
                     CurrentMentions.Add(mention);
             }
 
@@ -385,14 +385,14 @@ public partial class ManuscriptEditorViewModel : ObservableObject
     public async Task NavigateToChapterAsync(string manuscriptId, string chapterId)
     {
         // Switch manuscript if needed
-        var targetMs = Manuscripts.FirstOrDefault(m => m.ManuscriptId == manuscriptId);
+        Manuscript? targetMs = Manuscripts.FirstOrDefault(m => m.ManuscriptId == manuscriptId);
         if (targetMs == null) return;
 
         if (SelectedManuscript?.ManuscriptId != manuscriptId)
             await SelectManuscriptAsync(targetMs);
 
         // Switch chapter
-        var targetCh = CurrentChapters.FirstOrDefault(c => c.ChapterId.ToString() == chapterId);
+        Chapter? targetCh = CurrentChapters.FirstOrDefault(c => c.ChapterId.ToString() == chapterId);
         if (targetCh != null)
             await SelectChapterAsync(targetCh);
     }

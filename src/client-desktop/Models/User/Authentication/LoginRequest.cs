@@ -10,15 +10,15 @@ public class LoginRequest
 
     public ValidationResult Validate()
     {
-        var result = ValidationResult.Success();
+        ValidationResult? result = ValidationResult.Success();
 
-        if (!ValidationService.IsRequired(Email))
-            result.AddError(nameof(Email), "Email is required.");
-        else if (!ValidationService.IsValidEmail(Email))
-            result.AddError(nameof(Email), "Invalid email format.");
+        if (!ValidationService.IsRequired(this.Email))
+            result.AddError(nameof(this.Email), "Email is required.");
+        else if (!ValidationService.IsValidEmail(this.Email))
+            result.AddError(nameof(this.Email), "Invalid email format.");
 
-        if (!ValidationService.IsRequired(Password))
-            result.AddError(nameof(Password), "Password is required.");
+        if (!ValidationService.IsRequired(this.Password))
+            result.AddError(nameof(this.Password), "Password is required.");
 
         return result;
     }

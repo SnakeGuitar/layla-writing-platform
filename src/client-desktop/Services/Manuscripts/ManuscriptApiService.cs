@@ -1,5 +1,4 @@
 using Layla.Desktop.Models.Manuscripts;
-using Layla.Desktop.Services.User;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -18,7 +17,7 @@ public class ManuscriptApiService : IManuscriptApiService
     /// <summary>Initialises the service with a pre-configured <see cref="HttpClient"/>.</summary>
     public ManuscriptApiService()
     {
-        _httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.WorldbuildingApiUrl);
+        _httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.WORLDBUILDING_API_URL);
     }
 
     /// <summary>
@@ -27,10 +26,7 @@ public class ManuscriptApiService : IManuscriptApiService
     /// </summary>
     private void AddAuthorizationHeader()
     {
-        if (SessionManager.IsAuthenticated)
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", SessionManager.CurrentToken);
-        else
-            _httpClient.DefaultRequestHeaders.Authorization = null;
+        _httpClient.DefaultRequestHeaders.Authorization = SessionManager.IsAuthenticated ? new AuthenticationHeaderValue("Bearer", SessionManager.CurrentToken) : null;
     }
 
     /// <inheritdoc/>
@@ -39,7 +35,7 @@ public class ManuscriptApiService : IManuscriptApiService
         AddAuthorizationHeader();
         try
         {
-            var response = await _httpClient.GetAsync($"/api/manuscripts/{projectId}");
+            HttpResponseMessage? response = await _httpClient.GetAsync($"/api/manuscripts/{projectId}");
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<List<Manuscript>>();
         }
@@ -56,7 +52,7 @@ public class ManuscriptApiService : IManuscriptApiService
         AddAuthorizationHeader();
         try
         {
-            var response = await _httpClient.GetAsync($"/api/manuscripts/{projectId}/{manuscriptId}");
+            HttpResponseMessage? response = await _httpClient.GetAsync($"/api/manuscripts/{projectId}/{manuscriptId}");
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<Manuscript>();
         }
@@ -74,7 +70,7 @@ public class ManuscriptApiService : IManuscriptApiService
         try
         {
             var payload = new { title, order };
-            var response = await _httpClient.PostAsJsonAsync($"/api/manuscripts/{projectId}", payload);
+            HttpResponseMessage response = await _httpClient.PostAsJsonAsync($"/api/manuscripts/{projectId}", payload);
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<Manuscript>();
         }
@@ -92,7 +88,7 @@ public class ManuscriptApiService : IManuscriptApiService
         try
         {
             var payload = new { title, order };
-            var response = await _httpClient.PutAsJsonAsync($"/api/manuscripts/{projectId}/{manuscriptId}", payload);
+            HttpResponseMessage response = await _httpClient.PutAsJsonAsync($"/api/manuscripts/{projectId}/{manuscriptId}", payload);
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<Manuscript>();
         }
@@ -109,7 +105,7 @@ public class ManuscriptApiService : IManuscriptApiService
         AddAuthorizationHeader();
         try
         {
-            var response = await _httpClient.DeleteAsync($"/api/manuscripts/{projectId}/{manuscriptId}");
+            HttpResponseMessage response = await _httpClient.DeleteAsync($"/api/manuscripts/{projectId}/{manuscriptId}");
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
@@ -125,7 +121,7 @@ public class ManuscriptApiService : IManuscriptApiService
         AddAuthorizationHeader();
         try
         {
-            var response = await _httpClient.GetAsync($"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}");
+            HttpResponseMessage response = await _httpClient.GetAsync($"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}");
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<Chapter>();
         }
@@ -143,7 +139,7 @@ public class ManuscriptApiService : IManuscriptApiService
         try
         {
             var payload = new { title, content, order };
-            var response = await _httpClient.PostAsJsonAsync($"/api/manuscripts/{projectId}/{manuscriptId}/chapters", payload);
+            HttpResponseMessage response = await _httpClient.PostAsJsonAsync($"/api/manuscripts/{projectId}/{manuscriptId}/chapters", payload);
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<Chapter>();
         }
@@ -167,7 +163,7 @@ public class ManuscriptApiService : IManuscriptApiService
                 order,
                 clientTimestamp = clientTimestamp?.ToString("o")
             };
-            var response = await _httpClient.PutAsJsonAsync($"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}", payload);
+            HttpResponseMessage response = await _httpClient.PutAsJsonAsync($"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}", payload);
             if (response.IsSuccessStatusCode)
                 return await response.Content.ReadFromJsonAsync<Chapter>();
         }
@@ -184,7 +180,7 @@ public class ManuscriptApiService : IManuscriptApiService
         AddAuthorizationHeader();
         try
         {
-            var response = await _httpClient.DeleteAsync($"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}");
+            HttpResponseMessage response = await _httpClient.DeleteAsync($"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}");
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)

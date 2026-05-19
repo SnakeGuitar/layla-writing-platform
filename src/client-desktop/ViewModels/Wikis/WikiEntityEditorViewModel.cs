@@ -68,11 +68,11 @@ public partial class WikiEntityEditorViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            var entries = await _wikiApi.GetEntriesAsync(_projectId);
+            List<WikiEntry>? entries = await _wikiApi.GetEntriesAsync(_projectId);
             Entries.Clear();
             if (entries != null)
             {
-                foreach (var e in entries.OrderBy(e => e.EntityType).ThenBy(e => e.Name))
+                foreach (WikiEntry? e in entries.OrderBy(e => e.EntityType).ThenBy(e => e.Name))
                     Entries.Add(e);
             }
         }
@@ -95,7 +95,7 @@ public partial class WikiEntityEditorViewModel : ObservableObject
             return;
         }
 
-        var full = await _wikiApi.GetEntryAsync(_projectId, entry.EntityId);
+        WikiEntry? full = await _wikiApi.GetEntryAsync(_projectId, entry.EntityId);
         if (full != null)
         {
             Name = full.Name;
@@ -104,10 +104,10 @@ public partial class WikiEntityEditorViewModel : ObservableObject
             Tags = string.Join(", ", full.Tags);
         }
 
-        var appearances = await _wikiApi.GetEntityAppearancesAsync(_projectId, entry.EntityId);
+        List<AppearanceRecord>? appearances = await _wikiApi.GetEntityAppearancesAsync(_projectId, entry.EntityId);
         if (appearances != null)
         {
-            foreach (var a in appearances)
+            foreach (AppearanceRecord a in appearances)
                 Appearances.Add(a);
         }
     }
@@ -118,23 +118,23 @@ public partial class WikiEntityEditorViewModel : ObservableObject
     {
         if (string.IsNullOrWhiteSpace(Name)) return;
 
-        var tagList = Tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        List<string>? tagList = Tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                           .ToList();
 
         if (SelectedEntry != null)
         {
-            var updated = await _wikiApi.UpdateEntryAsync(
+            WikiEntry? updated = await _wikiApi.UpdateEntryAsync(
                 _projectId, SelectedEntry.EntityId, Name, EntityType, Description, tagList);
             if (updated != null)
             {
-                var index = Entries.IndexOf(SelectedEntry);
+                int index = Entries.IndexOf(SelectedEntry);
                 if (index >= 0) Entries[index] = updated;
                 SelectedEntry = updated;
             }
         }
         else
         {
-            var created = await _wikiApi.CreateEntryAsync(
+            WikiEntry? created = await _wikiApi.CreateEntryAsync(
                 _projectId, Name, EntityType, Description, tagList);
             if (created != null)
             {
@@ -150,7 +150,7 @@ public partial class WikiEntityEditorViewModel : ObservableObject
     {
         if (SelectedEntry == null) return;
 
-        var deleted = await _wikiApi.DeleteEntryAsync(_projectId, SelectedEntry.EntityId);
+        bool deleted = await _wikiApi.DeleteEntryAsync(_projectId, SelectedEntry.EntityId);
         if (deleted)
         {
             Entries.Remove(SelectedEntry);

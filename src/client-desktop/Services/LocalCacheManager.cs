@@ -1,6 +1,6 @@
 using System.IO;
 
-namespace Layla.Desktop.Services.User;
+namespace Layla.Desktop.Services;
 
 /// <summary>
 /// File-based offline cache for chapter RTF content.
@@ -10,7 +10,7 @@ namespace Layla.Desktop.Services.User;
 public class LocalCacheManager
 {
     private readonly string _cacheDirectory;
-    private readonly SemaphoreSlim _fileSemaphore = new SemaphoreSlim(1, 1);
+    private readonly SemaphoreSlim _fileSemaphore = new(1, 1);
 
     public LocalCacheManager()
     {
@@ -32,7 +32,7 @@ public class LocalCacheManager
     /// </summary>
     public async Task SaveChapterAsync(string manuscriptId, string chapterId, string content)
     {
-        var filePath = GetChapterPath(manuscriptId, chapterId);
+        string? filePath = GetChapterPath(manuscriptId, chapterId);
 
         await _fileSemaphore.WaitAsync();
         try
@@ -51,7 +51,7 @@ public class LocalCacheManager
     /// </summary>
     public async Task<string?> LoadChapterAsync(string manuscriptId, string chapterId)
     {
-        var filePath = GetChapterPath(manuscriptId, chapterId);
+        string? filePath = GetChapterPath(manuscriptId, chapterId);
 
         await _fileSemaphore.WaitAsync();
         try
@@ -76,7 +76,7 @@ public class LocalCacheManager
     {
         try
         {
-            var filePath = GetChapterPath(manuscriptId, chapterId);
+            string? filePath = GetChapterPath(manuscriptId, chapterId);
             if (File.Exists(filePath)) File.Delete(filePath);
         }
         catch { /* Best-effort */ }

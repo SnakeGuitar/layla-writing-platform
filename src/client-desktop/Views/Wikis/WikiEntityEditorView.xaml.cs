@@ -1,6 +1,6 @@
 using Layla.Desktop.Models.Wikis;
+using Layla.Desktop.Services;
 using Layla.Desktop.Services.Projetcs;
-using Layla.Desktop.Services.User;
 using Layla.Desktop.ViewModels.Wikis;
 using System.Windows.Controls;
 
@@ -14,7 +14,7 @@ public partial class WikiEntityEditorView : Page
     {
         InitializeComponent();
         _viewModel = ServiceLocator.GetService<WikiEntityEditorViewModel>()
-            ?? throw new InvalidOperationException("WikiEntityEditorViewModel not registered");
+            ?? throw new("WikiEntityEditorViewModel not registered");
         _viewModel.Initialize(projectId);
         DataContext = _viewModel;
 
@@ -59,7 +59,7 @@ public partial class WikiEntityEditorView : Page
     {
         try
         {
-            var entry = _viewModel.Entries.FirstOrDefault(e => e.EntityId == entityId);
+            WikiEntry? entry = _viewModel.Entries.FirstOrDefault(e => e.EntityId == entityId);
             if (entry != null)
             {
                 _viewModel.SelectedEntry = entry;

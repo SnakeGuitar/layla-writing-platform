@@ -22,7 +22,7 @@ public class Manuscript
     /// Chapter index for this manuscript.
     /// In index responses the <see cref="Chapter.Content"/> field is omitted.
     /// </summary>
-    public List<Chapter> Chapters { get; set; } = new List<Chapter>();
+    public List<Chapter> Chapters { get; set; } = new();
 
     /// <summary>UTC timestamp set by the server when the document was first created.</summary>
     public DateTime CreatedAt { get; set; }

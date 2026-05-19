@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Layla.Desktop.Services.User;
+namespace Layla.Desktop.Services;
 
 public static class ServiceLocator
 {

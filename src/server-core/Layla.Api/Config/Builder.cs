@@ -10,6 +10,16 @@ public static class Builder
 {
     public static void Configure(WebApplicationBuilder builder)
     {
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            options.ListenAnyIP(7166, listen =>
+                {
+                    listen.UseHttps("/certs/aspnetapp.pfx", "YourStrongPasswordAF");
+                });
+
+            options.ListenAnyIP(5287);
+        });
+
         builder.Services.AddControllers()
             .AddJsonOptions(options =>
             {
@@ -55,8 +65,6 @@ public static class Builder
 
         builder.Services.AddInfrastructureServices(builder.Configuration);
         builder.Services.AddSignalR();
-        builder.WebHost.UseUrls(
-            $"https://localhost:{builder.Configuration["Ports:HTTPS"]};http://localhost:{builder.Configuration["Ports:HTTP"]};");
         builder.Services.AddHealthChecks();
     }
 }

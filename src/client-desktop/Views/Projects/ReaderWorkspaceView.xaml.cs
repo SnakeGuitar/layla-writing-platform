@@ -1,5 +1,5 @@
 using Layla.Desktop.Models.Projects;
-using Layla.Desktop.Services.User;
+using Layla.Desktop.Services;
 using Layla.Desktop.ViewModels.Projects;
 using Layla.Desktop.Views.Manuscripts;
 using Layla.Desktop.Views.User;
@@ -30,7 +30,7 @@ public partial class ReaderWorkspaceView : Page
     {
         if (_viewModel.CurrentProject != null)
         {
-            var projectId = _viewModel.CurrentProject.Id;
+            Guid projectId = _viewModel.CurrentProject.Id;
             EditorFrame.Navigate(new ManuscriptEditorView(projectId, isReadOnly: true));
             WikiFrame.Navigate(new WikiEntityEditorView(projectId));
             GraphFrame.Navigate(new NarrativeGraphView(projectId));

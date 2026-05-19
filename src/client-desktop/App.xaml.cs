@@ -1,7 +1,7 @@
+using Layla.Desktop.Services;
 using Layla.Desktop.Services.Graphs;
 using Layla.Desktop.Services.Manuscripts;
 using Layla.Desktop.Services.Projetcs;
-using Layla.Desktop.Services.User;
 using Layla.Desktop.Services.User.Authentication;
 using Layla.Desktop.Services.Wikis;
 using Layla.Desktop.ViewModels.Manuscripts;
@@ -43,16 +43,16 @@ public partial class App : Application
         SessionManager.LoadSession();
         base.OnStartup(e);
 
-        var services = new ServiceCollection();
+        ServiceCollection? services = new();
         ConfigureServices(services);
-        var provider = services.BuildServiceProvider();
+        ServiceProvider? provider = services.BuildServiceProvider();
         ServiceLocator.Initialize(provider);
 
         string theme = "SpaceTheme";
         try
         {
-            if (File.Exists(ConfigPath))
-                theme = File.ReadAllText(ConfigPath).Trim();
+            if (File.Exists(this.ConfigPath))
+                theme = File.ReadAllText(this.ConfigPath).Trim();
         }
         catch { }
         ChangeTheme(theme);
@@ -70,27 +70,27 @@ public partial class App : Application
     private WindowStyle _previousWindowStyle = WindowStyle.SingleBorderWindow;
     private WindowState _previousWindowState = WindowState.Normal;
 
-    public bool IsFullscreen => _isFullscreen;
+    public bool IsFullscreen => this._isFullscreen;
 
     public void SetFullscreen(bool isFullscreen)
     {
         if (this.MainWindow == null) return;
-        if (_isFullscreen == isFullscreen) return;
+        if (this._isFullscreen == isFullscreen) return;
 
         if (isFullscreen)
         {
-            _previousWindowStyle = this.MainWindow.WindowStyle;
-            _previousWindowState = this.MainWindow.WindowState;
+            this._previousWindowStyle = this.MainWindow.WindowStyle;
+            this._previousWindowState = this.MainWindow.WindowState;
 
             this.MainWindow.WindowStyle = WindowStyle.None;
             this.MainWindow.WindowState = WindowState.Maximized;
-            _isFullscreen = true;
+            this._isFullscreen = true;
         }
         else
         {
-            this.MainWindow.WindowStyle = _previousWindowStyle;
-            this.MainWindow.WindowState = _previousWindowState;
-            _isFullscreen = false;
+            this.MainWindow.WindowStyle = this._previousWindowStyle;
+            this.MainWindow.WindowState = this._previousWindowState;
+            this._isFullscreen = false;
         }
     }
 
@@ -100,9 +100,9 @@ public partial class App : Application
 
         if (e.Key == Key.F11)
         {
-            SetFullscreen(!_isFullscreen);
+            SetFullscreen(!this._isFullscreen);
         }
-        else if (e.Key == Key.Escape && _isFullscreen)
+        else if (e.Key == Key.Escape && this._isFullscreen)
         {
             SetFullscreen(false);
         }
@@ -110,27 +110,27 @@ public partial class App : Application
 
     public void ChangeTheme(string theme)
     {
-        CurrentTheme = theme;
+        this.CurrentTheme = theme;
         try
         {
-            var dir = Path.GetDirectoryName(ConfigPath);
+            string? dir = Path.GetDirectoryName(this.ConfigPath);
             if (!Directory.Exists(dir)) Directory.CreateDirectory(dir!);
-            File.WriteAllText(ConfigPath, theme);
+            File.WriteAllText(this.ConfigPath, theme);
         }
         catch { }
 
-        var existingTheme = Resources.MergedDictionaries.FirstOrDefault(d => d.Source != null && d.Source.OriginalString.StartsWith("Themes/"));
+        ResourceDictionary? existingTheme = this.Resources.MergedDictionaries.FirstOrDefault(d => d.Source != null && d.Source.OriginalString.StartsWith("Themes/"));
         if (existingTheme != null)
         {
-            Resources.MergedDictionaries.Remove(existingTheme);
+            this.Resources.MergedDictionaries.Remove(existingTheme);
         }
-        Resources.MergedDictionaries.Add(new ResourceDictionary
+        this.Resources.MergedDictionaries.Add(new()
         {
-            Source = new Uri($"Themes/{theme}.xaml", UriKind.Relative)
+            Source = new($"Themes/{theme}.xaml", UriKind.Relative)
         });
 
-        PaletteHelper paletteHelper = new PaletteHelper();
-        var materialTheme = paletteHelper.GetTheme();
+        PaletteHelper paletteHelper = new();
+        Theme? materialTheme = paletteHelper.GetTheme();
         if (theme == "LightTheme")
         {
             materialTheme.SetBaseTheme(BaseTheme.Light);

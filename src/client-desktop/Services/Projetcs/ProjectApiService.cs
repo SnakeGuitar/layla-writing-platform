@@ -1,5 +1,4 @@
 using Layla.Desktop.Models.Projects;
-using Layla.Desktop.Services.User;
 using Microsoft.AspNetCore.SignalR.Client;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -19,19 +18,12 @@ public class ProjectApiService : IProjectApiService
 
     public ProjectApiService()
     {
-        _httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.ServerCoreUrl);
+        _httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.SERVER_CORE_URL);
     }
 
     private void AddAuthorizationHeader()
     {
-        if (SessionManager.IsAuthenticated)
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", SessionManager.CurrentToken);
-        }
-        else
-        {
-            _httpClient.DefaultRequestHeaders.Authorization = null;
-        }
+        _httpClient.DefaultRequestHeaders.Authorization = SessionManager.IsAuthenticated ? new AuthenticationHeaderValue("Bearer", SessionManager.CurrentToken) : null;
     }
 
     public async Task<IEnumerable<Project>?> GetMyProjectsAsync()
@@ -39,10 +31,10 @@ public class ProjectApiService : IProjectApiService
         AddAuthorizationHeader();
         try
         {
-            var response = await _httpClient.GetAsync("/api/projects");
+            HttpResponseMessage response = await _httpClient.GetAsync("/api/projects");
             if (response.IsSuccessStatusCode)
             {
-                var projects = await response.Content.ReadFromJsonAsync<IEnumerable<Project>>();
+                IEnumerable<Project>? projects = await response.Content.ReadFromJsonAsync<IEnumerable<Project>>();
                 if (projects != null) return projects;
             }
         }
@@ -55,7 +47,7 @@ public class ProjectApiService : IProjectApiService
         AddAuthorizationHeader();
         try
         {
-            var response = await _httpClient.PostAsJsonAsync("/api/projects", request);
+            HttpResponseMessage response = await _httpClient.PostAsJsonAsync("/api/projects", request);
             if (response.IsSuccessStatusCode) return await response.Content.ReadFromJsonAsync<Project>();
         }
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error creating project: {ex.Message}"); }
@@ -67,7 +59,7 @@ public class ProjectApiService : IProjectApiService
         AddAuthorizationHeader();
         try
         {
-            var response = await _httpClient.PutAsJsonAsync($"/api/projects/{id}", request);
+            HttpResponseMessage response = await _httpClient.PutAsJsonAsync($"/api/projects/{id}", request);
             if (response.IsSuccessStatusCode) return await response.Content.ReadFromJsonAsync<Project>();
         }
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error updating project: {ex.Message}"); }
@@ -79,7 +71,7 @@ public class ProjectApiService : IProjectApiService
         AddAuthorizationHeader();
         try
         {
-            var response = await _httpClient.DeleteAsync($"/api/projects/{id}");
+            HttpResponseMessage response = await _httpClient.DeleteAsync($"/api/projects/{id}");
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error deleting project: {ex.Message}"); }
@@ -90,7 +82,7 @@ public class ProjectApiService : IProjectApiService
     {
         try
         {
-            var response = await _httpClient.GetAsync("/api/projects/public");
+            HttpResponseMessage response = await _httpClient.GetAsync("/api/projects/public");
             if (response.IsSuccessStatusCode) return await response.Content.ReadFromJsonAsync<IEnumerable<Project>>();
         }
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error retrieving public projects: {ex.Message}"); }
@@ -102,7 +94,7 @@ public class ProjectApiService : IProjectApiService
         AddAuthorizationHeader();
         try
         {
-            var response = await _httpClient.GetAsync($"/api/projects/{id}");
+            HttpResponseMessage response = await _httpClient.GetAsync($"/api/projects/{id}");
             if (response.IsSuccessStatusCode) return await response.Content.ReadFromJsonAsync<Project>();
         }
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error retrieving project: {ex.Message}"); }
@@ -114,7 +106,7 @@ public class ProjectApiService : IProjectApiService
         AddAuthorizationHeader();
         try
         {
-            var response = await _httpClient.PostAsync($"/api/projects/{projectId}/join", null);
+            HttpResponseMessage response = await _httpClient.PostAsync($"/api/projects/{projectId}/join", null);
             if (response.IsSuccessStatusCode) return await response.Content.ReadFromJsonAsync<Collaborator>();
         }
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error joining project: {ex.Message}"); }
@@ -126,7 +118,7 @@ public class ProjectApiService : IProjectApiService
         AddAuthorizationHeader();
         try
         {
-            var response = await _httpClient.PostAsJsonAsync($"/api/projects/{projectId}/collaborators", request);
+            HttpResponseMessage response = await _httpClient.PostAsJsonAsync($"/api/projects/{projectId}/collaborators", request);
             if (response.IsSuccessStatusCode) return await response.Content.ReadFromJsonAsync<Collaborator>();
         }
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error inviting collaborator: {ex.Message}"); }
@@ -138,7 +130,7 @@ public class ProjectApiService : IProjectApiService
         AddAuthorizationHeader();
         try
         {
-            var response = await _httpClient.GetAsync($"/api/projects/{projectId}/collaborators");
+            HttpResponseMessage response = await _httpClient.GetAsync($"/api/projects/{projectId}/collaborators");
             if (response.IsSuccessStatusCode) return await response.Content.ReadFromJsonAsync<IEnumerable<Collaborator>>();
         }
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error retrieving collaborators: {ex.Message}"); }
@@ -150,7 +142,7 @@ public class ProjectApiService : IProjectApiService
         AddAuthorizationHeader();
         try
         {
-            var response = await _httpClient.DeleteAsync($"/api/projects/{projectId}/collaborators/{collaboratorUserId}");
+            HttpResponseMessage response = await _httpClient.DeleteAsync($"/api/projects/{projectId}/collaborators/{collaboratorUserId}");
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error removing collaborator: {ex.Message}"); }
@@ -162,7 +154,7 @@ public class ProjectApiService : IProjectApiService
         if (_presenceHub != null) return;
 
         _presenceHub = new HubConnectionBuilder()
-            .WithUrl($"{ConfigurationService.ServerCoreUrl}/hubs/presence", options =>
+            .WithUrl($"{ConfigurationService.SERVER_CORE_URL}/hubs/presence", options =>
             {
                 if (SessionManager.IsAuthenticated)
                     options.AccessTokenProvider = () => Task.FromResult<string?>(SessionManager.CurrentToken);

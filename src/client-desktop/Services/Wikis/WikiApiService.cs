@@ -1,5 +1,4 @@
 using Layla.Desktop.Models.Wikis;
-using Layla.Desktop.Services.User;
 using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Json;
@@ -13,7 +12,7 @@ public class WikiApiService : IWikiApiService
 
     public WikiApiService()
     {
-        _httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.WorldbuildingApiUrl);
+        _httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.WORLDBUILDING_API_URL);
     }
 
     private void AddAuthorizationHeader()
@@ -30,7 +29,7 @@ public class WikiApiService : IWikiApiService
         try
         {
             AddAuthorizationHeader();
-            var url = $"/api/wiki/{projectId}/entries";
+            string url = $"/api/wiki/{projectId}/entries";
             if (!string.IsNullOrEmpty(entityType))
                 url += $"?type={Uri.EscapeDataString(entityType)}";
 
@@ -65,7 +64,7 @@ public class WikiApiService : IWikiApiService
         {
             AddAuthorizationHeader();
             var payload = new { name, entityType, description = description ?? "", tags = tags ?? new List<string>() };
-            var response = await _httpClient.PostAsJsonAsync($"/api/wiki/{projectId}/entries", payload);
+            HttpResponseMessage? response = await _httpClient.PostAsJsonAsync($"/api/wiki/{projectId}/entries", payload);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<WikiEntry>();
         }
@@ -82,13 +81,13 @@ public class WikiApiService : IWikiApiService
         try
         {
             AddAuthorizationHeader();
-            var payload = new Dictionary<string, object>();
+            Dictionary<string, object>? payload = new();
             if (name != null) payload["name"] = name;
             if (entityType != null) payload["entityType"] = entityType;
             if (description != null) payload["description"] = description;
             if (tags != null) payload["tags"] = tags;
 
-            var response = await _httpClient.PutAsJsonAsync($"/api/wiki/{projectId}/entries/{entityId}", payload);
+            HttpResponseMessage? response = await _httpClient.PutAsJsonAsync($"/api/wiki/{projectId}/entries/{entityId}", payload);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadFromJsonAsync<WikiEntry>();
         }
@@ -105,7 +104,7 @@ public class WikiApiService : IWikiApiService
         try
         {
             AddAuthorizationHeader();
-            var response = await _httpClient.DeleteAsync($"/api/wiki/{projectId}/entries/{entityId}");
+            HttpResponseMessage? response = await _httpClient.DeleteAsync($"/api/wiki/{projectId}/entries/{entityId}");
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)

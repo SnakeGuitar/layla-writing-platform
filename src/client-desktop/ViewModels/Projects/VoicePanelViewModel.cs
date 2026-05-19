@@ -1,9 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Layla.Desktop.Models;
 using Layla.Desktop.Models.Projects;
+using Layla.Desktop.Services;
 using Layla.Desktop.Services.Projetcs;
-using Layla.Desktop.Services.User;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Media;
@@ -65,7 +64,7 @@ public partial class VoicePanelViewModel : ObservableObject
     {
         try
         {
-            var api = ServiceLocator.GetService<IProjectApiService>();
+            IProjectApiService? api = ServiceLocator.GetService<IProjectApiService>();
             if (api == null) return;
 
             api.ParticipantsUpdated += OnParticipantsUpdated;
@@ -86,7 +85,7 @@ public partial class VoicePanelViewModel : ObservableObject
             App.Current.Dispatcher.Invoke(() =>
             {
                 OnlineParticipants.Clear();
-                foreach (var p in participants)
+                foreach (ParticipantPresence p in participants)
                     OnlineParticipants.Add(p);
                 IsOnlineParticipantsVisible = OnlineParticipants.Count > 0;
             });
@@ -135,7 +134,8 @@ public partial class VoicePanelViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"Error leaving room: {ex.Message}", "Voice Error",
+            MessageBox.Show(
+                $"Error leaving room: {ex.Message}", "Voice Error",
                 MessageBoxButton.OK, MessageBoxImage.Warning);
         }
     }
@@ -145,7 +145,7 @@ public partial class VoicePanelViewModel : ObservableObject
     {
         if (_voice == null || !_voice.IsConnected) return;
 
-        var localUser = Participants.FirstOrDefault(p => p.UserId == SessionManager.CurrentUserId);
+        VoiceParticipantViewModel? localUser = Participants.FirstOrDefault(p => p.UserId == SessionManager.CurrentUserId);
         if (localUser?.Role == "Reader")
         {
             PttStatusText = "Listen only mode";
@@ -194,7 +194,7 @@ public partial class VoicePanelViewModel : ObservableObject
         _voice.RoomStateReceived += participants =>
         {
             Participants.Clear();
-            foreach (var p in participants)
+            foreach (ParticipantInfo p in participants)
                 Participants.Add(new VoiceParticipantViewModel(p.UserId, p.DisplayName, p.IsSpeaking, p.Role));
 
             IsEmptyRoomVisible = Participants.Count == 0;
@@ -210,7 +210,7 @@ public partial class VoicePanelViewModel : ObservableObject
 
         _voice.ParticipantLeft += userId =>
         {
-            var p = Participants.FirstOrDefault(x => x.UserId == userId);
+            VoiceParticipantViewModel? p = Participants.FirstOrDefault(x => x.UserId == userId);
             if (p != null) Participants.Remove(p);
 
             IsEmptyRoomVisible = Participants.Count == 0;
@@ -218,13 +218,13 @@ public partial class VoicePanelViewModel : ObservableObject
 
         _voice.SpeakerStarted += (userId, _) =>
         {
-            var p = Participants.FirstOrDefault(x => x.UserId == userId);
+            VoiceParticipantViewModel? p = Participants.FirstOrDefault(x => x.UserId == userId);
             if (p != null) p.IsSpeaking = true;
         };
 
         _voice.SpeakerStopped += userId =>
         {
-            var p = Participants.FirstOrDefault(x => x.UserId == userId);
+            VoiceParticipantViewModel? p = Participants.FirstOrDefault(x => x.UserId == userId);
             if (p != null) p.IsSpeaking = false;
         };
     }

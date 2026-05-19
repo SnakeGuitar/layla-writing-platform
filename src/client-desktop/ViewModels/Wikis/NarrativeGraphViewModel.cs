@@ -89,26 +89,26 @@ public partial class NarrativeGraphViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            var result = await _graphApi.GetGraphAsync(_projectId);
+            GraphResult? result = await _graphApi.GetGraphAsync(_projectId);
             if (result == null) return;
 
             Nodes.Clear();
             Edges.Clear();
 
-            var nodeMap = new Dictionary<string, GraphNode>();
+            Dictionary<string, GraphNode> nodeMap = new();
 
             ArrangeCircular(result.Nodes, 600, 400, Math.Min(300, Math.Max(120, result.Nodes.Count * 35)));
 
-            foreach (var node in result.Nodes)
+            foreach (GraphNode node in result.Nodes)
             {
                 Nodes.Add(node);
                 nodeMap[node.EntityId] = node;
             }
 
-            foreach (var edge in result.Edges)
+            foreach (GraphEdge edge in result.Edges)
             {
-                if (nodeMap.TryGetValue(edge.SourceId, out var source) &&
-                    nodeMap.TryGetValue(edge.TargetId, out var target))
+                if (nodeMap.TryGetValue(edge.SourceId, out GraphNode? source) &&
+                    nodeMap.TryGetValue(edge.TargetId, out GraphNode? target))
                 {
                     edge.Source = source;
                     edge.Target = target;
@@ -140,11 +140,11 @@ public partial class NarrativeGraphViewModel : ObservableObject
 
         try
         {
-            var entries = await _wikiApi.GetEntriesAsync(_projectId);
+            List<WikiEntry>? entries = await _wikiApi.GetEntriesAsync(_projectId);
             AvailableEntities.Clear();
             if (entries != null)
             {
-                foreach (var e in entries.OrderBy(e => e.Name))
+                foreach (WikiEntry? e in entries.OrderBy(e => e.Name))
                     AvailableEntities.Add(e);
             }
         }
@@ -175,8 +175,8 @@ public partial class NarrativeGraphViewModel : ObservableObject
             return;
         }
 
-        var label = string.IsNullOrWhiteSpace(NewRelLabel) ? NewRelType : NewRelLabel;
-        var success = await _graphApi.CreateRelationshipAsync(
+        string label = string.IsNullOrWhiteSpace(NewRelLabel) ? NewRelType : NewRelLabel;
+        bool success = await _graphApi.CreateRelationshipAsync(
             _projectId, NewRelSource.EntityId, NewRelTarget.EntityId, NewRelType, label);
 
         if (success)
@@ -196,13 +196,13 @@ public partial class NarrativeGraphViewModel : ObservableObject
     {
         if (edge == null) return;
 
-        var confirm = MessageBox.Show(
+        MessageBoxResult confirm = MessageBox.Show(
             $"Delete relationship \"{edge.Label}\" between nodes?",
             "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
         if (confirm != MessageBoxResult.Yes) return;
 
-        var success = await _graphApi.DeleteRelationshipAsync(
+        bool success = await _graphApi.DeleteRelationshipAsync(
             _projectId, edge.SourceId, edge.TargetId);
 
         if (success)
@@ -232,10 +232,10 @@ public partial class NarrativeGraphViewModel : ObservableObject
         double angleStep = 2 * Math.PI / nodes.Count;
         for (int i = 0; i < nodes.Count; i++)
         {
-            double angle = i * angleStep - Math.PI / 2;
+            double angle = (i * angleStep) - (Math.PI / 2);
             nodes[i].Center = new Point(
-                cx + radius * Math.Cos(angle),
-                cy + radius * Math.Sin(angle));
+                cx + (radius * Math.Cos(angle)),
+                cy + (radius * Math.Sin(angle)));
         }
     }
 }

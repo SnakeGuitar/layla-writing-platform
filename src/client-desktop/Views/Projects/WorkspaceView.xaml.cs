@@ -1,6 +1,6 @@
 using Layla.Desktop.Models.Projects;
+using Layla.Desktop.Services;
 using Layla.Desktop.Services.Projetcs;
-using Layla.Desktop.Services.User;
 using Layla.Desktop.ViewModels.Projects;
 using Layla.Desktop.Views.Manuscripts;
 using Layla.Desktop.Views.User;
@@ -36,7 +36,7 @@ public partial class WorkspaceView : Page
     {
         if (_viewModel.CurrentProject != null)
         {
-            var projectId = _viewModel.CurrentProject.Id;
+            Guid projectId = _viewModel.CurrentProject.Id;
             _editorView = new ManuscriptEditorView(projectId);
             _wikiView = new WikiEntityEditorView(projectId);
             _graphView = new NarrativeGraphView(projectId);
@@ -74,7 +74,7 @@ public partial class WorkspaceView : Page
         Dispatcher.Invoke(() =>
         {
             // Switch to Wiki tab (index 1)
-            var tabControl = FindTabControl();
+            TabControl? tabControl = FindTabControl();
             if (tabControl != null)
                 tabControl.SelectedIndex = 1;
 
@@ -87,7 +87,7 @@ public partial class WorkspaceView : Page
         Dispatcher.Invoke(() =>
         {
             // Switch to Editor tab (index 0)
-            var tabControl = FindTabControl();
+            TabControl? tabControl = FindTabControl();
             if (tabControl != null)
                 tabControl.SelectedIndex = 0;
 
@@ -100,7 +100,7 @@ public partial class WorkspaceView : Page
         Dispatcher.Invoke(() =>
         {
             // Switch to Graph tab (index 2)
-            var tabControl = FindTabControl();
+            TabControl? tabControl = FindTabControl();
             if (tabControl != null)
                 tabControl.SelectedIndex = 2;
         });
@@ -116,9 +116,9 @@ public partial class WorkspaceView : Page
         int count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent);
         for (int i = 0; i < count; i++)
         {
-            var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+            DependencyObject child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
             if (child is T found) return found;
-            var result = FindChild<T>(child);
+            T? result = FindChild<T>(child);
             if (result != null) return result;
         }
         return null;

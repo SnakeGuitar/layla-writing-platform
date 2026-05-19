@@ -79,11 +79,11 @@ public partial class ProjectListViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            var result = await _projectApiService.GetMyProjectsAsync();
+            IEnumerable<Project>? result = await _projectApiService.GetMyProjectsAsync();
             Projects.Clear();
             if (result != null)
             {
-                foreach (var project in result)
+                foreach (Project project in result)
                 {
                     Projects.Add(project);
                 }
@@ -124,7 +124,7 @@ public partial class ProjectListViewModel : ObservableObject
 
         try
         {
-            CreateProjectRequest request = new CreateProjectRequest
+            CreateProjectRequest request = new()
             {
                 Title = NewProjectTitle,
                 LiteraryGenre = NewProjectGenre,
@@ -132,7 +132,7 @@ public partial class ProjectListViewModel : ObservableObject
                 IsPublic = NewProjectIsPublic
             };
 
-            var newProject = await _projectApiService.CreateProjectAsync(request);
+            Project? newProject = await _projectApiService.CreateProjectAsync(request);
             if (newProject != null)
             {
                 IsCreateModalVisible = false;
@@ -175,7 +175,7 @@ public partial class ProjectListViewModel : ObservableObject
 
         try
         {
-            var request = new UpdateProjectRequest
+            UpdateProjectRequest? request = new()
             {
                 Title = EditProjectTitle,
                 LiteraryGenre = EditProjectGenre,
@@ -183,7 +183,7 @@ public partial class ProjectListViewModel : ObservableObject
                 IsPublic = EditProjectIsPublic
             };
 
-            var updated = await _projectApiService.UpdateProjectAsync(_editingProjectId, request);
+            Project? updated = await _projectApiService.UpdateProjectAsync(_editingProjectId, request);
             if (updated != null)
             {
                 IsEditModalVisible = false;
@@ -203,7 +203,7 @@ public partial class ProjectListViewModel : ObservableObject
     [RelayCommand]
     private async Task DeleteProjectAsync(Project project)
     {
-        var result = MessageBox.Show($"Are you sure you want to delete '{project.Title}'?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+        MessageBoxResult result = MessageBox.Show($"Are you sure you want to delete '{project.Title}'?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Warning);
         if (result == MessageBoxResult.Yes)
         {
             bool deleted = await _projectApiService.DeleteProjectAsync(project.Id);

@@ -126,7 +126,6 @@ services:
       - ASPNETCORE_ENVIRONMENT=${CORE_ENVIRONMENT}
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/app/certs/aspnetapp.pfx
       - ASPNETCORE_Kestrel__Certificates__Default__Password=YourStrongPasswordAF
-      - ASPNETCORE_URLS=https://+:${CORE_PORT_HTTPS};http://+:${CORE_PORT_HTTP}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${CORE_PORT_HTTP}/health"]
       interval: 30s
@@ -138,6 +137,9 @@ services:
       rabbitmq:
         condition: service_healthy
     restart: unless-stopped
+    volumes:
+      - ./server-core/Layla.Api/Certs:/app/certs:ro
+
 
   # --- 6. Web app - (.NET) ---
   layla-web:

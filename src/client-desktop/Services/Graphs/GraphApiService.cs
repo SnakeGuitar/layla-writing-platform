@@ -1,8 +1,6 @@
 using Layla.Desktop.Models.Graphs;
-using Layla.Desktop.Services.User;
 using System.Diagnostics;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
 namespace Layla.Desktop.Services.Graphs;
@@ -14,14 +12,14 @@ public class GraphApiService : IGraphApiService
 
     public GraphApiService()
     {
-        _httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.WorldbuildingApiUrl);
+        this._httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.WORLDBUILDING_API_URL);
     }
 
     private void AddAuthorizationHeader()
     {
-        _httpClient.DefaultRequestHeaders.Authorization =
+        this._httpClient.DefaultRequestHeaders.Authorization =
             SessionManager.IsAuthenticated
-                ? new AuthenticationHeaderValue("Bearer", SessionManager.CurrentToken)
+                ? new("Bearer", SessionManager.CurrentToken)
                 : null;
     }
 
@@ -31,11 +29,11 @@ public class GraphApiService : IGraphApiService
         try
         {
             AddAuthorizationHeader();
-            var url = $"/api/graph/{projectId}";
+            string? url = $"/api/graph/{projectId}";
             if (!string.IsNullOrEmpty(entityType))
                 url += $"?type={Uri.EscapeDataString(entityType)}";
 
-            return await _httpClient.GetFromJsonAsync<GraphResult>(url);
+            return await this._httpClient.GetFromJsonAsync<GraphResult>(url);
         }
         catch (Exception ex)
         {
@@ -50,8 +48,9 @@ public class GraphApiService : IGraphApiService
         try
         {
             AddAuthorizationHeader();
-            var payload = new { sourceEntityId, targetEntityId, type, label = label ?? type };
-            var response = await _httpClient.PostAsJsonAsync($"/api/graph/{projectId}/relationships", payload);
+            var payload =
+                new { sourceEntityId, targetEntityId, type, label = label ?? type };
+            HttpResponseMessage? response = await this._httpClient.PostAsJsonAsync($"/api/graph/{projectId}/relationships", payload);
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
@@ -67,11 +66,11 @@ public class GraphApiService : IGraphApiService
         try
         {
             AddAuthorizationHeader();
-            var request = new HttpRequestMessage(HttpMethod.Delete, $"/api/graph/{projectId}/relationships")
+            HttpRequestMessage request = new(HttpMethod.Delete, $"/api/graph/{projectId}/relationships")
             {
                 Content = JsonContent.Create(new { sourceEntityId, targetEntityId })
             };
-            var response = await _httpClient.SendAsync(request);
+            HttpResponseMessage response = await this._httpClient.SendAsync(request);
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)

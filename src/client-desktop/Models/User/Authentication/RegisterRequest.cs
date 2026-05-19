@@ -11,7 +11,7 @@ public class RegisterRequest
 
     public ValidationResult Validate()
     {
-        var result = ValidationResult.Success();
+        ValidationResult? result = ValidationResult.Success();
 
         if (!ValidationService.IsRequired(Email))
             result.AddError(nameof(Email), "Email is required.");

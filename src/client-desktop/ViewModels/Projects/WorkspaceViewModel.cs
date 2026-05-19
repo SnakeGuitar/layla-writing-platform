@@ -1,9 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Layla.Desktop.Models;
 using Layla.Desktop.Models.Projects;
+using Layla.Desktop.Services;
 using Layla.Desktop.Services.Projetcs;
-using Layla.Desktop.Services.User;
 using System.Collections.ObjectModel;
 using System.Windows;
 
@@ -120,11 +119,11 @@ public partial class WorkspaceViewModel : ObservableObject
 
         try
         {
-            var result = await _projectApiService.GetCollaboratorsAsync(CurrentProject.Id);
+            IEnumerable<Collaborator>? result = await _projectApiService.GetCollaboratorsAsync(CurrentProject.Id);
             Collaborators.Clear();
             if (result != null)
             {
-                foreach (var c in result)
+                foreach (Collaborator c in result)
                     Collaborators.Add(c);
             }
         }
@@ -150,13 +149,13 @@ public partial class WorkspaceViewModel : ObservableObject
 
         try
         {
-            var request = new InviteCollaboratorRequest
+            InviteCollaboratorRequest request = new()
             {
                 Email = InviteEmail,
                 Role = "READER"
             };
 
-            var result = await _projectApiService.InviteCollaboratorAsync(CurrentProject.Id, request);
+            Collaborator? result = await _projectApiService.InviteCollaboratorAsync(CurrentProject.Id, request);
             if (result != null)
             {
                 InviteEmail = string.Empty;
@@ -182,12 +181,12 @@ public partial class WorkspaceViewModel : ObservableObject
     {
         if (CurrentProject == null) return;
 
-        var confirm = MessageBox.Show($"Remove {collaborator.DisplayName ?? collaborator.Email} from this project?",
+        MessageBoxResult confirm = MessageBox.Show($"Remove {collaborator.DisplayName ?? collaborator.Email} from this project?",
             "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Question);
 
         if (confirm == MessageBoxResult.Yes)
         {
-            var success = await _projectApiService.RemoveCollaboratorAsync(CurrentProject.Id, collaborator.UserId);
+            bool success = await _projectApiService.RemoveCollaboratorAsync(CurrentProject.Id, collaborator.UserId);
             if (success)
                 await LoadCollaboratorsAsync();
             else

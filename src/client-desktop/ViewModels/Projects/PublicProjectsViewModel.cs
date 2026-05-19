@@ -34,11 +34,11 @@ public partial class PublicProjectsViewModel : ObservableObject
         IsLoading = true;
         try
         {
-            var result = await _projectApiService.GetPublicProjectsAsync();
+            IEnumerable<Project>? result = await _projectApiService.GetPublicProjectsAsync();
             PublicProjects.Clear();
             if (result != null)
             {
-                foreach (var project in result)
+                foreach (Project project in result)
                 {
                     PublicProjects.Add(project);
                 }
@@ -59,7 +59,7 @@ public partial class PublicProjectsViewModel : ObservableObject
     {
         try
         {
-            var result = await _projectApiService.JoinPublicProjectAsync(project.Id);
+            Collaborator? result = await _projectApiService.JoinPublicProjectAsync(project.Id);
             if (result != null)
             {
                 MessageBox.Show($"You joined '{project.Title}' as a reader!", "Joined", MessageBoxButton.OK, MessageBoxImage.Information);

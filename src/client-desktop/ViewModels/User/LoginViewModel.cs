@@ -1,14 +1,17 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Layla.Desktop.Models.User.Authentication;
-using Layla.Desktop.Services.User;
+using Layla.Desktop.Services;
+using Layla.Desktop.Services.Logger;
 using Layla.Desktop.Services.User.Authentication;
+using Microsoft.Extensions.Logging;
 
 namespace Layla.Desktop.ViewModels.User;
 
 public partial class LoginViewModel : ObservableObject
 {
     private readonly IAuthService _authService;
+    private readonly ILogger<LoginViewModel> _logger;
 
     [ObservableProperty]
     private string _email = string.Empty;
@@ -28,19 +31,21 @@ public partial class LoginViewModel : ObservableObject
     public LoginViewModel(IAuthService authService)
     {
         _authService = authService;
+        _logger = Log.For<LoginViewModel>();
     }
 
     [RelayCommand]
     private async Task SignInAsync()
     {
+        this._logger.LogTrace("SignUpAsync: Entering.");
         ErrorMessage = string.Empty;
         IsLoggingIn = true;
         LoginButtonContent = "Signing in...";
 
         try
         {
-            var request = new LoginRequest { Email = Email, Password = Password };
-            var response = await _authService.LoginAsync(request);
+            LoginRequest request = new() { Email = Email, Password = Password };
+            AuthResult response = await _authService.LoginAsync(request);
 
             if (response.IsSuccess && response.Response != null)
             {

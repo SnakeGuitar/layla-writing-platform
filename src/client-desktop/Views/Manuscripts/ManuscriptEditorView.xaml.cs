@@ -1,9 +1,12 @@
 using Layla.Desktop.Models.Manuscripts;
 using Layla.Desktop.Models.Wikis;
+using Layla.Desktop.Services;
 using Layla.Desktop.Services.Projetcs;
-using Layla.Desktop.Services.User;
 using Layla.Desktop.ViewModels.Manuscripts;
+using Microsoft.Win32;
+using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -25,7 +28,7 @@ public partial class ManuscriptEditorView : Page
     private bool _isLoaded = false;
     private bool _isReadOnly = false;
     private bool _suppressToolbarSync = false;
-    private System.Threading.Timer? _debounceTimer;
+    private Timer? _debounceTimer;
 
     private AdornerLayer? _adornerLayer;
     private ImageResizerAdorner? _currentAdorner;
@@ -36,11 +39,13 @@ public partial class ManuscriptEditorView : Page
     private static readonly double[] FontSizes = { 8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 72 };
 
     private static readonly Color[] PaletteColors = {
-        Colors.Black, Colors.DarkSlateGray, Colors.DimGray, Colors.Gray, Colors.DarkGray, Colors.Silver, Colors.LightGray, Colors.White,
-        Colors.DarkRed, Colors.Red, Colors.OrangeRed, Colors.Orange, Colors.Gold, Colors.Yellow, Colors.GreenYellow, Colors.LawnGreen,
-        Colors.DarkGreen, Colors.Green, Colors.MediumSeaGreen, Colors.Teal, Colors.DarkCyan, Colors.DeepSkyBlue, Colors.DodgerBlue, Colors.Blue,
-        Colors.DarkBlue, Colors.Navy, Colors.Indigo, Colors.DarkViolet, Colors.Purple, Colors.MediumOrchid, Colors.HotPink, Colors.Crimson,
-        Colors.SaddleBrown, Colors.Sienna, Colors.Chocolate, Colors.Peru, Colors.DarkGoldenrod, Colors.Goldenrod, Colors.Tan, Colors.BlanchedAlmond,
+        Colors.Black,           Colors.DarkSlateGray,   Colors.DimGray,     Colors.Gray,        Colors.DarkGray,    Colors.Silver,
+        Colors.LightGray,       Colors.White,           Colors.DarkRed,     Colors.Red,         Colors.OrangeRed,   Colors.Orange,
+        Colors.Gold,            Colors.Yellow,          Colors.GreenYellow, Colors.LawnGreen,   Colors.DarkGreen,   Colors.Green,
+        Colors.MediumSeaGreen,  Colors.Teal,            Colors.DarkCyan,    Colors.DeepSkyBlue, Colors.DodgerBlue,  Colors.Blue,
+        Colors.DarkBlue,        Colors.Navy,            Colors.Indigo,      Colors.DarkViolet,  Colors.Purple,      Colors.MediumOrchid,
+        Colors.HotPink,         Colors.Crimson,         Colors.SaddleBrown, Colors.Sienna,      Colors.Chocolate,   Colors.Peru,
+        Colors.DarkGoldenrod,   Colors.Goldenrod,       Colors.Tan,         Colors.BlanchedAlmond,
     };
 
     /// <summary>
@@ -56,7 +61,8 @@ public partial class ManuscriptEditorView : Page
     {
         InitializeComponent();
         _isReadOnly = isReadOnly;
-        _viewModel = ServiceLocator.GetService<ManuscriptEditorViewModel>() ?? throw new InvalidOperationException("ViewModel not found");
+        _viewModel = ServiceLocator.GetService<ManuscriptEditorViewModel>() ??
+            throw new InvalidOperationException("ViewModel not found");
         DataContext = _viewModel;
         _viewModel.Initialize(projectId);
         _viewModel.ContentReloadRequested += OnContentReloadRequested;
@@ -77,13 +83,13 @@ public partial class ManuscriptEditorView : Page
             if (_isReadOnly)
             {
                 EditorRichTextBox.IsReadOnly = true;
-                foreach (var child in GetVisualChildren<ToolBarTray>(this))
+                foreach (ToolBarTray child in GetVisualChildren<ToolBarTray>(this))
                     child.Visibility = Visibility.Collapsed;
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"OnLoaded failed: {ex.Message}");
+            Debug.WriteLine($"OnLoaded failed: {ex.Message}");
         }
     }
 
@@ -93,9 +99,9 @@ public partial class ManuscriptEditorView : Page
     /// </summary>
     private void InitializeFontFamilyComboBox()
     {
-        var families = Fonts.SystemFontFamilies.OrderBy(f => f.Source).ToList();
+        List<FontFamily> families = Fonts.SystemFontFamilies.OrderBy(f => f.Source).ToList();
         FontFamilyComboBox.ItemsSource = families;
-        var segoe = families.FirstOrDefault(f => f.Source == "Segoe UI");
+        FontFamily? segoe = families.FirstOrDefault(f => f.Source == "Segoe UI");
         FontFamilyComboBox.SelectedItem = segoe ?? families.FirstOrDefault();
     }
 
@@ -131,8 +137,8 @@ public partial class ManuscriptEditorView : Page
             if (_viewModel.CurrentChapter != null && !string.IsNullOrEmpty(_viewModel.CurrentChapter.Content))
             {
                 EditorRichTextBox.Document.Blocks.Clear();
-                var textRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
-                using var ms = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(_viewModel.CurrentChapter.Content));
+                TextRange textRange = new(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
+                using MemoryStream ms = new(Encoding.UTF8.GetBytes(_viewModel.CurrentChapter.Content));
                 textRange.Load(ms, DataFormats.Rtf);
             }
             else
@@ -143,7 +149,7 @@ public partial class ManuscriptEditorView : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to load chapter content: {ex.Message}");
+            Debug.WriteLine($"Failed to load chapter content: {ex.Message}");
             EditorRichTextBox.Document.Blocks.Clear();
             EditorRichTextBox.Document.Blocks.Add(new Paragraph(new Run("")));
         }
@@ -163,7 +169,7 @@ public partial class ManuscriptEditorView : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"ManuscriptComboBox_SelectionChanged failed: {ex.Message}");
+            Debug.WriteLine($"ManuscriptComboBox_SelectionChanged failed: {ex.Message}");
         }
     }
 
@@ -177,7 +183,7 @@ public partial class ManuscriptEditorView : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"ChapterListBox_SelectionChanged failed: {ex.Message}");
+            Debug.WriteLine($"ChapterListBox_SelectionChanged failed: {ex.Message}");
         }
     }
 
@@ -189,17 +195,18 @@ public partial class ManuscriptEditorView : Page
     {
         if (_viewModel == null || !_isLoaded || _viewModel.CurrentChapter == null || _suppressToolbarSync) return;
 
-        var countRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
+        TextRange countRange = new(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
         int wordCount = countRange.Text.Split(new char[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
         _viewModel.UpdateWordCount(wordCount);
 
         if (_debounceTimer != null)
         {
-            _debounceTimer.Change(1000, System.Threading.Timeout.Infinite);
+            _debounceTimer.Change(1000, Timeout.Infinite);
         }
         else
         {
-            _debounceTimer = new System.Threading.Timer(async _ => await SaveContentInternalAsync(), null, 1000, System.Threading.Timeout.Infinite);
+            _debounceTimer = new Timer(
+                async _ => await SaveContentInternalAsync(), null, 1000, Timeout.Infinite);
         }
     }
 
@@ -213,10 +220,10 @@ public partial class ManuscriptEditorView : Page
 
         await Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            var textRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
-            using var ms = new MemoryStream();
+            TextRange textRange = new(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
+            using MemoryStream ms = new();
             textRange.Save(ms, DataFormats.Rtf);
-            rtfContent = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+            rtfContent = Encoding.UTF8.GetString(ms.ToArray());
         });
 
         await _viewModel.SaveContentCommand.ExecuteAsync(rtfContent);
@@ -238,14 +245,14 @@ public partial class ManuscriptEditorView : Page
         _suppressToolbarSync = true;
         try
         {
-            var selection = EditorRichTextBox.Selection;
+            TextSelection selection = EditorRichTextBox.Selection;
             if (selection == null) return;
 
-            var fontFamily = selection.GetPropertyValue(TextElement.FontFamilyProperty);
+            object fontFamily = selection.GetPropertyValue(TextElement.FontFamilyProperty);
             if (fontFamily is FontFamily ff)
                 FontFamilyComboBox.SelectedItem = ff;
 
-            var fontSize = selection.GetPropertyValue(TextElement.FontSizeProperty);
+            object fontSize = selection.GetPropertyValue(TextElement.FontSizeProperty);
             if (fontSize is double fs)
                 FontSizeComboBox.Text = fs.ToString();
         }
@@ -322,15 +329,15 @@ public partial class ManuscriptEditorView : Page
     private void ShowColorPicker()
     {
         ColorPalettePanel.Children.Clear();
-        foreach (var color in PaletteColors)
+        foreach (Color color in PaletteColors)
         {
-            var btn = new Button
+            Button btn = new()
             {
                 Width = 20,
                 Height = 20,
-                Margin = new Thickness(2),
+                Margin = new(2),
                 Background = new SolidColorBrush(color),
-                BorderThickness = new Thickness(1),
+                BorderThickness = new(1),
                 BorderBrush = Brushes.Gray,
                 Cursor = Cursors.Hand,
                 Tag = color,
@@ -341,16 +348,16 @@ public partial class ManuscriptEditorView : Page
 
         if (!_isPickingFontColor)
         {
-            var clearBtn = new Button
+            Button clearBtn = new()
             {
                 Width = 44,
                 Height = 20,
-                Margin = new Thickness(2),
+                Margin = new(2),
                 Content = "Clear",
                 FontSize = 9,
                 Cursor = Cursors.Hand,
                 Background = Brushes.Transparent,
-                BorderThickness = new Thickness(1),
+                BorderThickness = new(1),
                 BorderBrush = Brushes.Gray,
             };
             clearBtn.Click += (s, ev) =>
@@ -375,13 +382,12 @@ public partial class ManuscriptEditorView : Page
     {
         if (sender is Button btn && btn.Tag is Color color)
         {
-            var brush = new SolidColorBrush(color);
+            SolidColorBrush brush = new(color);
 
             if (_isPickingFontColor)
             {
                 EditorRichTextBox.Selection.ApplyPropertyValue(TextElement.ForegroundProperty, brush);
                 FontColorIndicator.Background = brush;
-
             }
             else
             {
@@ -401,13 +407,13 @@ public partial class ManuscriptEditorView : Page
     /// </summary>
     private void StrikethroughButton_Click(object sender, RoutedEventArgs e)
     {
-        var selection = EditorRichTextBox.Selection;
+        TextSelection selection = EditorRichTextBox.Selection;
         if (selection.IsEmpty) return;
 
-        var currentDecorations = selection.GetPropertyValue(Inline.TextDecorationsProperty);
+        object? currentDecorations = selection.GetPropertyValue(Inline.TextDecorationsProperty);
         if (currentDecorations is TextDecorationCollection decorations && decorations.Contains(TextDecorations.Strikethrough[0]))
         {
-            var newDecorations = new TextDecorationCollection(decorations.Where(d => !TextDecorations.Strikethrough.Contains(d)));
+            TextDecorationCollection newDecorations = new(decorations.Where(d => !TextDecorations.Strikethrough.Contains(d)));
             selection.ApplyPropertyValue(Inline.TextDecorationsProperty, newDecorations);
         }
         else
@@ -423,7 +429,7 @@ public partial class ManuscriptEditorView : Page
     /// </summary>
     private void InsertImageButton_Click(object sender, RoutedEventArgs e)
     {
-        var openFileDialog = new Microsoft.Win32.OpenFileDialog
+        OpenFileDialog openFileDialog = new()
         {
             Filter = "Image files (*.png;*.jpeg;*.jpg;*.gif;*.bmp;*.webp)|*.png;*.jpeg;*.jpg;*.gif;*.bmp;*.webp|All files (*.*)|*.*"
         };
@@ -432,7 +438,7 @@ public partial class ManuscriptEditorView : Page
         {
             try
             {
-                var bitmap = new BitmapImage();
+                BitmapImage bitmap = new();
                 bitmap.BeginInit();
                 bitmap.UriSource = new Uri(openFileDialog.FileName);
                 bitmap.CacheOption = BitmapCacheOption.OnLoad;
@@ -448,14 +454,14 @@ public partial class ManuscriptEditorView : Page
                     initialWidth = maxWidth;
                 }
 
-                var image = new Image
+                Image image = new()
                 {
                     Source = bitmap,
                     Width = initialWidth,
                     Height = initialHeight,
                     Stretch = Stretch.Fill,
-                    Margin = new Thickness(0),
-                    ToolTip = System.IO.Path.GetFileName(openFileDialog.FileName),
+                    Margin = new(0),
+                    ToolTip = Path.GetFileName(openFileDialog.FileName),
                 };
 
                 _ = new InlineUIContainer(image, EditorRichTextBox.CaretPosition);
@@ -470,8 +476,8 @@ public partial class ManuscriptEditorView : Page
 
     private void EditorRichTextBox_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
-        var position = e.GetPosition(EditorRichTextBox);
-        var hitTestResult = VisualTreeHelper.HitTest(EditorRichTextBox, position);
+        Point position = e.GetPosition(EditorRichTextBox);
+        HitTestResult hitTestResult = VisualTreeHelper.HitTest(EditorRichTextBox, position);
 
         if (hitTestResult?.VisualHit is Image clickedImage)
             SelectImage(clickedImage);
@@ -554,10 +560,10 @@ public partial class ManuscriptEditorView : Page
         int count = VisualTreeHelper.GetChildrenCount(parent);
         for (int i = 0; i < count; i++)
         {
-            var child = VisualTreeHelper.GetChild(parent, i);
+            DependencyObject child = VisualTreeHelper.GetChild(parent, i);
             if (child is T typedChild)
                 yield return typedChild;
-            foreach (var grandChild in GetVisualChildren<T>(child))
+            foreach (T grandChild in GetVisualChildren<T>(child))
                 yield return grandChild;
         }
     }
