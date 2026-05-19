@@ -145,8 +145,19 @@
             <!-- Header -->
             <Border Padding="15,8" Background="{DynamicResource SidebarBackground}"
                     BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1">
-                <TextBlock Text="Manuscript Editor" FontSize="16" FontWeight="SemiBold"
-                           Foreground="{DynamicResource PrimaryText}"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Manuscript Editor" FontSize="16" FontWeight="SemiBold"
+                               Foreground="{DynamicResource PrimaryText}" VerticalAlignment="Center"/>
+                    <Button Grid.Column="1" x:Name="SaveButton" Content="💾 Save"
+                            ToolTip="Save the current chapter now (Ctrl+S)"
+                            Background="{DynamicResource AccentColor}" Foreground="White"
+                            BorderThickness="0" Padding="10,4" FontWeight="SemiBold"
+                            Cursor="Hand" Click="SaveButton_Click"/>
+                </Grid>
             </Border>
 
             <!-- ═══ TOOLBAR ═══ -->
@@ -221,12 +232,6 @@
                     <Button Command="EditingCommands.IncreaseIndentation" Content="Indent"/>
                     <Separator/>
                     <Button x:Name="InsertImageButton" Content="Image" ToolTip="Insert Image" Click="InsertImageButton_Click"/>
-                    <Separator/>
-                    <Button x:Name="SaveButton" Content="💾 Save"
-                            ToolTip="Save the current chapter now (Ctrl+S)"
-                            Background="{DynamicResource AccentColor}" Foreground="White"
-                            BorderThickness="0" Padding="10,4" FontWeight="SemiBold"
-                            Cursor="Hand" Click="SaveButton_Click"/>
                 </ToolBar>
             </ToolBarTray>
 
@@ -243,7 +248,8 @@
                              TextChanged="EditorRichTextBox_TextChanged"
                              SelectionChanged="EditorRichTextBox_SelectionChanged"
                              PreviewMouseLeftButtonUp="EditorRichTextBox_PreviewMouseLeftButtonUp"
-                             AcceptsReturn="True">
+                             AcceptsReturn="True"
+                             IsDocumentEnabled="True">
                     <FlowDocument>
                         <Paragraph>
                             <Run Text="Start writing your amazing story here..."/>
@@ -427,7 +433,7 @@
                         <!-- Action Bar: Create Milestone snapshot -->
                         <Border Grid.Row="0" Padding="8,6" BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1">
                             <Button Content="Create Milestone ⭐️"
-                                    Command="{Binding CreateMilestoneCommand}"
+                                    Click="CreateMilestoneButton_Click"
                                     Background="{DynamicResource AccentColor}" Foreground="White"
                                     BorderThickness="0" Padding="10,6" FontSize="11" FontWeight="SemiBold"
                                     Cursor="Hand" HorizontalAlignment="Stretch"/>

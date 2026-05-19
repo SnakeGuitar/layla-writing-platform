@@ -33,6 +33,7 @@ namespace Layla.Desktop.Views
         private AdornerLayer? _adornerLayer;
         private ImageResizerAdorner? _currentAdorner;
         private Image? _selectedImage;
+        private CollaboratorCursorAdorner? _cursorAdorner;
 
         private bool _isPickingFontColor = true;
 
@@ -66,6 +67,8 @@ namespace Layla.Desktop.Views
             _viewModel.EvictedFromProject += OnEvictedFromProject;
             _viewModel.WikiTokenizerUpdated += OnWikiTokenizerUpdated;
             _viewModel.RequestShowDiff += OnRequestShowDiff;
+            _viewModel.CollaboratorCursorMoved += OnCollaboratorCursorMoved;
+            _viewModel.RequestFlushAction = async () => await FlushPendingSavesAsync();
             this.Loaded += OnLoaded;
             this.Unloaded += OnUnloaded;
 
@@ -110,6 +113,15 @@ namespace Layla.Desktop.Views
             _viewModel.EvictedFromProject -= OnEvictedFromProject;
             _viewModel.WikiTokenizerUpdated -= OnWikiTokenizerUpdated;
             _viewModel.RequestShowDiff -= OnRequestShowDiff;
+            _viewModel.CollaboratorCursorMoved -= OnCollaboratorCursorMoved;
+            _viewModel.RequestFlushAction = null;
+            
+            if (_cursorAdorner != null)
+            {
+                var layer = AdornerLayer.GetAdornerLayer(EditorRichTextBox);
+                layer?.Remove(_cursorAdorner);
+                _cursorAdorner = null;
+            }
         }
 
         /// <summary>
@@ -162,6 +174,13 @@ namespace Layla.Desktop.Views
                     foreach (var child in GetVisualChildren<ToolBarTray>(this))
                         child.Visibility = Visibility.Collapsed;
                 }
+
+                var layer = AdornerLayer.GetAdornerLayer(EditorRichTextBox);
+                if (layer != null)
+                {
+                    _cursorAdorner = new CollaboratorCursorAdorner(EditorRichTextBox);
+                    layer.Add(_cursorAdorner);
+                }
             }
             catch (Exception ex)
             {
@@ -200,6 +219,14 @@ namespace Layla.Desktop.Views
             Application.Current.Dispatcher.Invoke(() => LoadCurrentChapterContent());
         }
 
+        private void OnCollaboratorCursorMoved(string userId, int offset)
+        {
+            Application.Current.Dispatcher.InvokeAsync(() => 
+            {
+                _cursorAdorner?.UpdateCursor(userId, offset);
+            });
+        }
+
         /// <summary>
         /// Replaces the editor's <see cref="FlowDocument"/> with the RTF content stored in
         /// <see cref="ManuscriptEditorViewModel.CurrentChapter"/>.
@@ -220,7 +247,7 @@ namespace Layla.Desktop.Views
                 else
                 {
                     EditorRichTextBox.Document.Blocks.Clear();
-                    EditorRichTextBox.Document.Blocks.Add(new Paragraph(new Run("Start writing your amazing story here...")));
+                    EditorRichTextBox.Document.Blocks.Add(new Paragraph(new Run("")));
                 }
             }
             catch (Exception ex)
@@ -458,6 +485,29 @@ namespace Layla.Desktop.Views
             }
         }
 
+        private async void CreateMilestoneButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_viewModel.CurrentChapter == null) return;
+            var args = new SaveContentArgs { RtfContent = GetRtfContent(), PlainText = GetPlainText() };
+            await _viewModel.SaveMilestoneAsync(args);
+        }
+
+        /// <summary>
+        /// Reads the <see cref="FlowDocument"/> and returns it serialized as an RTF string.
+        /// </summary>
+        private string GetRtfContent()
+        {
+            var textRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
+            using var ms = new MemoryStream();
+            textRange.Save(ms, DataFormats.Rtf);
+            return System.Text.Encoding.UTF8.GetString(ms.ToArray());
+        }
+
+        private string GetPlainText()
+        {
+            return new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd).Text;
+        }
+
         /// <summary>
         /// Applies the selected <see cref="FontFamily"/> to the current editor selection.
         /// </summary>
@@ -676,6 +726,130 @@ namespace Layla.Desktop.Views
             var position = e.GetPosition(EditorRichTextBox);
             var hitTestResult = VisualTreeHelper.HitTest(EditorRichTextBox, position);
 
+            var clickPointer = EditorRichTextBox.GetPositionFromPoint(position, snapToText: true);
+            if (clickPointer != null)
+            {
+                var parent = clickPointer.Parent;
+                while (parent != null && !(parent is Hyperlink) && !(parent is FlowDocument) && !(parent is RichTextBox))
+                {
+                    if (parent is FrameworkContentElement fce)
+                        parent = fce.Parent;
+                    else if (parent is FrameworkElement fe)
+                        parent = fe.Parent;
+                    else
+                        break;
+                }
+
+                if (parent is Hyperlink hyperlink && hyperlink.NavigateUri != null)
+                {
+                    var uriString = hyperlink.NavigateUri.ToString();
+                    if (uriString.StartsWith("wiki://"))
+                    {
+                        var entityId = uriString.Substring("wiki://".Length).TrimEnd('/');
+                        
+                        // Create a floating popup menu/preview
+                        var popup = new System.Windows.Controls.Primitives.Popup
+                        {
+                            Placement = System.Windows.Controls.Primitives.PlacementMode.MousePoint,
+                            AllowsTransparency = true,
+                            StaysOpen = false,
+                            PopupAnimation = System.Windows.Controls.Primitives.PopupAnimation.Fade
+                        };
+
+                        var mainBorder = new Border
+                        {
+                            Background = (Brush)FindResource("ControlBackground"),
+                            BorderBrush = (Brush)FindResource("AccentColor"),
+                            BorderThickness = new Thickness(1),
+                            CornerRadius = new CornerRadius(8),
+                            Padding = new Thickness(12),
+                            Width = 200,
+                            Effect = new System.Windows.Media.Effects.DropShadowEffect
+                            {
+                                Color = Colors.Black,
+                                Direction = 315,
+                                ShadowDepth = 2,
+                                Opacity = 0.25,
+                                BlurRadius = 6
+                            }
+                        };
+
+                        var stack = new StackPanel();
+
+                        // Get text of mention
+                        var titleText = new TextBlock
+                        {
+                            Text = hyperlink.Inlines.FirstOrDefault() is Run r ? r.Text : "Wiki Entry",
+                            FontWeight = FontWeights.Bold,
+                            FontSize = 14,
+                            Foreground = (Brush)FindResource("PrimaryText"),
+                            Margin = new Thickness(0, 0, 0, 2)
+                        };
+                        stack.Children.Add(titleText);
+
+                        // Try to extract entity type from ToolTip content
+                        string typeStr = "WIKI ENTRY";
+                        if (hyperlink.ToolTip is ToolTip tt && tt.Content is Border b && b.Child is StackPanel sp && sp.Children.Count > 1 && sp.Children[1] is TextBlock tbType)
+                        {
+                            typeStr = tbType.Text;
+                        }
+                        var typeText = new TextBlock
+                        {
+                            Text = typeStr,
+                            FontSize = 10,
+                            Foreground = (Brush)FindResource("AccentColor"),
+                            FontWeight = FontWeights.SemiBold,
+                            Margin = new Thickness(0, 0, 0, 12)
+                        };
+                        stack.Children.Add(typeText);
+
+                        // Open Button
+                        var openButton = new Button
+                        {
+                            Content = "📖 Open Full Wiki",
+                            Background = (Brush)FindResource("AccentColor"),
+                            Foreground = Brushes.White,
+                            BorderThickness = new Thickness(0),
+                            Padding = new Thickness(8, 6, 8, 6),
+                            Cursor = Cursors.Hand,
+                            Margin = new Thickness(0, 0, 0, 6),
+                            FontWeight = FontWeights.SemiBold
+                        };
+                        openButton.Click += (s, ev) =>
+                        {
+                            WorkspaceMediator.RequestNavigateToWikiEntry(entityId);
+                            popup.IsOpen = false;
+                        };
+                        stack.Children.Add(openButton);
+
+                        // Close Button
+                        var closeButton = new Button
+                        {
+                            Content = "Close",
+                            Background = Brushes.Transparent,
+                            Foreground = (Brush)FindResource("SecondaryText"),
+                            BorderBrush = (Brush)FindResource("BorderColor"),
+                            BorderThickness = new Thickness(1),
+                            Padding = new Thickness(8, 4, 8, 4),
+                            Cursor = Cursors.Hand
+                        };
+                        closeButton.Click += (s, ev) =>
+                        {
+                            popup.IsOpen = false;
+                        };
+                        stack.Children.Add(closeButton);
+
+                        mainBorder.Child = stack;
+                        popup.Child = mainBorder;
+
+                        popup.IsOpen = true;
+
+                        e.Handled = true;
+                        return;
+                    }
+                }
+            }
+
             if (hitTestResult?.VisualHit is Image clickedImage)
                 SelectImage(clickedImage);
             else
@@ -765,6 +939,41 @@ namespace Layla.Desktop.Views
             }
         }
 
+        private IEnumerable<Run> GetAllRuns(FlowDocument document)
+        {
+            return GetRunsFromBlocks(document.Blocks);
+        }
+
+        private IEnumerable<Run> GetRunsFromBlocks(BlockCollection blocks)
+        {
+            foreach (var block in blocks)
+            {
+                if (block is Paragraph p)
+                {
+                    foreach (var run in GetRunsFromInlines(p.Inlines)) yield return run;
+                }
+                else if (block is List list)
+                {
+                    foreach (var listItem in list.ListItems)
+                    {
+                        foreach (var run in GetRunsFromBlocks(listItem.Blocks)) yield return run;
+                    }
+                }
+            }
+        }
+
+        private IEnumerable<Run> GetRunsFromInlines(InlineCollection inlines)
+        {
+            foreach (var inline in inlines)
+            {
+                if (inline is Run run) yield return run;
+                else if (inline is Span span)
+                {
+                    foreach (var childRun in GetRunsFromInlines(span.Inlines)) yield return childRun;
+                }
+            }
+        }
+
         /// <summary>
         /// Scans all text runs in the FlowDocument and programmatically injects
         /// interactive wiki hyperlinks for matches detected by the Aho-Corasick tokenizer.
@@ -776,7 +985,7 @@ namespace Layla.Desktop.Views
             _suppressToolbarSync = true;
             try
             {
-                var runs = GetVisualChildren<Run>(EditorRichTextBox.Document).ToList();
+                var runs = GetAllRuns(EditorRichTextBox.Document).ToList();
                 var textRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
                 var detectable = _viewModel.Tokenizer.FindMentions(textRange.Text);
 
@@ -794,10 +1003,50 @@ namespace Layla.Desktop.Views
                             var pointer = run.ContentStart.GetPositionAtOffset(index);
                             var endPointer = pointer.GetPositionAtOffset(match.MatchedText.Length);
 
+                            var tooltipBorder = new Border
+                            {
+                                Background = (Brush)FindResource("ControlBackground"),
+                                BorderBrush = (Brush)FindResource("AccentColor"),
+                                BorderThickness = new Thickness(1),
+                                CornerRadius = new CornerRadius(6),
+                                Padding = new Thickness(12),
+                                MaxWidth = 250
+                            };
+                            var tooltipStack = new StackPanel();
+                            tooltipStack.Children.Add(new TextBlock 
+                            { 
+                                Text = match.MatchedText, 
+                                FontWeight = FontWeights.Bold, 
+                                FontSize = 14, 
+                                Foreground = (Brush)FindResource("PrimaryText")
+                            });
+                            tooltipStack.Children.Add(new TextBlock 
+                            { 
+                                Text = match.EntityType.ToUpper(), 
+                                FontSize = 10, 
+                                Foreground = (Brush)FindResource("AccentColor"),
+                                Margin = new Thickness(0, 2, 0, 8),
+                                FontWeight = FontWeights.SemiBold
+                            });
+                            tooltipStack.Children.Add(new TextBlock 
+                            { 
+                                Text = "Click to view full details in the Wiki.", 
+                                Foreground = (Brush)FindResource("SecondaryText"),
+                                FontSize = 11,
+                                TextWrapping = TextWrapping.Wrap
+                            });
+                            tooltipBorder.Child = tooltipStack;
+
                             var hyperlink = new Hyperlink(pointer, endPointer)
                             {
                                 NavigateUri = new Uri($"wiki://{match.EntityId}"),
-                                ToolTip = $"Wiki: {match.MatchedText} ({match.EntityType})"
+                                ToolTip = new ToolTip 
+                                { 
+                                    Content = tooltipBorder,
+                                    Background = Brushes.Transparent,
+                                    BorderThickness = new Thickness(0),
+                                    HasDropShadow = true
+                                }
                             };
                             hyperlink.RequestNavigate += (s, e) =>
                             {
@@ -808,7 +1057,10 @@ namespace Layla.Desktop.Views
                             hyperlink.Foreground = new SolidColorBrush(Color.FromRgb(103, 58, 183)); // Modern Slate Indigo
                             hyperlink.TextDecorations = TextDecorations.Underline;
                             hyperlink.Cursor = Cursors.Hand;
-                            break; // Move to next run
+                            
+                            // Only process the first match per run to avoid concurrent modification issues
+                            // If there are more matches, they'll be picked up in subsequent debounced passes.
+                            break; 
                         }
                     }
                 }
@@ -856,24 +1108,38 @@ namespace Layla.Desktop.Views
         {
             Dispatcher.Invoke(async () =>
             {
-                // Extract current editor RTF content
-                string currentRtf = string.Empty;
-                var textRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
-                using (var ms = new MemoryStream())
+                try
                 {
-                    textRange.Save(ms, DataFormats.Rtf);
-                    currentRtf = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+                    // Extract current editor RTF content
+                    string currentRtf = string.Empty;
+                    var textRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
+                    using (var ms = new MemoryStream())
+                    {
+                        textRange.Save(ms, DataFormats.Rtf);
+                        currentRtf = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+                    }
+
+                    var diffWindow = new ChapterDiffWindow(fullVersion, currentRtf);
+                    var parentWindow = Window.GetWindow(this);
+                    if (parentWindow != null)
+                    {
+                        diffWindow.Owner = parentWindow;
+                    }
+
+                    if (diffWindow.ShowDialog() == true && diffWindow.Restored)
+                    {
+                        // User clicked "Restore to this Version" inside the diff dialog
+                        await _viewModel.RestoreVersionCommand.ExecuteAsync(fullVersion);
+                    }
                 }
-
-                var diffWindow = new ChapterDiffWindow(fullVersion, currentRtf)
+                catch (Exception ex)
                 {
-                    Owner = Window.GetWindow(this)
-                };
-
-                if (diffWindow.ShowDialog() == true && diffWindow.Restored)
-                {
-                    // User clicked "Restore to this Version" inside the diff dialog
-                    await _viewModel.RestoreVersionCommand.ExecuteAsync(fullVersion);
+                    System.Windows.MessageBox.Show(
+                        $"Error displaying comparison window:\n\n{ex.Message}\n\nDetails:\n{ex.StackTrace}",
+                        "Comparison Window Error",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error
+                    );
                 }
             });
         }
