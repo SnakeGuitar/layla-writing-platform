@@ -1,4 +1,4 @@
-﻿using Layla.Core.Entities;
+using Layla.Core.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,6 +12,7 @@ namespace Layla.Infrastructure.Data
 
         public DbSet<Project> Projects { get; set; } = null!;
         public DbSet<ProjectRole> ProjectRoles { get; set; } = null!;
+        public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -43,6 +44,9 @@ namespace Layla.Infrastructure.Data
 
             builder.Entity<ProjectRole>()
                 .HasIndex(pr => pr.ProjectId);
+
+            builder.Entity<OutboxMessage>()
+                .HasIndex(om => om.Processed);
         }
     }
 }

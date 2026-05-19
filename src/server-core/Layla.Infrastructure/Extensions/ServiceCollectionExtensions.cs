@@ -60,6 +60,7 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<IAppUserRepository, AppUserRepository>();
+        services.AddScoped<IOutboxRepository, OutboxRepository>();
 
         // RabbitMQ infrastructure:
         // - Connection: low-level RabbitMQ connection wrapper (singleton, auto-reconnect)
@@ -77,6 +78,8 @@ public static class ServiceCollectionExtensions
 
         services.Configure<EmailSettings>(configuration.GetSection("EmailConfigs"));
         services.AddScoped<IEmailService, EmailService>();
+
+        services.AddHostedService<Layla.Infrastructure.Workers.OutboxProcessorWorker>();
 
         return services;
     }
