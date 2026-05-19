@@ -28,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Layla.Client.Shared\Layla.Client.Shared.csproj" />
+    <ProjectReference Include="..\client-shared\client-shared.csproj" />
   </ItemGroup>
 
 </Project>
