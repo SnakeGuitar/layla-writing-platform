@@ -59,6 +59,32 @@
                                                 Visibility="{Binding IsPublic, Converter={StaticResource BoolToVis}}">
                                             <TextBlock Text="PUBLIC" FontSize="10" Foreground="White" FontWeight="Bold"/>
                                         </Border>
+                                        <Border CornerRadius="3" Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="LightGray"/>
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding UserRole}" Value="">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding UserRole}" Value="{x:Null}">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding UserRole}" Value="OWNER">
+                                                            <Setter Property="Background" Value="{DynamicResource AccentColor}"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding UserRole}" Value="COLLABORATOR">
+                                                            <Setter Property="Background" Value="#4FC3F7"/>
+                                                        </DataTrigger>
+                                                        <DataTrigger Binding="{Binding UserRole}" Value="READER">
+                                                            <Setter Property="Background" Value="#81C784"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <TextBlock Text="{Binding UserRole}" FontSize="10" Foreground="White" FontWeight="Bold"/>
+                                        </Border>
                                     </StackPanel>
                                     <TextBlock Text="{Binding LiteraryGenre}" FontStyle="Italic" Foreground="{DynamicResource SecondaryText}" Margin="0,2,0,5" />
                                     <TextBlock Text="{Binding Synopsis}" TextWrapping="Wrap" MaxWidth="600" Foreground="{DynamicResource PrimaryText}"/>
