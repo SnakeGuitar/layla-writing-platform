@@ -38,6 +38,7 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<VoiceHub>("/hubs/voice");
 app.MapHub<PresenceHub>("/hubs/presence");
+app.MapHub<ManuscriptHub>("/hubs/manuscript");
 
 using (var scope = app.Services.CreateScope())
 {
