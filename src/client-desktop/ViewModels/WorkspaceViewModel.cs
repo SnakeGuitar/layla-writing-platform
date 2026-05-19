@@ -83,7 +83,6 @@ namespace Layla.Desktop.ViewModels
         private void Logout()
         {
             StopHeartbeat();
-            Services.SessionManager.ClearSession();
             OnLogout?.Invoke(this, EventArgs.Empty);
         }
 

@@ -114,6 +114,9 @@ namespace Layla.Desktop.ViewModels
         /// <summary>Raised when the view should open the Diff Comparison window.</summary>
         public event Action<ChapterVersionFull>? RequestShowDiff;
 
+        /// <summary>Delegate to request the View to flush current rich text to the active chapter.</summary>
+        public Func<Task>? RequestFlushAction { get; set; }
+
         /// <summary>Initialises the ViewModel via dependency injection.</summary>
         public ManuscriptEditorViewModel(
             IManuscriptApiService apiService,
@@ -270,6 +273,10 @@ namespace Layla.Desktop.ViewModels
         /// </summary>
         private async Task SelectManuscriptAsync(Manuscript manuscript)
         {
+            if (RequestFlushAction != null)
+            {
+                await RequestFlushAction();
+            }
             SelectedManuscript = manuscript;
             CurrentChapters.Clear();
 
@@ -300,6 +307,11 @@ namespace Layla.Desktop.ViewModels
         private async Task SelectChapterAsync(Chapter chapterIndex)
         {
             if (SelectedManuscript == null) return;
+
+            if (RequestFlushAction != null)
+            {
+                await RequestFlushAction();
+            }
 
             // Leave previous chapter SignalR group if any
             if (_activeChapterId.HasValue)
@@ -377,6 +389,10 @@ namespace Layla.Desktop.ViewModels
         [RelayCommand]
         private async Task AddManuscriptAsync()
         {
+            if (RequestFlushAction != null)
+            {
+                await RequestFlushAction();
+            }
             StatusMessage = "Creating manuscript...";
             var order = Manuscripts.Count;
             var newMs = await _apiService.CreateManuscriptAsync(_projectId, $"Manuscript {order + 1}", order);
@@ -473,6 +489,11 @@ namespace Layla.Desktop.ViewModels
                 return;
             }
 
+            if (RequestFlushAction != null)
+            {
+                await RequestFlushAction();
+            }
+
             StatusMessage = "Creating chapter...";
             var order = CurrentChapters.Count;
             var newChapter = await _apiService.CreateChapterAsync(
@@ -545,7 +566,7 @@ namespace Layla.Desktop.ViewModels
         /// is cleared so it only ever contains work that has not reached the server.
         /// </summary>
         [RelayCommand]
-        public Task SaveContentAsync(SaveContentArgs args) => SaveContentInternalAsync(args.RtfContent, args.PlainText, force: false);
+        public Task SaveContentAsync(SaveContentArgs args) => SaveContentInternalAsync(args.RtfContent, args.PlainText, force: false, isMilestone: false);
 
         /// <summary>
         /// Like <see cref="SaveContentAsync"/> but waits for any in-progress save
@@ -553,9 +574,11 @@ namespace Layla.Desktop.ViewModels
         /// Called from the view's <c>Unloaded</c> handler so the user's last
         /// edits are always flushed before navigating away.
         /// </summary>
-        public Task FlushSaveAsync(SaveContentArgs args) => SaveContentInternalAsync(args.RtfContent, args.PlainText, force: true);
+        public Task FlushSaveAsync(SaveContentArgs args) => SaveContentInternalAsync(args.RtfContent, args.PlainText, force: true, isMilestone: false);
 
-        private async Task SaveContentInternalAsync(string rtfContent, string plainText, bool force)
+        public Task SaveMilestoneAsync(SaveContentArgs args) => SaveContentInternalAsync(args.RtfContent, args.PlainText, force: true, isMilestone: true);
+
+        private async Task SaveContentInternalAsync(string rtfContent, string plainText, bool force, bool isMilestone)
         {
             if (CurrentChapter == null || SelectedManuscript == null) return;
 
@@ -587,7 +610,8 @@ namespace Layla.Desktop.ViewModels
                     manuscriptId,
                     chapterId,
                     rtfContent,
-                    mentions
+                    mentions,
+                    isMilestone
                 );
 
                 if (!success)
@@ -619,6 +643,12 @@ namespace Layla.Desktop.ViewModels
                 CurrentChapter.Mentions = modelMentions;
                 _cache.ClearChapter(manuscriptId, chapterId);
                 HasUnsavedOfflineChanges = false;
+                
+                if (isMilestone)
+                {
+                    StatusMessage = "Milestone snapshot created successfully!";
+                    await LoadHistoryAsync();
+                }
             }
             catch (Exception ex)
             {
@@ -690,33 +720,7 @@ namespace Layla.Desktop.ViewModels
             }
         }
 
-        [RelayCommand]
-        public async Task CreateMilestoneAsync()
-        {
-            if (CurrentChapter == null || SelectedManuscript == null) return;
-            StatusMessage = "Creating milestone snapshot...";
-            try
-            {
-                var milestone = await _collaborationApiService.CreateMilestoneAsync(
-                    _projectId,
-                    SelectedManuscript.ManuscriptId,
-                    CurrentChapter.ChapterId.ToString()
-                );
-                if (milestone != null)
-                {
-                    StatusMessage = "Milestone snapshot created successfully!";
-                    await LoadHistoryAsync();
-                }
-                else
-                {
-                    StatusMessage = "Failed to create milestone snapshot.";
-                }
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = $"Milestone error: {ex.Message}";
-            }
-        }
+
 
         [RelayCommand]
         public async Task RestoreVersionAsync(ChapterVersionMeta? version)

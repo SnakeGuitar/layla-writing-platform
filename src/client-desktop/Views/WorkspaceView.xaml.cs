@@ -27,7 +27,11 @@ namespace Layla.Desktop.Views
             _viewModel.OnLogout += async (s, e) =>
             {
                 await FlushEditorAsync();
-                NavigationService.Navigate(new LoginView());
+                Services.SessionManager.ClearSession();
+                if (NavigationService != null)
+                {
+                    NavigationService.Navigate(new LoginView());
+                }
             };
             _viewModel.OnBackToProjects += async (s, e) =>
             {
