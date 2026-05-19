@@ -27,4 +27,8 @@
     <PackageReference Include="SkiaSharp" Version="3.119.2" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Layla.Client.Shared\Layla.Client.Shared.csproj" />
+  </ItemGroup>
+
 </Project>
