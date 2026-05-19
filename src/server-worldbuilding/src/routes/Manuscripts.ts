@@ -68,4 +68,29 @@ router.get(
   asyncHandler(ManuscriptsController.getChapterMentions),
 );
 
+router.put(
+  "/:projectId/:manuscriptId/chapters/:chapterId/autosave",
+  asyncHandler(ManuscriptsController.autosaveChapter),
+);
+
+router.get(
+  "/:projectId/:manuscriptId/chapters/:chapterId/versions",
+  asyncHandler(ManuscriptsController.getChapterVersions),
+);
+
+router.get(
+  "/:projectId/:manuscriptId/chapters/:chapterId/versions/:versionId",
+  asyncHandler(ManuscriptsController.getChapterVersion),
+);
+
+router.post(
+  "/:projectId/:manuscriptId/chapters/:chapterId/versions/milestone",
+  asyncHandler(ManuscriptsController.createMilestone),
+);
+
+router.put(
+  "/:projectId/:manuscriptId/chapters/:chapterId/versions/:versionId/restore",
+  asyncHandler(ManuscriptsController.restoreVersion),
+);
+
 export default router;

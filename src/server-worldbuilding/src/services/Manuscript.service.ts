@@ -5,6 +5,7 @@ import type {
   IManuscript,
 } from "@/interfaces/manuscript/IManuscript";
 import { syncChapterMentions } from "@/services/Mention.service";
+import { ChapterVersionModel } from "@/models/ChapterVersion.model";
 import { container } from "./container";
 
 /**
@@ -272,4 +273,130 @@ export const deleteChapter = async (
   repo = container.manuscriptRepo,
 ): Promise<boolean> => {
   return repo.deleteChapter(projectId, manuscriptId, chapterId);
+};
+
+/**
+ * Handles debounced autosaves from clients.
+ * Uses the mentions detected directly by the client's tokenizer.
+ * Saves a version delta in ChapterVersionModel for history.
+ */
+export const autosaveChapter = async (
+  projectId: string,
+  manuscriptId: string,
+  chapterId: string,
+  content: string,
+  mentions: any[],
+  userId: string,
+  repo = container.manuscriptRepo,
+): Promise<void> => {
+  // Update main document using Last-Write-Wins and client-provided mentions
+  const updatePayload: ChapterUpdatePayload = { updatedAt: new Date(), content, mentions };
+  await repo.updateChapter(projectId, manuscriptId, chapterId, updatePayload);
+
+  // Save the delta in the version history
+  await ChapterVersionModel.create({
+    chapterId,
+    projectId,
+    content,
+    isMilestone: false,
+    createdBy: userId,
+  });
+};
+
+/**
+ * Retrieves the version history for a chapter (excluding actual content for performance).
+ */
+export const getChapterVersions = async (
+  projectId: string,
+  chapterId: string,
+) => {
+  return ChapterVersionModel.find({ projectId, chapterId })
+    .select("-content")
+    .sort({ createdAt: -1 })
+    .lean();
+};
+
+/**
+ * Retrieves a specific chapter version, including its content.
+ */
+export const getChapterVersion = async (
+  projectId: string,
+  chapterId: string,
+  versionId: string,
+) => {
+  return ChapterVersionModel.findOne({
+    _id: versionId,
+    projectId,
+    chapterId,
+  }).lean();
+};
+
+/**
+ * Creates a milestone (snapshot) of the current chapter state.
+ */
+export const createMilestone = async (
+  projectId: string,
+  manuscriptId: string,
+  chapterId: string,
+  userId: string,
+  repo = container.manuscriptRepo,
+) => {
+  const chapter = await repo.getChapter(projectId, manuscriptId, chapterId);
+  if (!chapter) return null;
+
+  return ChapterVersionModel.create({
+    chapterId,
+    projectId,
+    content: chapter.content || "",
+    isMilestone: true,
+    createdBy: userId,
+  });
+};
+
+/**
+ * Restores a chapter to a specific version.
+ */
+export const restoreVersion = async (
+  projectId: string,
+  manuscriptId: string,
+  chapterId: string,
+  versionId: string,
+  userId: string,
+  repo = container.manuscriptRepo,
+) => {
+  const version = await ChapterVersionModel.findOne({
+    _id: versionId,
+    projectId,
+    chapterId,
+  });
+  if (!version) return null;
+
+  const updatePayload: ChapterUpdatePayload = {
+    updatedAt: new Date(),
+    content: version.content,
+  };
+
+  const updatedManuscript = await repo.updateChapter(
+    projectId,
+    manuscriptId,
+    chapterId,
+    updatePayload,
+  );
+
+  const updatedChapter = updatedManuscript?.chapters.find(
+    (c: IChapter) => c.chapterId === chapterId,
+  );
+
+  if (updatedChapter) {
+    // Create a new history entry representing the restore action
+    await ChapterVersionModel.create({
+      chapterId,
+      projectId,
+      content: version.content,
+      isMilestone: false,
+      createdBy: userId,
+    });
+  }
+
+  return updatedChapter;
 };

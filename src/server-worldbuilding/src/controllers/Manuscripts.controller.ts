@@ -227,7 +227,7 @@ export const deleteChapter = async (
 /**
  * GET /api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId/mentions
  *
- * Returns the list of wiki entity mentions detected in the chapter.
+ * Returns the detected wiki mentions stored inside the chapter.
  */
 export const getChapterMentions = async (
   req: Request,
@@ -242,5 +242,133 @@ export const getChapterMentions = async (
     res.status(404).json({ error: "Chapter not found" });
     return;
   }
-  res.json(chapter.mentions ?? []);
+  res.json(chapter.mentions || []);
+};
+
+/**
+ * PUT /api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId/autosave
+ *
+ * Handles client debounced autosaves including locally-detected mentions.
+ */
+export const autosaveChapter = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const { content, mentions } = req.body;
+  // User context is populated by auth middleware
+  const userId = req.user?.id;
+
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  await ManuscriptService.autosaveChapter(
+    req.params["projectId"] as string,
+    req.params["manuscriptId"] as string,
+    req.params["chapterId"] as string,
+    content || "",
+    mentions || [],
+    userId,
+  );
+
+  res.status(200).send();
+};
+
+/**
+ * GET /api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId/versions
+ *
+ * Returns version history metadata for a chapter.
+ */
+export const getChapterVersions = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const versions = await ManuscriptService.getChapterVersions(
+    req.params["projectId"] as string,
+    req.params["chapterId"] as string,
+  );
+  res.json(versions);
+};
+
+/**
+ * GET /api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId/versions/:versionId
+ *
+ * Returns a specific chapter version including content.
+ */
+export const getChapterVersion = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const version = await ManuscriptService.getChapterVersion(
+    req.params["projectId"] as string,
+    req.params["chapterId"] as string,
+    req.params["versionId"] as string,
+  );
+  if (!version) {
+    res.status(404).json({ error: "Version not found" });
+    return;
+  }
+  res.json(version);
+};
+
+/**
+ * POST /api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId/versions/milestone
+ *
+ * Creates a milestone snapshot for a chapter.
+ */
+export const createMilestone = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const milestone = await ManuscriptService.createMilestone(
+    req.params["projectId"] as string,
+    req.params["manuscriptId"] as string,
+    req.params["chapterId"] as string,
+    userId,
+  );
+
+  if (!milestone) {
+    res.status(404).json({ error: "Chapter not found" });
+    return;
+  }
+
+  res.status(201).json(milestone);
+};
+
+/**
+ * PUT /api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId/versions/:versionId/restore
+ *
+ * Restores a chapter to a specific version.
+ */
+export const restoreVersion = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const userId = req.user?.id;
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  const restored = await ManuscriptService.restoreVersion(
+    req.params["projectId"] as string,
+    req.params["manuscriptId"] as string,
+    req.params["chapterId"] as string,
+    req.params["versionId"] as string,
+    userId,
+  );
+
+  if (!restored) {
+    res.status(404).json({ error: "Version or chapter not found" });
+    return;
+  }
+
+  res.json(restored);
 };
