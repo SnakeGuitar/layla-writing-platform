@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import type InterfaceAuthRequest from "@/interfaces/auth/AuthRequest";
 import * as ManuscriptService from "@/services/Manuscript.service";
 import {
   CreateManuscriptSchema,
@@ -251,7 +252,7 @@ export const getChapterMentions = async (
  * Handles client debounced autosaves including locally-detected mentions.
  */
 export const autosaveChapter = async (
-  req: Request,
+  req: InterfaceAuthRequest,
   res: Response,
 ): Promise<void> => {
   const { content, mentions, isMilestone } = req.body;
@@ -321,7 +322,7 @@ export const getChapterVersion = async (
  * Restores a chapter to a specific version.
  */
 export const restoreVersion = async (
-  req: Request,
+  req: InterfaceAuthRequest,
   res: Response,
 ): Promise<void> => {
   const userId = req.user?.id;

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { MiddlewareAuthenticate } from "@/middlewares/Auth";
-import { requireProjectAccess } from "@/middlewares/ProjectGuard";
+import { requireProjectAccess, requireWriteAccess } from "@/middlewares/ProjectGuard";
 import { asyncHandler } from "@/utils/asyncHandler";
 import * as GraphController from "@/controllers/Graph.controller";
 
@@ -13,11 +13,13 @@ router.get("/:projectId", asyncHandler(GraphController.getGraph));
 
 router.post(
   "/:projectId/relationships",
+  requireWriteAccess(),
   asyncHandler(GraphController.createRelationship),
 );
 
 router.delete(
   "/:projectId/relationships",
+  requireWriteAccess(),
   asyncHandler(GraphController.deleteRelationship),
 );
 

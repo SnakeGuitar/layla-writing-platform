@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { MiddlewareAuthenticate } from "@/middlewares/Auth";
-import { requireProjectAccess } from "@/middlewares/ProjectGuard";
+import { requireProjectAccess, requireWriteAccess } from "@/middlewares/ProjectGuard";
 import { asyncHandler } from "@/utils/asyncHandler";
 import * as ManuscriptsController from "@/controllers/Manuscripts.controller";
 
@@ -25,6 +25,7 @@ router.get(
 
 router.post(
   "/:projectId",
+  requireWriteAccess(),
   asyncHandler(ManuscriptsController.createManuscript),
 );
 
@@ -35,11 +36,13 @@ router.get(
 
 router.put(
   "/:projectId/:manuscriptId",
+  requireWriteAccess(),
   asyncHandler(ManuscriptsController.updateManuscript),
 );
 
 router.delete(
   "/:projectId/:manuscriptId",
+  requireWriteAccess(),
   asyncHandler(ManuscriptsController.deleteManuscript),
 );
 
@@ -50,16 +53,19 @@ router.get(
 
 router.post(
   "/:projectId/:manuscriptId/chapters",
+  requireWriteAccess(),
   asyncHandler(ManuscriptsController.createChapter),
 );
 
 router.put(
   "/:projectId/:manuscriptId/chapters/:chapterId",
+  requireWriteAccess(),
   asyncHandler(ManuscriptsController.updateChapter),
 );
 
 router.delete(
   "/:projectId/:manuscriptId/chapters/:chapterId",
+  requireWriteAccess(),
   asyncHandler(ManuscriptsController.deleteChapter),
 );
 
@@ -70,6 +76,7 @@ router.get(
 
 router.put(
   "/:projectId/:manuscriptId/chapters/:chapterId/autosave",
+  requireWriteAccess(),
   asyncHandler(ManuscriptsController.autosaveChapter),
 );
 
@@ -83,10 +90,9 @@ router.get(
   asyncHandler(ManuscriptsController.getChapterVersion),
 );
 
-
-
 router.put(
   "/:projectId/:manuscriptId/chapters/:chapterId/versions/:versionId/restore",
+  requireWriteAccess(),
   asyncHandler(ManuscriptsController.restoreVersion),
 );
 
