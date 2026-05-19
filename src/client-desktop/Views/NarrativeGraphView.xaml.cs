@@ -35,13 +35,21 @@ namespace Layla.Desktop.Views
             { "Concept",   (Color)ColorConverter.ConvertFromString("#90A4AE")! },
         };
 
-        public NarrativeGraphView(Guid projectId)
+        private bool _isReadOnly;
+
+        public NarrativeGraphView(Guid projectId, bool isReadOnly = false)
         {
             InitializeComponent();
+            _isReadOnly = isReadOnly;
             _viewModel = ServiceLocator.GetService<NarrativeGraphViewModel>()
                 ?? throw new InvalidOperationException("NarrativeGraphViewModel not registered");
             _viewModel.Initialize(projectId);
             DataContext = _viewModel;
+
+            if (isReadOnly)
+            {
+                AddRelationshipButton.Visibility = System.Windows.Visibility.Collapsed;
+            }
 
             ((INotifyCollectionChanged)_viewModel.Nodes).CollectionChanged += (_, _) => DrawGraph();
             ((INotifyCollectionChanged)_viewModel.Edges).CollectionChanged += (_, _) => DrawGraph();
@@ -82,11 +90,14 @@ namespace Layla.Desktop.Views
             };
 
             // Right-click to delete edge
-            line.MouseRightButtonUp += (s, e) =>
+            if (!_isReadOnly)
             {
-                e.Handled = true;
-                _viewModel.DeleteRelationshipCommand.Execute(edge);
-            };
+                line.MouseRightButtonUp += (s, e) =>
+                {
+                    e.Handled = true;
+                    _viewModel.DeleteRelationshipCommand.Execute(edge);
+                };
+            }
 
             _edgeElements[line] = edge;
             GraphCanvas.Children.Add(line);
@@ -107,7 +118,7 @@ namespace Layla.Desktop.Views
                     CornerRadius = new CornerRadius(4),
                     Padding = new Thickness(5, 2, 5, 2),
                     Cursor = Cursors.Hand,
-                    ToolTip = $"Right-click to delete"
+                    ToolTip = _isReadOnly ? null : $"Right-click to delete"
                 };
 
                 border.Child = new TextBlock
@@ -118,11 +129,14 @@ namespace Layla.Desktop.Views
                     FontWeight = FontWeights.Medium
                 };
 
-                border.MouseRightButtonUp += (s, e) =>
+                if (!_isReadOnly)
                 {
-                    e.Handled = true;
-                    _viewModel.DeleteRelationshipCommand.Execute(edge);
-                };
+                    border.MouseRightButtonUp += (s, e) =>
+                    {
+                        e.Handled = true;
+                        _viewModel.DeleteRelationshipCommand.Execute(edge);
+                    };
+                }
 
                 _edgeElements[border] = edge;
                 border.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));

@@ -11,13 +11,25 @@ namespace Layla.Desktop.Views
     {
         private readonly WikiEntityEditorViewModel _viewModel;
 
-        public WikiEntityEditorView(Guid projectId)
+        public WikiEntityEditorView(Guid projectId, bool isReadOnly = false)
         {
             InitializeComponent();
             _viewModel = ServiceLocator.GetService<WikiEntityEditorViewModel>()
                 ?? throw new InvalidOperationException("WikiEntityEditorViewModel not registered");
             _viewModel.Initialize(projectId);
             DataContext = _viewModel;
+
+            if (isReadOnly)
+            {
+                NameTextBox.IsReadOnly = true;
+                TypeComboBox.IsEnabled = false;
+                TagsTextBox.IsReadOnly = true;
+                DescriptionTextBox.IsReadOnly = true;
+
+                NewButton.Visibility = System.Windows.Visibility.Collapsed;
+                DeleteButton.Visibility = System.Windows.Visibility.Collapsed;
+                SaveButton.Visibility = System.Windows.Visibility.Collapsed;
+            }
 
             Loaded += async (_, _) =>
             {

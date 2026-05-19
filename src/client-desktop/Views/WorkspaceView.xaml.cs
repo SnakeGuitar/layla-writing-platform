@@ -53,9 +53,11 @@ namespace Layla.Desktop.Views
             if (_viewModel.CurrentProject != null)
             {
                 var projectId = _viewModel.CurrentProject.Id;
-                _editorView = new ManuscriptEditorView(projectId);
-                _wikiView = new WikiEntityEditorView(projectId);
-                _graphView = new NarrativeGraphView(projectId);
+                var isReadOnly = string.Equals(_viewModel.CurrentProject.UserRole, "READER", StringComparison.OrdinalIgnoreCase);
+
+                _editorView = new ManuscriptEditorView(projectId, isReadOnly);
+                _wikiView = new WikiEntityEditorView(projectId, isReadOnly);
+                _graphView = new NarrativeGraphView(projectId, isReadOnly);
 
                 EditorFrame.Navigate(_editorView);
                 WikiFrame.Navigate(_wikiView);

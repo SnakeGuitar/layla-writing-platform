@@ -54,7 +54,7 @@
                                       BorderBrush="{DynamicResource BorderColor}"
                                       Padding="5,4" FontSize="12"
                                       SelectionChanged="ManuscriptComboBox_SelectionChanged"/>
-                            <Button Grid.Column="1" Content="+" ToolTip="Add manuscript"
+                            <Button x:Name="AddManuscriptButton" Grid.Column="1" Content="+" ToolTip="Add manuscript"
                                     Width="26" Height="26" Margin="4,0,0,0"
                                     Background="{DynamicResource AccentColor}" Foreground="White"
                                     BorderThickness="0" FontWeight="Bold" Cursor="Hand"
@@ -79,7 +79,7 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="CHAPTERS" FontSize="10" FontWeight="Bold"
                                    Foreground="{DynamicResource SecondaryText}" VerticalAlignment="Center"/>
-                        <Button Grid.Column="1" Content="+ Add" ToolTip="Add chapter"
+                        <Button x:Name="AddChapterButton" Grid.Column="1" Content="+ Add" ToolTip="Add chapter"
                                 Background="Transparent" Foreground="{DynamicResource AccentColor}"
                                 BorderThickness="0" FontSize="11" Cursor="Hand" Padding="4,2"
                                 Command="{Binding AddChapterCommand}"/>

@@ -173,6 +173,10 @@ namespace Layla.Desktop.Views
                     EditorRichTextBox.IsReadOnly = true;
                     foreach (var child in GetVisualChildren<ToolBarTray>(this))
                         child.Visibility = Visibility.Collapsed;
+
+                    AddManuscriptButton.Visibility = Visibility.Collapsed;
+                    DeleteManuscriptButton.Visibility = Visibility.Collapsed;
+                    AddChapterButton.Visibility = Visibility.Collapsed;
                 }
 
                 var layer = AdornerLayer.GetAdornerLayer(EditorRichTextBox);
