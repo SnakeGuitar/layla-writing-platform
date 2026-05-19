@@ -49,7 +49,8 @@ const initializeProjectInNeo4j = async (
 				`MERGE (u:User { id: $ownerId })
          WITH u
          MATCH (p:Project { projectId: $projectId })
-         MERGE (u)-[:MEMBER_OF]->(p)`,
+         MERGE (u)-[r:MEMBER_OF]->(p)
+         SET r.role = 'OWNER'`,
 				{
 					ownerId: payload.ownerId,
 					projectId: payload.projectId,
