@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,5 +17,6 @@ namespace Layla.Desktop.Models
         public DateTime UpdatedAt { get; set; }
         public bool IsPublic { get; set; }
         public bool IsAuthorActive { get; set; }
+        public string UserRole { get; set; } = string.Empty;
     }
 }
