@@ -1,6 +1,7 @@
 using Layla.Desktop.Models;
 using Layla.Desktop.Services;
 using Layla.Desktop.ViewModels;
+using Layla.Client.Shared.Models;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -62,6 +63,9 @@ namespace Layla.Desktop.Views
             DataContext = _viewModel;
             _viewModel.Initialize(projectId);
             _viewModel.ContentReloadRequested += OnContentReloadRequested;
+            _viewModel.EvictedFromProject += OnEvictedFromProject;
+            _viewModel.WikiTokenizerUpdated += OnWikiTokenizerUpdated;
+            _viewModel.RequestShowDiff += OnRequestShowDiff;
             this.Loaded += OnLoaded;
             this.Unloaded += OnUnloaded;
 
@@ -103,6 +107,9 @@ namespace Layla.Desktop.Views
             _debounceTimer?.Dispose();
             _debounceTimer = null;
             _viewModel.ContentReloadRequested -= OnContentReloadRequested;
+            _viewModel.EvictedFromProject -= OnEvictedFromProject;
+            _viewModel.WikiTokenizerUpdated -= OnWikiTokenizerUpdated;
+            _viewModel.RequestShowDiff -= OnRequestShowDiff;
         }
 
         /// <summary>
@@ -118,11 +125,13 @@ namespace Layla.Desktop.Views
                 return;
 
             string rtf;
+            string plainText;
             try
             {
                 var textRange = new TextRange(
                     EditorRichTextBox.Document.ContentStart,
                     EditorRichTextBox.Document.ContentEnd);
+                plainText = textRange.Text;
                 using var ms = new MemoryStream();
                 textRange.Save(ms, DataFormats.Rtf);
                 rtf = System.Text.Encoding.UTF8.GetString(ms.ToArray());
@@ -133,7 +142,7 @@ namespace Layla.Desktop.Views
                 return;
             }
 
-            await _viewModel.FlushSaveAsync(rtf);
+            await _viewModel.FlushSaveAsync(new SaveContentArgs { RtfContent = rtf, PlainText = plainText });
         }
 
         private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -362,13 +371,28 @@ namespace Layla.Desktop.Views
         /// Recalculates the word count and schedules an auto-save after a 1-second
         /// debounce to avoid flooding the API on every keystroke.
         /// </summary>
-        private void EditorRichTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        private async void EditorRichTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (_viewModel == null || !_isLoaded || _viewModel.CurrentChapter == null || _suppressToolbarSync) return;
 
             var countRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
-            int wordCount = countRange.Text.Split(new char[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
+            string plainText = countRange.Text;
+            int wordCount = plainText.Split(new char[] { ' ', '\r', '\n', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
             _viewModel.UpdateWordCount(wordCount);
+
+            // Debounced/background visual tokenization
+            await Dispatcher.InvokeAsync(() => RunVisualTokenization(), System.Windows.Threading.DispatcherPriority.Background);
+
+            // Broadcast cursor position
+            try
+            {
+                int cursorOffset = EditorRichTextBox.Document.ContentStart.GetOffsetToPosition(EditorRichTextBox.CaretPosition);
+                await _viewModel.BroadcastCursorPositionAsync(cursorOffset);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to broadcast cursor: {ex.Message}");
+            }
 
             if (_debounceTimer != null)
             {
@@ -381,22 +405,24 @@ namespace Layla.Desktop.Views
         }
 
         /// <summary>
-        /// Extracts the current <see cref="FlowDocument"/> as RTF and delegates the
+        /// Extracts the current <see cref="FlowDocument"/> as RTF and plain text, and delegates the
         /// persistence to <see cref="ManuscriptEditorViewModel.SaveContentCommand"/>.
         /// </summary>
         private async Task SaveContentInternalAsync()
         {
             string rtfContent = string.Empty;
+            string plainText = string.Empty;
 
             await Application.Current.Dispatcher.InvokeAsync(() =>
             {
                 var textRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
+                plainText = textRange.Text;
                 using var ms = new MemoryStream();
                 textRange.Save(ms, DataFormats.Rtf);
                 rtfContent = System.Text.Encoding.UTF8.GetString(ms.ToArray());
             });
 
-            await _viewModel.SaveContentCommand.ExecuteAsync(rtfContent);
+            await _viewModel.SaveContentCommand.ExecuteAsync(new SaveContentArgs { RtfContent = rtfContent, PlainText = plainText });
         }
 
         private void EditorRichTextBox_SelectionChanged(object sender, RoutedEventArgs e)
@@ -737,6 +763,127 @@ namespace Layla.Desktop.Views
                 foreach (var grandChild in GetVisualChildren<T>(child))
                     yield return grandChild;
             }
+        }
+
+        /// <summary>
+        /// Scans all text runs in the FlowDocument and programmatically injects
+        /// interactive wiki hyperlinks for matches detected by the Aho-Corasick tokenizer.
+        /// </summary>
+        private void RunVisualTokenization()
+        {
+            if (_suppressToolbarSync || !_isLoaded || _viewModel.CurrentChapter == null) return;
+
+            _suppressToolbarSync = true;
+            try
+            {
+                var runs = GetVisualChildren<Run>(EditorRichTextBox.Document).ToList();
+                var textRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
+                var detectable = _viewModel.Tokenizer.FindMentions(textRange.Text);
+
+                foreach (var run in runs)
+                {
+                    // Skip if the run is already nested under a Hyperlink
+                    if (run.Parent is Hyperlink) continue;
+
+                    string text = run.Text;
+                    foreach (var match in detectable)
+                    {
+                        int index = text.IndexOf(match.MatchedText, StringComparison.OrdinalIgnoreCase);
+                        if (index >= 0)
+                        {
+                            var pointer = run.ContentStart.GetPositionAtOffset(index);
+                            var endPointer = pointer.GetPositionAtOffset(match.MatchedText.Length);
+
+                            var hyperlink = new Hyperlink(pointer, endPointer)
+                            {
+                                NavigateUri = new Uri($"wiki://{match.EntityId}"),
+                                ToolTip = $"Wiki: {match.MatchedText} ({match.EntityType})"
+                            };
+                            hyperlink.RequestNavigate += (s, e) =>
+                            {
+                                WorkspaceMediator.RequestNavigateToWikiEntry(match.EntityId);
+                            };
+
+                            // Apply premium styled aesthetic
+                            hyperlink.Foreground = new SolidColorBrush(Color.FromRgb(103, 58, 183)); // Modern Slate Indigo
+                            hyperlink.TextDecorations = TextDecorations.Underline;
+                            hyperlink.Cursor = Cursors.Hand;
+                            break; // Move to next run
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Tokenization error: {ex.Message}");
+            }
+            finally
+            {
+                _suppressToolbarSync = false;
+            }
+        }
+
+        private void OnWikiTokenizerUpdated()
+        {
+            Dispatcher.Invoke(() => RunVisualTokenization());
+        }
+
+        private void OnEvictedFromProject(Guid projectId)
+        {
+            Application.Current.Dispatcher.Invoke(async () =>
+            {
+                MessageBox.Show("Your collaborator access to this project has been revoked by the owner.", "Access Revoked", MessageBoxButton.OK, MessageBoxImage.Error);
+
+                try
+                {
+                    await FlushPendingSavesAsync();
+                }
+                catch { }
+
+                var parentPage = GetParentPage(this);
+                if (parentPage?.NavigationService != null)
+                {
+                    parentPage.NavigationService.Navigate(new ProjectListView());
+                }
+                else
+                {
+                    this.NavigationService?.Navigate(new ProjectListView());
+                }
+            });
+        }
+
+        private void OnRequestShowDiff(ChapterVersionFull fullVersion)
+        {
+            Dispatcher.Invoke(async () =>
+            {
+                // Extract current editor RTF content
+                string currentRtf = string.Empty;
+                var textRange = new TextRange(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
+                using (var ms = new MemoryStream())
+                {
+                    textRange.Save(ms, DataFormats.Rtf);
+                    currentRtf = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+                }
+
+                var diffWindow = new ChapterDiffWindow(fullVersion, currentRtf)
+                {
+                    Owner = Window.GetWindow(this)
+                };
+
+                if (diffWindow.ShowDialog() == true && diffWindow.Restored)
+                {
+                    // User clicked "Restore to this Version" inside the diff dialog
+                    await _viewModel.RestoreVersionCommand.ExecuteAsync(fullVersion);
+                }
+            });
+        }
+
+        private Page? GetParentPage(DependencyObject child)
+        {
+            var parent = VisualTreeHelper.GetParent(child);
+            if (parent == null) return null;
+            if (parent is Page page) return page;
+            return GetParentPage(parent);
         }
     }
 }

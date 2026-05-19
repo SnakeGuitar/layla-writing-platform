@@ -142,6 +142,12 @@ namespace Layla.Desktop
             services.AddSingleton<IGraphApiService, GraphApiService>();
             services.AddSingleton<LocalCacheManager>();
 
+            // Collaboration & Tokenizer Services
+            services.AddSingleton<Layla.Client.Shared.Hub.ManuscriptHubClient>();
+            services.AddSingleton<Layla.Client.Shared.Services.ICollaborationApiService>(sp => 
+                new Layla.Client.Shared.Services.CollaborationApiService(
+                    ConfigurationService.CreateHttpClient(ConfigurationService.WorldbuildingApiUrl)));
+
             services.AddTransient<ViewModels.ManuscriptEditorViewModel>();
             services.AddTransient<ViewModels.ProjectListViewModel>();
             services.AddTransient<ViewModels.LoginViewModel>();
