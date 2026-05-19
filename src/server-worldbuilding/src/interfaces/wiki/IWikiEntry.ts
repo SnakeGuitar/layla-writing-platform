@@ -4,6 +4,7 @@ export interface IWikiEntry {
   projectId: string;
   entityId: string;
   name: string;
+  aliases: string[];
   entityType: WikiEntityType;
   description: string;
   tags: string[];

@@ -12,6 +12,11 @@ router.use(asyncHandler(requireProjectAccess()));
 router.get("/:projectId/entries", asyncHandler(WikiController.listEntries));
 
 router.get(
+	"/:projectId/detectable",
+	asyncHandler(WikiController.getDetectableEntities),
+);
+
+router.get(
 	"/:projectId/entries/:entityId",
 	asyncHandler(WikiController.getEntry),
 );
