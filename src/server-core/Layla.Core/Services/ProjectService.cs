@@ -38,17 +38,20 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
     private readonly IProjectRepository _projectRepository;
     private readonly IAppUserRepository _appUserRepository;
     private readonly IEventPublisher _eventPublisher;
+    private readonly IOutboxRepository _outboxRepository;
 
     public ProjectService(
         IProjectRepository projectRepository,
         IAppUserRepository appUserRepository,
         IEventPublisher eventPublisher,
+        IOutboxRepository outboxRepository,
         ILogger<ProjectService> logger)
         : base(logger)
     {
         _projectRepository = projectRepository;
         _appUserRepository = appUserRepository;
         _eventPublisher = eventPublisher;
+        _outboxRepository = outboxRepository;
     }
 
     /// <summary>
@@ -306,8 +309,17 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
             if (role.Role == ProjectRoles.Owner)
                 return Result<bool>.Failure(ErrorCode.InvalidInput, "Cannot remove the project owner.");
 
-            await _projectRepository.RemoveProjectRoleAsync(role, cancellationToken);
-            await _projectRepository.SaveChangesAsync(cancellationToken);
+            var outboxMessage = new OutboxMessage
+            {
+                EventType = "ClientEvicted",
+                Payload = System.Text.Json.JsonSerializer.Serialize(new { ProjectId = projectId, UserId = collaboratorUserId })
+            };
+
+            await _projectRepository.ExecuteInTransactionAsync(async ct =>
+            {
+                await _projectRepository.RemoveProjectRoleAsync(role, ct);
+                await _outboxRepository.AddMessageAsync(outboxMessage, ct);
+            }, cancellationToken);
 
             return Result<bool>.Success(true);
         }, "Failed to remove collaborator from project {ProjectId}", projectId);
