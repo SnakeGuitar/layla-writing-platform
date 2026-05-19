@@ -8,6 +8,11 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Layla.Client.Shared.Hub;
+using Layla.Client.Shared.Services;
+using Layla.Client.Shared.Tokenizer;
+using Layla.Client.Shared.Models;
+
 namespace Layla.Desktop.ViewModels
 {
     /// <summary>
@@ -20,8 +25,23 @@ namespace Layla.Desktop.ViewModels
     public partial class ManuscriptEditorViewModel : ObservableObject
     {
         private readonly IManuscriptApiService _apiService;
+        private readonly ICollaborationApiService _collaborationApiService;
+        private readonly ManuscriptHubClient _hubClient;
         private readonly LocalCacheManager _cache;
         private Guid _projectId;
+        private Guid? _activeChapterId;
+
+        /// <summary>High-performance Aho-Corasick tokenizer for this project.</summary>
+        public WikiTokenizer Tokenizer { get; } = new();
+
+        /// <summary>Fired when the current user has been evicted from the project.</summary>
+        public event Action<Guid>? EvictedFromProject;
+
+        /// <summary>Fired when the wiki entities have changed and the tokenizer is rebuilt.</summary>
+        public event Action? WikiTokenizerUpdated;
+
+        /// <summary>Fired when another collaborator's cursor moves inside the active chapter.</summary>
+        public event Action<string, int>? CollaboratorCursorMoved;
 
         // Serialises saves so two in-flight calls cannot interleave on the
         // same chapter — but still allows a forced flush to wait for the
@@ -70,6 +90,12 @@ namespace Layla.Desktop.ViewModels
         [ObservableProperty]
         private Chapter? _selectedChapterItem;
 
+        /// <summary>Timeline list of all chapter versions.</summary>
+        public ObservableCollection<ChapterVersionMeta> ChapterVersions { get; } = new();
+
+        [ObservableProperty]
+        private bool _isLoadingHistory;
+
         /// <summary>All manuscripts belonging to the current project, ordered by <see cref="Manuscript.Order"/>.</summary>
         public ObservableCollection<Manuscript> Manuscripts { get; } = new();
 
@@ -85,19 +111,101 @@ namespace Layla.Desktop.ViewModels
         /// </summary>
         public event Action? ContentReloadRequested;
 
+        /// <summary>Raised when the view should open the Diff Comparison window.</summary>
+        public event Action<ChapterVersionFull>? RequestShowDiff;
+
         /// <summary>Initialises the ViewModel via dependency injection.</summary>
-        public ManuscriptEditorViewModel(IManuscriptApiService apiService, LocalCacheManager cache)
+        public ManuscriptEditorViewModel(
+            IManuscriptApiService apiService,
+            LocalCacheManager cache,
+            ICollaborationApiService collaborationApiService,
+            ManuscriptHubClient hubClient)
         {
             _apiService = apiService;
             _cache = cache;
+            _collaborationApiService = collaborationApiService;
+            _hubClient = hubClient;
+
+            // Wire SignalR -> ViewModel events
+            _hubClient.ClientEvicted += projectId =>
+            {
+                if (projectId == _projectId)
+                    EvictedFromProject?.Invoke(projectId);
+            };
+
+            _hubClient.WikiEntitiesChanged += async () =>
+            {
+                await RebuildTokenizerAsync();
+                WikiTokenizerUpdated?.Invoke();
+            };
+
+            _hubClient.CursorMoved += (userId, offset) =>
+            {
+                CollaboratorCursorMoved?.Invoke(userId, offset);
+            };
         }
 
         /// <summary>
-        /// Sets the project context. Must be called before any command is executed.
+        /// Rebuilds the Aho-Corasick tokenizer with current detectable wiki entities.
         /// </summary>
-        public void Initialize(Guid projectId)
+        public async Task RebuildTokenizerAsync()
+        {
+            try
+            {
+                var detectable = await _collaborationApiService.GetDetectableEntitiesAsync(_projectId);
+                if (detectable != null)
+                {
+                    Tokenizer.Build(detectable);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to build tokenizer: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Broadcasts our cursor position to other collaborators.
+        /// </summary>
+        public async Task BroadcastCursorPositionAsync(int offset)
+        {
+            if (_activeChapterId.HasValue)
+            {
+                try
+                {
+                    await _hubClient.SendCursorMovedAsync(_projectId, _activeChapterId.Value.ToString(), offset);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to send cursor offset: {ex.Message}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sets the project context and connects to the collaboration hub.
+        /// </summary>
+        public async void Initialize(Guid projectId)
         {
             _projectId = projectId;
+
+            // Initial tokenizer load
+            await RebuildTokenizerAsync();
+            WikiTokenizerUpdated?.Invoke();
+
+            // Connect to SignalR collaboration hub
+            try
+            {
+                await _hubClient.ConnectAsync(
+                    $"{ConfigurationService.ServerCoreUrl}/hubs/manuscript",
+                    () => Task.FromResult<string?>(SessionManager.CurrentToken)
+                );
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = "SignalR collaboration hub unreachable.";
+                System.Diagnostics.Debug.WriteLine($"Failed to connect to SignalR hub: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -189,15 +297,22 @@ namespace Layla.Desktop.ViewModels
             await SelectManuscriptAsync(manuscript);
         }
 
-        /// <summary>
-        /// Fetches the full chapter content from the API and sets <see cref="CurrentChapter"/>,
-        /// then raises <see cref="ContentReloadRequested"/> so the view reloads the editor.
-        /// Falls back to the offline cache when the API is unreachable so any unsaved work
-        /// from a previous session is not lost.
-        /// </summary>
         private async Task SelectChapterAsync(Chapter chapterIndex)
         {
             if (SelectedManuscript == null) return;
+
+            // Leave previous chapter SignalR group if any
+            if (_activeChapterId.HasValue)
+            {
+                try
+                {
+                    await _hubClient.LeaveChapterGroupAsync(_projectId, _activeChapterId.Value.ToString());
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to leave SignalR group: {ex.Message}");
+                }
+            }
 
             var fullChapter = await _apiService.GetChapterAsync(_projectId, SelectedManuscript.ManuscriptId, chapterIndex.ChapterId);
 
@@ -219,6 +334,20 @@ namespace Layla.Desktop.ViewModels
 
             CurrentChapter = fullChapter ?? chapterIndex;
             SelectedChapterItem = chapterIndex;
+            _activeChapterId = chapterIndex.ChapterId;
+
+            // Join new chapter SignalR group
+            try
+            {
+                await _hubClient.JoinChapterGroupAsync(_projectId, _activeChapterId.Value.ToString());
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to join SignalR group: {ex.Message}");
+            }
+
+            // Load Version History in background
+            _ = LoadHistoryAsync();
 
             CurrentMentions.Clear();
             if (CurrentChapter?.Mentions != null)
@@ -409,14 +538,14 @@ namespace Layla.Desktop.ViewModels
         public bool CanEdit => CurrentChapter != null;
 
         /// <summary>
-        /// Persists <paramref name="rtfContent"/> to the API for <see cref="CurrentChapter"/>.
+        /// Persists <paramref name="args"/> to the API for <see cref="CurrentChapter"/>.
         /// Guards against concurrent saves with <see cref="IsSaving"/>. On network failure the
         /// content is written to the local cache and <see cref="HasUnsavedOfflineChanges"/>
         /// is raised so the view can display an offline indicator. On success the cache entry
         /// is cleared so it only ever contains work that has not reached the server.
         /// </summary>
         [RelayCommand]
-        public Task SaveContentAsync(string rtfContent) => SaveContentInternalAsync(rtfContent, force: false);
+        public Task SaveContentAsync(SaveContentArgs args) => SaveContentInternalAsync(args.RtfContent, args.PlainText, force: false);
 
         /// <summary>
         /// Like <see cref="SaveContentAsync"/> but waits for any in-progress save
@@ -424,9 +553,9 @@ namespace Layla.Desktop.ViewModels
         /// Called from the view's <c>Unloaded</c> handler so the user's last
         /// edits are always flushed before navigating away.
         /// </summary>
-        public Task FlushSaveAsync(string rtfContent) => SaveContentInternalAsync(rtfContent, force: true);
+        public Task FlushSaveAsync(SaveContentArgs args) => SaveContentInternalAsync(args.RtfContent, args.PlainText, force: true);
 
-        private async Task SaveContentInternalAsync(string rtfContent, bool force)
+        private async Task SaveContentInternalAsync(string rtfContent, string plainText, bool force)
         {
             if (CurrentChapter == null || SelectedManuscript == null) return;
 
@@ -444,33 +573,50 @@ namespace Layla.Desktop.ViewModels
 
             try
             {
-                var saved = await _apiService.UpdateChapterAsync(
+                // Run tokenizer scan on plain text to find wiki mentions
+                var matches = Tokenizer.FindMentions(plainText);
+                var mentions = matches.Select(m => new MentionPayload
+                {
+                    EntityId = m.EntityId,
+                    Name = m.MatchedText,
+                    EntityType = m.EntityType
+                }).ToList();
+
+                var success = await _collaborationApiService.AutosaveChapterAsync(
                     _projectId,
                     manuscriptId,
-                    CurrentChapter.ChapterId,
-                    CurrentChapter.Title,
+                    chapterId,
                     rtfContent,
-                    CurrentChapter.Order
+                    mentions
                 );
 
-                if (saved == null)
+                if (!success)
                 {
-                    // API reachable but returned no result — treat as a soft failure and cache.
+                    // API reachable but returned no result or failed — treat as a soft failure and cache.
                     await _cache.SaveChapterAsync(manuscriptId, chapterId, rtfContent);
                     HasUnsavedOfflineChanges = true;
                     return;
                 }
 
-                if (saved.Mentions != null)
+                // Update UI mentions collection
+                CurrentMentions.Clear();
+                var modelMentions = new List<Mention>();
+                foreach (var mention in matches)
                 {
-                    CurrentMentions.Clear();
-                    foreach (var mention in saved.Mentions)
-                        CurrentMentions.Add(mention);
+                    var mentionModel = new Mention
+                    {
+                        EntityId = mention.EntityId,
+                        Name = mention.MatchedText,
+                        EntityType = mention.EntityType
+                    };
+                    CurrentMentions.Add(mentionModel);
+                    modelMentions.Add(mentionModel);
                 }
 
                 // Successful server save — drop any stale offline copy and the
                 // in-memory chapter content so a subsequent re-load reflects it.
                 CurrentChapter.Content = rtfContent;
+                CurrentChapter.Mentions = modelMentions;
                 _cache.ClearChapter(manuscriptId, chapterId);
                 HasUnsavedOfflineChanges = false;
             }
@@ -512,5 +658,157 @@ namespace Layla.Desktop.ViewModels
             if (targetCh != null)
                 await SelectChapterAsync(targetCh);
         }
+
+        [RelayCommand]
+        public async Task LoadHistoryAsync()
+        {
+            if (CurrentChapter == null || SelectedManuscript == null) return;
+            IsLoadingHistory = true;
+            try
+            {
+                var versions = await _collaborationApiService.GetChapterVersionsAsync(
+                    _projectId,
+                    SelectedManuscript.ManuscriptId,
+                    CurrentChapter.ChapterId.ToString()
+                );
+                ChapterVersions.Clear();
+                if (versions != null)
+                {
+                    foreach (var v in versions.OrderByDescending(v => v.CreatedAt))
+                    {
+                        ChapterVersions.Add(v);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load version history: {ex.Message}");
+            }
+            finally
+            {
+                IsLoadingHistory = false;
+            }
+        }
+
+        [RelayCommand]
+        public async Task CreateMilestoneAsync()
+        {
+            if (CurrentChapter == null || SelectedManuscript == null) return;
+            StatusMessage = "Creating milestone snapshot...";
+            try
+            {
+                var milestone = await _collaborationApiService.CreateMilestoneAsync(
+                    _projectId,
+                    SelectedManuscript.ManuscriptId,
+                    CurrentChapter.ChapterId.ToString()
+                );
+                if (milestone != null)
+                {
+                    StatusMessage = "Milestone snapshot created successfully!";
+                    await LoadHistoryAsync();
+                }
+                else
+                {
+                    StatusMessage = "Failed to create milestone snapshot.";
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Milestone error: {ex.Message}";
+            }
+        }
+
+        [RelayCommand]
+        public async Task RestoreVersionAsync(ChapterVersionMeta? version)
+        {
+            if (version == null || CurrentChapter == null || SelectedManuscript == null) return;
+            var confirm = System.Windows.MessageBox.Show(
+                $"Are you sure you want to restore the editor to the version created on {version.CreatedAt}?",
+                "Confirm Restoration",
+                System.Windows.MessageBoxButton.YesNo,
+                System.Windows.MessageBoxImage.Warning
+            );
+            if (confirm != System.Windows.MessageBoxResult.Yes) return;
+
+            StatusMessage = "Restoring version...";
+            try
+            {
+                var restored = await _collaborationApiService.RestoreVersionAsync(
+                    _projectId,
+                    SelectedManuscript.ManuscriptId,
+                    CurrentChapter.ChapterId.ToString(),
+                    version.Id
+                );
+
+                if (restored)
+                {
+                    StatusMessage = $"Restored to version from {version.CreatedAt}!";
+                    
+                    // Fetch full restored content to update the editor
+                    var fullVersion = await _collaborationApiService.GetChapterVersionAsync(
+                        _projectId,
+                        SelectedManuscript.ManuscriptId,
+                        CurrentChapter.ChapterId.ToString(),
+                        version.Id
+                    );
+                    
+                    if (fullVersion != null)
+                    {
+                        CurrentChapter.Content = fullVersion.Content;
+                    }
+                    
+                    // Reload content in the RichTextBox
+                    ContentReloadRequested?.Invoke();
+                    await LoadHistoryAsync();
+                }
+                else
+                {
+                    StatusMessage = "Failed to restore version.";
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Restore failed: {ex.Message}";
+            }
+        }
+
+        [RelayCommand]
+        public async Task CompareDiffAsync(ChapterVersionMeta? version)
+        {
+            if (version == null || CurrentChapter == null || SelectedManuscript == null) return;
+            StatusMessage = "Fetching historical version content...";
+            try
+            {
+                var fullVersion = await _collaborationApiService.GetChapterVersionAsync(
+                    _projectId,
+                    SelectedManuscript.ManuscriptId,
+                    CurrentChapter.ChapterId.ToString(),
+                    version.Id
+                );
+
+                if (fullVersion != null)
+                {
+                    StatusMessage = "Loaded version details.";
+                    RequestShowDiff?.Invoke(fullVersion);
+                }
+                else
+                {
+                    StatusMessage = "Failed to load version content.";
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Failed to fetch version: {ex.Message}";
+            }
+        }
+    }
+
+    /// <summary>
+    /// Arguments for saving manuscript chapter content including both rich-text and plain-text.
+    /// </summary>
+    public class SaveContentArgs
+    {
+        public string RtfContent { get; set; } = string.Empty;
+        public string PlainText { get; set; } = string.Empty;
     }
 }
