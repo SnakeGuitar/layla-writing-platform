@@ -287,6 +287,7 @@ export const autosaveChapter = async (
   content: string,
   mentions: any[],
   userId: string,
+  isMilestone: boolean = false,
   repo = container.manuscriptRepo,
 ): Promise<void> => {
   // Update main document using Last-Write-Wins and client-provided mentions
@@ -298,7 +299,7 @@ export const autosaveChapter = async (
     chapterId,
     projectId,
     content,
-    isMilestone: false,
+    isMilestone,
     createdBy: userId,
   });
 };
@@ -331,27 +332,7 @@ export const getChapterVersion = async (
   }).lean();
 };
 
-/**
- * Creates a milestone (snapshot) of the current chapter state.
- */
-export const createMilestone = async (
-  projectId: string,
-  manuscriptId: string,
-  chapterId: string,
-  userId: string,
-  repo = container.manuscriptRepo,
-) => {
-  const chapter = await repo.getChapter(projectId, manuscriptId, chapterId);
-  if (!chapter) return null;
 
-  return ChapterVersionModel.create({
-    chapterId,
-    projectId,
-    content: chapter.content || "",
-    isMilestone: true,
-    createdBy: userId,
-  });
-};
 
 /**
  * Restores a chapter to a specific version.

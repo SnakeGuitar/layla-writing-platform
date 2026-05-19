@@ -254,7 +254,7 @@ export const autosaveChapter = async (
   req: Request,
   res: Response,
 ): Promise<void> => {
-  const { content, mentions } = req.body;
+  const { content, mentions, isMilestone } = req.body;
   // User context is populated by auth middleware
   const userId = req.user?.id;
 
@@ -270,6 +270,7 @@ export const autosaveChapter = async (
     content || "",
     mentions || [],
     userId,
+    isMilestone === true
   );
 
   res.status(200).send();
@@ -312,35 +313,7 @@ export const getChapterVersion = async (
   res.json(version);
 };
 
-/**
- * POST /api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId/versions/milestone
- *
- * Creates a milestone snapshot for a chapter.
- */
-export const createMilestone = async (
-  req: Request,
-  res: Response,
-): Promise<void> => {
-  const userId = req.user?.id;
-  if (!userId) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
 
-  const milestone = await ManuscriptService.createMilestone(
-    req.params["projectId"] as string,
-    req.params["manuscriptId"] as string,
-    req.params["chapterId"] as string,
-    userId,
-  );
-
-  if (!milestone) {
-    res.status(404).json({ error: "Chapter not found" });
-    return;
-  }
-
-  res.status(201).json(milestone);
-};
 
 /**
  * PUT /api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId/versions/:versionId/restore

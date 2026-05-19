@@ -83,10 +83,7 @@ router.get(
   asyncHandler(ManuscriptsController.getChapterVersion),
 );
 
-router.post(
-  "/:projectId/:manuscriptId/chapters/:chapterId/versions/milestone",
-  asyncHandler(ManuscriptsController.createMilestone),
-);
+
 
 router.put(
   "/:projectId/:manuscriptId/chapters/:chapterId/versions/:versionId/restore",
