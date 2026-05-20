@@ -60,4 +60,16 @@ public interface IManuscriptApiService
     /// Returns <c>true</c> on success, <c>false</c> on failure.
     /// </summary>
     Task<bool> DeleteChapterAsync(Guid projectId, string manuscriptId, Guid chapterId);
+
+    /// <summary>
+    /// Triggers an autosave of the current chapter content, flagging it as a milestone snapshot.
+    /// The milestone will appear in the version history with an orange MILESTONE badge.
+    /// Returns <c>true</c> on success.
+    /// </summary>
+    Task<bool> CreateMilestoneAsync(Guid projectId, string manuscriptId, Guid chapterId, string content);
+
+    /// <summary>
+    /// Returns the version history for a chapter, ordered by date descending.
+    /// </summary>
+    Task<List<ChapterVersion>?> GetChapterVersionsAsync(Guid projectId, string manuscriptId, Guid chapterId);
 }

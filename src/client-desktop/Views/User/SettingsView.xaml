@@ -30,9 +30,8 @@
             <TextBlock Text="APP THEME:" Style="{StaticResource CyberLabel}" Width="150" VerticalAlignment="Center"/>
             <ComboBox x:Name="ThemeComboBox" Width="200" 
                       SelectedValue="{Binding CurrentTheme}" SelectedValuePath="Tag">
-                <ComboBoxItem Content="Light Theme" Tag="LightTheme"/>
-                <ComboBoxItem Content="Dark Theme" Tag="DarkTheme"/>
-                <ComboBoxItem Content="Space Theme" Tag="SpaceTheme"/>
+                <ComboBoxItem Content="Light" Tag="LightTheme"/>
+                <ComboBoxItem Content="Dark (Cyber)" Tag="CyberMinimalismTheme"/>
             </ComboBox>
         </StackPanel>
 

@@ -179,7 +179,11 @@ public partial class ManuscriptEditorView : Page
         try
         {
             if (ChapterListBox.SelectedItem is Chapter selected)
+            {
                 await _viewModel.SelectChapterItemCommand.ExecuteAsync(selected);
+                // Reload version history for the newly selected chapter
+                await _viewModel.LoadHistoryCommand.ExecuteAsync(null);
+            }
         }
         catch (Exception ex)
         {
@@ -631,10 +635,29 @@ public partial class ManuscriptEditorView : Page
         }
     }
 
-    private void CreateMilestoneButton_Click(object sender, RoutedEventArgs e)
+    private async void CreateMilestoneButton_Click(object sender, RoutedEventArgs e)
     {
-        MessageBox.Show("Milestone creation is not supported in the current offline/modular mode.", "Feature Unavailable", MessageBoxButton.OK, MessageBoxImage.Information);
+        try
+        {
+            // Extract the current RTF from the editor and pass it to the ViewModel
+            string rtf = string.Empty;
+            TextRange range = new(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
+            using MemoryStream ms = new();
+            range.Save(ms, DataFormats.Rtf);
+            rtf = Encoding.UTF8.GetString(ms.ToArray());
+
+            await _viewModel.CreateMilestoneCommand.ExecuteAsync(rtf);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"CreateMilestoneButton_Click failed: {ex.Message}");
+            MessageBox.Show($"Could not create milestone: {ex.Message}", "Error",
+                MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
+
+
+
 
 
     /// <summary>
