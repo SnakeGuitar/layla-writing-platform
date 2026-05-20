@@ -9,12 +9,12 @@ namespace Layla.Desktop.Services
         /// <summary>
         /// Base URL for the .NET Server Core API (Identity, Projects, Users).
         /// </summary>
-        public static string ServerCoreUrl { get; } = "https://localhost:5288";
+        public static string ServerCoreUrl { get; } = Environment.GetEnvironmentVariable("LAYLA_GATEWAY_URL") ?? "http://localhost:5000";
 
         /// <summary>
         /// Base URL for the Node.js Worldbuilding API (Manuscripts, Wiki, Graph).
         /// </summary>
-        public static string WorldbuildingApiUrl { get; } = "http://localhost:3000";
+        public static string WorldbuildingApiUrl { get; } = Environment.GetEnvironmentVariable("LAYLA_WORLDBUILDING_URL") ?? "http://localhost:3000";
 
         public static HttpClient CreateHttpClient(string baseUrl)
         {
