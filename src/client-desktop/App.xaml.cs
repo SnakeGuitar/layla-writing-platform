@@ -3,6 +3,7 @@ using System.Data;
 using System.Windows;
 using MaterialDesignThemes.Wpf;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Layla.Desktop.Services;
 
 namespace Layla.Desktop
@@ -135,6 +136,12 @@ namespace Layla.Desktop
 
         private void ConfigureServices(IServiceCollection services)
         {
+            services.AddLogging(builder =>
+            {
+                builder.ClearProviders();
+                builder.AddProvider(new DesktopLoggerProvider());
+            });
+
             services.AddSingleton<IManuscriptApiService, ManuscriptApiService>();
             services.AddSingleton<IProjectApiService, ProjectApiService>();
             services.AddSingleton<IAuthService, AuthService>();
