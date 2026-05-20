@@ -5,42 +5,56 @@
     <!-- ================================================================= -->
     <!-- DESIGN TOKENS (COLORS)                                            -->
     <!-- ================================================================= -->
-    <Color x:Key="CyberBgPrimaryColor">#09090B</Color>
-    <Color x:Key="CyberBgSecondaryColor">#121216</Color>
-    <Color x:Key="CyberBgElevatedColor">#181820</Color>
-    <Color x:Key="CyberBorderSubtleColor">#202024</Color>
-    <Color x:Key="CyberBorderActiveColor">#3A3A40</Color>
-    <Color x:Key="CyberTextPrimaryColor">#F4F4F5</Color>
-    <Color x:Key="CyberTextSecondaryColor">#A1A1AA</Color>
-    <Color x:Key="CyberTextDisabledColor">#52525B</Color>
-    <Color x:Key="CyberAccentPrimaryColor">#00E5FF</Color>
-    <Color x:Key="CyberAccentGlowColor">#1F00E5FF</Color> <!-- 12% Opacity Cyan -->
-    <Color x:Key="CyberAccentWarningColor">#FF9F00</Color>
+    <Color x:Key="CyberBgPrimaryColor">#020204</Color>
+    <Color x:Key="CyberBgSecondaryColor">#0B0B0E</Color>
+    <Color x:Key="CyberBgElevatedColor">#0E0D14</Color>
+    <Color x:Key="CyberBorderSubtleColor">#1A1A22</Color>
+    <Color x:Key="CyberBorderActiveColor">#00F0FF</Color>
+    <Color x:Key="CyberTextPrimaryColor">#FFFFFF</Color>
+    <Color x:Key="CyberTextSecondaryColor">#94A3B8</Color>
+    <Color x:Key="CyberTextDisabledColor">#475569</Color>
+    
+    <!-- ACCENTS (CYBER BRUTALIST & AURORA) -->
+    <Color x:Key="CyberAccentPrimaryColor">#00F0FF</Color> <!-- Electric Cyan -->
+    <Color x:Key="CyberAccentSecondaryColor">#8B5CF6</Color> <!-- Royal Violet -->
+    <Color x:Key="CyberAccentAlertColor">#CCFF00</Color> <!-- Toxic Lime Green -->
+    <Color x:Key="CyberAccentGlowColor">#1A00F0FF</Color> <!-- 10% Cyan Glow -->
+    <Color x:Key="CyberAccentWarningColor">#EF4444</Color> <!-- Red Alert -->
 
     <!-- BRUSHES -->
-    <SolidColorBrush x:Key="CyberBgPrimaryBrush" Color="{StaticResource CyberBgPrimaryColor}" />
-    <SolidColorBrush x:Key="CyberBgSecondaryBrush" Color="{StaticResource CyberBgSecondaryColor}" />
-    <SolidColorBrush x:Key="CyberBgElevatedBrush" Color="{StaticResource CyberBgElevatedColor}" />
-    <SolidColorBrush x:Key="CyberBorderSubtleBrush" Color="{StaticResource CyberBorderSubtleColor}" />
+    <!-- Stunning Sweeping Deep Aurora Glow Background -->
+    <LinearGradientBrush x:Key="CyberBgPrimaryBrush" StartPoint="0,0" EndPoint="1.2,1.2">
+        <GradientStop Color="#020204" Offset="0.0" />
+        <GradientStop Color="#0C071A" Offset="0.35" />
+        <GradientStop Color="#040F22" Offset="0.75" />
+        <GradientStop Color="#010102" Offset="1.0" />
+    </LinearGradientBrush>
+    
+    <!-- Glassmorphic Translucent Brushes -->
+    <SolidColorBrush x:Key="CyberBgSecondaryBrush" Color="#CC0B0B0E" /> <!-- 80% opacity dark backdrop -->
+    <SolidColorBrush x:Key="CyberBgElevatedBrush" Color="#EE0E0D14" />
+    <SolidColorBrush x:Key="CyberBorderSubtleBrush" Color="#33FFFFFF" /> <!-- Translucent border -->
     <SolidColorBrush x:Key="CyberBorderActiveBrush" Color="{StaticResource CyberBorderActiveColor}" />
     <SolidColorBrush x:Key="CyberTextPrimaryBrush" Color="{StaticResource CyberTextPrimaryColor}" />
     <SolidColorBrush x:Key="CyberTextSecondaryBrush" Color="{StaticResource CyberTextSecondaryColor}" />
     <SolidColorBrush x:Key="CyberTextDisabledBrush" Color="{StaticResource CyberTextDisabledColor}" />
     <SolidColorBrush x:Key="CyberAccentPrimaryBrush" Color="{StaticResource CyberAccentPrimaryColor}" />
+    <SolidColorBrush x:Key="CyberAccentSecondaryBrush" Color="{StaticResource CyberAccentSecondaryColor}" />
+    <SolidColorBrush x:Key="CyberAccentAlertBrush" Color="{StaticResource CyberAccentAlertColor}" />
     <SolidColorBrush x:Key="CyberAccentGlowBrush" Color="{StaticResource CyberAccentGlowColor}" />
     <SolidColorBrush x:Key="CyberAccentWarningBrush" Color="{StaticResource CyberAccentWarningColor}" />
 
-    <!-- Deprecated resources alias compatibility with old themes -->
-    <SolidColorBrush x:Key="WindowBackground" Color="{StaticResource CyberBgPrimaryColor}" />
-    <SolidColorBrush x:Key="SidebarBackground" Color="{StaticResource CyberBgSecondaryColor}" />
+    <!-- Deprecated Resource Alias Compatibility -->
+    <SolidColorBrush x:Key="WindowBackground" Color="#020204" />
+    <SolidColorBrush x:Key="SidebarBackground" Color="#0B0B0E" />
     <SolidColorBrush x:Key="PrimaryText" Color="{StaticResource CyberTextPrimaryColor}" />
     <SolidColorBrush x:Key="SecondaryText" Color="{StaticResource CyberTextSecondaryColor}" />
     <SolidColorBrush x:Key="AccentColor" Color="{StaticResource CyberAccentPrimaryColor}" />
     <SolidColorBrush x:Key="BorderColor" Color="{StaticResource CyberBorderSubtleColor}" />
-    <SolidColorBrush x:Key="ControlBackground" Color="{StaticResource CyberBgSecondaryColor}" />
+    <SolidColorBrush x:Key="ControlBackground" Color="#0B0B0E" />
     <SolidColorBrush x:Key="ErrorText" Color="{StaticResource CyberAccentWarningColor}" />
-    <Color x:Key="AcrylicTintColor">#121216</Color>
-    <system:Double x:Key="AcrylicTintOpacity">1.0</system:Double>
+    <Color x:Key="AcrylicTintColor">#020204</Color>
+    <system:Double x:Key="AcrylicTintOpacity">0.85</system:Double>
 
     <!-- ================================================================= -->
     <!-- TYPOGRAPHY                                                        -->
@@ -52,16 +66,17 @@
     <!-- TEXT STYLES                                                       -->
     <!-- ================================================================= -->
     <Style x:Key="CyberDisplayText" TargetType="TextBlock">
-        <Setter Property="FontFamily" Value="{StaticResource InterfaceFont}" />
+        <Setter Property="FontFamily" Value="{StaticResource TechnicalFont}" />
         <Setter Property="FontSize" Value="24" />
-        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontWeight" Value="ExtraBold" />
         <Setter Property="Foreground" Value="{StaticResource CyberTextPrimaryBrush}" />
+        <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
     </Style>
 
     <Style x:Key="CyberTitleText" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource InterfaceFont}" />
-        <Setter Property="FontSize" Value="16" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="15" />
+        <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="Foreground" Value="{StaticResource CyberTextPrimaryBrush}" />
     </Style>
 
@@ -73,14 +88,14 @@
 
     <Style x:Key="CyberTechMonoText" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource TechnicalFont}" />
-        <Setter Property="FontSize" Value="12" />
+        <Setter Property="FontSize" Value="11" />
         <Setter Property="Foreground" Value="{StaticResource CyberTextPrimaryBrush}" />
     </Style>
 
     <Style x:Key="CyberLabel" TargetType="TextBlock">
         <Setter Property="FontFamily" Value="{StaticResource TechnicalFont}" />
-        <Setter Property="FontSize" Value="10" />
-        <Setter Property="FontWeight" Value="Bold" />
+        <Setter Property="FontSize" Value="9" />
+        <Setter Property="FontWeight" Value="ExtraBold" />
         <Setter Property="Foreground" Value="{StaticResource CyberTextSecondaryBrush}" />
         <Setter Property="TextOptions.TextFormattingMode" Value="Display"/>
     </Style>
@@ -94,7 +109,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Thumb">
-                    <Border Background="{StaticResource CyberBorderActiveBrush}" CornerRadius="0" />
+                    <Border Background="{StaticResource CyberBorderSubtleBrush}" CornerRadius="0" />
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="true">
                             <Setter Property="Background" Value="{StaticResource CyberAccentPrimaryBrush}" />
@@ -119,26 +134,26 @@
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
                         <ScrollContentPresenter Grid.Column="0" Grid.Row="0" Margin="{TemplateBinding Padding}" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" CanContentScroll="{TemplateBinding CanContentScroll}" />
-                        <ScrollBar x:Name="PART_VerticalScrollBar" Grid.Column="1" Grid.Row="0" Value="{TemplateBinding VerticalOffset}" Maximum="{TemplateBinding ScrollableHeight}" ViewportSize="{TemplateBinding ViewportHeight}" Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" Width="6" AutomationProperties.Name="Vertical ScrollBar">
+                        <ScrollBar x:Name="PART_VerticalScrollBar" Grid.Column="1" Grid.Row="0" Value="{TemplateBinding VerticalOffset}" Maximum="{TemplateBinding ScrollableHeight}" ViewportSize="{TemplateBinding ViewportHeight}" Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" Width="4" AutomationProperties.Name="Vertical ScrollBar">
                             <ScrollBar.Template>
                                 <ControlTemplate TargetType="ScrollBar">
-                                    <Grid Background="{StaticResource CyberBgPrimaryBrush}">
+                                    <Grid Background="Transparent">
                                         <Track x:Name="PART_Track" IsDirectionReversed="true" Orientation="Vertical">
                                             <Track.Thumb>
-                                                <Thumb Style="{StaticResource CyberScrollBarThumb}" Width="6" />
+                                                <Thumb Style="{StaticResource CyberScrollBarThumb}" Width="4" />
                                             </Track.Thumb>
                                         </Track>
                                     </Grid>
                                 </ControlTemplate>
                             </ScrollBar.Template>
                         </ScrollBar>
-                        <ScrollBar x:Name="PART_HorizontalScrollBar" Grid.Column="0" Grid.Row="1" Value="{TemplateBinding HorizontalOffset}" Maximum="{TemplateBinding ScrollableWidth}" ViewportSize="{TemplateBinding ViewportWidth}" Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" Height="6" Orientation="Horizontal" AutomationProperties.Name="Horizontal ScrollBar">
+                        <ScrollBar x:Name="PART_HorizontalScrollBar" Grid.Column="0" Grid.Row="1" Value="{TemplateBinding HorizontalOffset}" Maximum="{TemplateBinding ScrollableWidth}" ViewportSize="{TemplateBinding ViewportWidth}" Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" Height="4" Orientation="Horizontal" AutomationProperties.Name="Horizontal ScrollBar">
                             <ScrollBar.Template>
                                 <ControlTemplate TargetType="ScrollBar">
-                                    <Grid Background="{StaticResource CyberBgPrimaryBrush}">
+                                    <Grid Background="Transparent">
                                         <Track x:Name="PART_Track" Orientation="Horizontal">
                                             <Track.Thumb>
-                                                <Thumb Style="{StaticResource CyberScrollBarThumb}" Height="6" />
+                                                <Thumb Style="{StaticResource CyberScrollBarThumb}" Height="4" />
                                             </Track.Thumb>
                                         </Track>
                                     </Grid>
@@ -167,47 +182,54 @@
     </Style>
 
     <!-- ================================================================= -->
-    <!-- BUTTON STYLE                                                      -->
+    <!-- BUTTON STYLE (BRUTALIST CONSOLE ACCENTED)                         -->
     <!-- ================================================================= -->
     <Style x:Key="CyberButton" TargetType="Button">
-        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Background" Value="#0Affffff" />
         <Setter Property="Foreground" Value="{StaticResource CyberTextPrimaryBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource CyberBorderActiveBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource CyberBorderSubtleBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="16,8" />
         <Setter Property="FontFamily" Value="{StaticResource TechnicalFont}" />
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="HorizontalContentAlignment" Value="Center" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Border"
-                            Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="0"
-                            Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
-                    </Border>
+                    <Grid>
+                        <Border x:Name="Border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="0"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                              VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        </Border>
+                        <!-- Top left numeric aesthetic indicator /01 style -->
+                        <Rectangle x:Name="LeftAccent" Width="3" HorizontalAlignment="Left" Fill="{StaticResource CyberAccentPrimaryBrush}" VerticalAlignment="Stretch" Visibility="Collapsed"/>
+                    </Grid>
                     <ControlTemplate.Triggers>
-                        <!-- Hover: Phosphorus cyan accent with glow background -->
+                        <!-- Hover: Glow effect -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Border" Property="Background" Value="{StaticResource CyberAccentGlowBrush}" />
                             <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource CyberAccentPrimaryBrush}" />
                             <Setter Property="Foreground" Value="{StaticResource CyberAccentPrimaryBrush}" />
+                            <Setter TargetName="LeftAccent" Property="Visibility" Value="Visible"/>
                         </Trigger>
-                        <!-- Pressed: Inverted terminal state -->
+                        <!-- Pressed: Neon highlight inversion -->
                         <Trigger Property="IsPressed" Value="True">
                             <Setter TargetName="Border" Property="Background" Value="{StaticResource CyberAccentPrimaryBrush}" />
                             <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource CyberAccentPrimaryBrush}" />
                             <Setter Property="Foreground" Value="{StaticResource CyberBgPrimaryBrush}" />
+                            <Setter TargetName="LeftAccent" Property="Fill" Value="{StaticResource CyberBgPrimaryBrush}"/>
                         </Trigger>
-                        <!-- Disabled: Dead Zinc inoperative state -->
+                        <!-- Disabled: Dark zinc locked -->
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource CyberBorderSubtleBrush}" />
+                            <Setter TargetName="Border" Property="Background" Value="Transparent"/>
                             <Setter Property="Foreground" Value="{StaticResource CyberTextDisabledBrush}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -223,7 +245,7 @@
     <!-- TEXTBOX & PASSWORD BOX STYLE                                      -->
     <!-- ================================================================= -->
     <Style x:Key="CyberTextBox" TargetType="TextBox">
-        <Setter Property="Background" Value="{StaticResource CyberBgSecondaryBrush}" />
+        <Setter Property="Background" Value="#440B0B0E" /> <!-- High translucency -->
         <Setter Property="Foreground" Value="{StaticResource CyberTextPrimaryBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource CyberBorderSubtleBrush}" />
         <Setter Property="BorderThickness" Value="1" />
@@ -244,7 +266,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource CyberBorderActiveBrush}" />
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource CyberTextSecondaryBrush}" />
                         </Trigger>
                         <Trigger Property="IsFocused" Value="True">
                             <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource CyberAccentPrimaryBrush}" />
@@ -262,7 +284,7 @@
     <Style TargetType="TextBox" BasedOn="{StaticResource CyberTextBox}" />
 
     <Style x:Key="CyberPasswordBox" TargetType="PasswordBox">
-        <Setter Property="Background" Value="{StaticResource CyberBgSecondaryBrush}" />
+        <Setter Property="Background" Value="#440B0B0E" />
         <Setter Property="Foreground" Value="{StaticResource CyberTextPrimaryBrush}" />
         <Setter Property="BorderBrush" Value="{StaticResource CyberBorderSubtleBrush}" />
         <Setter Property="BorderThickness" Value="1" />
@@ -283,7 +305,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource CyberBorderActiveBrush}" />
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource CyberTextSecondaryBrush}" />
                         </Trigger>
                         <Trigger Property="IsFocused" Value="True">
                             <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource CyberAccentPrimaryBrush}" />
@@ -306,11 +328,11 @@
     <Style TargetType="ListBoxItem">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{StaticResource CyberTextPrimaryBrush}" />
-        <Setter Property="Padding" Value="8,6" />
+        <Setter Property="Padding" Value="12,10" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
-                    <Border x:Name="Border" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="0">
+                    <Border x:Name="Border" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="0" BorderThickness="0,0,0,1" BorderBrush="#11ffffff">
                         <ContentPresenter />
                     </Border>
                     <ControlTemplate.Triggers>
@@ -319,8 +341,9 @@
                             <Setter Property="Foreground" Value="{StaticResource CyberAccentPrimaryBrush}" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter Property="Background" Value="{StaticResource CyberAccentPrimaryBrush}" />
-                            <Setter Property="Foreground" Value="{StaticResource CyberBgPrimaryBrush}" />
+                            <Setter Property="Background" Value="#228B5CF6" /> <!-- Semi-transparent Violet Selection -->
+                            <Setter Property="Foreground" Value="{StaticResource CyberAccentPrimaryBrush}" />
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource CyberAccentPrimaryBrush}"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -415,19 +438,26 @@
     </Style>
 
     <!-- ================================================================= -->
-    <!-- TAB CONTROL STYLE                                                 -->
+    <!-- TAB CONTROL STYLE (BRUTALIST TABS)                                -->
     <!-- ================================================================= -->
     <Style TargetType="TabItem">
-        <Setter Property="Background" Value="{StaticResource CyberBgSecondaryBrush}" />
+        <Setter Property="Background" Value="Transparent" />
         <Setter Property="Foreground" Value="{StaticResource CyberTextSecondaryBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource CyberBorderSubtleBrush}" />
-        <Setter Property="BorderThickness" Value="1,1,1,0" />
-        <Setter Property="Padding" Value="12,6" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0,0,0,2" />
+        <Setter Property="Padding" Value="20,12" />
+        <Setter Property="FontFamily" Value="{StaticResource TechnicalFont}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="Bold" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
-                    <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}" Margin="0,0,2,0">
-                        <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <Border x:Name="Border" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}" Margin="0,0,4,0">
+                        <StackPanel Orientation="Horizontal">
+                            <!-- Bullet dot active accent -->
+                            <TextBlock Text="■ " Foreground="{StaticResource CyberAccentPrimaryBrush}" FontSize="8" VerticalAlignment="Center" Margin="0,0,6,0" x:Name="Bullet" Visibility="Collapsed"/>
+                            <ContentPresenter ContentSource="Header" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </StackPanel>
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
@@ -435,10 +465,10 @@
                             <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource CyberBorderActiveBrush}" />
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter Property="Background" Value="{StaticResource CyberBgPrimaryBrush}" />
                             <Setter Property="Foreground" Value="{StaticResource CyberAccentPrimaryBrush}" />
-                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource CyberBorderActiveBrush}" />
-                            <Setter TargetName="Border" Property="BorderThickness" Value="1,1,1,0"/>
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource CyberAccentPrimaryBrush}" />
+                            <Setter TargetName="Border" Property="Background" Value="#0D00F0FF"/> <!-- Transparent Cyan Backing -->
+                            <Setter TargetName="Bullet" Property="Visibility" Value="Visible"/>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

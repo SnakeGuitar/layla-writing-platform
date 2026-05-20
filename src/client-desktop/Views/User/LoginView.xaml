@@ -11,36 +11,60 @@
     </Page.Resources>
 
     <Grid>
-        <Border Width="360" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20" Style="{StaticResource CyberPanelBorder}">
-            <StackPanel Margin="40">
-                <TextBlock Text="LAYLA" Style="{StaticResource CyberDisplayText}" 
-                           HorizontalAlignment="Center" Foreground="{StaticResource CyberAccentPrimaryBrush}" Margin="0,0,0,10"/>
-                <TextBlock Text="Sign in to your workspace" Style="{StaticResource CyberBodyText}" 
-                           HorizontalAlignment="Center" Margin="0,0,0,30"/>
+        <Border Width="400" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20" Style="{StaticResource CyberPanelBorder}" BorderBrush="{DynamicResource CyberAccentSecondaryBrush}">
+            <Grid>
+                <!-- Top neon cyan stripe -->
+                <Rectangle Height="3" Fill="{DynamicResource CyberAccentPrimaryBrush}" VerticalAlignment="Top" HorizontalAlignment="Stretch"/>
+                
+                <StackPanel Margin="30,35,30,30">
+                    <!-- Technical prefix -->
+                    <Grid Margin="0,0,0,15">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0" Orientation="Horizontal">
+                            <TextBlock Text="/00" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentAlertBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="AUTHORIZATION_GATEWAY" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberTextSecondaryBrush}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <Border Grid.Column="1" BorderBrush="{DynamicResource CyberAccentSecondaryBrush}" BorderThickness="1" Padding="4,2">
+                            <TextBlock Text="SECURE_v2.0" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentSecondaryBrush}" FontSize="8"/>
+                        </Border>
+                    </Grid>
+                    
+                    <TextBlock Text="LAYLA // WRITER_OS" Style="{StaticResource CyberDisplayText}" FontSize="24"
+                               HorizontalAlignment="Left" Foreground="{DynamicResource CyberAccentPrimaryBrush}" Margin="0,0,0,4"/>
+                    
+                    <TextBlock Text="Sign in to authenticate secure terminal session." Style="{StaticResource CyberBodyText}" 
+                               HorizontalAlignment="Left" Margin="0,0,0,25"/>
 
-                <TextBlock Text="EMAIL" Style="{StaticResource CyberLabel}" Margin="0,0,0,5"/>
-                <TextBox x:Name="EmailTextBox" Style="{StaticResource CyberTextBox}" Margin="0,0,0,15"
-                         Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"/>
+                    <!-- Technical separator -->
+                    <TextBlock Text="------------------------------------------------------------------" Style="{StaticResource CyberTechMonoText}" Foreground="#11ffffff" Margin="0,0,0,20"/>
 
-                <TextBlock Text="PASSWORD" Style="{StaticResource CyberLabel}" Margin="0,0,0,5"/>
-                <PasswordBox x:Name="PasswordBox" Style="{StaticResource CyberPasswordBox}" Margin="0,0,0,25"
-                             PasswordChanged="PasswordBox_PasswordChanged"/>
+                    <TextBlock Text="EMAIL ADDRESS" Style="{StaticResource CyberLabel}" Margin="0,0,0,5"/>
+                    <TextBox x:Name="EmailTextBox" Style="{StaticResource CyberTextBox}" Margin="0,0,0,18"
+                             Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"/>
 
-                <TextBlock x:Name="ErrorText" Foreground="{StaticResource CyberAccentWarningBrush}" Style="{StaticResource CyberTechMonoText}"
-                           Visibility="{Binding ErrorMessage, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}" 
-                           HorizontalAlignment="Center" Margin="0,0,0,10"
-                           Text="{Binding ErrorMessage}"/>
+                    <TextBlock Text="ACCESS PASSWORD" Style="{StaticResource CyberLabel}" Margin="0,0,0,5"/>
+                    <PasswordBox x:Name="PasswordBox" Style="{StaticResource CyberPasswordBox}" Margin="0,0,0,25"
+                                 PasswordChanged="PasswordBox_PasswordChanged"/>
 
-                <Button x:Name="LoginButton" Content="{Binding LoginButtonContent}" Height="40"
-                        Cursor="Hand" Command="{Binding SignInCommand}"
-                        Style="{StaticResource CyberButton}"/>
+                    <TextBlock x:Name="ErrorText" Foreground="{DynamicResource CyberAccentWarningBrush}" Style="{StaticResource CyberTechMonoText}"
+                               Visibility="{Binding ErrorMessage, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}" 
+                               HorizontalAlignment="Left" Margin="0,0,0,15"
+                               Text="{Binding ErrorMessage}"/>
 
-                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,20,0,0">
-                    <TextBlock Text="No account? " Style="{StaticResource CyberBodyText}"/>
-                    <TextBlock Text="Create one" Style="{StaticResource CyberTechMonoText}" Foreground="{StaticResource CyberAccentPrimaryBrush}" 
-                               Cursor="Hand" MouseLeftButtonDown="NavigateToSignUp_Click"/>
+                    <Button x:Name="LoginButton" Content="ESTABLISH CONNECTION" Height="42"
+                            Cursor="Hand" Command="{Binding SignInCommand}"
+                            Style="{StaticResource CyberButton}" BorderBrush="{DynamicResource CyberAccentPrimaryBrush}" Foreground="{DynamicResource CyberAccentPrimaryBrush}"/>
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,25,0,0">
+                        <TextBlock Text="No credentials registered? " Style="{StaticResource CyberBodyText}"/>
+                        <TextBlock Text="Create connection profile" Style="{StaticResource CyberTechMonoText}" Foreground="{DynamicResource CyberAccentAlertBrush}" 
+                                   Cursor="Hand" MouseLeftButtonDown="NavigateToSignUp_Click"/>
+                    </StackPanel>
                 </StackPanel>
-            </StackPanel>
+            </Grid>
         </Border>
     </Grid>
 </Page>

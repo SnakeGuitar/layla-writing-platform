@@ -37,6 +37,14 @@ public partial class ProjectListView : Page
         }
     }
 
+    private void OpenButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.DataContext is Project selectedProject)
+        {
+            NavigationService.Navigate(new WorkspaceView(selectedProject));
+        }
+    }
+
     private void SettingsButton_Click(object sender, RoutedEventArgs e)
     {
         NavigationService.Navigate(new SettingsView());

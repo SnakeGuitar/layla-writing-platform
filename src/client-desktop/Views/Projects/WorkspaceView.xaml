@@ -17,73 +17,160 @@
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="250" MinWidth="200" MaxWidth="400"/>
+            <ColumnDefinition Width="260" MinWidth="240" MaxWidth="400"/>
             <ColumnDefinition Width="2"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
+        <!-- Redesigned Tech Console Sidebar -->
         <Border Grid.Column="0" Background="{DynamicResource CyberBgSecondaryBrush}" 
                 BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="0,0,1,0">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="50"/>
+                    <RowDefinition Height="60"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
-                    <RowDefinition Height="50"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0" Text="{Binding CurrentProject.Title}" Style="{StaticResource CyberTitleText}" 
-                            VerticalAlignment="Center" Margin="15,0" TextTrimming="CharacterEllipsis"
-                            Foreground="{DynamicResource CyberAccentPrimaryBrush}"/>
+                <!-- Project Title & Tech Badge -->
+                <Grid Grid.Row="0" Margin="15,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="{Binding CurrentProject.Title}" Style="{StaticResource CyberTitleText}" 
+                               VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                               Foreground="{DynamicResource CyberAccentPrimaryBrush}"/>
+                    <Border Grid.Column="1" BorderBrush="{DynamicResource CyberAccentPrimaryBrush}" BorderThickness="1" Padding="4,2" VerticalAlignment="Center">
+                        <TextBlock Text="PRJ" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentPrimaryBrush}" FontSize="8"/>
+                    </Border>
+                </Grid>
 
-                <StackPanel Grid.Row="1" Margin="5">
+                <!-- Navigation Console Buttons -->
+                <StackPanel Grid.Row="1" Margin="15,10,15,0">
                     <Button Content="BACK TO PROJECTS" 
                             Style="{StaticResource CyberButton}"
-                            HorizontalAlignment="Stretch" Padding="10,6"
+                            HorizontalAlignment="Stretch" Padding="12,8"
                             Cursor="Hand"
                             Command="{Binding BackToProjectsCommand}"/>
                     <Button Content="COLLABORATORS" 
                             Style="{StaticResource CyberButton}"
-                            HorizontalAlignment="Stretch" Padding="10,6" Margin="0,4,0,0"
+                            HorizontalAlignment="Stretch" Padding="12,8" Margin="0,6,0,0"
                             Cursor="Hand"
                             Command="{Binding OpenCollaboratorsModalCommand}"/>
-                </StackPanel>
-
-                <StackPanel Grid.Row="2" Orientation="Vertical" VerticalAlignment="Center" Margin="15,0">
                     <Button Content="SETTINGS" 
                             Style="{StaticResource CyberButton}"
-                            HorizontalAlignment="Stretch" Padding="0,5"
+                            HorizontalAlignment="Stretch" Padding="12,8" Margin="0,6,0,0"
                             Cursor="Hand"
                             Command="{Binding OpenSettingsCommand}"/>
-                    
-                    <Button Content="LOGOUT" 
+                </StackPanel>
+
+                <!-- Aesthetic Middle Gridlines -->
+                <Grid Grid.Row="2" Background="Transparent" Margin="15,15,15,10">
+                    <!-- Slash visual divider pattern -->
+                    <TextBlock Text="///////////////////////////////////////&#x0a;///////////////////////////////////////&#x0a;///////////////////////////////////////" 
+                               Style="{StaticResource CyberTechMonoText}" Foreground="#06ffffff" FontSize="10" TextAlignment="Center" VerticalAlignment="Center"/>
+                </Grid>
+
+                <!-- Brutalist System Status Monitor -->
+                <Border Grid.Row="3" BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="0,1,0,0" Padding="15,15,15,10">
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                            <TextBlock Text="/02" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentAlertBrush}" Margin="0,0,6,0"/>
+                            <TextBlock Text="SYSTEM MONITOR" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberTextSecondaryBrush}"/>
+                        </StackPanel>
+                        
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="CONN_STABILITY" Style="{StaticResource CyberLabel}" FontSize="8"/>
+                            <TextBlock Grid.Column="1" Text=" IIIIIIIIIIIIIIIIIIIIII" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentPrimaryBrush}" FontSize="8" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="98%" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentPrimaryBrush}" FontSize="8"/>
+                        </Grid>
+                        
+                        <Grid Margin="0,0,0,6">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="ROLE_PRIVILEGE" Style="{StaticResource CyberLabel}" FontSize="8"/>
+                            <TextBlock Grid.Column="1" Text=" ///////////////////" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentSecondaryBrush}" FontSize="8" HorizontalAlignment="Center"/>
+                            <TextBlock Grid.Column="2" Text="SECURE" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentSecondaryBrush}" FontSize="8"/>
+                        </Grid>
+                        
+                        <Border BorderBrush="{DynamicResource CyberAccentAlertBrush}" BorderThickness="1" Background="#0C1F0C" Padding="6,4" Margin="0,6,0,0">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <Ellipse Width="5" Height="5" Fill="{DynamicResource CyberAccentAlertBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                <TextBlock Text="ALL SYSTEMS OPERATIONAL" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentAlertBrush}" FontSize="8"/>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </Border>
+
+                <!-- Disconnect Session Button -->
+                <Border Grid.Row="4" Padding="15,0,15,15" Background="Transparent">
+                    <Button Content="DISCONNECT SESSION" 
                             Style="{StaticResource CyberButton}"
                             BorderBrush="{DynamicResource CyberAccentWarningBrush}"
                             Foreground="{DynamicResource CyberAccentWarningBrush}"
-                            HorizontalAlignment="Stretch" Padding="0,5" Margin="0,5,0,0"
+                            HorizontalAlignment="Stretch" Padding="0,8"
                             Cursor="Hand"
                             Command="{Binding LogoutCommand}"/>
-                </StackPanel>
+                </Border>
             </Grid>
         </Border>
 
         <GridSplitter Grid.Column="1" Width="2" HorizontalAlignment="Stretch" 
                       Background="{DynamicResource CyberBorderSubtleBrush}" Cursor="SizeWE"/>
 
-        <Grid Grid.Column="2" Background="{DynamicResource CyberBgPrimaryBrush}">
-            <TabControl Background="Transparent" BorderThickness="0">
+        <!-- Main Workspace Area -->
+        <Grid Grid.Column="2" Background="Transparent" Margin="12,0,0,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+            
+            <!-- Technical Workspace Header Bar -->
+            <Border Grid.Row="0" BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="0,0,0,1" Padding="10,15,15,10" Background="#0C0A15" Margin="0,0,0,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <TextBlock Text="LAYLA_OS_v2.0" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                        <TextBlock Text="||" Foreground="{DynamicResource CyberTextDisabledBrush}" Style="{StaticResource CyberLabel}" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                        <TextBlock Text="SECURE WORKSPACE INTERFACE" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberTextSecondaryBrush}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <TextBlock Text="SYS.TIME: UTC+0 // 23:47:12  " Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberTextSecondaryBrush}" VerticalAlignment="Center"/>
+                        <Ellipse Width="6" Height="6" Fill="{DynamicResource CyberAccentPrimaryBrush}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+            
+            <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
                 <TabItem Header="MANUSCRIPT EDITOR">
                     <Frame x:Name="EditorFrame" NavigationUIVisibility="Hidden"/>
                 </TabItem>
 
-                <TabItem Header="WIKI">
+                <TabItem Header="WIKI DATABASE">
                     <Frame x:Name="WikiFrame" NavigationUIVisibility="Hidden"/>
                 </TabItem>
 
-                <TabItem Header="GRAPH">
+                <TabItem Header="NEURAL GRAPH">
                     <Frame x:Name="GraphFrame" NavigationUIVisibility="Hidden"/>
                 </TabItem>
 
-                <TabItem Header="VOICE">
+                <TabItem Header="VOICE COMM">
                     <Frame x:Name="VoiceFrame" NavigationUIVisibility="Hidden"/>
                 </TabItem>
             </TabControl>
@@ -126,7 +213,7 @@
 
                     <!-- Collaborators list -->
                     <ListView Grid.Row="2" ItemsSource="{Binding Collaborators}" BorderThickness="0"
-                              Background="Transparent" MaxHeight="250">
+                               Background="Transparent" MaxHeight="250">
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <Border BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="0,0,0,1"

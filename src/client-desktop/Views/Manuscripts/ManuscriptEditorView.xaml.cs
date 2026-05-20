@@ -551,6 +551,92 @@ public partial class ManuscriptEditorView : Page
         }
     }
 
+    private async void SaveButton_Click(object sender, RoutedEventArgs e)
+    {
+        await SaveContentInternalAsync();
+    }
+
+    private async void AddManuscriptButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isReadOnly) return;
+        try
+        {
+            await _viewModel.AddManuscriptCommand.ExecuteAsync(null);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Add manuscript failed: {ex.Message}");
+        }
+    }
+
+    private async void DeleteManuscriptButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isReadOnly) return;
+        var target = _viewModel.SelectedManuscript;
+        if (target == null) return;
+
+        var confirm = MessageBox.Show(
+            $"Delete the manuscript \"{target.Title}\" and all its chapters?\n\nThis cannot be undone.",
+            "Delete Manuscript",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (confirm == MessageBoxResult.Yes)
+        {
+            try
+            {
+                await _viewModel.DeleteManuscriptCommand.ExecuteAsync(target);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Delete manuscript failed: {ex.Message}");
+            }
+        }
+    }
+
+    private async void AddChapterButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isReadOnly) return;
+        try
+        {
+            await _viewModel.AddChapterCommand.ExecuteAsync(null);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Add chapter failed: {ex.Message}");
+        }
+    }
+
+    private async void DeleteChapterButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isReadOnly) return;
+        if (sender is not Button btn || btn.Tag is not Chapter chapter) return;
+
+        var confirm = MessageBox.Show(
+            $"Delete the chapter \"{chapter.Title}\"?\n\nThis cannot be undone.",
+            "Delete Chapter",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning);
+
+        if (confirm == MessageBoxResult.Yes)
+        {
+            try
+            {
+                await _viewModel.DeleteChapterCommand.ExecuteAsync(chapter);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Delete chapter failed: {ex.Message}");
+            }
+        }
+    }
+
+    private void CreateMilestoneButton_Click(object sender, RoutedEventArgs e)
+    {
+        MessageBox.Show("Milestone creation is not supported in the current offline/modular mode.", "Feature Unavailable", MessageBoxButton.OK, MessageBoxImage.Information);
+    }
+
+
     /// <summary>
     /// Recursively enumerates all visual-tree descendants of <paramref name="parent"/>
     /// that are assignable to <typeparamref name="T"/>.
