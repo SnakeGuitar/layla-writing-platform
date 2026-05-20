@@ -1,20 +1,20 @@
 @using client_web.Helpers;
 
-<article class="group relative flex flex-col bg-stone-950 border border-stone-800 rounded-none overflow-hidden hover:border-amber-500/60 transition-all duration-500 cursor-pointer hover:shadow-[0_0_40px_-8px_rgba(245,158,11,0.2)]" @onclick="OnClick">
+<article class="cyber-panel flex flex-col group cursor-pointer hover:border-[var(--accent-primary)] hover:shadow-[0_0_8px_var(--accent-glow)] transition-all duration-100 steps-2" @onclick="OnClick">
 
     @* Cover Image *@
-    <div class="relative overflow-hidden aspect-3/2 bg-stone-900">
+    <div class="relative overflow-hidden aspect-3/2 bg-[var(--bg-primary)] border-b border-[var(--border-subtle)]">
         @if (!string.IsNullOrEmpty(CoverImageUrl))
         {
             <img src="@CoverImageUrl"
                  alt="@Title"
-                 class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-80 group-hover:opacity-100" />
+                 class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-100" />
         }
         else
         {
             @* Placeholder when no cover image *@
-            <div class="w-full h-full flex items-center justify-center bg-linear-to-br from-stone-900 to-stone-800">
-                <svg class="w-12 h-12 text-stone-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-full h-full flex items-center justify-center bg-[var(--bg-primary)]">
+                <svg class="w-12 h-12 text-[var(--border-active)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
                           d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.75 19 7.5 19s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
@@ -22,49 +22,45 @@
         }
 
         @* Literary genre badge *@
-        <span class="absolute top-3 left-3 px-2 py-0.5 bg-amber-500 text-stone-950 text-[10px] font-bold tracking-[0.15em] uppercase">
+        <span class="absolute top-3 left-3 px-2 py-0.5 bg-[var(--bg-secondary)] border border-[var(--border-active)] text-cyber-metadata text-[10px]">
             @LiteraryGenre
         </span>
 
         @* Author active indicator *@
-        <div class="absolute top-3 right-3 flex items-center gap-1.5">
-            <span class="@(IsAuthorActive ? "bg-emerald-400 shadow-[0_0_8px_2px_rgba(52,211,153,0.5)]" : "bg-stone-600") w-2.5 h-2.5 rounded-full transition-all duration-500"></span>
+        <div class="absolute top-3 right-3 flex items-center gap-1.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] px-2 py-0.5">
+            <span class="@(IsAuthorActive ? "bg-[var(--accent-primary)] shadow-[0_0_6px_var(--accent-glow)]" : "bg-[var(--text-disabled)]") w-2 h-2 rounded-none transition-all duration-100"></span>
             @if (IsAuthorActive)
             {
-                <span class="text-emerald-400 text-[9px] font-bold tracking-widest uppercase">Working</span>
+                <span class="text-[var(--accent-primary)] text-[9px] font-mono tracking-wider uppercase">ACTIVE</span>
+            }
+            else
+            {
+                <span class="text-[var(--text-disabled)] text-[9px] font-mono tracking-wider uppercase">STDBY</span>
             }
         </div>
     </div>
 
     @* Content *@
-    <div class="flex flex-col flex-1 p-5 gap-3">
-
-        @* Decorative line *@
-        <div class="w-8 h-px bg-amber-500/50 group-hover:w-16 group-hover:bg-amber-500 transition-all duration-500"></div>
+    <div class="flex flex-col flex-1 p-4 gap-2">
 
         @* Title *@
-        <h2 class="text-stone-100 font-serif text-xl leading-tight tracking-tight line-clamp-2
-                   group-hover:text-amber-50 transition-colors duration-300">
+        <h2 class="text-cyber-title uppercase tracking-wide truncate group-hover:text-[var(--accent-primary)] transition-colors duration-100">
             @Title
         </h2>
 
         @* Synopsis *@
-        <p class="text-stone-400 text-sm leading-relaxed line-clamp-3 flex-1">
+        <p class="text-cyber-body text-xs line-clamp-3 flex-1">
             @Synopsis
         </p>
 
         @* Footer *@
-        <div class="flex items-center justify-between pt-3 border-t border-stone-800">
-            <time class="text-stone-600 text-xs tracking-wide font-mono" datetime="@UpdatedAt.ToString("yyyy-MM-dd")">
+        <div class="flex items-center justify-between pt-3 border-t border-[var(--border-subtle)]">
+            <time class="text-cyber-metadata" datetime="@UpdatedAt.ToString("yyyy-MM-dd")">
                 @FormatData.FormatDateToString(UpdatedAt)
             </time>
 
-            <span class="flex items-center gap-1.5 text-amber-500/70 group-hover:text-amber-400 text-xs font-medium tracking-wide uppercase transition-colors duration-300">
-                Leer
-                <svg class="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform duration-300"
-                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
+            <span class="text-cyber-tech-mono text-xs text-[var(--accent-primary)] group-hover:underline">
+                [ READ ]
             </span>
         </div>
     </div>

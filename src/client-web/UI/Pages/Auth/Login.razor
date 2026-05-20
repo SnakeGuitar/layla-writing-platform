@@ -8,57 +8,45 @@
 @inject ISessionManager Session
 @inject NavigationManager Navigation
 
+<PageTitle>Login // System Access</PageTitle>
 
-<PageTitle>Login</PageTitle>
+<main class="flex items-center justify-center px-4 min-h-screen bg-[var(--bg-primary)]">
 
-<main class="flex items-center justify-center px-4 min-h-screen bg-linear-to-t from-base-purple-1 to-base-blue-2">
-
-    <!-- Background decoration -->
-    <div class="fixed inset-0 overflow-hidden pointer-events-none">
-        <div class="absolute -top-32 -right-32 size-50 rounded-full bg-amber-100 opacity-40 blur-3xl"></div>
-        <div class="absolute -bottom-24 -left-24 size-50 rounded-full bg-stone-200 opacity-60 blur-3xl"></div>
-    </div>
-
-    <!-- Card -->
-    <div class="relative h-auto w-sm px-8 py-10 bg-stone-50 rounded-2xl animate-[fadeInUp_0.5s_ease_both]">
+    <!-- Monolithic Technical Panel -->
+    <div class="cyber-panel w-full max-w-sm">
+        
         <!-- Header -->
-        <header class="mb-8 animate-[fadeInUp_0.5s_ease_both] [animation-delay:0.1s]">
-            <img type="image/png" src="./favicon.png" class="mx-auto" />
-            <h1 class="text-3xl text-center text-stone-900 leading-tight">
-                Login
-            </h1>
-            <p class="text-sm text-center text-stone-400 font-light">
-                Login to continue
-            </p>
+        <header class="cyber-panel-header">
+            <div class="flex flex-col">
+                <span class="text-cyber-metadata">SECURE ACCESS</span>
+                <h1 class="text-cyber-title mt-1">OPERATOR SIGN IN</h1>
+            </div>
+            <span class="text-cyber-tech-mono text-[var(--accent-primary)]">SYS_OK</span>
         </header>
 
-        <!-- Form -->
-        <div class="space-y-5">
+        <!-- Form Elements -->
+        <div class="space-y-4">
 
             <!-- Email -->
-            <div class="animate-[fadeInUp_0.5s_ease_both] [animation-delay:0.2s]">
-                <label class="block text-xs font-medium text-stone-500 uppercase tracking-widest mb-2">
-                    Email
-                </label>
+            <div class="cyber-input-wrapper">
+                <label class="cyber-label">Operational Email</label>
                 <input
                     type="email"
                     @bind="_email"
-                    placeholder="email@company.com"
-                    class="input-field w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 text-stone-900 text-sm placeholder-stone-300 [transition:border-color_0.2s,box-shadow_0.2s] focus:outline-none focus:border-[#1a1a1a] focus:[box-shadow:0_0_0_3px_rgba(26,26,26,0.08)]" />
+                    placeholder="operator@system.core"
+                    class="cyber-input w-full" />
                 @if (_fieldErrors.TryGetValue("Email", out var emailErrors))
                 {
-                    <p class="mt-1 text-xs text-red-600">@string.Join(' ', emailErrors)</p>
+                    <p class="mt-1 text-cyber-tech-mono text-xs text-[var(--accent-warning)]">@string.Join(' ', emailErrors)</p>
                 }
             </div>
 
             <!-- Password -->
-            <div class="animate-[fadeInUp_0.5s_ease_both] [animation-delay:0.3s]">
-                <div class="flex justify-between items-center mb-2">
-                    <label class="block text-xs font-medium text-stone-500 uppercase tracking-widest">
-                        Password
-                    </label>
-                    <a href="#" class="text-xs text-stone-400 hover:text-stone-700 transition-colors">
-                        Forgot your password?
+            <div class="cyber-input-wrapper">
+                <div class="flex justify-between items-center">
+                    <label class="cyber-label">Security Key</label>
+                    <a href="#" class="text-cyber-caption hover:text-[var(--accent-primary)] text-xs">
+                        [ Recover Key ]
                     </a>
                 </div>
                 <input
@@ -66,54 +54,47 @@
                     @bind="_password"
                     @onkeyup="@(e => { if (e.Key == "Enter") _ = HandleLogin(); })"
                     placeholder="••••••••"
-                    class="input-field w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 text-stone-900 text-sm placeholder-stone-300 [transition:border-color_0.2s,box-shadow_0.2s] focus:outline-none focus:border-[#1a1a1a] focus:[box-shadow:0_0_0_3px_rgba(26,26,26,0.08)]" />
+                    class="cyber-input w-full" />
                 @if (_fieldErrors.TryGetValue("Password", out var pwErrors))
                 {
-                    <p class="mt-1 text-xs text-red-600">@string.Join(' ', pwErrors)</p>
+                    <p class="mt-1 text-cyber-tech-mono text-xs text-[var(--accent-warning)]">@string.Join(' ', pwErrors)</p>
                 }
             </div>
 
-            <!-- Error -->
+            <!-- Error Notification Panel -->
             @if (!string.IsNullOrEmpty(_errorMessage))
             {
-                <div class="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
-                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-                    </svg>
-                    @_errorMessage
+                <div class="p-3 bg-[var(--bg-primary)] border border-[var(--accent-warning)] text-[var(--accent-warning)] text-xs font-mono">
+                    <span class="font-bold">[ ERROR ]</span> @_errorMessage
                 </div>
             }
 
-            <!-- Button -->
-            <div class="animate-[fadeInUp_0.5s_ease_both] [animation-delay:0.4s] pt-2">
+            <!-- Confirm Button -->
+            <div class="pt-2">
                 <button
                     @onclick="HandleLogin"
                     disabled="@_isLoading"
-                    class="w-full py-3.5 rounded-xl bg-stone-900 text-white text-sm font-medium tracking-wide disabled:opacity-50 disabled:cursor-not-allowed [transition:background_0.2s,transform_0.1s,box-shadow_0.2s] hover:bg-[#111] hover:[box-shadow:0_8px_24px_rgba(0,0,0,0.18)] hover:-translate-y-px active:translate-y-px">
+                    class="cyber-button w-full">
                     @if (_isLoading)
                     {
                         <span class="flex items-center justify-center gap-2">
-                            <svg class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-                            </svg>
-                            Logging in...
+                            <span>Executing Handshake...</span>
                         </span>
                     }
                     else
                     {
-                        <span>Login →</span>
+                        <span>Initialize Link →</span>
                     }
                 </button>
             </div>
 
         </div>
 
-        <!-- Footer -->
-        <footer class="mt-8 text-center text-sm text-stone-300">
-            Don't have an account?
-            <a href="/auth/register" class="text-stone-500 hover:text-stone-800 transition-colors font-medium">
-                Register
+        <!-- Footer options -->
+        <footer class="mt-6 pt-4 border-t border-[var(--border-subtle)] text-center text-xs">
+            <span class="text-cyber-body text-xs">No registered operator?</span>
+            <a href="/auth/register" class="ml-1 text-cyber-tech-mono text-[var(--accent-primary)] hover:underline">
+                [ Register New Unit ]
             </a>
         </footer>
 
@@ -141,19 +122,16 @@
             if (result.IsSuccess && result.Response is not null)
             {
                 await Session.SaveAsync(result.Response);
-                // forceLoad: true bypasses Blazor's enhanced navigation —
-                // matches the data-enhance-nav="false" policy on every link
-                // so the post-login circuit picks up the persisted session.
                 Navigation.NavigateTo("/home", forceLoad: true);
                 return;
             }
 
-            _errorMessage = result.ErrorMessage ?? "Login failed.";
+            _errorMessage = result.ErrorMessage ?? "Handshake rejected.";
             _fieldErrors = result.ValidationErrors;
         }
         catch (Exception)
         {
-            _errorMessage = "An unexpected error occurred.";
+            _errorMessage = "Link failure: service offline.";
         }
         finally
         {

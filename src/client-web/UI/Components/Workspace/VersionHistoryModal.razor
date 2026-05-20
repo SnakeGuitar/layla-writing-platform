@@ -6,17 +6,17 @@
 {
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <!-- Backdrop -->
-        <div @onclick="CloseModal" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div @onclick="CloseModal" class="absolute inset-0 bg-black/70"></div>
 
         <!-- Modal Container -->
-        <div class="bg-stone-950 border border-white/10 rounded-2xl w-full max-w-5xl h-[85vh] flex flex-col shadow-2xl relative z-10 overflow-hidden backdrop-blur-xl">
+        <div class="cyber-panel w-full max-w-5xl h-[85vh] flex flex-col relative z-10 overflow-hidden p-0 bg-base-gray-1 border-base-gray-4">
             <!-- Header -->
-            <div class="h-16 px-6 border-b border-white/5 flex items-center justify-between shrink-0 bg-stone-900/50">
+            <div class="cyber-panel-header px-6 py-4 shrink-0 pb-3 mb-0 border-b border-base-gray-4">
                 <div>
-                    <h3 class="text-stone-100 font-serif text-lg font-light tracking-wide">Historial de Versiones</h3>
-                    <p class="text-stone-500 text-[10px] uppercase tracking-wider font-semibold">Compara guardados y restaura tu manuscrito</p>
+                    <h3 class="text-cyber-title text-sm tracking-wide uppercase">Historial de Versiones</h3>
+                    <p class="text-cyber-metadata text-[10px] uppercase tracking-wider font-semibold">Compara guardados y restaura tu manuscrito</p>
                 </div>
-                <button @onclick="CloseModal" class="text-stone-500 hover:text-stone-200 p-1.5 rounded-lg hover:bg-white/5 transition-all">
+                <button @onclick="CloseModal" class="text-cyber-metadata hover:text-cyber-tech-mono p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                     </svg>
@@ -26,46 +26,45 @@
             <!-- Body (Split Layout) -->
             <div class="flex-1 flex overflow-hidden">
                 <!-- Left Sidebar: Timeline -->
-                <div class="w-80 border-r border-white/5 overflow-y-auto p-4 space-y-4 bg-stone-900/10">
-                    <h4 class="text-[10px] text-stone-500 uppercase tracking-widest font-semibold px-2">Línea de Tiempo</h4>
+                <div class="w-80 border-r border-base-gray-4 overflow-y-auto p-4 space-y-4 bg-base-gray-2">
+                    <h4 class="text-[10px] text-cyber-metadata font-semibold px-2">Línea de Tiempo</h4>
                     
                     @if (_loadingVersions)
                     {
                         <div class="flex flex-col items-center justify-center py-12 space-y-3">
-                            <div class="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-                            <span class="text-stone-500 text-xs">Cargando versiones...</span>
+                            <span class="text-cyber-tech-mono animate-pulse text-xs">// LOADING_TIMELINE</span>
                         </div>
                     }
                     else if (_versions.Count == 0)
                     {
-                        <p class="text-stone-500 text-xs italic text-center py-8">No hay versiones registradas.</p>
+                        <p class="text-cyber-metadata text-xs italic text-center py-8">No hay versiones registradas.</p>
                     }
                     else
                     {
-                        <div class="relative pl-4 border-l border-white/10 space-y-3">
+                        <div class="relative pl-4 border-l border-base-gray-4 space-y-3">
                             @foreach (var v in _versions)
                             {
                                 var isSelected = _selectedVersionId == v.Id;
                                 <button @onclick="() => SelectVersionAsync(v.Id)"
-                                        class="w-full text-left p-3 rounded-lg border transition-all relative outline-none flex flex-col gap-1.5
-                                               @(isSelected ? "bg-amber-500/10 border-amber-500/30 text-amber-400" : "bg-stone-900/30 border-white/5 hover:border-white/10 text-stone-400 hover:text-stone-200")">
+                                        class="w-full text-left p-3 border relative outline-none flex flex-col gap-1.5 transition-none
+                                               @(isSelected ? "bg-base-gray-3 border-[var(--accent-primary)] text-[var(--accent-primary)]" : "bg-base-gray-1 border-base-gray-4 hover:border-base-gray-5 text-cyber-caption")">
                                     
-                                    <!-- Bullet indicator -->
-                                    <span class="absolute -left-[21px] top-4 w-2 h-2 rounded-full border border-stone-950 
-                                                 @(isSelected ? "bg-amber-400 scale-125" : "bg-stone-700")"></span>
+                                    <!-- Bullet indicator: square anchor -->
+                                    <span class="absolute -left-[21px] top-4.5 w-2 h-2 border border-base-gray-1 
+                                                 @(isSelected ? "bg-[var(--accent-primary)]" : "bg-base-gray-5")"></span>
 
                                     <div class="flex justify-between items-center w-full">
-                                        <span class="text-[10px] font-semibold font-serif">
+                                        <span class="text-[10px] font-mono uppercase font-bold">
                                             @(v.IsMilestone ? "Hito" : "Autoguardado")
                                         </span>
-                                        <span class="text-[9px] text-stone-500">
+                                        <span class="text-[9px] text-cyber-metadata">
                                             @v.CreatedAt.ToString("HH:mm:ss")
                                         </span>
                                     </div>
-                                    <div class="text-[11px] font-medium truncate">
+                                    <div class="text-[11px] font-mono truncate">
                                         Por: @v.CreatedBy
                                     </div>
-                                    <div class="text-[9px] text-stone-500">
+                                    <div class="text-[9px] text-cyber-metadata">
                                         @v.CreatedAt.ToString("dd/MM/yyyy")
                                     </div>
                                 </button>
@@ -75,30 +74,26 @@
                 </div>
 
                 <!-- Right Area: Diff/Preview -->
-                <div class="flex-1 flex flex-col overflow-hidden bg-stone-950">
+                <div class="flex-1 flex flex-col overflow-hidden bg-base-gray-1">
                     @if (string.IsNullOrEmpty(_selectedVersionId))
                     {
-                        <div class="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-3 text-stone-500">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 opacity-40">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                            </svg>
-                            <span class="text-xs">Selecciona un guardado de la línea de tiempo para ver la previsualización del diff.</span>
+                        <div class="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-2">
+                            <span class="text-cyber-tech-mono text-xs uppercase text-cyber-metadata">// SELECT_A_SAVED_VERSION_TO_COMPARE</span>
                         </div>
                     }
                     else if (_loadingVersionContent)
                     {
                         <div class="flex-1 flex flex-col items-center justify-center space-y-3">
-                            <div class="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-                            <span class="text-stone-500 text-xs">Cargando contenido e hilando diferencias...</span>
+                            <span class="text-cyber-tech-mono animate-pulse text-xs">// CALCULATING_DIFF...</span>
                         </div>
                     }
                     else
                     {
                         <!-- Diff Content Area -->
-                        <div class="flex-1 overflow-y-auto p-8 font-serif leading-relaxed text-sm text-stone-300 whitespace-pre-wrap select-text">
+                        <div class="flex-1 overflow-y-auto p-8 font-mono leading-relaxed text-sm text-cyber-body whitespace-pre-wrap select-text">
                             @if (_diffPieces.Count == 0)
                             {
-                                <span>No hay cambios o el documento está vacío.</span>
+                                <span class="text-cyber-metadata">// No hay cambios o el documento está vacío.</span>
                             }
                             else
                             {
@@ -110,32 +105,30 @@
                                     }
                                     else if (piece.Type == DiffType.Inserted)
                                     {
-                                        <span class="bg-emerald-950/40 text-emerald-400 font-semibold px-0.5 rounded">@piece.Text</span>
+                                        <span class="bg-[var(--accent-glow)] text-[var(--accent-primary)] px-0.5 border border-[var(--accent-primary)]/20 font-bold">@piece.Text</span>
                                     }
                                     else if (piece.Type == DiffType.Deleted)
                                     {
-                                        <span class="bg-red-950/40 text-red-400 line-through px-0.5 rounded opacity-70">@piece.Text</span>
+                                        <span class="bg-base-orange-1/5 text-[var(--accent-warning)] line-through px-0.5 border border-base-orange-1/20 opacity-70">@piece.Text</span>
                                     }
                                 }
                             }
                         </div>
 
                         <!-- Footer Actions -->
-                        <div class="h-16 px-8 border-t border-white/5 flex items-center justify-between shrink-0 bg-stone-900/30">
+                        <div class="h-16 px-8 border-t border-base-gray-4 flex items-center justify-between shrink-0 bg-base-gray-2">
                             <div class="flex items-center gap-4 text-xs">
-                                <div class="flex items-center gap-1.5">
-                                    <span class="w-2.5 h-2.5 bg-emerald-950/40 border border-emerald-500/30 rounded"></span>
-                                    <span class="text-stone-400">Adición</span>
+                                <div class="flex items-center gap-1.5 font-mono text-cyber-metadata">
+                                    <span class="w-2 h-2 bg-[var(--accent-glow)] border border-[var(--accent-primary)]/40"></span>
+                                    <span>Adición (Cyan)</span>
                                 </div>
-                                <div class="flex items-center gap-1.5">
-                                    <span class="w-2.5 h-2.5 bg-red-950/40 border border-red-500/30 rounded line-through"></span>
-                                    <span class="text-stone-400">Eliminación</span>
+                                <div class="flex items-center gap-1.5 font-mono text-cyber-metadata">
+                                    <span class="w-2 h-2 bg-base-orange-1/5 border border-base-orange-1/30 line-through"></span>
+                                    <span>Eliminación (Ámbar)</span>
                                 </div>
                             </div>
 
-                            <button @onclick="RestoreVersionAsync"
-                                    disabled="@_restoring"
-                                    class="px-5 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-stone-800 text-stone-950 disabled:text-stone-600 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all disabled:opacity-50">
+                            <button @onclick="RestoreVersionAsync" disabled="@_restoring" class="cyber-button text-xs py-2 px-5">
                                 @(_restoring ? "Restaurando..." : "Restaurar esta Versión")
                             </button>
                         </div>

@@ -5,59 +5,59 @@
 
 @inject IManuscriptService ManuscriptService
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[700px]">
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[700px]">
     <!-- Left Panel: Tree View -->
-    <div class="lg:col-span-1 p-4 bg-base-blue-3 border border-white/5 rounded-xl flex flex-col h-full overflow-hidden shadow-md">
-        <div class="flex items-center justify-between border-b border-white/5 pb-3 mb-3 shrink-0">
-            <h3 class="text-stone-200 text-sm font-semibold tracking-wider uppercase">Manuscripts</h3>
+    <div class="lg:col-span-1 p-4 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex flex-col h-full overflow-hidden">
+        <div class="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2 mb-3 shrink-0">
+            <h3 class="text-cyber-tech-mono text-xs text-[var(--text-secondary)] uppercase">Manuscripts</h3>
             <button @onclick="ToggleAddManuscriptForm" 
-                    class="px-2 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-300 hover:bg-amber-500/20 hover:text-amber-200 text-xs font-semibold rounded transition-all">
-                + New MS
+                    class="cyber-button text-[10px] py-0.5 px-2">
+                [ + NEW MS ]
             </button>
         </div>
 
         @if (_showAddMsForm)
         {
-            <div class="p-3 bg-white/5 rounded-lg border border-white/5 mb-3 shrink-0 space-y-2">
+            <div class="p-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] mb-3 shrink-0 space-y-2">
                 <input @bind="_newMsTitle" placeholder="Manuscript Title" 
-                       class="w-full px-3 py-1.5 bg-stone-900 border border-white/10 rounded text-xs text-stone-200 focus:outline-none focus:border-amber-500" />
+                       class="cyber-input text-xs w-full" />
                 <div class="flex justify-end gap-2 text-xs">
-                    <button @onclick="ToggleAddManuscriptForm" class="px-2 py-1 text-stone-400 hover:text-stone-200">Cancel</button>
-                    <button @onclick="CreateManuscriptAsync" class="px-2 py-1 bg-amber-500 text-stone-950 font-bold rounded hover:bg-amber-400">Create</button>
+                    <button @onclick="ToggleAddManuscriptForm" class="text-cyber-caption hover:text-[var(--accent-primary)] text-[10px]">[ CANCEL ]</button>
+                    <button @onclick="CreateManuscriptAsync" class="cyber-button text-[10px] py-0.5 px-2">[ CREATE ]</button>
                 </div>
             </div>
         }
 
         <!-- Manuscripts Tree Container -->
-        <div class="flex-1 overflow-y-auto pr-1 space-y-2 text-sm text-stone-300">
+        <div class="flex-1 overflow-y-auto pr-1 space-y-2 text-sm text-[var(--text-secondary)]">
             @if (_loading)
             {
-                <p class="text-stone-500 text-xs animate-pulse">Loading manuscripts...</p>
+                <p class="text-cyber-tech-mono text-xs text-[var(--text-disabled)] animate-pulse">LOADING MANUSCRIPTS...</p>
             }
             else if (_manuscripts == null || _manuscripts.Count == 0)
             {
-                <p class="text-stone-500 text-xs py-4 text-center">No manuscripts created yet.</p>
+                <p class="text-cyber-tech-mono text-xs text-[var(--text-disabled)] py-4 text-center">NO REGISTERED MANUSCRIPTS.</p>
             }
             else
             {
                 @foreach (var ms in _manuscripts)
                 {
                     var isExpanded = _expandedMs.Contains(ms.ManuscriptId);
-                    <div class="border border-white/5 rounded-lg bg-stone-950/20 p-2 space-y-1">
+                    <div class="border border-[var(--border-subtle)] bg-[var(--bg-primary)] p-2 space-y-1">
                         <!-- Manuscript Title Block -->
                         <div class="flex items-center justify-between group">
                             <div class="flex items-center gap-2 cursor-pointer flex-1" @onclick="() => ToggleMsExpansion(ms.ManuscriptId)">
-                                <span class="text-stone-500 text-xs select-none">
+                                <span class="text-[var(--text-disabled)] text-xs select-none">
                                     @(isExpanded ? "▼" : "▶")
                                 </span>
-                                <span class="font-medium text-stone-200 truncate">@ms.Title</span>
+                                <span class="font-mono text-xs uppercase text-[var(--text-primary)] truncate">@ms.Title</span>
                             </div>
-                            <div class="opacity-0 group-hover:opacity-100 flex gap-2 transition-all">
-                                <button @onclick="() => ShowAddChapterForm(ms.ManuscriptId)" title="Add Chapter" class="text-[10px] text-amber-500 hover:text-amber-400">
-                                    + Add Chap
+                            <div class="opacity-0 group-hover:opacity-100 flex gap-2 transition-all duration-100">
+                                <button @onclick="() => ShowAddChapterForm(ms.ManuscriptId)" title="Add Chapter" class="text-[10px] text-[var(--accent-primary)] hover:underline">
+                                    [ + CHAP ]
                                 </button>
-                                <button @onclick="() => DeleteManuscriptAsync(ms.ManuscriptId)" title="Delete Manuscript" class="text-[10px] text-red-500 hover:text-red-400">
-                                    Delete
+                                <button @onclick="() => DeleteManuscriptAsync(ms.ManuscriptId)" title="Delete Manuscript" class="text-[10px] text-[var(--accent-warning)] hover:underline">
+                                    [ DEL ]
                                 </button>
                             </div>
                         </div>
@@ -65,37 +65,37 @@
                         <!-- Chapters under this manuscript -->
                         @if (isExpanded)
                         {
-                            <div class="pl-4 border-l border-white/5 mt-1 space-y-1">
+                            <div class="pl-3 border-l border-[var(--border-subtle)] mt-1 space-y-1">
                                 @if (_addingChapterMsId == ms.ManuscriptId)
                                 {
-                                    <div class="p-2 bg-white/5 rounded space-y-2 mt-1">
+                                    <div class="p-2 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-2 mt-1">
                                         <input @bind="_newChapTitle" placeholder="Chapter Title"
-                                               class="w-full px-2 py-1 bg-stone-900 border border-white/10 rounded text-xs text-stone-200 focus:outline-none focus:border-amber-500" />
+                                               class="cyber-input text-xs w-full" />
                                         <div class="flex justify-end gap-1.5 text-[10px]">
-                                            <button @onclick="CancelAddChapter" class="px-2 py-0.5 text-stone-400">Cancel</button>
-                                            <button @onclick="() => CreateChapterAsync(ms.ManuscriptId)" class="px-2 py-0.5 bg-amber-500 text-stone-950 font-bold rounded">Create</button>
+                                            <button @onclick="CancelAddChapter" class="text-cyber-caption hover:text-[var(--accent-primary)] text-[10px]">[ CANCEL ]</button>
+                                            <button @onclick="() => CreateChapterAsync(ms.ManuscriptId)" class="cyber-button text-[10px] py-0.5 px-2">[ CREATE ]</button>
                                         </div>
                                     </div>
                                 }
 
                                 @if (ms.Chapters == null || ms.Chapters.Count == 0)
                                 {
-                                    <p class="text-stone-600 text-xs italic py-1">No chapters.</p>
+                                    <p class="text-cyber-tech-mono text-[10px] text-[var(--text-disabled)] italic py-1">NO_CHAPTERS</p>
                                 }
                                 else
                                 {
                                     @foreach (var chap in ms.Chapters)
                                     {
                                         var isSelected = _selectedChapter?.ChapterId == chap.ChapterId;
-                                        <div class="flex items-center justify-between group/chap p-1 rounded hover:bg-white/5 transition-colors cursor-pointer
-                                                    @(isSelected ? "bg-amber-500/10 border-l-2 border-amber-500 pl-1.5" : "")"
+                                        <div class="flex items-center justify-between group/chap p-1 hover:bg-[var(--bg-secondary)] cursor-pointer
+                                                    @(isSelected ? "bg-[var(--accent-glow)] border-l-2 border-[var(--accent-primary)] pl-1.5" : "")"
                                              @onclick="() => SelectChapter(chap, ms.ManuscriptId)">
-                                            <span class="truncate flex-1 text-xs @(isSelected ? "text-amber-400 font-semibold" : "text-stone-300")">
+                                            <span class="truncate flex-1 text-xs @(isSelected ? "text-[var(--accent-primary)] font-mono" : "text-[var(--text-secondary)]")">
                                                 @chap.Title
                                             </span>
                                             <button @onclick="() => DeleteChapterAsync(ms.ManuscriptId, chap.ChapterId)" @onclick:stopPropagation="true"
-                                                    class="opacity-0 group-hover/chap:opacity-100 text-[10px] text-red-500 hover:text-red-400 transition-opacity">
-                                                🗑
+                                                    class="opacity-0 group-hover/chap:opacity-100 text-[10px] text-[var(--accent-warning)] hover:underline">
+                                                [ X ]
                                             </button>
                                         </div>
                                     }
@@ -109,41 +109,41 @@
     </div>
 
     <!-- Right Panel: Chapter Content Editor -->
-    <div class="lg:col-span-2 p-6 bg-base-blue-3 border border-white/5 rounded-xl flex flex-col h-full shadow-md">
+    <div class="lg:col-span-2 p-4 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex flex-col h-full">
         @if (_selectedChapter == null)
         {
             <div class="flex-1 flex flex-col items-center justify-center text-center">
-                <span class="text-stone-600 text-5xl mb-4">✍️</span>
-                <h3 class="text-stone-400 font-medium mb-1">No Chapter Selected</h3>
-                <p class="text-stone-500 text-xs max-w-sm leading-relaxed">
-                    Select a chapter from the sidebar tree or create a new manuscript and chapter to begin crafting your epic.
+                <span class="text-cyber-tech-mono text-xs text-[var(--text-disabled)] mb-2">[ NO_SELECTION ]</span>
+                <h3 class="text-cyber-title text-[var(--text-disabled)] uppercase mb-2">No Chapter Selected</h3>
+                <p class="text-cyber-body text-xs max-w-sm">
+                    Select a chapter node from the operational registry or initialize a new manuscript stream.
                 </p>
             </div>
         }
         else
         {
             <!-- Editor Title & Meta -->
-            <div class="flex items-center justify-between border-b border-white/5 pb-4 mb-4 shrink-0">
-                <div class="flex-1 max-w-lg">
+            <div class="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3 mb-3 shrink-0">
+                <div class="flex-1 max-w-lg pr-4">
                     <input @bind="_selectedChapter.Title" @oninput="TriggerAutoSave"
-                           class="w-full bg-transparent text-xl font-serif text-stone-100 border-none border-b border-transparent focus:border-amber-500/30 focus:outline-none py-1 transition-all"
+                           class="w-full bg-[var(--bg-primary)] text-cyber-title uppercase border border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:outline-none px-3 py-1.5"
                            placeholder="Untitled Chapter" />
                 </div>
-                <div class="flex items-center gap-4 shrink-0">
+                <div class="flex items-center gap-2 shrink-0">
                     <!-- Auto-save state message -->
-                    <span class="text-[10px] uppercase font-semibold tracking-wider transition-colors
-                                 @(_saveStatus == "Saving..." ? "text-amber-400 animate-pulse" : _saveStatus == "Saved" ? "text-emerald-500" : "text-stone-500")">
+                    <span class="text-[10px] font-mono uppercase tracking-wider transition-colors
+                                 @(_saveStatus == "Saving..." ? "text-[var(--accent-warning)] animate-pulse" : _saveStatus == "Saved" ? "text-[var(--accent-primary)]" : "text-[var(--text-disabled)]")">
                         @_saveStatus
                     </span>
                     <!-- Version history button -->
                     <button @onclick="OpenVersionHistory" 
-                            class="px-3 py-1 border border-amber-500/20 text-amber-300 hover:bg-amber-500/10 rounded text-xs font-semibold tracking-wider uppercase transition-all">
-                        Historial
+                            class="cyber-button text-xs py-1 px-3">
+                        [ HISTORY ]
                     </button>
                     <!-- View toggle -->
                     <button @onclick="TogglePreview" 
-                            class="px-3 py-1 border border-white/10 rounded text-xs text-stone-300 hover:bg-white/5 hover:text-stone-100 font-semibold tracking-wider uppercase transition-all">
-                        @(_previewMode ? "Edit Page" : "Preview Page")
+                            class="cyber-button text-xs py-1 px-3">
+                        @(_previewMode ? "[ EDIT ]" : "[ PREVIEW ]")
                     </button>
                 </div>
             </div>
@@ -152,9 +152,9 @@
             <div class="flex-1 overflow-hidden relative">
                 @if (_previewMode)
                 {
-                    <div class="w-full h-full p-4 overflow-y-auto rounded-lg bg-stone-950/20 border border-white/5 prose prose-invert max-w-none text-stone-200 select-text">
-                        <h1 class="font-serif text-2xl text-amber-500 font-light border-b border-white/5 pb-2 mb-4">@_selectedChapter.Title</h1>
-                        <div class="leading-relaxed whitespace-pre-wrap font-serif text-stone-300">
+                    <div class="w-full h-full p-4 overflow-y-auto bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-cyber-body select-text">
+                        <h1 class="text-cyber-title text-[var(--accent-primary)] uppercase border-b border-[var(--border-subtle)] pb-1 mb-3">@_selectedChapter.Title</h1>
+                        <div class="leading-relaxed whitespace-pre-wrap font-sans text-[var(--text-secondary)] text-sm">
                             @RenderSimpleMarkdown(_selectedChapter.Content)
                         </div>
                     </div>
@@ -162,8 +162,8 @@
                 else
                 {
                     <textarea @bind="_selectedChapter.Content" @oninput="TriggerAutoSave"
-                              class="w-full h-full p-6 bg-stone-950/20 border border-white/5 rounded-lg text-stone-200 focus:outline-none focus:border-amber-500/20 resize-none font-serif text-base leading-relaxed leading-8"
-                              placeholder="Write your story here... Supports plain text writing."></textarea>
+                              class="w-full h-full p-4 bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-cyber-body focus:outline-none focus:border-[var(--accent-primary)] resize-none font-mono text-sm leading-relaxed"
+                              placeholder="Type contents here... Supports plain text raw input."></textarea>
                 }
             </div>
         }

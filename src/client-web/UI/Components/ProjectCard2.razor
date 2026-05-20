@@ -1,64 +1,57 @@
 @using client_web.Helpers;
 
-<article class="group relative flex flex-row bg-stone-950 border border-stone-800 rounded-lg overflow-hidden hover:border-amber-500/60 transition-all duration-500 cursor-pointer hover:shadow-[0_0_40px_-8px_rgba(245,158,11,0.2)] w-auto" @onclick="OnClick">
+<article class="cyber-panel flex flex-row group cursor-pointer hover:border-[var(--accent-primary)] hover:shadow-[0_0_8px_var(--accent-glow)] transition-all duration-100 steps-2 w-auto" @onclick="OnClick">
 
     @* Cover Image *@
-    <div class="relative w-48 md:w-64 overflow-hidden bg-stone-900">
+    <div class="relative w-48 md:w-64 overflow-hidden bg-[var(--bg-primary)] border-r border-[var(--border-subtle)]">
         @if (!string.IsNullOrEmpty(CoverImageUrl))
         {
             <img src="@CoverImageUrl"
                  alt="@Title"
-                 class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 opacity-80 group-hover:opacity-100" />
+                 class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity duration-100" />
         }
         else
         {
-            <div class="w-full h-full flex items-center justify-center bg-linear-to-br from-stone-900 to-stone-800">
-                <svg class="w-12 h-12 text-stone-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-full h-full flex items-center justify-center bg-[var(--bg-primary)]">
+                <svg class="w-12 h-12 text-[var(--border-active)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1"
                           d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.75 19 7.5 19s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                 </svg>
             </div>
         }
 
-        <span class="absolute top-3 left-3 px-2 py-0.5 bg-amber-500 text-stone-950 text-[10px] font-bold tracking-[0.15em] uppercase">
+        <span class="absolute top-3 left-3 px-2 py-0.5 bg-[var(--bg-secondary)] border border-[var(--border-active)] text-cyber-metadata text-[10px]">
             @LiteraryGenre
         </span>
 
         @if (!string.IsNullOrEmpty(UserRole))
         {
-            <span class="absolute top-3 right-3 px-2 py-0.5 text-[10px] font-bold tracking-wider rounded uppercase @GetRoleBadgeClass(UserRole)">
+            <span class="absolute top-3 right-3 px-2 py-0.5 text-[10px] font-mono tracking-wider uppercase border @GetRoleBadgeClass(UserRole)">
                 @UserRole
             </span>
         }
     </div>
 
     @* Content *@
-    <div class="flex flex-col flex-1 p-5 gap-3 justify-between">
+    <div class="flex flex-col flex-1 p-4 gap-2 justify-between">
 
-        <div class="space-y-3">
-            <div class="w-8 h-px bg-amber-500/50 group-hover:w-16 group-hover:bg-amber-500 transition-all duration-500"></div>
-
-            <h2 class="text-stone-100 font-serif text-xl leading-tight tracking-tight line-clamp-2
-                       group-hover:text-amber-50 transition-colors duration-300">
+        <div class="space-y-2">
+            <h2 class="text-cyber-title uppercase tracking-wide truncate group-hover:text-[var(--accent-primary)] transition-colors duration-100">
                 @Title
             </h2>
 
-            <p class="text-stone-400 text-sm leading-relaxed line-clamp-3">
+            <p class="text-cyber-body text-xs line-clamp-3">
                 @Synopsis
             </p>
         </div>
 
-        <div class="flex items-center justify-between pt-3 border-t border-stone-800">
-            <time class="text-stone-600 text-xs tracking-wide font-mono" datetime="@UpdatedAt.ToString("yyyy-MM-dd")">
+        <div class="flex items-center justify-between pt-3 border-t border-[var(--border-subtle)]">
+            <time class="text-cyber-metadata" datetime="@UpdatedAt.ToString("yyyy-MM-dd")">
                 @FormatData.FormatDateToString(UpdatedAt)
             </time>
 
-            <span class="flex items-center gap-1.5 text-amber-500/70 group-hover:text-amber-400 text-xs font-medium tracking-wide uppercase transition-colors duration-300">
-                Leer
-                <svg class="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform duration-300"
-                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                </svg>
+            <span class="text-cyber-tech-mono text-xs text-[var(--accent-primary)] group-hover:underline">
+                [ READ ]
             </span>
         </div>
     </div>
@@ -78,10 +71,9 @@
     {
         return role.ToUpper() switch
         {
-            "OWNER" => "bg-amber-500/20 text-amber-300 border border-amber-500/30",
-            "EDITOR" => "bg-sky-500/20 text-sky-300 border border-sky-500/30",
-            "READER" => "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30",
-            _ => "bg-stone-500/20 text-stone-300 border border-stone-500/30"
+            "OWNER" => "bg-[var(--bg-secondary)] border-[var(--accent-warning)] text-[var(--accent-warning)]",
+            "EDITOR" => "bg-[var(--bg-secondary)] border-[var(--accent-primary)] text-[var(--accent-primary)]",
+            _ => "bg-[var(--bg-secondary)] border-[var(--border-active)] text-[var(--text-secondary)]"
         };
     }
 

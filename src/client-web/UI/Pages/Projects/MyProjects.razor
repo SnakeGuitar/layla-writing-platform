@@ -7,29 +7,26 @@
 @inject ISessionManager Session
 @inject NavigationManager Navigation
 
-<PageTitle>My Projects</PageTitle>
+<PageTitle>My Projects // Secure Registry</PageTitle>
 
-<header class="max-w-5xl mx-auto mb-12">
-    <h2 class="text-amber-500 text-xs font-bold tracking-[0.3em] uppercase mb-3">Projects</h2>
-    <h1 class="text-stone-100 font-serif text-4xl md:text-5xl font-light tracking-tight">
-        My Projects
-    </h1>
-    <div class="mt-4 w-16 h-px bg-amber-500"></div>
+<header class="max-w-5xl mx-auto mb-8 border-b border-[var(--border-subtle)] pb-4">
+    <span class="text-cyber-metadata">SYS_REGISTRY // OPERATOR_UNITS</span>
+    <h1 class="text-cyber-display mt-1 uppercase">My Projects</h1>
 </header>
 
 <AuthorizeView>
     <Authorized>
         @if (_loading)
         {
-            <p class="text-stone-500 text-sm">Loading your projects…</p>
+            <p class="text-cyber-tech-mono text-sm text-[var(--text-disabled)]">LOADING MY PROJECTS...</p>
         }
         else if (_projects is null || _projects.Count == 0)
         {
-            <p class="text-stone-500 text-sm">No projects have been created yet.</p>
+            <p class="text-cyber-tech-mono text-sm text-[var(--text-disabled)]">NO REGISTERED PROJECTS DETECTED.</p>
         }
         else
         {
-            <div class="grid md:grid-cols-2 sm:grid-cols-1 gap-1 bg-transparent">
+            <div class="grid md:grid-cols-2 sm:grid-cols-1 gap-4 bg-transparent">
                 @foreach (var project in _projects)
                 {
                     <div>
@@ -47,9 +44,9 @@
         }
     </Authorized>
     <NotAuthorized>
-        <p class="text-stone-300">
-            Please <a href="/auth/login" class="text-amber-400 underline hover:text-amber-300">sign in</a>
-            to see your projects.
+        <p class="text-cyber-body">
+            Security key missing. Please <a href="/auth/login" class="text-[var(--accent-primary)] hover:underline">[ SIGN IN ]</a>
+            to access personal project streams.
         </p>
     </NotAuthorized>
 </AuthorizeView>

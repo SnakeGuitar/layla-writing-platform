@@ -3,43 +3,43 @@
 @inject ISessionManager Session
 @inject NavigationManager Navigation
 
-<div class="lg:flex lg:h-screen lg:overflow-hidden bg-base-gray-1 min-h-screen">
+<div class="lg:flex lg:h-screen lg:overflow-hidden bg-[var(--bg-primary)] min-h-screen text-[var(--text-primary)]">
 
-    <aside class="lg:w-64 lg:shrink-0 lg:flex lg:flex-col lg:h-screen lg:overflow-y-auto lg:sticky lg:top-0">
+    <aside class="lg:w-64 lg:shrink-0 lg:flex lg:flex-col lg:h-screen lg:overflow-y-auto lg:sticky lg:top-0 bg-[var(--bg-secondary)] border-r border-[var(--border-subtle)]">
         <NavMenu />
     </aside>
 
     <div class="flex-1 flex flex-col lg:overflow-y-auto lg:h-screen">
 
         <header class="lg:sticky lg:top-0 lg:z-30 px-6 sm:px-8 h-14 min-h-14
-                       bg-base-blue-3 border-b border-white/5
+                       bg-[var(--bg-secondary)] border-b border-[var(--border-subtle)]
                        flex items-center justify-end gap-6">
             <AuthorizeView>
                 <Authorized>
-                    <span class="text-stone-400 text-sm tracking-wide">
-                        Signed in as <span class="text-stone-100 font-medium">@(context.User.Identity?.Name ?? Session.CurrentDisplayName)</span>
+                    <span class="text-xs font-mono text-[var(--text-secondary)] tracking-widest uppercase">
+                        Operator: <span class="text-[var(--text-primary)] font-bold">@(context.User.Identity?.Name ?? Session.CurrentDisplayName)</span>
                     </span>
                     <button @onclick="HandleLogoutAsync"
-                            class="text-amber-300 hover:text-amber-200 text-sm font-medium tracking-wide transition-colors">
-                        Logout
+                            class="text-[var(--accent-warning)] hover:text-amber-400 text-xs font-mono uppercase tracking-widest cursor-pointer">
+                        [ Terminate Session ]
                     </button>
                 </Authorized>
                 <NotAuthorized>
                     <a href="/auth/login"
-                       class="text-amber-300 hover:text-amber-200 text-sm font-medium tracking-wide transition-colors">
-                        Login
+                       class="text-[var(--accent-primary)] hover:underline text-xs font-mono uppercase tracking-widest">
+                        [ Access System ]
                     </a>
                 </NotAuthorized>
             </AuthorizeView>
 
             <a href="/about"
-               class="text-stone-400 text-sm font-medium tracking-wide hover:text-stone-100 transition-colors">
-                About
+               class="text-[var(--text-secondary)] text-xs font-mono uppercase tracking-widest hover:text-[var(--text-primary)]">
+                [ Info ]
             </a>
         </header>
 
         <main class="flex-1 min-h-[calc(100vh-3.5rem)]">
-            <article class="content bg-base-gray-1 px-6 py-6 min-h-full">
+            <article class="content bg-[var(--bg-primary)] px-6 py-6 min-h-full">
                 @Body
             </article>
         </main>
