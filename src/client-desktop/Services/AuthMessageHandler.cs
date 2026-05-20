@@ -30,11 +30,24 @@ namespace Layla.Desktop.Services
             if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
             {
                 SessionManager.ClearSession();
-                System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    if (System.Windows.Application.Current.MainWindow is System.Windows.Navigation.NavigationWindow navWindow)
+                    var mainWindow = System.Windows.Application.Current.MainWindow;
+                    if (mainWindow is System.Windows.Navigation.NavigationWindow navWindow)
                     {
                         navWindow.Navigate(new System.Uri("Views/LoginView.xaml", System.UriKind.Relative));
+                    }
+                    else
+                    {
+                        // Fallback: scan open windows for the NavigationWindow
+                        foreach (System.Windows.Window window in System.Windows.Application.Current.Windows)
+                        {
+                            if (window is System.Windows.Navigation.NavigationWindow nw)
+                            {
+                                nw.Navigate(new System.Uri("Views/LoginView.xaml", System.UriKind.Relative));
+                                break;
+                            }
+                        }
                     }
                 });
             }
