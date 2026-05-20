@@ -3,12 +3,12 @@ using NAudio.Wave;
 using System.Threading.Channels;
 using System.Windows;
 using Microsoft.Extensions.Logging;
+using System.Net.Http;
 
 namespace Layla.Desktop.Services.Projetcs;
 
 public class VoiceConnection : IAsyncDisposable
 {
-    private const string BASE_URL = "https://localhost:5288";
     private const int SAMPLE_RATE = 16000;
     private const int CHANNELS = 1;
     private const int BITS_PER_SAMPLE = 16;
@@ -46,9 +46,18 @@ public class VoiceConnection : IAsyncDisposable
             throw new InvalidOperationException("Not authenticated.");
 
         _hub = new HubConnectionBuilder()
-            .WithUrl($"{BASE_URL}/hubs/voice", options =>
+            .WithUrl($"{ConfigurationService.SERVER_CORE_URL}/hubs/voice", options =>
             {
                 options.AccessTokenProvider = () => Task.FromResult<string?>(token);
+                options.HttpMessageHandlerFactory = handler =>
+                {
+                    if (handler is HttpClientHandler clientHandler)
+                    {
+                        clientHandler.ServerCertificateCustomValidationCallback =
+                            (message, cert, chain, errors) => true;
+                    }
+                    return handler;
+                };
             })
             .WithAutomaticReconnect()
             .Build();

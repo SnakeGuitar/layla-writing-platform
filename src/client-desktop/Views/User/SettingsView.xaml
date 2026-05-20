@@ -72,7 +72,7 @@
 
             <TextBlock Margin="150,6,0,0" FontSize="9" Foreground="{DynamicResource SecondaryText}"
                        FontFamily="{StaticResource TechnicalFont}">
-                Defaults: Server Core = https://localhost:7166 · Worldbuilding = http://localhost:3000
+                Defaults: Server Core = https://localhost:5288 · Worldbuilding = http://localhost:3000
                 <LineBreak/>Docker: Server Core = https://localhost:5288 · Worldbuilding = http://localhost:3000
             </TextBlock>
         </StackPanel>

@@ -23,7 +23,7 @@ public static class ConfigurationService
     // -------------------------------------------------------------------------
 
     /// <summary>Base URL for the .NET Server Core API (Identity, Projects, Users).</summary>
-    public static string SERVER_CORE_URL { get; private set; } = "https://localhost:7166";
+    public static string SERVER_CORE_URL { get; private set; } = "https://localhost:5288";
 
     /// <summary>Base URL for the Node.js Worldbuilding API (Manuscripts, Wiki, Graph).</summary>
     public static string WORLDBUILDING_API_URL { get; private set; } = "http://localhost:3000";
