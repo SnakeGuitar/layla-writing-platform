@@ -195,4 +195,59 @@ public class ManuscriptService : IManuscriptService
             return false;
         }
     }
+
+    public async Task<List<Layla.Client.Shared.Models.ChapterVersionMeta>?> GetChapterVersionsAsync(Guid projectId, string manuscriptId, Guid chapterId)
+    {
+        try
+        {
+            return await _client.SendAsync<List<Layla.Client.Shared.Models.ChapterVersionMeta>>(new APIRequest
+            {
+                Endpoint = $"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/versions",
+                Method = HttpMethod.Get,
+                Token = Token
+            });
+        }
+        catch (APIException ex)
+        {
+            _logger.LogWarning(ex, "Failed to get chapter versions for chapter {ChapterId}", chapterId);
+            return null;
+        }
+    }
+
+    public async Task<Layla.Client.Shared.Models.ChapterVersionFull?> GetChapterVersionAsync(Guid projectId, string manuscriptId, Guid chapterId, string versionId)
+    {
+        try
+        {
+            return await _client.SendAsync<Layla.Client.Shared.Models.ChapterVersionFull>(new APIRequest
+            {
+                Endpoint = $"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/versions/{versionId}",
+                Method = HttpMethod.Get,
+                Token = Token
+            });
+        }
+        catch (APIException ex)
+        {
+            _logger.LogWarning(ex, "Failed to get chapter version {VersionId} for chapter {ChapterId}", versionId, chapterId);
+            return null;
+        }
+    }
+
+    public async Task<bool> RestoreChapterVersionAsync(Guid projectId, string manuscriptId, Guid chapterId, string versionId)
+    {
+        try
+        {
+            await _client.SendAsync<object>(new APIRequest
+            {
+                Endpoint = $"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/versions/{versionId}/restore",
+                Method = HttpMethod.Put,
+                Token = Token
+            });
+            return true;
+        }
+        catch (APIException ex)
+        {
+            _logger.LogWarning(ex, "Failed to restore chapter version {VersionId} for chapter {ChapterId}", versionId, chapterId);
+            return false;
+        }
+    }
 }

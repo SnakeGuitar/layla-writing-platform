@@ -1,0 +1,348 @@
+@using client_web.Application.Services.Manuscripts
+@using Layla.Client.Shared.Models
+@inject IManuscriptService ManuscriptService
+
+@if (IsOpen)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <!-- Backdrop -->
+        <div @onclick="CloseModal" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+
+        <!-- Modal Container -->
+        <div class="bg-stone-950 border border-white/10 rounded-2xl w-full max-w-5xl h-[85vh] flex flex-col shadow-2xl relative z-10 overflow-hidden backdrop-blur-xl">
+            <!-- Header -->
+            <div class="h-16 px-6 border-b border-white/5 flex items-center justify-between shrink-0 bg-stone-900/50">
+                <div>
+                    <h3 class="text-stone-100 font-serif text-lg font-light tracking-wide">Historial de Versiones</h3>
+                    <p class="text-stone-500 text-[10px] uppercase tracking-wider font-semibold">Compara guardados y restaura tu manuscrito</p>
+                </div>
+                <button @onclick="CloseModal" class="text-stone-500 hover:text-stone-200 p-1.5 rounded-lg hover:bg-white/5 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Body (Split Layout) -->
+            <div class="flex-1 flex overflow-hidden">
+                <!-- Left Sidebar: Timeline -->
+                <div class="w-80 border-r border-white/5 overflow-y-auto p-4 space-y-4 bg-stone-900/10">
+                    <h4 class="text-[10px] text-stone-500 uppercase tracking-widest font-semibold px-2">Línea de Tiempo</h4>
+                    
+                    @if (_loadingVersions)
+                    {
+                        <div class="flex flex-col items-center justify-center py-12 space-y-3">
+                            <div class="w-5 h-5 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                            <span class="text-stone-500 text-xs">Cargando versiones...</span>
+                        </div>
+                    }
+                    else if (_versions.Count == 0)
+                    {
+                        <p class="text-stone-500 text-xs italic text-center py-8">No hay versiones registradas.</p>
+                    }
+                    else
+                    {
+                        <div class="relative pl-4 border-l border-white/10 space-y-3">
+                            @foreach (var v in _versions)
+                            {
+                                var isSelected = _selectedVersionId == v.Id;
+                                <button @onclick="() => SelectVersionAsync(v.Id)"
+                                        class="w-full text-left p-3 rounded-lg border transition-all relative outline-none flex flex-col gap-1.5
+                                               @(isSelected ? "bg-amber-500/10 border-amber-500/30 text-amber-400" : "bg-stone-900/30 border-white/5 hover:border-white/10 text-stone-400 hover:text-stone-200")">
+                                    
+                                    <!-- Bullet indicator -->
+                                    <span class="absolute -left-[21px] top-4 w-2 h-2 rounded-full border border-stone-950 
+                                                 @(isSelected ? "bg-amber-400 scale-125" : "bg-stone-700")"></span>
+
+                                    <div class="flex justify-between items-center w-full">
+                                        <span class="text-[10px] font-semibold font-serif">
+                                            @(v.IsMilestone ? "Hito" : "Autoguardado")
+                                        </span>
+                                        <span class="text-[9px] text-stone-500">
+                                            @v.CreatedAt.ToString("HH:mm:ss")
+                                        </span>
+                                    </div>
+                                    <div class="text-[11px] font-medium truncate">
+                                        Por: @v.CreatedBy
+                                    </div>
+                                    <div class="text-[9px] text-stone-500">
+                                        @v.CreatedAt.ToString("dd/MM/yyyy")
+                                    </div>
+                                </button>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Right Area: Diff/Preview -->
+                <div class="flex-1 flex flex-col overflow-hidden bg-stone-950">
+                    @if (string.IsNullOrEmpty(_selectedVersionId))
+                    {
+                        <div class="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-3 text-stone-500">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 opacity-40">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                            </svg>
+                            <span class="text-xs">Selecciona un guardado de la línea de tiempo para ver la previsualización del diff.</span>
+                        </div>
+                    }
+                    else if (_loadingVersionContent)
+                    {
+                        <div class="flex-1 flex flex-col items-center justify-center space-y-3">
+                            <div class="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                            <span class="text-stone-500 text-xs">Cargando contenido e hilando diferencias...</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <!-- Diff Content Area -->
+                        <div class="flex-1 overflow-y-auto p-8 font-serif leading-relaxed text-sm text-stone-300 whitespace-pre-wrap select-text">
+                            @if (_diffPieces.Count == 0)
+                            {
+                                <span>No hay cambios o el documento está vacío.</span>
+                            }
+                            else
+                            {
+                                @foreach (var piece in _diffPieces)
+                                {
+                                    @if (piece.Type == DiffType.Unchanged)
+                                    {
+                                        <span>@piece.Text</span>
+                                    }
+                                    else if (piece.Type == DiffType.Inserted)
+                                    {
+                                        <span class="bg-emerald-950/40 text-emerald-400 font-semibold px-0.5 rounded">@piece.Text</span>
+                                    }
+                                    else if (piece.Type == DiffType.Deleted)
+                                    {
+                                        <span class="bg-red-950/40 text-red-400 line-through px-0.5 rounded opacity-70">@piece.Text</span>
+                                    }
+                                }
+                            }
+                        </div>
+
+                        <!-- Footer Actions -->
+                        <div class="h-16 px-8 border-t border-white/5 flex items-center justify-between shrink-0 bg-stone-900/30">
+                            <div class="flex items-center gap-4 text-xs">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-2.5 h-2.5 bg-emerald-950/40 border border-emerald-500/30 rounded"></span>
+                                    <span class="text-stone-400">Adición</span>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-2.5 h-2.5 bg-red-950/40 border border-red-500/30 rounded line-through"></span>
+                                    <span class="text-stone-400">Eliminación</span>
+                                </div>
+                            </div>
+
+                            <button @onclick="RestoreVersionAsync"
+                                    disabled="@_restoring"
+                                    class="px-5 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-stone-800 text-stone-950 disabled:text-stone-600 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all disabled:opacity-50">
+                                @(_restoring ? "Restaurando..." : "Restaurar esta Versión")
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid ProjectId { get; set; }
+    [Parameter] public string ManuscriptId { get; set; } = string.Empty;
+    [Parameter] public Guid ChapterId { get; set; }
+    [Parameter] public string CurrentContent { get; set; } = string.Empty;
+    
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public EventCallback<string> OnVersionRestored { get; set; }
+
+    private List<ChapterVersionMeta> _versions = new();
+    private bool _loadingVersions = false;
+    
+    private string _selectedVersionId = string.Empty;
+    private ChapterVersionFull? _selectedVersion;
+    private bool _loadingVersionContent = false;
+    private bool _restoring = false;
+
+    private List<DiffPiece> _diffPieces = new();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsOpen && _versions.Count == 0 && !_loadingVersions)
+        {
+            await LoadVersionsAsync();
+        }
+    }
+
+    private async Task LoadVersionsAsync()
+    {
+        _loadingVersions = true;
+        _selectedVersionId = string.Empty;
+        _selectedVersion = null;
+        _diffPieces.Clear();
+        StateHasChanged();
+
+        try
+        {
+            var res = await ManuscriptService.GetChapterVersionsAsync(ProjectId, ManuscriptId, ChapterId);
+            _versions = res?.OrderByDescending(v => v.CreatedAt).ToList() ?? new List<ChapterVersionMeta>();
+        }
+        catch
+        {
+            _versions.Clear();
+        }
+        finally
+        {
+            _loadingVersions = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SelectVersionAsync(string versionId)
+    {
+        _selectedVersionId = versionId;
+        _loadingVersionContent = true;
+        _diffPieces.Clear();
+        StateHasChanged();
+
+        try
+        {
+            _selectedVersion = await ManuscriptService.GetChapterVersionAsync(ProjectId, ManuscriptId, ChapterId, versionId);
+            if (_selectedVersion != null)
+            {
+                // Calculate word diff between historic version and current live text
+                _diffPieces = DiffCalculator.CalculateDiff(_selectedVersion.Content, CurrentContent);
+            }
+        }
+        catch
+        {
+            _selectedVersion = null;
+        }
+        finally
+        {
+            _loadingVersionContent = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RestoreVersionAsync()
+    {
+        if (string.IsNullOrEmpty(_selectedVersionId) || _selectedVersion == null) return;
+
+        _restoring = true;
+        StateHasChanged();
+
+        try
+        {
+            var ok = await ManuscriptService.RestoreChapterVersionAsync(ProjectId, ManuscriptId, ChapterId, _selectedVersionId);
+            if (ok)
+            {
+                await OnVersionRestored.InvokeAsync(_selectedVersion.Content);
+                await CloseModal();
+            }
+        }
+        finally
+        {
+            _restoring = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CloseModal()
+    {
+        _versions.Clear();
+        _selectedVersionId = string.Empty;
+        _selectedVersion = null;
+        _diffPieces.Clear();
+        
+        IsOpen = false;
+        await IsOpenChanged.InvokeAsync(IsOpen);
+    }
+
+    // Dynamic Programming LCS Diff Engine in Pure C#
+    public enum DiffType { Unchanged, Inserted, Deleted }
+    public record DiffPiece(string Text, DiffType Type);
+
+    public static class DiffCalculator
+    {
+        public static List<DiffPiece> CalculateDiff(string oldText, string newText)
+        {
+            // Standardize text splits by words + space keeping
+            var oldWords = SplitWords(oldText ?? string.Empty);
+            var newWords = SplitWords(newText ?? string.Empty);
+
+            int n = oldWords.Count;
+            int m = newWords.Count;
+            int[,] dp = new int[n + 1, m + 1];
+
+            // DP LCS calculation
+            for (int i = 1; i <= n; i++)
+            {
+                for (int j = 1; j <= m; j++)
+                {
+                    if (oldWords[i - 1] == newWords[j - 1])
+                        dp[i, j] = dp[i - 1, j - 1] + 1;
+                    else
+                        dp[i, j] = Math.Max(dp[i - 1, j], dp[i, j - 1]);
+                }
+            }
+
+            var result = new List<DiffPiece>();
+            int x = n, y = m;
+
+            // Backtrack DP matrix
+            while (x > 0 || y > 0)
+            {
+                if (x > 0 && y > 0 && oldWords[x - 1] == newWords[y - 1])
+                {
+                    result.Add(new DiffPiece(oldWords[x - 1], DiffType.Unchanged));
+                    x--;
+                    y--;
+                }
+                else if (y > 0 && (x == 0 || dp[x, y - 1] >= dp[x - 1, y]))
+                {
+                    result.Add(new DiffPiece(newWords[y - 1], DiffType.Inserted));
+                    y--;
+                }
+                else
+                {
+                    result.Add(new DiffPiece(oldWords[x - 1], DiffType.Deleted));
+                    x--;
+                }
+            }
+
+            result.Reverse();
+            return result;
+        }
+
+        private static List<string> SplitWords(string text)
+        {
+            var words = new List<string>();
+            var currentWord = new System.Text.StringBuilder();
+
+            foreach (var c in text)
+            {
+                if (char.IsWhiteSpace(c) || char.IsPunctuation(c))
+                {
+                    if (currentWord.Length > 0)
+                    {
+                        words.Add(currentWord.ToString());
+                        currentWord.Clear();
+                    }
+                    words.Add(c.ToString());
+                }
+                else
+                {
+                    currentWord.Append(c);
+                }
+            }
+
+            if (currentWord.Length > 0)
+            {
+                words.Add(currentWord.ToString());
+            }
+
+            return words;
+        }
+    }
+}

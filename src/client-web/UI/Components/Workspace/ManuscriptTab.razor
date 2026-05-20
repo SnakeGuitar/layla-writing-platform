@@ -135,6 +135,11 @@
                                  @(_saveStatus == "Saving..." ? "text-amber-400 animate-pulse" : _saveStatus == "Saved" ? "text-emerald-500" : "text-stone-500")">
                         @_saveStatus
                     </span>
+                    <!-- Version history button -->
+                    <button @onclick="OpenVersionHistory" 
+                            class="px-3 py-1 border border-amber-500/20 text-amber-300 hover:bg-amber-500/10 rounded text-xs font-semibold tracking-wider uppercase transition-all">
+                        Historial
+                    </button>
                     <!-- View toggle -->
                     <button @onclick="TogglePreview" 
                             class="px-3 py-1 border border-white/10 rounded text-xs text-stone-300 hover:bg-white/5 hover:text-stone-100 font-semibold tracking-wider uppercase transition-all">
@@ -165,6 +170,16 @@
     </div>
 </div>
 
+@if (_selectedChapter != null)
+{
+    <VersionHistoryModal ProjectId="ProjectId"
+                         ManuscriptId="@_activeManuscriptId"
+                         ChapterId="@_selectedChapter.ChapterId"
+                         CurrentContent="@_selectedChapter.Content"
+                         @bind-IsOpen="_versionHistoryOpen"
+                         OnVersionRestored="HandleVersionRestored" />
+}
+
 @code {
     [Parameter]
     public Guid ProjectId { get; set; }
@@ -187,6 +202,7 @@
     private bool _previewMode = false;
     private string _saveStatus = "All changes saved";
     private CancellationTokenSource? _cts;
+    private bool _versionHistoryOpen = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -312,7 +328,21 @@
         _previewMode = !_previewMode;
     }
 
-    private void TriggerAutoSave(ChangeEventArgs e)
+    private void OpenVersionHistory()
+    {
+        _versionHistoryOpen = true;
+    }
+
+    private void HandleVersionRestored(string restoredContent)
+    {
+        if (_selectedChapter != null)
+        {
+            _selectedChapter.Content = restoredContent;
+            TriggerAutoSave();
+        }
+    }
+
+    private void TriggerAutoSave(ChangeEventArgs? e = null)
     {
         _saveStatus = "Saving...";
         _cts?.Cancel();
