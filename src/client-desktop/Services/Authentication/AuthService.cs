@@ -5,14 +5,18 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace Layla.Desktop.Services
 {
     public class AuthService : IAuthService
     {
         private readonly HttpClient _httpClient;
-        public AuthService()
+        private readonly ILogger<AuthService> _logger;
+
+        public AuthService(ILogger<AuthService> logger)
         {
+            _logger = logger;
             _httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.ServerCoreUrl);
         }
 
@@ -46,7 +50,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Login failed: {ex.Message}");
+                _logger.LogError(ex, "Login failed");
                 return AuthResult.Fail("Network error. Could not connect to the server.");
             }
         }
@@ -98,7 +102,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Registration failed: {ex.Message}");
+                _logger.LogError(ex, "Registration failed");
                 return AuthResult.Fail("Network error. Could not connect to the server.");
             }
         }
@@ -127,7 +131,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Verification failed: {ex.Message}");
+                _logger.LogError(ex, "Email verification failed");
                 return AuthResult.Fail("Network error. Could not connect to the server.");
             }
         }

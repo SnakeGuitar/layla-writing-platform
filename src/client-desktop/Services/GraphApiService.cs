@@ -1,9 +1,9 @@
 using System;
-using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Layla.Desktop.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Layla.Desktop.Services
 {
@@ -11,13 +11,15 @@ namespace Layla.Desktop.Services
     public class GraphApiService : IGraphApiService
     {
         private readonly HttpClient _httpClient;
+        private readonly ILogger<GraphApiService> _logger;
 
-        public GraphApiService()
+        public GraphApiService(ILogger<GraphApiService> logger)
         {
+            _logger = logger;
             _httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.WorldbuildingApiUrl);
         }
 
-/// <inheritdoc />
+        /// <inheritdoc />
         public async Task<GraphResult?> GetGraphAsync(Guid projectId, string? entityType = null)
         {
             try
@@ -30,7 +32,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[GraphApiService] GetGraph failed: {ex.Message}");
+                _logger.LogError(ex, "[GraphApiService] GetGraph failed for project {ProjectId}", projectId);
                 return null;
             }
         }
@@ -46,7 +48,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[GraphApiService] CreateRelationship failed: {ex.Message}");
+                _logger.LogError(ex, "[GraphApiService] CreateRelationship failed for project {ProjectId}", projectId);
                 return false;
             }
         }
@@ -65,7 +67,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[GraphApiService] DeleteRelationship failed: {ex.Message}");
+                _logger.LogError(ex, "[GraphApiService] DeleteRelationship failed for project {ProjectId}", projectId);
                 return false;
             }
         }

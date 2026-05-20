@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Layla.Desktop.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Layla.Desktop.Services
 {
@@ -12,9 +12,11 @@ namespace Layla.Desktop.Services
     public class WikiApiService : IWikiApiService
     {
         private readonly HttpClient _httpClient;
+        private readonly ILogger<WikiApiService> _logger;
 
-        public WikiApiService()
+        public WikiApiService(ILogger<WikiApiService> logger)
         {
+            _logger = logger;
             _httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.WorldbuildingApiUrl);
         }
 
@@ -32,7 +34,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[WikiApiService] GetEntries failed: {ex.Message}");
+                _logger.LogError(ex, "GetEntries failed for project {ProjectId}", projectId);
                 return null;
             }
         }
@@ -46,7 +48,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[WikiApiService] GetEntry failed: {ex.Message}");
+                _logger.LogError(ex, "GetEntry failed for entry {EntityId} in project {ProjectId}", entityId, projectId);
                 return null;
             }
         }
@@ -63,7 +65,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[WikiApiService] CreateEntry failed: {ex.Message}");
+                _logger.LogError(ex, "CreateEntry failed for project {ProjectId}", projectId);
                 return null;
             }
         }
@@ -85,7 +87,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[WikiApiService] UpdateEntry failed: {ex.Message}");
+                _logger.LogError(ex, "UpdateEntry failed for entry {EntityId} in project {ProjectId}", entityId, projectId);
                 return null;
             }
         }
@@ -100,7 +102,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[WikiApiService] DeleteEntry failed: {ex.Message}");
+                _logger.LogError(ex, "DeleteEntry failed for entry {EntityId} in project {ProjectId}", entityId, projectId);
                 return false;
             }
         }
@@ -115,7 +117,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"[WikiApiService] GetEntityAppearances failed: {ex.Message}");
+                _logger.LogError(ex, "GetEntityAppearances failed for entry {EntityId} in project {ProjectId}", entityId, projectId);
                 return null;
             }
         }

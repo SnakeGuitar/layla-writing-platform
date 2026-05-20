@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Layla.Desktop.Models;
+using Microsoft.Extensions.Logging;
 
 namespace Layla.Desktop.Services
 {
@@ -18,6 +19,7 @@ namespace Layla.Desktop.Services
     public class ManuscriptApiService : IManuscriptApiService
     {
         private readonly HttpClient _httpClient;
+        private readonly ILogger<ManuscriptApiService> _logger;
 
         // Skip null properties when serialising request bodies. Required because
         // the worldbuilding Zod schemas use `.optional()` (matches `undefined`)
@@ -31,12 +33,13 @@ namespace Layla.Desktop.Services
         };
 
         /// <summary>Initialises the service with a pre-configured <see cref="HttpClient"/>.</summary>
-        public ManuscriptApiService()
+        public ManuscriptApiService(ILogger<ManuscriptApiService> logger)
         {
+            _logger = logger;
             _httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.WorldbuildingApiUrl);
         }
 
-/// <inheritdoc/>
+        /// <inheritdoc/>
         public async Task<List<Manuscript>?> GetManuscriptsByProjectAsync(Guid projectId)
         {
             try
@@ -47,7 +50,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error retrieving manuscripts: {ex.Message}");
+                _logger.LogError(ex, "Error retrieving manuscripts for project {ProjectId}", projectId);
             }
             return null;
         }
@@ -63,7 +66,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error retrieving manuscript: {ex.Message}");
+                _logger.LogError(ex, "Error retrieving manuscript {ManuscriptId} for project {ProjectId}", manuscriptId, projectId);
             }
             return null;
         }
@@ -80,7 +83,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error creating manuscript: {ex.Message}");
+                _logger.LogError(ex, "Error creating manuscript '{Title}' for project {ProjectId}", title, projectId);
             }
             return null;
         }
@@ -97,7 +100,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error updating manuscript: {ex.Message}");
+                _logger.LogError(ex, "Error updating manuscript {ManuscriptId} for project {ProjectId}", manuscriptId, projectId);
             }
             return null;
         }
@@ -112,7 +115,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error deleting manuscript: {ex.Message}");
+                _logger.LogError(ex, "Error deleting manuscript {ManuscriptId} for project {ProjectId}", manuscriptId, projectId);
             }
             return false;
         }
@@ -128,7 +131,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error retrieving chapter: {ex.Message}");
+                _logger.LogError(ex, "Error retrieving chapter {ChapterId} for project {ProjectId}", chapterId, projectId);
             }
             return null;
         }
@@ -145,7 +148,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error creating chapter: {ex.Message}");
+                _logger.LogError(ex, "Error creating chapter '{Title}' in manuscript {ManuscriptId} for project {ProjectId}", title, manuscriptId, projectId);
             }
             return null;
         }
@@ -170,11 +173,11 @@ namespace Layla.Desktop.Services
                 // (400 from a malformed payload, 401 from an expired token,
                 // 404 from a stale chapterId) looked identical from the VM.
                 var body = await response.Content.ReadAsStringAsync();
-                System.Diagnostics.Debug.WriteLine($"Chapter UPDATE {response.StatusCode}: {body}");
+                _logger.LogWarning("Chapter UPDATE {StatusCode}: {Body}", response.StatusCode, body);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error updating chapter: {ex.Message}");
+                _logger.LogError(ex, "Error updating chapter {ChapterId} in manuscript {ManuscriptId} for project {ProjectId}", chapterId, manuscriptId, projectId);
             }
             return null;
         }
@@ -189,7 +192,7 @@ namespace Layla.Desktop.Services
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error deleting chapter: {ex.Message}");
+                _logger.LogError(ex, "Error deleting chapter {ChapterId} in manuscript {ManuscriptId} for project {ProjectId}", chapterId, manuscriptId, projectId);
             }
             return false;
         }

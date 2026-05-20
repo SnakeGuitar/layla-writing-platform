@@ -6,12 +6,14 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 using Layla.Desktop.Models;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Logging;
 
 namespace Layla.Desktop.Services
 {
     public class ProjectApiService : IProjectApiService
     {
         private readonly HttpClient _httpClient;
+        private readonly ILogger<ProjectApiService> _logger;
         private HubConnection? _presenceHub;
 
         public event Action<Guid, bool>? AuthorStatusChanged;
@@ -19,12 +21,13 @@ namespace Layla.Desktop.Services
         public event Action<Guid, IEnumerable<VoiceParticipant>>? VoiceParticipantsUpdated;
         public event Action? SessionDisplaced;
 
-        public ProjectApiService()
+        public ProjectApiService(ILogger<ProjectApiService> logger)
         {
+            _logger = logger;
             _httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.ServerCoreUrl);
         }
 
-public async Task<IEnumerable<Project>?> GetMyProjectsAsync()
+        public async Task<IEnumerable<Project>?> GetMyProjectsAsync()
         {
             try
             {
@@ -35,7 +38,10 @@ public async Task<IEnumerable<Project>?> GetMyProjectsAsync()
                     if (projects != null) return projects;
                 }
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error retrieving projects: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving projects");
+            }
             return new List<Project>();
         }
 
@@ -46,7 +52,10 @@ public async Task<IEnumerable<Project>?> GetMyProjectsAsync()
                 var response = await _httpClient.PostAsJsonAsync("/api/projects", request);
                 if (response.IsSuccessStatusCode) return await response.Content.ReadFromJsonAsync<Project>();
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error creating project: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating project");
+            }
             return null;
         }
 
@@ -57,7 +66,10 @@ public async Task<IEnumerable<Project>?> GetMyProjectsAsync()
                 var response = await _httpClient.PutAsJsonAsync($"/api/projects/{id}", request);
                 if (response.IsSuccessStatusCode) return await response.Content.ReadFromJsonAsync<Project>();
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error updating project: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating project {ProjectId}", id);
+            }
             return null;
         }
 
@@ -68,7 +80,10 @@ public async Task<IEnumerable<Project>?> GetMyProjectsAsync()
                 var response = await _httpClient.DeleteAsync($"/api/projects/{id}");
                 return response.IsSuccessStatusCode;
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error deleting project: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting project {ProjectId}", id);
+            }
             return false;
         }
 
@@ -79,7 +94,10 @@ public async Task<IEnumerable<Project>?> GetMyProjectsAsync()
                 var response = await _httpClient.GetAsync("/api/projects/public");
                 if (response.IsSuccessStatusCode) return await response.Content.ReadFromJsonAsync<IEnumerable<Project>>();
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error retrieving public projects: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving public projects");
+            }
             return new List<Project>();
         }
 
@@ -90,7 +108,10 @@ public async Task<IEnumerable<Project>?> GetMyProjectsAsync()
                 var response = await _httpClient.GetAsync($"/api/projects/{id}");
                 if (response.IsSuccessStatusCode) return await response.Content.ReadFromJsonAsync<Project>();
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error retrieving project: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving project {ProjectId}", id);
+            }
             return null;
         }
 
@@ -101,7 +122,10 @@ public async Task<IEnumerable<Project>?> GetMyProjectsAsync()
                 var response = await _httpClient.PostAsync($"/api/projects/{projectId}/join", null);
                 if (response.IsSuccessStatusCode) return await response.Content.ReadFromJsonAsync<Collaborator>();
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error joining project: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error joining project {ProjectId}", projectId);
+            }
             return null;
         }
 
@@ -112,7 +136,10 @@ public async Task<IEnumerable<Project>?> GetMyProjectsAsync()
                 var response = await _httpClient.PostAsJsonAsync($"/api/projects/{projectId}/collaborators", request);
                 if (response.IsSuccessStatusCode) return await response.Content.ReadFromJsonAsync<Collaborator>();
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error inviting collaborator: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error inviting collaborator to project {ProjectId}", projectId);
+            }
             return null;
         }
 
@@ -123,7 +150,10 @@ public async Task<IEnumerable<Project>?> GetMyProjectsAsync()
                 var response = await _httpClient.GetAsync($"/api/projects/{projectId}/collaborators");
                 if (response.IsSuccessStatusCode) return await response.Content.ReadFromJsonAsync<IEnumerable<Collaborator>>();
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error retrieving collaborators: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving collaborators for project {ProjectId}", projectId);
+            }
             return new List<Collaborator>();
         }
 
@@ -134,7 +164,10 @@ public async Task<IEnumerable<Project>?> GetMyProjectsAsync()
                 var response = await _httpClient.DeleteAsync($"/api/projects/{projectId}/collaborators/{collaboratorUserId}");
                 return response.IsSuccessStatusCode;
             }
-            catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Error removing collaborator: {ex.Message}"); }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error removing collaborator {CollaboratorId} from project {ProjectId}", collaboratorUserId, projectId);
+            }
             return false;
         }
 

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using NAudio.Wave;
 using System.Threading.Channels;
 using System.Windows;
+using Microsoft.Extensions.Logging;
 
 namespace Layla.Desktop.Services;
 
@@ -13,6 +14,7 @@ public class VoiceConnection : IAsyncDisposable
     private const int BitsPerSample = 16;
     private const int FrameDurationMs = 20;
 
+    private readonly ILogger<VoiceConnection>? _logger = ServiceLocator.GetService<ILogger<VoiceConnection>>();
     private HubConnection? _hub;
     private WaveInEvent? _waveIn;
     private WaveOutEvent? _waveOut;
@@ -215,7 +217,7 @@ public class VoiceConnection : IAsyncDisposable
                 catch (OperationCanceledException) { break; }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Audio send failed: {ex.Message}");
+                    _logger?.LogError(ex, "Audio send failed");
                 }
             }
         }
