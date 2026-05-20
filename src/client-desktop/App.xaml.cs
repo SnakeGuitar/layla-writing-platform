@@ -44,6 +44,8 @@ public partial class App : Application
         base.OnStartup(e);
 
         ServiceCollection? services = new();
+        ConfigurationService.Load();
+        ConfigurationService.EnsureDefaultConfigFile();
         ConfigureServices(services);
         ServiceProvider? provider = services.BuildServiceProvider();
         ServiceLocator.Initialize(provider);

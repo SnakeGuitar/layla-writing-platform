@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Layla.Desktop.Services;
 using System.Windows;
 
 namespace Layla.Desktop.ViewModels.User;
@@ -12,6 +13,15 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _isFullscreen;
 
+    [ObservableProperty]
+    private string _serverCoreUrl = ConfigurationService.SERVER_CORE_URL;
+
+    [ObservableProperty]
+    private string _worldbuildingUrl = ConfigurationService.WORLDBUILDING_API_URL;
+
+    [ObservableProperty]
+    private string _connectionSaveStatus = string.Empty;
+
     public SettingsViewModel()
     {
         if (Application.Current is App app)
@@ -19,6 +29,8 @@ public partial class SettingsViewModel : ObservableObject
             _currentTheme = app.CurrentTheme;
             _isFullscreen = app.IsFullscreen;
         }
+        _serverCoreUrl = ConfigurationService.SERVER_CORE_URL;
+        _worldbuildingUrl = ConfigurationService.WORLDBUILDING_API_URL;
     }
 
     partial void OnCurrentThemeChanged(string value)
@@ -32,6 +44,18 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnIsFullscreenChanged(bool value)
     {
         (Application.Current as App)?.SetFullscreen(value);
+    }
+
+    [RelayCommand]
+    private void SaveConnection()
+    {
+        if (string.IsNullOrWhiteSpace(ServerCoreUrl) || string.IsNullOrWhiteSpace(WorldbuildingUrl))
+        {
+            ConnectionSaveStatus = "URLs cannot be empty.";
+            return;
+        }
+        ConfigurationService.Save(ServerCoreUrl, WorldbuildingUrl);
+        ConnectionSaveStatus = "✔ Saved — restart the app to reconnect.";
     }
 
     [RelayCommand]

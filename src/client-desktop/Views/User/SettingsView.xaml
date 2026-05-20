@@ -35,13 +35,46 @@
             </ComboBox>
         </StackPanel>
 
-        <StackPanel Grid.Row="3" Orientation="Horizontal" VerticalAlignment="Top">
-            <TextBlock Text="FULLSCREEN MODE:" Style="{StaticResource CyberLabel}" Width="150" VerticalAlignment="Center"/>
-            <CheckBox x:Name="FullscreenCheckBox" VerticalAlignment="Center" IsChecked="{Binding IsFullscreen}" Foreground="{DynamicResource CyberTextPrimaryBrush}">
-                <CheckBox.LayoutTransform>
-                    <ScaleTransform ScaleX="1.2" ScaleY="1.2" />
-                </CheckBox.LayoutTransform>
-            </CheckBox>
+        <StackPanel Grid.Row="3" Orientation="Vertical" VerticalAlignment="Top" Margin="0,10,0,0">
+
+            <!-- Fullscreen -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
+                <TextBlock Text="FULLSCREEN MODE:" Style="{StaticResource CyberLabel}" Width="150" VerticalAlignment="Center"/>
+                <CheckBox x:Name="FullscreenCheckBox" VerticalAlignment="Center" IsChecked="{Binding IsFullscreen}" Foreground="{DynamicResource CyberTextPrimaryBrush}">
+                    <CheckBox.LayoutTransform>
+                        <ScaleTransform ScaleX="1.2" ScaleY="1.2" />
+                    </CheckBox.LayoutTransform>
+                </CheckBox>
+            </StackPanel>
+
+            <!-- Connection settings -->
+            <TextBlock Text="CONNECTION" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentPrimaryBrush}" Margin="0,0,0,12"/>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="SERVER CORE URL:" Style="{StaticResource CyberLabel}" Width="150" VerticalAlignment="Center"/>
+                <TextBox x:Name="ServerCoreUrlBox" Width="320" Text="{Binding ServerCoreUrl, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource CyberTextBox}" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBlock Text="WORLDBUILDING URL:" Style="{StaticResource CyberLabel}" Width="150" VerticalAlignment="Center"/>
+                <TextBox x:Name="WorldbuildingUrlBox" Width="320" Text="{Binding WorldbuildingUrl, UpdateSourceTrigger=PropertyChanged}"
+                         Style="{StaticResource CyberTextBox}" VerticalAlignment="Center"/>
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal" Margin="0,10,0,4">
+                <Button Content="SAVE CONNECTION" Style="{StaticResource CyberButton}" Padding="12,6"
+                        Command="{Binding SaveConnectionCommand}" Cursor="Hand"/>
+                <TextBlock Text="{Binding ConnectionSaveStatus}" Style="{StaticResource CyberLabel}"
+                           Foreground="{DynamicResource CyberAccentAlertBrush}"
+                           VerticalAlignment="Center" Margin="14,0,0,0"/>
+            </StackPanel>
+
+            <TextBlock Margin="150,6,0,0" FontSize="9" Foreground="{DynamicResource SecondaryText}"
+                       FontFamily="{StaticResource TechnicalFont}">
+                Defaults: Server Core = https://localhost:7166 · Worldbuilding = http://localhost:3000
+                <LineBreak/>Docker: Server Core = https://localhost:5288 · Worldbuilding = http://localhost:3000
+            </TextBlock>
         </StackPanel>
     </Grid>
 </Page>
