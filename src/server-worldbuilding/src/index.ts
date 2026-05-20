@@ -36,9 +36,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use(helmet());
 
 // CORS — only allow traffic from server-core and the desktop/web clients
-const allowedOrigins = (config.allowedOrigins ?? "")
+const allowedOrigins = config.allowedOrigins
 	.split(",")
-	.map((o) => o.trim())
+	.map((o: string) => o.trim())
 	.filter(Boolean);
 
 app.use(

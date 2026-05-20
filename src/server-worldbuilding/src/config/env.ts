@@ -88,6 +88,8 @@ export const config = {
 		password: process.env["NEO4J_PASSWORD"]!,
 	},
 
+	allowedOrigins: process.env["ALLOWED_ORIGINS"] ?? "",
+
 	rabbitmq: {
 		url: process.env["RABBITMQ_URL"]!,
 		/** Default: `"worldbuilding.events"`. */
