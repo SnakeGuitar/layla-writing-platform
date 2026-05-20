@@ -24,6 +24,14 @@ import GraphRouter from "@/routes/Graph";
 
 const app = express();
 
+app.use((req: Request, res: Response, next: NextFunction) => {
+	console.log(`[HTTP_REQ] ${req.method} ${req.url}`);
+	res.on("finish", () => {
+		console.log(`[HTTP_RES] ${req.method} ${req.url} - ${res.statusCode}`);
+	});
+	next();
+});
+
 // Security headers (XSS, clickjacking, MIME sniffing, etc.)
 app.use(helmet());
 
