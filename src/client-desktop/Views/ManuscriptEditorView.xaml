@@ -58,7 +58,7 @@
                                     Width="26" Height="26" Margin="4,0,0,0"
                                     Background="{DynamicResource AccentColor}" Foreground="White"
                                     BorderThickness="0" FontWeight="Bold" Cursor="Hand"
-                                    Command="{Binding AddManuscriptCommand}"/>
+                                    Click="AddManuscriptButton_Click"/>
                             <Button Grid.Column="2" x:Name="DeleteManuscriptButton"
                                     ToolTip="Delete the current manuscript and all its chapters"
                                     Width="26" Height="26" Margin="4,0,0,0"
@@ -82,7 +82,7 @@
                         <Button x:Name="AddChapterButton" Grid.Column="1" Content="+ Add" ToolTip="Add chapter"
                                 Background="Transparent" Foreground="{DynamicResource AccentColor}"
                                 BorderThickness="0" FontSize="11" Cursor="Hand" Padding="4,2"
-                                Command="{Binding AddChapterCommand}"/>
+                                Click="AddChapterButton_Click"/>
                     </Grid>
                 </Border>
 
@@ -109,6 +109,7 @@
                                         BorderThickness="0" Cursor="Hand" Padding="6,2"
                                         VerticalAlignment="Center" ToolTip="Delete chapter"
                                         Tag="{Binding}"
+                                        Visibility="{Binding IsEditablePage, RelativeSource={RelativeSource AncestorType=Page}, Converter={StaticResource BoolToVis}}"
                                         Click="DeleteChapterButton_Click"/>
                             </Grid>
                         </DataTemplate>

@@ -27,6 +27,7 @@ namespace Layla.Desktop.Views
         private readonly ManuscriptEditorViewModel _viewModel;
         private bool _isLoaded = false;
         private bool _isReadOnly = false;
+        public bool IsEditablePage => !_isReadOnly;
         private bool _suppressToolbarSync = false;
         private System.Threading.Timer? _debounceTimer;
 
@@ -306,8 +307,35 @@ namespace Layla.Desktop.Views
             }
         }
 
+        private async void AddManuscriptButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isReadOnly) return;
+            try
+            {
+                await _viewModel.AddManuscriptCommand.ExecuteAsync(null);
+            }
+            catch (Exception ex)
+            {
+                _viewModel.StatusMessage = $"Add manuscript failed: {ex.Message}";
+            }
+        }
+
+        private async void AddChapterButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_isReadOnly) return;
+            try
+            {
+                await _viewModel.AddChapterCommand.ExecuteAsync(null);
+            }
+            catch (Exception ex)
+            {
+                _viewModel.StatusMessage = $"Add chapter failed: {ex.Message}";
+            }
+        }
+
         private async void DeleteChapterButton_Click(object sender, RoutedEventArgs e)
         {
+            if (_isReadOnly) return;
             if (sender is not Button btn || btn.Tag is not Chapter chapter) return;
 
             // Deleting the last chapter is allowed — the ViewModel auto-creates
@@ -337,6 +365,7 @@ namespace Layla.Desktop.Views
 
         private async void DeleteManuscriptButton_Click(object sender, RoutedEventArgs e)
         {
+            if (_isReadOnly) return;
             var target = _viewModel.SelectedManuscript;
             if (target == null)
             {

@@ -14,6 +14,15 @@ namespace Layla.Desktop.Views
             _viewModel = Services.ServiceLocator.GetService<LoginViewModel>() ?? throw new InvalidOperationException("ViewModel not found");
             DataContext = _viewModel;
             _viewModel.OnLoginSuccess += OnLoginSuccess;
+            Loaded += OnPageLoaded;
+        }
+
+        private void OnPageLoaded(object sender, RoutedEventArgs e)
+        {
+            if (Services.SessionManager.IsAuthenticated)
+            {
+                NavigationService.Navigate(new ProjectListView());
+            }
         }
 
         private void OnLoginSuccess(object? sender, EventArgs e)
