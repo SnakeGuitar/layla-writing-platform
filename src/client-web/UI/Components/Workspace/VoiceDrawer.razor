@@ -1,0 +1,341 @@
+@using Microsoft.AspNetCore.SignalR.Client
+@using client_web.Application.Config.SignalR
+@using client_web.Application.Services.Voice
+@using client_web.Application.Services.Session
+@inject IVoiceService VoiceService
+@inject ISessionManager SessionManager
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div class="fixed inset-y-0 right-0 w-80 bg-base-gray-1 border-l border-base-gray-4 z-40 flex flex-col transition-transform duration-[100ms] transform @(IsOpen ? "translate-x-0" : "translate-x-full")">
+    
+    <!-- Header -->
+    <div class="h-16 px-6 border-b border-base-gray-4 flex items-center justify-between shrink-0">
+        <div class="flex items-center gap-3">
+            <h3 class="text-cyber-title text-sm tracking-wide uppercase">Sala de Voz</h3>
+            <span class="w-2 h-2 @StatusColor animate-pulse"></span>
+        </div>
+        <button @onclick="CloseDrawerAsync" class="text-cyber-metadata hover:text-cyber-tech-mono p-1">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg>
+        </button>
+    </div>
+
+    <!-- Scrollable content -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-6">
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div class="p-3 bg-base-gray-2 border border-[var(--accent-warning)] text-[var(--accent-warning)] font-mono text-xs">
+                @_error
+            </div>
+        }
+
+        @if (!VoiceService.IsConnected)
+        {
+            <div class="space-y-4 text-center py-8">
+                <div class="mx-auto w-12 h-12 bg-base-gray-2 border border-base-gray-4 flex items-center justify-center text-cyber-metadata">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+                    </svg>
+                </div>
+                <div>
+                    <h4 class="text-cyber-title text-sm font-medium">// REUNION_VOZ</h4>
+                    <p class="text-cyber-body text-xs mt-2">Conéctate para hablar con tus colaboradores en tiempo real.</p>
+                </div>
+                <button @onclick="ConnectAsync" disabled="@_isConnecting" class="cyber-button w-full text-xs">
+                    @(_isConnecting ? "Conectando..." : "Unirse a la llamada")
+                </button>
+            </div>
+        }
+        else
+        {
+            <!-- Call state -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <span class="text-cyber-metadata text-[10px]">Participantes (@_participants.Count)</span>
+                    <button @onclick="LeaveRoomAsync" class="text-xs text-[var(--accent-warning)] hover:underline uppercase font-mono font-medium">
+                        Abandonar
+                    </button>
+                </div>
+
+                <!-- Participants list -->
+                <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    @if (_participants.Count == 0)
+                    {
+                        <p class="text-cyber-metadata text-xs italic text-center py-4">Nadie en la sala</p>
+                    }
+                    else
+                    {
+                        @foreach (var p in _participants)
+                        {
+                            <div class="flex items-center justify-between p-2.5 bg-base-gray-1 border border-base-gray-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="relative">
+                                        <div class="w-8 h-8 bg-base-gray-2 border border-base-gray-4 flex items-center justify-center text-cyber-tech-mono text-xs font-bold uppercase">
+                                            @p.DisplayName.Substring(0, Math.Min(2, p.DisplayName.Length))
+                                        </div>
+                                        <span class="absolute bottom-0 right-0 w-2 h-2 border border-base-gray-1 @(p.IsSpeaking ? "bg-[var(--accent-primary)]" : "bg-base-gray-5")"></span>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs text-cyber-tech-mono font-medium">@p.DisplayName</div>
+                                        <div class="text-[9px] text-cyber-metadata">
+                                            @(p.Role == "Reader" ? "Oyente" : "Colaborador")
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if (p.IsSpeaking)
+                                {
+                                    <span class="flex gap-0.5 items-end h-3">
+                                        <span class="w-0.5 bg-[var(--accent-primary)] animate-[bounce_0.8s_infinite_100ms] h-full"></span>
+                                        <span class="w-0.5 bg-[var(--accent-primary)] animate-[bounce_0.8s_infinite_200ms] h-2"></span>
+                                        <span class="w-0.5 bg-[var(--accent-primary)] animate-[bounce_0.8s_infinite_300ms] h-full"></span>
+                                    </span>
+                                }
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- PTT Area (Sticky at bottom) -->
+    @if (VoiceService.IsConnected)
+    {
+        <div class="p-6 border-t border-base-gray-4 bg-base-gray-1 flex flex-col items-center justify-center space-y-3 shrink-0 select-none">
+            <button @onmousedown="StartSpeakingAsync" 
+                    @onmouseup="StopSpeakingAsync" 
+                    @ontouchstart="StartSpeakingAsync"
+                    @ontouchend="StopSpeakingAsync" 
+                    class="w-32 h-32 flex flex-col items-center justify-center border outline-none select-none transition-none
+                           @(_isSpeaking ? "bg-base-orange-1/10 text-[var(--accent-warning)] border-[var(--accent-warning)]" : "bg-base-gray-2 text-cyber-tech-mono border-base-gray-4 hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)]")">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8 mb-2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+                </svg>
+                <span class="text-[10px] font-mono font-bold uppercase tracking-wider">
+                    @(_isSpeaking ? "Hablando..." : "Mantener PTT")
+                </span>
+            </button>
+            <span class="text-[9px] text-cyber-metadata">
+                @(_isSpeaking ? "SUELTE PARA SILENCIAR" : "MANTENGA PRESIONADO PARA HABLAR")
+            </span>
+        </div>
+    }
+</div>
+
+<!-- Backdrop (closes drawer on click) -->
+@if (IsOpen)
+{
+    <div @onclick="CloseDrawerAsync" class="fixed inset-0 bg-black/40 z-30 transition-opacity"></div>
+}
+
+@code {
+    [Parameter] public Guid ProjectId { get; set; }
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+
+    private bool _isConnecting = false;
+    private bool _isSpeaking = false;
+    private string? _error;
+    private List<VoiceParticipant> _participants = new();
+    private IJSObjectReference? _jsModule;
+    private DotNetObjectReference<VoiceDrawer>? _dotNetRef;
+
+    private string StatusColor => VoiceService.State switch
+    {
+        HubConnectionState.Connected => "bg-emerald-400",
+        HubConnectionState.Connecting => "bg-amber-400",
+        HubConnectionState.Reconnecting => "bg-orange-400",
+        _ => "bg-stone-500"
+    };
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _jsModule = await JS.InvokeAsync<IJSObjectReference>(
+                identifier: "import",
+                args: "./js/voiceAudio.js"
+            );
+        }
+    }
+
+    private async Task CloseDrawerAsync()
+    {
+        IsOpen = false;
+        await IsOpenChanged.InvokeAsync(IsOpen);
+    }
+
+    private async Task ConnectAsync()
+    {
+        _isConnecting = true;
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            await SessionManager.InitializeAsync();
+            var token = SessionManager.CurrentToken;
+            if (string.IsNullOrEmpty(token))
+            {
+                _error = "Es necesario iniciar sesión.";
+                return;
+            }
+
+            VoiceService.OnRoomStateChanged += OnRoomState;
+            VoiceService.OnUserJoined += OnUserJoined;
+            VoiceService.OnUserLeft += OnUserLeft;
+            VoiceService.OnSpeakerStarted += OnSpeakerStarted;
+            VoiceService.OnSpeakerStopped += OnSpeakerStopped;
+            VoiceService.OnAudioReceived += OnAudioReceived;
+            VoiceService.OnConnectionChanged += OnConnectionChanged;
+
+            await VoiceService.ConnectAsync(token);
+            await VoiceService.JoinRoomAsync(ProjectId);
+
+            if (_jsModule != null)
+                await _jsModule.InvokeVoidAsync("initPlayback");
+        }
+        catch (Exception ex)
+        {
+            _error = $"Error al unirse: {ex.Message}";
+            await LeaveRoomAsync();
+        }
+        finally
+        {
+            _isConnecting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task StartSpeakingAsync()
+    {
+        if (!VoiceService.IsConnected) return;
+        try
+        {
+            await VoiceService.StartSpeakingAsync(ProjectId);
+            _isSpeaking = true;
+
+            if (_jsModule != null)
+            {
+                _dotNetRef = DotNetObjectReference.Create(this);
+                await _jsModule.InvokeVoidAsync("startCapture", _dotNetRef);
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        StateHasChanged();
+    }
+
+    private async Task StopSpeakingAsync()
+    {
+        if (!_isSpeaking) return;
+        _isSpeaking = false;
+
+        if (_jsModule != null)
+            await _jsModule.InvokeVoidAsync("stopCapture");
+
+        await VoiceService.StopSpeakingAsync(ProjectId);
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public async Task OnAudioCaptured(string base64Audio)
+    {
+        byte[] audioData = Convert.FromBase64String(base64Audio);
+        await VoiceService.SendAudioAsync(ProjectId, audioData);
+    }
+
+    private async Task LeaveRoomAsync()
+    {
+        if (_isSpeaking)
+            await StopSpeakingAsync();
+
+        try
+        {
+            await VoiceService.LeaveRoomAsync(ProjectId);
+            await VoiceService.DisconnectAsync();
+        }
+        catch { }
+
+        if (_jsModule != null)
+            await _jsModule.InvokeVoidAsync("disposePlayback");
+
+        _participants.Clear();
+        UnsubscribeEvents();
+        StateHasChanged();
+    }
+
+    private void UnsubscribeEvents()
+    {
+        VoiceService.OnRoomStateChanged -= OnRoomState;
+        VoiceService.OnUserJoined -= OnUserJoined;
+        VoiceService.OnUserLeft -= OnUserLeft;
+        VoiceService.OnSpeakerStarted -= OnSpeakerStarted;
+        VoiceService.OnSpeakerStopped -= OnSpeakerStopped;
+        VoiceService.OnAudioReceived -= OnAudioReceived;
+        VoiceService.OnConnectionChanged -= OnConnectionChanged;
+    }
+
+    private void OnRoomState(object? sender, List<VoiceParticipant> participants)
+    {
+        _participants = participants;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnUserJoined(object? sender, VoiceParticipant participant)
+    {
+        if (_participants.All(p => p.UserId != participant.UserId))
+            _participants.Add(participant);
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnUserLeft(object? sender, string userId)
+    {
+        _participants.RemoveAll(p => p.UserId == userId);
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnSpeakerStarted(object? sender, (string userId, string displayName) e)
+    {
+        var idx = _participants.FindIndex(p => p.UserId == e.userId);
+        if (idx >= 0)
+            _participants[idx] = _participants[idx] with { IsSpeaking = true };
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnSpeakerStopped(object? sender, string userId)
+    {
+        int idx = _participants.FindIndex(p => p.UserId == userId);
+        if (idx >= 0)
+            _participants[idx] = _participants[idx] with { IsSpeaking = false };
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void OnAudioReceived(object? sender, (string senderId, byte[] audio) e)
+    {
+        if (_jsModule != null)
+        {
+            var base64 = Convert.ToBase64String(e.audio);
+            _ = _jsModule.InvokeVoidAsync("playAudio", base64);
+        }
+    }
+
+    private async void OnConnectionChanged(object? sender, HubConnectionState state)
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        UnsubscribeEvents();
+        _dotNetRef?.Dispose();
+
+        if (_jsModule != null)
+            await _jsModule.DisposeAsync();
+    }
+}

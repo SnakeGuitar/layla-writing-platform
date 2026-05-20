@@ -8,8 +8,8 @@
       d:DesignHeight="720" d:DesignWidth="1080"
       ShowsNavigationUI="False"
       Title="Workspace"
-      Background="{DynamicResource WindowBackground}"
-      Foreground="{DynamicResource PrimaryText}">
+      Background="{DynamicResource CyberBgPrimaryBrush}"
+      Foreground="{DynamicResource CyberTextPrimaryBrush}">
 
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -22,8 +22,8 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Background="{DynamicResource SidebarBackground}" 
-                BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,1,0">
+        <Border Grid.Column="0" Background="{DynamicResource CyberBgSecondaryBrush}" 
+                BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="0,0,1,0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="50"/>
@@ -31,70 +31,59 @@
                     <RowDefinition Height="50"/>
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0" Text="{Binding CurrentProject.Title}" FontWeight="Bold" FontSize="16" 
-                           VerticalAlignment="Center" Margin="15,0" TextTrimming="CharacterEllipsis"
-                           Foreground="{DynamicResource AccentColor}"/>
+                <TextBlock Grid.Row="0" Text="{Binding CurrentProject.Title}" Style="{StaticResource CyberTitleText}" 
+                            VerticalAlignment="Center" Margin="15,0" TextTrimming="CharacterEllipsis"
+                            Foreground="{DynamicResource CyberAccentPrimaryBrush}"/>
 
                 <StackPanel Grid.Row="1" Margin="5">
-                    <Button Content="← Back to Projects" Background="Transparent" BorderThickness="0"
-                            HorizontalAlignment="Left" Padding="10,5"
-                            Foreground="{DynamicResource SecondaryText}" Cursor="Hand"
+                    <Button Content="BACK TO PROJECTS" 
+                            Style="{StaticResource CyberButton}"
+                            HorizontalAlignment="Stretch" Padding="10,6"
+                            Cursor="Hand"
                             Command="{Binding BackToProjectsCommand}"/>
-                    <Button Content="Collaborators" Background="Transparent" BorderThickness="0"
-                            HorizontalAlignment="Left" Padding="10,5"
-                            Foreground="{DynamicResource AccentColor}" Cursor="Hand"
+                    <Button Content="COLLABORATORS" 
+                            Style="{StaticResource CyberButton}"
+                            HorizontalAlignment="Stretch" Padding="10,6" Margin="0,4,0,0"
+                            Cursor="Hand"
                             Command="{Binding OpenCollaboratorsModalCommand}"/>
                 </StackPanel>
 
                 <StackPanel Grid.Row="2" Orientation="Vertical" VerticalAlignment="Center" Margin="15,0">
-                    <Button Content="⚙ Settings" Background="Transparent" BorderThickness="0" 
-                            HorizontalAlignment="Left" Padding="0,5"
-                            Foreground="{DynamicResource SecondaryText}" Cursor="Hand"
+                    <Button Content="SETTINGS" 
+                            Style="{StaticResource CyberButton}"
+                            HorizontalAlignment="Stretch" Padding="0,5"
+                            Cursor="Hand"
                             Command="{Binding OpenSettingsCommand}"/>
                     
-                    <Button Content="🚪 Logout" Background="Transparent" BorderThickness="0" 
-                            HorizontalAlignment="Left" Padding="0,5" Margin="0,5,0,0"
-                            Foreground="IndianRed" Cursor="Hand"
+                    <Button Content="LOGOUT" 
+                            Style="{StaticResource CyberButton}"
+                            BorderBrush="{DynamicResource CyberAccentWarningBrush}"
+                            Foreground="{DynamicResource CyberAccentWarningBrush}"
+                            HorizontalAlignment="Stretch" Padding="0,5" Margin="0,5,0,0"
+                            Cursor="Hand"
                             Command="{Binding LogoutCommand}"/>
                 </StackPanel>
             </Grid>
         </Border>
 
         <GridSplitter Grid.Column="1" Width="2" HorizontalAlignment="Stretch" 
-                      Background="{DynamicResource BorderColor}" Cursor="SizeWE"/>
+                      Background="{DynamicResource CyberBorderSubtleBrush}" Cursor="SizeWE"/>
 
-        <Grid Grid.Column="2" Background="{DynamicResource ControlBackground}">
+        <Grid Grid.Column="2" Background="{DynamicResource CyberBgPrimaryBrush}">
             <TabControl Background="Transparent" BorderThickness="0">
-                <TabControl.Resources>
-                    <Style TargetType="TabItem">
-                        <Setter Property="Background" Value="Transparent"/>
-                        <Setter Property="Foreground" Value="{DynamicResource SecondaryText}"/>
-                        <Setter Property="BorderThickness" Value="0,0,0,2"/>
-                        <Setter Property="BorderBrush" Value="Transparent"/>
-                        <Setter Property="Margin" Value="0,0,5,0"/>
-                        <Setter Property="Padding" Value="10,5"/>
-                        <Style.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Foreground" Value="{DynamicResource AccentColor}"/>
-                                <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </TabControl.Resources>
-
-                <TabItem Header="Manuscript Editor">
+                <TabItem Header="MANUSCRIPT EDITOR">
                     <Frame x:Name="EditorFrame" NavigationUIVisibility="Hidden"/>
                 </TabItem>
 
-                <TabItem Header="Wiki">
+                <TabItem Header="WIKI">
                     <Frame x:Name="WikiFrame" NavigationUIVisibility="Hidden"/>
                 </TabItem>
 
-                <TabItem Header="Graph">
+                <TabItem Header="GRAPH">
                     <Frame x:Name="GraphFrame" NavigationUIVisibility="Hidden"/>
                 </TabItem>
 
-                <TabItem Header="Voice">
+                <TabItem Header="VOICE">
                     <Frame x:Name="VoiceFrame" NavigationUIVisibility="Hidden"/>
                 </TabItem>
             </TabControl>
@@ -103,8 +92,8 @@
         <!-- Collaborators Modal -->
         <Border Visibility="{Binding IsCollaboratorsModalVisible, Converter={StaticResource BoolToVis}}"
                 Background="#CC000000" Panel.ZIndex="100" Grid.ColumnSpan="3">
-            <Border Background="{DynamicResource WindowBackground}" Width="500" MaxHeight="500"
-                    HorizontalAlignment="Center" VerticalAlignment="Center" Padding="20" CornerRadius="8">
+            <Border Style="{StaticResource CyberPanelBorder}" Background="{DynamicResource CyberBgElevatedBrush}" Width="500" MaxHeight="500"
+                    HorizontalAlignment="Center" VerticalAlignment="Center" Padding="20">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -113,29 +102,24 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="Collaborators" FontSize="20" FontWeight="Bold"
-                               Margin="0,0,0,15" Foreground="{DynamicResource PrimaryText}"/>
+                    <TextBlock Grid.Row="0" Text="COLLABORATORS" Style="{StaticResource CyberDisplayText}"
+                               Margin="0,0,0,15"/>
 
                     <!-- Invite section -->
                     <StackPanel Grid.Row="1" Margin="0,0,0,15">
-                        <TextBlock Text="Invite by email" FontWeight="SemiBold" Margin="0,0,0,5"
-                                   Foreground="{DynamicResource PrimaryText}"/>
+                        <TextBlock Text="INVITE BY EMAIL" Style="{StaticResource CyberLabel}" Margin="0,0,0,5"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
-                            <TextBox Grid.Column="0" Padding="5"
-                                     Background="{DynamicResource ControlBackground}"
-                                     Foreground="{DynamicResource PrimaryText}"
-                                     BorderBrush="{DynamicResource BorderColor}"
+                            <TextBox Grid.Column="0" 
                                      Text="{Binding InviteEmail, UpdateSourceTrigger=PropertyChanged}"/>
-                            <Button Grid.Column="1" Content="Invite" Margin="5,0,0,0"
-                                    Background="{DynamicResource AccentColor}" Foreground="White"
-                                    BorderThickness="0" Padding="10,5" Cursor="Hand"
+                            <Button Grid.Column="1" Content="INVITE" Margin="5,0,0,0"
+                                    Style="{StaticResource CyberButton}" Padding="15,5" Cursor="Hand"
                                     Command="{Binding InviteCollaboratorCommand}"/>
                         </Grid>
-                        <TextBlock Text="{Binding InviteError}" Foreground="IndianRed" FontSize="12"
+                        <TextBlock Text="{Binding InviteError}" Style="{StaticResource CyberTechMonoText}" Foreground="{DynamicResource CyberAccentWarningBrush}"
                                    Margin="0,5,0,0" TextWrapping="Wrap"
                                    Visibility="{Binding InviteError, Converter={StaticResource BoolToVis}}"/>
                     </StackPanel>
@@ -145,7 +129,7 @@
                               Background="Transparent" MaxHeight="250">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Border BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1"
+                                <Border BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="0,0,0,1"
                                         Padding="5" Margin="0,2">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
@@ -154,15 +138,14 @@
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
                                         <StackPanel Grid.Column="0">
-                                            <TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource PrimaryText}"/>
-                                            <TextBlock Text="{Binding Email}" FontSize="11"
-                                                       Foreground="{DynamicResource SecondaryText}"/>
+                                            <TextBlock Text="{Binding DisplayName}" Style="{StaticResource CyberTitleText}" FontSize="12"/>
+                                            <TextBlock Text="{Binding Email}" Style="{StaticResource CyberTechMonoText}" FontSize="10"
+                                                       Foreground="{DynamicResource CyberTextSecondaryBrush}"/>
                                         </StackPanel>
-                                        <TextBlock Grid.Column="1" Text="{Binding Role}" VerticalAlignment="Center"
-                                                   Margin="10,0" FontSize="11" Foreground="{DynamicResource SecondaryText}"/>
-                                        <Button Grid.Column="2" Content="X" Background="Transparent"
-                                                Foreground="IndianRed" BorderThickness="0" Padding="5,2" Cursor="Hand"
+                                        <TextBlock Grid.Column="1" Text="{Binding Role}" Style="{StaticResource CyberLabel}" VerticalAlignment="Center"
+                                                   Margin="10,0"/>
+                                        <Button Grid.Column="2" Content="X" Style="{StaticResource CyberButton}" BorderBrush="{DynamicResource CyberAccentWarningBrush}"
+                                                Foreground="{DynamicResource CyberAccentWarningBrush}" Padding="6,2" Cursor="Hand"
                                                 VerticalAlignment="Center"
                                                 Command="{Binding DataContext.RemoveCollaboratorCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
                                                 CommandParameter="{Binding}"/>
@@ -172,8 +155,8 @@
                         </ListView.ItemTemplate>
                     </ListView>
 
-                    <Button Grid.Row="3" Content="Close" Background="Transparent" BorderThickness="0"
-                            Foreground="Gray" Padding="15,5" Cursor="Hand" HorizontalAlignment="Right"
+                    <Button Grid.Row="3" Content="CLOSE" Style="{StaticResource CyberButton}"
+                            Padding="15,5" Cursor="Hand" HorizontalAlignment="Right"
                             Margin="0,10,0,0" Command="{Binding CloseCollaboratorsModalCommand}"/>
                 </Grid>
             </Border>

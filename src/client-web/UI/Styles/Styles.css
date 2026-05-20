@@ -1,111 +1,240 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
-/*
- * Paleta sobria y uniforme.
- * Reemplaza los tonos púrpura/azul brillantes anteriores por una escala neutra
- * de grises antracita. Las clases gradient (from-base-purple-1, etc.) siguen
- * existiendo en la salida compilada y resuelven a tonos casi imperceptibles,
- * dando un look uniforme sin tener que reescribir cada plantilla.
- */
 @theme {
-  --color-base-purple-1: #15161a;
-  --color-base-purple-2: #16171b;
-  --color-base-blue-1: #0e0f12;
-  --color-base-blue-2: #0c0d10;
-  --color-base-blue-3: #0a0b0e;
-  --color-base-blue-4: #8a9099;
-  --color-base-orange-1: #c0884a;
-  --color-base-green-1: #5a8a64;
-  --color-base-green-2: #7aa886;
-  --color-base-gray-1: #16171a;
-  --color-base-gray-2: #1d1e22;
-  --color-base-gray-3: #111214;
-  --color-base-gray-4: #2a2b30;
-  --color-base-gray-5: #4a4c52;
+  --color-base-purple-1: #09090b;
+  --color-base-purple-2: #121216;
+  --color-base-blue-1: #09090b;
+  --color-base-blue-2: #121216;
+  --color-base-blue-3: #181820;
+  --color-base-blue-4: #a1a1aa;
+  --color-base-orange-1: #ff9f00;
+  --color-base-green-1: #00e5ff;
+  --color-base-green-2: #00e5ff;
+  --color-base-gray-1: #09090b;
+  --color-base-gray-2: #121216;
+  --color-base-gray-3: #181820;
+  --color-base-gray-4: #202024;
+  --color-base-gray-5: #3a3a40;
 }
 
 :root {
-  box-sizing: border-box;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-synthesis: none;
-  line-height: 1.5;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: white;
+  --bg-primary: #09090B;
+  --bg-secondary: #121216;
+  --bg-elevated: #181820;
+  --border-subtle: #202024;
+  --border-active: #3A3A40;
+  --text-primary: #F4F4F5;
+  --text-secondary: #A1A1AA;
+  --text-disabled: #52525B;
+  --accent-primary: #00E5FF;
+  --accent-glow: rgba(0, 229, 255, 0.12);
+  --accent-warning: #FF9F00;
+  --font-interface: 'Inter', 'Outfit', system-ui, -apple-system, sans-serif;
+  --font-technical: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
 }
 
 html,
 body {
   margin: 0;
   padding: 0;
-  /*dvh, svh, lvh, vh*/
   height: 100dvh;
   width: 100dvw;
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+  font-family: var(--font-interface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-h1 {
-  @apply text-4xl font-bold mb-4;
+/* Custom scrollbars for a clean technical look */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-active);
+  border-radius: 0px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
 }
 
-h2 {
-  @apply text-2xl font-semibold mb-3;
+/* 1. Boton Tecnico */
+.cyber-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-technical);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 16px;
+  background-color: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-active);
+  border-radius: 1px;
+  cursor: pointer;
+  transition: none !important; /* Step-wise instant transition */
+}
+.cyber-button:hover:not(:disabled) {
+  background-color: var(--accent-glow);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+.cyber-button:active:not(:disabled) {
+  background-color: var(--accent-primary);
+  color: var(--bg-primary);
+  box-shadow: none;
+}
+.cyber-button:focus-visible {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px var(--bg-primary), 0 0 0 3px var(--accent-primary);
+}
+.cyber-button:disabled {
+  border-color: var(--border-subtle);
+  color: var(--text-disabled);
+  cursor: not-allowed;
 }
 
-h3 {
-  @apply text-xl font-semibold mb-2;
+/* 2. Input de Datos Tecnico */
+.cyber-input-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.cyber-label {
+  font-family: var(--font-technical);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+.cyber-input {
+  font-family: var(--font-technical);
+  font-size: 0.875rem;
+  padding: 10px 12px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1px;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.12s ease-in-out;
+}
+.cyber-input:hover:not(:disabled) {
+  border-color: var(--border-active);
+}
+.cyber-input:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 6px var(--accent-glow);
+}
+.cyber-input::placeholder {
+  color: var(--text-disabled);
+  letter-spacing: 0.02em;
+}
+.cyber-input.is-invalid {
+  border-color: var(--accent-warning);
+  box-shadow: 0 0 6px rgba(255, 159, 0, 0.12);
 }
 
-h4 {
-  @apply text-lg font-semibold mb-1;
+/* 3. Contenedor de Datos Monolitico */
+.cyber-panel {
+  position: relative;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 1px;
+  padding: 16px;
+}
+.cyber-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 8px;
+  margin-bottom: 16px;
+}
+.cyber-panel::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  width: 4px;
+  height: 4px;
+  background-color: var(--accent-primary);
 }
 
-p {
-  @apply text-base mb-1;
+/* Typography Classes */
+.text-cyber-display {
+  font-family: var(--font-interface);
+  font-size: 2rem;            /* 32px */
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-primary);
+}
+.text-cyber-title {
+  font-family: var(--font-interface);
+  font-size: 1.25rem;         /* 20px */
+  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+.text-cyber-body {
+  font-family: var(--font-interface);
+  font-size: 1rem;            /* 16px */
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+.text-cyber-caption {
+  font-family: var(--font-interface);
+  font-size: 0.875rem;        /* 14px */
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: 0.025em;
+  color: var(--text-secondary);
+}
+.text-cyber-tech-mono {
+  font-family: var(--font-technical);
+  font-size: 0.875rem;        /* 14px */
+  line-height: 1.4;
+  font-weight: 400;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+}
+.text-cyber-metadata {
+  font-family: var(--font-technical);
+  font-size: 0.75rem;         /* 12px */
+  line-height: 1.4;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-disabled);
 }
 
-@keyframes gradientMove {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-}
-
+/* Keyframes for animations */
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(25px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
-
-/* Animación suave */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(-8px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }

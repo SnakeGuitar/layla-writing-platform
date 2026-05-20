@@ -8,138 +8,169 @@
 @inject ISessionManager Session
 @inject NavigationManager Navigation
 
+<PageTitle>Register // System Enlistment</PageTitle>
 
-<PageTitle>Register</PageTitle>
+<main class="flex items-center justify-center px-4 min-h-screen bg-[var(--bg-primary)]">
 
-<main class="flex items-center justify-center px-4 min-h-screen bg-linear-to-t from-base-purple-1 to-base-blue-2">
-
-    <div class="fixed inset-0 overflow-hidden pointer-events-none">
-        <div class="absolute -top-32 -right-32 size-50 rounded-full bg-amber-100 opacity-40 blur-3xl"></div>
-        <div class="absolute -bottom-24 -left-24 size-50 rounded-full bg-stone-200 opacity-60 blur-3xl"></div>
-    </div>
-
-    <div class="relative h-auto w-sm px-8 py-10 bg-stone-50 rounded-2xl animate-[fadeInUp_0.5s_ease_both]">
+    <!-- Monolithic Technical Panel -->
+    <div class="cyber-panel w-full max-w-sm">
 
         @if (!_verificationStep)
         {
             <!-- ─── STAGE 1 — collect credentials ─────────────────────────────── -->
-            <header class="mb-8 animate-[fadeInUp_0.5s_ease_both] [animation-delay:0.1s]">
-                <img type="image/png" src="./favicon.png" class="mx-auto" />
-                <h1 class="text-3xl text-center text-stone-900 leading-tight">Create account</h1>
-                <p class="text-sm text-center text-stone-400 font-light">Start writing in minutes</p>
+            <header class="cyber-panel-header">
+                <div class="flex flex-col">
+                    <span class="text-cyber-metadata">SYSTEM ENLISTMENT</span>
+                    <h1 class="text-cyber-title mt-1">NEW OPERATOR REGISTRATION</h1>
+                </div>
+                <span class="text-cyber-tech-mono text-[var(--accent-primary)]">NEW_UNIT</span>
             </header>
 
-            <div class="space-y-5">
+            <div class="space-y-4">
 
-                <div class="animate-[fadeInUp_0.5s_ease_both] [animation-delay:0.15s]">
-                    <label class="block text-xs font-medium text-stone-500 uppercase tracking-widest mb-2">Display name</label>
+                <!-- Display Name -->
+                <div class="cyber-input-wrapper">
+                    <label class="cyber-label">Callsign / Display Name</label>
                     <input type="text"
                            @bind="_displayName"
                            placeholder="Jane Author"
-                           class="input-field w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 text-stone-900 text-sm placeholder-stone-300 focus:outline-none focus:border-[#1a1a1a]" />
+                           class="cyber-input w-full" />
                     @if (_fieldErrors.TryGetValue("DisplayName", out var nameErrors))
                     {
-                        <p class="mt-1 text-xs text-red-600">@string.Join(' ', nameErrors)</p>
+                        <p class="mt-1 text-cyber-tech-mono text-xs text-[var(--accent-warning)]">@string.Join(' ', nameErrors)</p>
                     }
                 </div>
 
-                <div class="animate-[fadeInUp_0.5s_ease_both] [animation-delay:0.2s]">
-                    <label class="block text-xs font-medium text-stone-500 uppercase tracking-widest mb-2">Email</label>
+                <!-- Email -->
+                <div class="cyber-input-wrapper">
+                    <label class="cyber-label">Operational Email</label>
                     <input type="email"
                            @bind="_email"
-                           placeholder="email@company.com"
-                           class="input-field w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 text-stone-900 text-sm placeholder-stone-300 focus:outline-none focus:border-[#1a1a1a]" />
+                           placeholder="operator@system.core"
+                           class="cyber-input w-full" />
                     @if (_fieldErrors.TryGetValue("Email", out var emailErrors))
                     {
-                        <p class="mt-1 text-xs text-red-600">@string.Join(' ', emailErrors)</p>
+                        <p class="mt-1 text-cyber-tech-mono text-xs text-[var(--accent-warning)]">@string.Join(' ', emailErrors)</p>
                     }
                 </div>
 
-                <div class="animate-[fadeInUp_0.5s_ease_both] [animation-delay:0.3s]">
-                    <label class="block text-xs font-medium text-stone-500 uppercase tracking-widest mb-2">Password</label>
+                <!-- Password -->
+                <div class="cyber-input-wrapper">
+                    <label class="cyber-label">Security Key / Password</label>
                     <input type="password"
                            @bind="_password"
                            @onkeyup="@(e => { if (e.Key == "Enter") _ = HandleRegister(); })"
                            placeholder="••••••••"
-                           class="input-field w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 text-stone-900 text-sm placeholder-stone-300 focus:outline-none focus:border-[#1a1a1a]" />
+                           class="cyber-input w-full" />
                     @if (_fieldErrors.TryGetValue("Password", out var pwErrors))
                     {
-                        <p class="mt-1 text-xs text-red-600">@string.Join(' ', pwErrors)</p>
+                        <p class="mt-1 text-cyber-tech-mono text-xs text-[var(--accent-warning)]">@string.Join(' ', pwErrors)</p>
                     }
                     else
                     {
-                        <p class="mt-1 text-xs text-stone-400">At least 6 chars, one number, one uppercase letter.</p>
+                        <p class="text-cyber-metadata text-[10px]">Min 6 chars, 1 number, 1 uppercase.</p>
                     }
                 </div>
 
+                <!-- Error Notification Panel -->
                 @if (!string.IsNullOrEmpty(_errorMessage))
                 {
-                    <div class="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
-                        @_errorMessage
+                    <div class="p-3 bg-[var(--bg-primary)] border border-[var(--accent-warning)] text-[var(--accent-warning)] text-xs font-mono">
+                        <span class="font-bold">[ ERROR ]</span> @_errorMessage
                     </div>
                 }
 
-                <div class="animate-[fadeInUp_0.5s_ease_both] [animation-delay:0.4s] pt-2">
+                <!-- Submit Button -->
+                <div class="pt-2">
                     <button @onclick="HandleRegister"
                             disabled="@_isLoading"
-                            class="w-full py-3.5 rounded-xl bg-stone-900 text-white text-sm font-medium tracking-wide disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#111]">
-                        @(_isLoading ? "Creating account..." : "Create account →")
+                            class="cyber-button w-full">
+                        @if (_isLoading)
+                        {
+                            <span>Registering Unit...</span>
+                        }
+                        else
+                        {
+                            <span>Initialize Registration →</span>
+                        }
                     </button>
                 </div>
             </div>
 
-            <footer class="mt-8 text-center text-sm text-stone-300">
-                Already have an account?
-                <a href="/auth/login" class="text-stone-500 hover:text-stone-800 font-medium">Login</a>
+            <!-- Footer options -->
+            <footer class="mt-6 pt-4 border-t border-[var(--border-subtle)] text-center text-xs">
+                <span class="text-cyber-body text-xs">Already registered?</span>
+                <a href="/auth/login" class="ml-1 text-cyber-tech-mono text-[var(--accent-primary)] hover:underline">
+                    [ Operator Login ]
+                </a>
             </footer>
         }
         else
         {
             <!-- ─── STAGE 2 — submit the email PIN ───────────────────────────── -->
-            <header class="mb-8 animate-[fadeInUp_0.5s_ease_both]">
-                <img type="image/png" src="./favicon.png" class="mx-auto" />
-                <h1 class="text-3xl text-center text-stone-900 leading-tight">Verify your email</h1>
-                <p class="text-sm text-center text-stone-400 font-light">
-                    We sent a PIN to <span class="font-medium text-stone-600">@_email</span>
-                </p>
+            <header class="cyber-panel-header">
+                <div class="flex flex-col">
+                    <span class="text-cyber-metadata">IDENTITY VERIFICATION</span>
+                    <h1 class="text-cyber-title mt-1">VERIFY EMAIL PIN</h1>
+                </div>
+                <span class="text-cyber-tech-mono text-[var(--accent-warning)]">PENDING_PIN</span>
             </header>
 
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-xs font-medium text-stone-500 uppercase tracking-widest mb-2">Verification PIN</label>
+            <div class="space-y-4">
+                <div class="text-xs text-cyber-body mb-2">
+                    Verification code dispatched to: <span class="text-cyber-tech-mono text-[var(--accent-primary)]">@_email</span>
+                </div>
+
+                <!-- PIN Input -->
+                <div class="cyber-input-wrapper">
+                    <label class="cyber-label">Verification PIN</label>
                     <input type="text"
                            inputmode="numeric"
                            autocomplete="one-time-code"
                            @bind="_pin"
                            @onkeyup="@(e => { if (e.Key == "Enter") _ = HandleVerify(); })"
                            placeholder="123456"
-                           class="input-field w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50 text-stone-900 text-base text-center tracking-widest placeholder-stone-300 focus:outline-none focus:border-[#1a1a1a]" />
+                           class="cyber-input w-full text-center tracking-widest font-mono" />
                 </div>
 
+                <!-- Messages -->
                 @if (!string.IsNullOrEmpty(_errorMessage))
                 {
-                    <div class="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600">
-                        @_errorMessage
+                    <div class="p-3 bg-[var(--bg-primary)] border border-[var(--accent-warning)] text-[var(--accent-warning)] text-xs font-mono">
+                        <span class="font-bold">[ ERROR ]</span> @_errorMessage
                     </div>
                 }
 
                 @if (!string.IsNullOrEmpty(_infoMessage))
                 {
-                    <div class="flex items-center gap-2 px-4 py-3 bg-amber-50 border border-amber-100 rounded-xl text-sm text-amber-700">
-                        @_infoMessage
+                    <div class="p-3 bg-[var(--bg-primary)] border border-[var(--accent-primary)] text-[var(--accent-primary)] text-xs font-mono">
+                        <span class="font-bold">[ SYSTEM ]</span> @_infoMessage
                     </div>
                 }
 
-                <button @onclick="HandleVerify"
-                        disabled="@_isLoading"
-                        class="w-full py-3.5 rounded-xl bg-stone-900 text-white text-sm font-medium tracking-wide disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[#111]">
-                    @(_isLoading ? "Verifying..." : "Verify email →")
-                </button>
+                <!-- Verify Button -->
+                <div class="pt-2">
+                    <button @onclick="HandleVerify"
+                            disabled="@_isLoading"
+                            class="cyber-button w-full">
+                        @if (_isLoading)
+                        {
+                            <span>Verifying...</span>
+                        }
+                        else
+                        {
+                            <span>Verify and Enlist →</span>
+                        }
+                    </button>
+                </div>
 
-                <button @onclick="BackToForm"
-                        class="w-full text-center text-xs text-stone-400 hover:text-stone-600">
-                    ← Use a different email
-                </button>
+                <!-- Back button -->
+                <div class="pt-1 text-center">
+                    <button @onclick="BackToForm"
+                            class="text-cyber-caption hover:text-[var(--accent-primary)] text-xs">
+                        [ ← Change Operational Email ]
+                    </button>
+                </div>
             </div>
         }
 
@@ -177,21 +208,18 @@
 
             if (result.IsSuccess)
             {
-                // Server-core no longer issues a JWT on register — it sends a
-                // PIN to the user's inbox first. Flip the form into stage 2
-                // (PIN entry) and clear the password from memory.
                 _verificationStep = true;
                 _password = string.Empty;
-                _infoMessage = "We sent a verification PIN to your inbox.";
+                _infoMessage = "Verification PIN dispatched to inbox.";
                 return;
             }
 
-            _errorMessage = result.ErrorMessage ?? "Registration failed.";
+            _errorMessage = result.ErrorMessage ?? "Registration rejected.";
             _fieldErrors = result.ValidationErrors;
         }
         catch (Exception)
         {
-            _errorMessage = "An unexpected error occurred.";
+            _errorMessage = "Link failure: service offline.";
         }
         finally
         {
@@ -216,11 +244,11 @@
                 return;
             }
 
-            _errorMessage = result.ErrorMessage ?? "Could not verify your email.";
+            _errorMessage = result.ErrorMessage ?? "PIN verification failed.";
         }
         catch (Exception)
         {
-            _errorMessage = "An unexpected error occurred.";
+            _errorMessage = "Verification failure: link offline.";
         }
         finally
         {

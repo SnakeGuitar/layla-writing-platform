@@ -1,0 +1,12 @@
+**/node_modules/
+**/bin/
+**/obj/
+**/.vs/
+**/.vscode/
+**/.git/
+**/.gitignore
+**/*.log
+**/dist/
+**/out/
+**/publish/
+**/certs/

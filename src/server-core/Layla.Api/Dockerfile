@@ -22,7 +22,9 @@ RUN dotnet publish "Layla.Api.csproj" \
 
 # -------- RUNTIME --------
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
+USER root
 WORKDIR /app
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 EXPOSE 7166
 EXPOSE 5287
 COPY --from=publish /app/publish .

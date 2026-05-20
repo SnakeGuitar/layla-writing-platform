@@ -1,0 +1,210 @@
+@page "/projects/explore"
+@using client_web.Application.Services.Projects
+@using client_web.Application.Services.Session
+@using client_web.Models
+@inject IProjectService ProjectService
+@inject ISessionManager Session
+@inject NavigationManager Navigation
+
+<PageTitle>Explore // Secure Catalog</PageTitle>
+
+<div class="max-w-5xl mx-auto space-y-6">
+    <!-- Header -->
+    <header class="mb-8 border-b border-[var(--border-subtle)] pb-4">
+        <span class="text-cyber-metadata">SYS_CATALOG // EXPLORE</span>
+        <h1 class="text-cyber-display mt-1 uppercase">
+            Public Projects
+        </h1>
+        <p class="text-cyber-body text-xs mt-2 max-w-2xl">
+            Explore public manuscript registries established by operators. Connect your terminal as a reader or editor unit.
+        </p>
+    </header>
+
+    <!-- Search and Controls -->
+    <div class="cyber-panel flex flex-col sm:flex-row gap-4 items-center justify-between p-4 bg-[var(--bg-secondary)]">
+        <div class="relative w-full sm:max-w-xs">
+            <input type="text" @bind="_searchQuery" @bind:event="oninput" placeholder="SEARCH BY KEYWORD..."
+                   id="search-explore-input"
+                   class="cyber-input w-full pr-10" />
+            <span class="absolute right-3 top-2.5 text-[var(--text-disabled)] font-mono text-xs">
+                [SRC]
+            </span>
+        </div>
+        <div class="text-cyber-metadata text-xs">
+            SYS_MATCHED: @FilteredProjects.Count // TOTAL: @_publicProjects.Count
+        </div>
+    </div>
+
+    <!-- Feedback Alerts -->
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <div class="p-3 bg-[var(--bg-primary)] border border-[var(--accent-warning)] text-[var(--accent-warning)] text-xs font-mono">
+            <span class="font-bold">[ ERROR ]</span> @_error
+        </div>
+    }
+
+    <!-- Projects Grid -->
+    @if (_loading)
+    {
+        <div class="flex flex-col items-center justify-center py-16 space-y-2">
+            <p class="text-cyber-tech-mono text-sm text-[var(--text-disabled)] animate-pulse">RETRIEVING PUBLIC CATALOG...</p>
+        </div>
+    }
+    else if (!FilteredProjects.Any())
+    {
+        <div class="cyber-panel text-center py-12">
+            <p class="text-cyber-tech-mono text-sm text-[var(--text-disabled)]">NO PUBLIC ARCHIVES FOUND.</p>
+        </div>
+    }
+    else
+    {
+        <div class="grid md:grid-cols-2 gap-4">
+            @foreach (var project in FilteredProjects)
+            {
+                <div class="cyber-panel p-4 flex flex-col justify-between hover:border-[var(--accent-primary)] hover:shadow-[0_0_8px_var(--accent-glow)] transition-all duration-100 steps-2 group">
+                    
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="px-2 py-0.5 bg-[var(--bg-secondary)] border border-[var(--border-active)] text-cyber-metadata text-[10px]">
+                                @project.LiteraryGenre
+                            </span>
+                            <span class="text-[10px] text-cyber-metadata">
+                                UPD: @project.UpdatedAt.ToString("yyyy-MM-dd")
+                            </span>
+                        </div>
+
+                        <div>
+                            <h3 class="text-cyber-title uppercase truncate mt-1 group-hover:text-[var(--accent-primary)] transition-colors duration-100">
+                                @project.Title
+                            </h3>
+                            <p class="text-cyber-body text-xs mt-1 line-clamp-3">
+                                @project.Synopsis
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between">
+                        <span class="text-cyber-metadata text-[10px]">PUBLIC_STREAM</span>
+                        
+                        <button @onclick="() => JoinProjectAsync(project.Id)"
+                                disabled="@_joining"
+                                id="join-btn-@project.Id"
+                                class="cyber-button text-xs py-1 px-3">
+                            @if (_joining && _activeJoiningId == project.Id)
+                            {
+                                <span>LINKING...</span>
+                            }
+                            else
+                            {
+                                <span>CONNECT LINK</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<PublicProjectDto> _publicProjects = new();
+    private List<Project> _myProjects = new();
+    private bool _loading = true;
+    private bool _joining = false;
+    private Guid? _activeJoiningId;
+    private string _searchQuery = string.Empty;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        var hadToken = Session.IsAuthenticated;
+        var restored = await Session.InitializeAsync();
+        if (restored && !hadToken)
+        {
+            await LoadDataAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var publicResult = await ProjectService.GetPublicProjectsAsync();
+            
+            if (Session.IsAuthenticated)
+            {
+                var myResult = await ProjectService.GetMyProjectsAsync();
+                _myProjects = myResult.ToList();
+            }
+
+            // Filter out projects that the user is already a member of
+            _publicProjects = publicResult
+                .Where(p => !_myProjects.Any(mp => mp.Id == p.Id))
+                .ToList();
+        }
+        catch (Exception)
+        {
+            _error = "Error al conectar con el servidor.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private List<PublicProjectDto> FilteredProjects =>
+        string.IsNullOrWhiteSpace(_searchQuery)
+            ? _publicProjects
+            : _publicProjects.Where(p =>
+                p.Title.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                p.Synopsis.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                p.LiteraryGenre.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    private async Task JoinProjectAsync(Guid projectId)
+    {
+        if (!Session.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/auth/login");
+            return;
+        }
+
+        _joining = true;
+        _activeJoiningId = projectId;
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            var success = await ProjectService.JoinPublicProjectAsync(projectId);
+            if (success)
+            {
+                // Navigate directly to the newly joined project's workspace!
+                Navigation.NavigateTo($"/projects/{projectId}", forceLoad: true);
+            }
+            else
+            {
+                _error = "No se pudo unir al proyecto. Por favor, inténtelo de nuevo.";
+            }
+        }
+        catch (Exception)
+        {
+            _error = "Ocurrió un error inesperado al intentar unirse al proyecto.";
+        }
+        finally
+        {
+            _joining = false;
+            _activeJoiningId = null;
+            StateHasChanged();
+        }
+    }
+}

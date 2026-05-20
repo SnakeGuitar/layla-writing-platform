@@ -1,93 +1,91 @@
 @*
     Sidebar / top-bar de la app.
-      - Desktop (lg+): columna fija a la izquierda.
-      - Mobile (<lg): barra superior + menú desplegable por checkbox.
-
-    Nota: ya NO se usa data-enhance-nav="false" en los NavLinks. Con
-    `<Routes @rendermode="InteractiveServer"/>` la navegación la maneja el
-    router interactivo de Blazor y los clicks se resuelven dentro del mismo
-    circuito SignalR — sin recargas completas.
+    - Desktop (lg+): columna fija a la izquierda.
+    - Mobile (<lg): barra superior + menú desplegable por checkbox.
 *@
 
 @* ─── DESKTOP sidebar ─────────────────────────────────────────────────── *@
-<div class="hidden lg:flex lg:flex-col h-full w-full bg-base-blue-3 border-r border-white/5">
-    <div class="h-14 flex items-center px-5 border-b border-white/5 shrink-0">
-        <a href="/home" class="text-stone-100 font-semibold tracking-widest uppercase text-sm hover:text-stone-300 transition-colors">
-            Layla
+<div class="hidden lg:flex lg:flex-col h-full w-full bg-[var(--bg-secondary)]">
+    <div class="h-14 flex items-center px-5 border-b border-[var(--border-subtle)] shrink-0">
+        <a href="/home" class="text-cyber-tech-mono font-bold tracking-widest uppercase text-sm hover:text-[var(--accent-primary)] transition-colors">
+            LAYLA // CORE
         </a>
     </div>
 
     <nav class="flex-1 flex flex-col py-4 overflow-y-auto">
-        <div class="px-4 pb-2">
-            <span class="text-[10px] uppercase tracking-[0.2em] text-stone-500 font-semibold">Menu</span>
+        <div class="px-5 pb-2">
+            <span class="text-cyber-metadata">Navigation</span>
         </div>
 
-        <div class="px-2 space-y-0.5">
-            <div class="nav-item px-1">
-                <NavLink href="/home" Match="NavLinkMatch.All" class="nav-link">Home</NavLink>
+        <div class="px-2 space-y-1">
+            <div class="nav-item">
+                <NavLink href="/home" Match="NavLinkMatch.All" class="nav-link">System Index</NavLink>
             </div>
-            <div class="nav-item px-1">
-                <NavLink href="/projects/my-projects" class="nav-link">My Projects</NavLink>
+            <div class="nav-item">
+                <NavLink href="/projects/my-projects" class="nav-link">Personal Works</NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink href="/projects/explore" class="nav-link">Public Archives</NavLink>
             </div>
             <AuthorizeView Roles="Admin">
                 <Authorized>
-                    <div class="nav-item px-1">
-                        <NavLink href="/admin/dashboard" class="nav-link">Administration</NavLink>
+                    <div class="nav-item">
+                        <NavLink href="/admin/dashboard" class="nav-link">Admin Terminal</NavLink>
                     </div>
-                    <div class="nav-item px-1">
-                        <NavLink href="/admin/manage-users" class="nav-link">User Management</NavLink>
+                    <div class="nav-item">
+                        <NavLink href="/admin/manage-users" class="nav-link">User Matrix</NavLink>
                     </div>
                 </Authorized>
             </AuthorizeView>
         </div>
 
-        <div class="mt-auto px-5 py-4 border-t border-white/5">
-            <span class="text-xs text-stone-500">v1.0.0</span>
+        <div class="mt-auto px-5 py-4 border-t border-[var(--border-subtle)]">
+            <span class="text-cyber-metadata">SYS.VER // 1.0.0</span>
         </div>
     </nav>
 </div>
 
 
 @* ─── MOBILE top-bar + dropdown ──────────────────────────────────────── *@
-<div class="lg:hidden bg-base-blue-3">
+<div class="lg:hidden bg-[var(--bg-secondary)]">
 
-    @* Checkbox FIRST so the peer-checked:* utilities applied to its siblings
-       below actually match — the previous version had the checkbox inside the
-       label, which broke the hamburger animation. *@
     <input type="checkbox" id="navbar-toggler" class="peer hidden" />
 
-    <div class="sticky top-0 z-50 flex items-center justify-between px-5 h-14 bg-base-blue-3 border-b border-white/5">
-        <a href="/home" class="text-stone-100 font-semibold tracking-widest uppercase text-sm hover:text-stone-300 transition-colors">
-            Layla
+    <div class="sticky top-0 z-50 flex items-center justify-between px-5 h-14 bg-[var(--bg-secondary)] border-b border-[var(--border-subtle)]">
+        <a href="/home" class="text-cyber-tech-mono font-bold tracking-widest uppercase text-sm hover:text-[var(--accent-primary)]">
+            LAYLA // CORE
         </a>
 
         <label for="navbar-toggler" aria-label="Open navigation menu"
-               class="cursor-pointer flex flex-col justify-center gap-1.5 p-2 rounded-md border border-white/10 hover:bg-white/5 active:scale-95 transition-all">
-            <span class="block w-5 h-0.5 bg-stone-300 rounded-full"></span>
-            <span class="block w-5 h-0.5 bg-stone-300 rounded-full"></span>
-            <span class="block w-5 h-0.5 bg-stone-300 rounded-full"></span>
+               class="cursor-pointer flex flex-col justify-center gap-1.5 p-2 border border-[var(--border-subtle)] hover:bg-[var(--accent-glow)]">
+            <span class="block w-5 h-0.5 bg-[var(--text-primary)]"></span>
+            <span class="block w-5 h-0.5 bg-[var(--text-primary)]"></span>
+            <span class="block w-5 h-0.5 bg-[var(--text-primary)]"></span>
         </label>
     </div>
 
-    <nav class="hidden peer-checked:flex flex-col py-3 bg-base-blue-3 border-b border-white/5">
-        <div class="px-4 pt-1 pb-2">
-            <span class="text-[10px] uppercase tracking-[0.2em] text-stone-500 font-semibold">Menu</span>
+    <nav class="hidden peer-checked:flex flex-col py-3 bg-[var(--bg-secondary)] border-b border-[var(--border-subtle)]">
+        <div class="px-5 pt-1 pb-2">
+            <span class="text-cyber-metadata">Navigation</span>
         </div>
 
-        <div class="px-2 space-y-0.5">
-            <div class="nav-item px-1">
-                <NavLink href="/home" Match="NavLinkMatch.All" class="nav-link">Home</NavLink>
+        <div class="px-2 space-y-1">
+            <div class="nav-item">
+                <NavLink href="/home" Match="NavLinkMatch.All" class="nav-link">System Index</NavLink>
             </div>
-            <div class="nav-item px-1">
-                <NavLink href="/projects/my-projects" class="nav-link">My Projects</NavLink>
+            <div class="nav-item">
+                <NavLink href="/projects/my-projects" class="nav-link">Personal Works</NavLink>
+            </div>
+            <div class="nav-item">
+                <NavLink href="/projects/explore" class="nav-link">Public Archives</NavLink>
             </div>
             <AuthorizeView Roles="Admin">
                 <Authorized>
-                    <div class="nav-item px-1">
-                        <NavLink href="/admin/dashboard" class="nav-link">Administration</NavLink>
+                    <div class="nav-item">
+                        <NavLink href="/admin/dashboard" class="nav-link">Admin Terminal</NavLink>
                     </div>
-                    <div class="nav-item px-1">
-                        <NavLink href="/admin/manage-users" class="nav-link">User Management</NavLink>
+                    <div class="nav-item">
+                        <NavLink href="/admin/manage-users" class="nav-link">User Matrix</NavLink>
                     </div>
                 </Authorized>
             </AuthorizeView>

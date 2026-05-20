@@ -20,7 +20,15 @@ export const requireProjectAccess = () => {
     res: Response,
     next: NextFunction,
   ): Promise<void> => {
-    const { projectId } = req.params as { projectId?: string };
+    let projectId = (req.params as { projectId?: string }).projectId;
+
+    if (!projectId) {
+      const fullPath = req.originalUrl || req.url || "";
+      const match = fullPath.match(/\/(manuscripts|wiki|graph)\/([^/]+)/);
+      if (match && match[2]) {
+        projectId = decodeURIComponent(match[2].split("?")[0]);
+      }
+    }
 
     if (!projectId) {
       next();

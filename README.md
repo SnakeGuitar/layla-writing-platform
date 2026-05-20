@@ -3,6 +3,7 @@
 Collaborative creative-writing and worldbuilding platform. Multiple authors can co-write novels, manage wiki entries, visualize narrative graphs, and communicate through a voice session — all in real time.
 
 ---
+
 # Use Cases
 | ID    | Name                      | Actor           | Backend       | Status |
 |-------|---------------------------|-----------------|---------------|--------|
@@ -25,38 +26,142 @@ Collaborative creative-writing and worldbuilding platform. Multiple authors can 
 ✅ Implemented · 🔧 Partial · ❌ Not started
 
 ## Available navigation on each client
-![Naviation on clients](./docs/assets/Navigation_diagram.png)
+![Navigation on clients](./docs/assets/Navigation_diagram.png)
 
 ---
-# Services and components description
-## General architecture
-![General architecture](./docs/assets/General_architecture2.png)
 
-## Comunication between components
-![Comunication between components](./docs/assets/Comunication.png)
+# Services and components description
+
+## General architecture (Logical Component Flow)
+```mermaid
+graph TB
+    subgraph Clientes ["Capa de Presentación (Clientes)"]
+        WPF["Cliente Escritorio (WPF/Avalonia)"]
+        Blazor["Cliente Web (Blazor Server)"]
+    end
+
+    subgraph Entrada ["Capa de Entrada (Ingress / Routing)"]
+        YARP["YARP API Gateway<br/>(Puerto 5000)"]
+    end
+
+    subgraph Microservicios ["Capa de Negocio (Microservicios)"]
+        Core["Server Core (.NET 9/10)<br/>- Identidad y Cuentas<br/>- Proyectos y Permisos<br/>- SignalR Hubs (Voice, Presence, Manuscript)"]
+        WB["Worldbuilding (Node/Express)<br/>- Manuscritos y Capítulos<br/>- Wiki Entidades<br/>- Grafo de Relaciones"]
+    end
+
+    subgraph Mensajeria ["Capa de Integración (Eventos Asíncronos)"]
+        Rabbit["RabbitMQ Exchange<br/>(worldbuilding.events)"]
+    end
+
+    subgraph Datos ["Capa de Persistencia (Bases de Datos)"]
+        SQL[("SQL Server Relational Database<br/>- Perfiles de Usuarios<br/>- Synopses y Permisos Relacionales")]
+        Mongo[("MongoDB Documental<br/>- Capítulos (Formato RTF)<br/>- Manuscritos")]
+        Neo4j[("Neo4j Graph Database<br/>- Entidades Wiki y Conexiones Semánticas")]
+    end
+
+    %% Relaciones de clientes al Gateway
+    WPF -->|HTTP / WebSockets| YARP
+    Blazor -->|HTTP / WebSockets| YARP
+
+    %% Enrutamiento del Gateway a microservicios
+    YARP -->|HTTP/gRPC/WS| Core
+    YARP -->|HTTP| WB
+
+    %% Persistencia directa de microservicios
+    Core -->|TDS / EF Core| SQL
+    WB -->|Mongoose / MongoDB Driver| Mongo
+    WB -->|Bolt Driver / Cypher| Neo4j
+
+    %% Integración asíncrona
+    Core -->|Publica 'project.created'| Rabbit
+    Rabbit -->|Consume y sincroniza| WB
+```
+
+## Physical Deployment Architecture (Docker Infrastructure)
+Este diagrama detalla la infraestructura física montada mediante Docker Compose, incluyendo la red virtual `layla_default`, el mapeo de puertos y los volúmenes persistentes:
+
+```mermaid
+graph TD
+    subgraph Host ["Máquina Host Física"]
+        subgraph Ports ["Puertos del Host Expuestos"]
+            P5000["Puerto 5000 (API Gateway)"]
+            P5233["Puerto 5233 / 7126 (Blazor Web)"]
+            P7474["Puerto 7474 / 7687 (Neo4j UI/Bolt)"]
+            P15672["Puerto 15672 / 5672 (Rabbit UI/AMQP)"]
+            P1433["Puerto 1433 (SQL Server)"]
+            P27017["Puerto 27017 (MongoDB)"]
+        end
+
+        subgraph DockerNet ["Red Interna Docker (layla_default)"]
+            Gateway["Contenedor: layla-api-gateway<br/>(YARP Proxy)"]
+            Web["Contenedor: layla-web<br/>(Blazor App)"]
+            Core["Contenedor: server-core<br/>(.NET 9 API)"]
+            WB["Contenedor: layla-worldbuilding<br/>(Node.js API)"]
+            SQL["Contenedor: layla-sql<br/>(MSSQL 2022)"]
+            Mongo["Contenedor: layla-mongo<br/>(MongoDB 7)"]
+            Neo["Contenedor: layla-neo4j<br/>(Neo4j 5)"]
+            Rabbit["Contenedor: layla-rabbit<br/>(RabbitMQ + Management)"]
+        end
+
+        subgraph Volumes ["Volúmenes Persistentes de Docker"]
+            V_SQL[("sql_data")]
+            V_Mongo[("mongo_data")]
+            V_Neo[("neo4j_data")]
+        end
+    end
+
+    %% Mapeo de Puertos Físicos a Contenedores
+    P5000 -.->|Mapea 5000:5000| Gateway
+    P5233 -.->|Mapea 5233/7126| Web
+    P7474 -.->|Mapea 7474/7687| Neo
+    P15672 -.->|Mapea 15672/5672| Rabbit
+    P1433 -.->|Mapea 1433:1433| SQL
+    P27017 -.->|Mapea 27017:27017| Mongo
+
+    %% Comunicación interna por nombres de contenedor de red
+    Web -->|Red Interna http://layla-api-gateway:5000| Gateway
+    Gateway -->|Red Interna http://server-core:5287| Core
+    Gateway -->|Red Interna http://layla-worldbuilding:3000| WB
+    Core -->|Red Interna sqlserver:1433| SQL
+    Core -->|Red Interna rabbitmq:5672| Rabbit
+    WB -->|Red Interna mongodb:27017| Mongo
+    WB -->|Red Interna neo4j:7687| Neo
+    WB -->|Red Interna rabbitmq:5672| Rabbit
+
+    %% Montaje de Volúmenes Físicos
+    SQL === V_SQL
+    Mongo === V_Mongo
+    Neo === V_Neo
+```
 
 ## Services
-| Service                | Tech                | Port                   | Databases      | Purpose |
+| Service                | Tech                | Ports (Internal / External) | Databases      | Purpose |
 |------------------------|---------------------|------------------------|----------------|---------|
-| `server-core`          | ASP.NET Core 10     | HTTPS-7166 / HTTP-5287 | SQL Server     | Auth, users, projects, roles, SignalR |
-| `server-worldbuilding` | Node.js + Express 5 | HTTPS-3000 / HTTP-3001 | MongoDB, Neo4j | Manuscripts, wiki, narrative graph |
+| `layla-api-gateway`    | .NET 9 + YARP Reverse Proxy | `5000` (HTTP)          | —              | Unified entry point, request routing, WebSockets & gRPC |
+| `server-core`          | ASP.NET Core 10     | `5287` (HTTP) / `5288` (HTTPS) | SQL Server     | Auth, users, projects, roles, SignalR hubs |
+| `server-worldbuilding` | Node.js + Express   | `3000` (HTTP) / `3001` (HTTPS) | MongoDB, Neo4j | Manuscripts, chapters, wiki, narrative graph |
 
 ## Clients
 | Client  | Tech | Role |
 |---------|------|------|
 | Desktop | WPF .NET 9 | Main writing workspace — editor, wiki, graph, voice |
-| Web     | Blazor .NET 9 | Public reader + admin panel |
+| Web     | Blazor .NET 9 | Public reader + admin panel (`5233` HTTP / `7126` HTTPS) |
 | Android | Kotlin + Compose | Mobile companion — project list, voice PTT, wiki reference |
 
 ---
-## API Documentation
-| Service | URL |
+
+## API & Gateway Documentation
+
+All endpoints and hubs are unified through the **API Gateway** running on port `5000`:
+
+| Service | Swagger URL |
 |---------|-----|
-| server-core (Swagger UI)            | `https://localhost:7166/swagger` |
-| server-worldbuilding (Swagger UI)   | `https://localhost:3000/api-docs` |
-| server-worldbuilding (OpenAPI JSON) | `https://localhost:3000/api-docs.json` |
+| `server-core` (direct)            | `https://localhost:5288/swagger` |
+| `server-worldbuilding` (direct)   | `http://localhost:3000/api-docs` |
+| **API Gateway** (unified)         | `http://localhost:5000/` |
 
 ---
+
 ## Project Roles
 | Role     | Permissions |
 |----------|-------------|
@@ -65,89 +170,45 @@ Collaborative creative-writing and worldbuilding platform. Multiple authors can 
 | `READER` | Read-only access |
 
 ---
-## API Reference
-### `server-core`  (`https://localhost:7166`)
-#### Authentication
-| Method | Path           | Auth | Description |
-|--------|----------------|------|-------------|
-| `POST` | `/api/tokens`  | — | Login — returns a JWT valid for 24 h |
-| `POST` | `/api/users`   | — | Register a new account |
 
-#### Users
-| Method | Path                 | Auth         | Description |
-|--------|----------------------|--------------|-------------|
-| `GET`  | `/api/users`         | Admin        | List all users |
-| `GET`  | `/api/users/{id}`    | User         | Get user by ID |
-| `PUT`  | `/api/users/{id}`    | Self / Admin | Update profile |
-|`DELETE`| `/api/users/{id}`    | Self / Admin | Delete account |
-| `POST` | `/api/users/{id}/ban`| Admin        | Ban user (locks account, invalidates sessions) |
+## API Reference (Through Gateway — `http://localhost:5000`)
 
-#### Projects
-| Method | Path                                | Auth         | Description |
-|--------|-------------------------------------|--------------|-------------|
-| `POST` | `/api/projects`                     | User | Create project (caller becomes OWNER) |
-| `GET`  | `/api/projects`                     | User | List caller's projects |
-| `GET`  | `/api/projects/public`              | — | List all public projects |
-| `GET`  | `/api/projects/all`                 | Admin | List every project in the system |
-| `GET`  | `/api/projects/{id}`                | Member / Public | Get project by ID |
-| `PUT`  | `/api/projects/{id}`                | OWNER | Update project metadata |
-|`DELETE`| `/api/projects/{id}`                | OWNER | Delete project |
-| `POST` | `/api/projects/{id}/join`           | User | Join a public project as READER |
-| `POST` | `/api/projects/{id}/collaborators`  | OWNER | Invite collaborator by email |
-| `GET`  | `/api/projects/{id}/collaborators`  | Member | List collaborators |
-|`DELETE`| `/api/projects/{id}/collaborators/{userId}` | OWNER | Remove collaborator |
+### 1. Identity & Projects (`server-core` endpoints)
+#### Authentication & Users
+* `POST /api/tokens` — Login (returns JWT valid for 24h)
+* `POST /api/users` — Register new user
+* `GET /api/users/{id}` — Get user by ID
+* `POST /api/users/{id}/ban` — Ban user (Admin only)
 
-#### Real-time Hubs (SignalR)
-| Hub      | Path             | Description |
-|----------|------------------|-------------|
-| Voice    | `/hubs/voice`    | Push-to-talk audio streaming |
-| Presence | `/hubs/presence` | Online/offline presence tracking |
+#### Project Management
+* `POST /api/projects` — Create project (caller becomes OWNER)
+* `GET /api/projects` — List caller's projects
+* `GET /api/projects/public` — List public catalog
+* `POST /api/projects/{id}/collaborators` — Invite collaborator
 
-### `server-worldbuilding`  (`https://localhost:3000`)
-#### Health
-| Method | Path          | Description |
-|--------|---------------|-------------|
-| `GET`  | `/api/health` | Service health check — returns `OK` |
+#### Real-time Hubs (SignalR via Gateway WebSockets)
+* `/hubs/voice` — Push-to-talk voice streaming
+* `/hubs/presence` — Active user presence tracking
+* `/hubs/manuscript` — Chapter collaboration and version synchronization
 
-#### Manuscripts
-| Method | Path                                          | Description |
-|--------|-----------------------------------------------|-------------|
-| `GET`  | `/api/manuscripts/{projectId}`                | List all manuscripts (chapter index, no content) |
-| `POST` | `/api/manuscripts/{projectId}`                | Create a manuscript |
-| `GET`  | `/api/manuscripts/{projectId}/{manuscriptId}` | Get manuscript with chapter index |
-| `PUT`  | `/api/manuscripts/{projectId}/{manuscriptId}` | Rename or reorder manuscript |
-|`DELETE`| `/api/manuscripts/{projectId}/{manuscriptId}` | Delete manuscript and all chapters |
+### 2. Worldbuilding (`server-worldbuilding` endpoints)
+#### Manuscripts & Chapters
+* `GET /api/manuscripts/{projectId}` — List manuscripts
+* `POST /api/manuscripts/{projectId}` — Create manuscript
+* `POST /api/manuscripts/{projectId}/{manuscriptId}/chapters` — Create chapter
+* `GET /api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}` — Get chapter content
+* `PUT /api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}` — Update chapter (LWW)
 
-#### Chapters
-| Method | Path                                                                 | Description |
-|--------|----------------------------------------------------------------------|-------------|
-| `POST` | `/api/manuscripts/{projectId}/{manuscriptId}/chapters`               | Create chapter |
-| `GET` | `/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}`    | Get chapter with full RTF content |
-| `PUT` | `/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}`    | Update chapter (Last-Write-Wins) |
-| `DELETE` | `/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}` | Delete chapter |
+#### Wiki & Narrative Graph
+* `GET /api/wiki/{projectId}` — List wiki entries
+* `POST /api/wiki/{projectId}` — Create entry
+* `GET /api/graph/{projectId}` — Get narrative graph (nodes + edges)
+* `POST /api/graph/{projectId}/relationships` — Connect wiki entities
 
-#### Wiki
-| Method | Path                              | Description |
-|--------|-----------------------------------|-------------|
-| `GET`  | `/api/wiki/{projectId}`           | List wiki entries |
-| `POST` | `/api/wiki/{projectId}`           | Create wiki entry |
-| `GET`  | `/api/wiki/{projectId}/{entryId}` | Get wiki entry |
-| `PUT`  | `/api/wiki/{projectId}/{entryId}` | Update wiki entry |
-|`DELETE`| `/api/wiki/{projectId}/{entryId}` | Delete wiki entry |
-
-#### Graph
-| Method | Path                                    | Description |
-|--------|-----------------------------------------|-------------|
-| `GET`  | `/api/graph/{projectId}`                | Get narrative graph (nodes + edges) |
-| `POST` | `/api/graph/{projectId}/nodes`          | Create graph node |
-| `POST` | `/api/graph/{projectId}/edges`          | Create relationship between nodes |
-|`DELETE`| `/api/graph/{projectId}/nodes/{nodeId}` | Delete node |
-|`DELETE`| `/api/graph/{projectId}/edges/{edgeId}` | Delete edge |
-
-Roles are managed through the `ProjectRoles` constant class (`Layla.Core/Constants/ProjectRoles.cs`), which provides `IsValid(role)` and `Normalize(role)` methods for case-insensitive validation.
+---
 
 ## Error Handling
-All services and controllers use the typed `ErrorCode` enum (`Layla.Core/Common/ErrorCode.cs`) instead of magic strings. Controllers map errors to HTTP status codes automatically via `RespondWithError(ErrorCode?)`.
+All services use the typed `ErrorCode` enum (`Layla.Core/Common/ErrorCode.cs`) instead of magic strings. Controllers map errors to HTTP status codes automatically via `RespondWithError(ErrorCode?)`.
 
 | ErrorCode Category | HTTP Status | Examples |
 |--------------------|-------------|----------|
@@ -161,154 +222,68 @@ All services and controllers use the typed `ErrorCode` enum (`Layla.Core/Common/
 ---
 
 # Setup
+
 ## Prerequisites
-- Docker Desktop (recommended) — or install services manually
-- .NET 10 SDK
-- .NET 9 SDK
-- Node.js 22 + pnpm 10
-- Android Studio v--- (for the mobile client)
-- SQL Server v---
-- MongoDB v---
-- Neo4J v---
-
-## Running
-### Docker (recommended)
-```bash
-cp .env.Development .env   # fill in secrets
-docker compose up -d
-```
-Services start at:
-- server-core: `https://localhost:7166`
-- server-worldbuilding: `https://localhost:3000`
-- RabbitMQ management: `https://localhost:15672`
-- Neo4j browser: `https://localhost:7474`
-
-### Manual
-#### server-core
-```bash
-cd src/server-core
-dotnet restore
-dotnet run --project Layla.Api
-```
-
-#### server-worldbuilding
-```bash
-cd src/server-worldbuilding
-pnpm install
-pnpm run dev
-```
-
-#### Web client
-```bash
-cd src/client-web
-dotnet run
-```
-
-#### Desktop client
-Open `src/client-desktop/Layla.Desktop/Layla.Desktop.sln` in Visual Studio and run.
+- **Docker Desktop** (highly recommended)
+- **.NET 9 / 10 SDKs**
+- **Node.js 22 / 24 + pnpm 10**
 
 ---
-# Environment Variables
-Copy `.env.Development` to `.env` and fill in all values before starting.
 
-## SQL Server
-| Variable          | Description |
-|-------------------|-------------|
-| `SQL_SERVER`      | Instance of server on the network |
-| `SQL_PORT`        | SQL Server port |
-| `SQL_USERNAME`    | SQL Server admin username |
-| `SQL_PASSWORD`    | SQL Server SA password |
-| `SQL_DATABASE`    | Database name |
-| `MSSQL_MEM_LIMIT` | SQL Server memory limit |
+## Running the Application
 
-### MongoDB
-| Variable                     | Description |
-|------------------------------|-------------|
-| `MONGO_INITDB_ROOT_USERNAME` | MongoDB root user |
-| `MONGO_INITDB_ROOT_PASSWORD` | MongoDB root password |
-| `MONGO_PORT`                 | MongoDB port |
+### 1. Docker Environment (Recommended)
+This compiles all images, configures healthchecks, and mounts the unified networks:
+```bash
+# 1. Copy the environment variables template
+cp src/.env.example src/.env
 
-### Neo4j
-| Variable             | Description |
-|----------------------|-------------|
-| `NEO4J_USERNAME`     | Neo4j username |
-| `NEO4J_PASSWORD`     | Neo4j password |
-| `NEO4J_BROWSER_PORT` | Neo4j browser HTTP port |
-| `NEO4J_BOLT_PORT`    | Neo4j Bolt protocol port |
-
-### Worldbuilding
-| Variable                        | Description |
-|---------------------------------|-------------|
-| `WORLDBUILDING_HTTPS_PORT`      | HTTPS port |
-| `WORLDBUILDING_HTTP_PORT`       | HTTP port |
-| `WORLDBUILDING_ALLOWED_ORIGINS` | Comma-separated CORS origins |
-
-### Core API
-| Variable           | Description |
-|--------------------|-------------|
-| `CORE_PORT_1`      | HTTPS port |
-| `CORE_PORT_2`      | HTTP port |
-| `CORE_ENVIRONMENT` | ASP.NET environment (`Development`, `Production`) |
-
-### RabbitMQ
-| Variable                 | Description |
-|--------------------------|-------------|
-| `RABBIT_HostName`        | RabbitMQ hostname |
-| `RABBIT_PORT`            | AMQP port |
-| `RABBIT_USER`            | RabbitMQ username |
-| `RABBIT_PASSWORD`        | RabbitMQ password |
-| `RABBIT_MANAGEMENT_PORT` | Management UI port |
-
-### Security (JWT)
-| Variable                   | Description |
-|----------------------------|-------------|
-| `JWT_SECRET`               | Signing key (min 32 chars, validated at startup) |
-| `JWT_SECRET_REFRESH`       | Refresh token signing key (min 32 chars) |
-| `JWT_ISSUER`               | Token issuer claim |
-| `JWT_AUDIENCE`             | Token audience claim |
-| `JWT_ACCESS_TOKEN_EXPIRY`  | Access token lifetime |
-| `JWT_REFRESH_TOKEN_EXPIRY` | Refresh token lifetime |
-
----
-# Messaging
-`server-core` publishes to the `worldbuilding.events` RabbitMQ Topic exchange.
-
-| Routing key           | Payload                                        | Trigger |
-|-----------------------|------------------------------------------------|---------|
-| `project.created`     | `{ projectId, ownerUserId, title, createdAt }` | New project created |
-
-`server-worldbuilding` consumes this event to bootstrap Neo4j graph nodes and MongoDB manuscript documents.
-
-> **Note**: Events are published **after** the database commit (outbox pattern) to prevent inconsistency between SQL Server state and downstream consumers.
-
----
-# Internal Architecture
-## `server-core`  (`https://localhost:7166`)
-### Modular Bootstrap (`Layla.Api/Config/`)
-`Program.cs` delegates configuration to four focused modules:
-
-| Module        | Responsibility |
-|---------------|----------------|
-| `Secrets.cs`  | Fail-fast validation of critical secrets (JWT, DB, RabbitMQ) |
-| `Builder.cs`  | Controllers, Swagger, SignalR, infrastructure DI |
-| `Services.cs` | Singleton services (VoiceRoomManager, PresenceTracker) |
-| `Secure.cs`   | CORS, JWT Bearer auth, rate limiting, token version validation |
-
-## Middleware & Filters
-| Component                   | Path           | Purpose |
-|-----------------------------|----------------|---------|
-| `GlobalExceptionMiddleware` | `Middleware/`  | Catches unhandled exceptions, logs and returns 500 |
-| `TokenVersionValidator`     | `Middleware/`  | Validates JWT token version against DB (session invalidation) |
-| `RequireUserIdFilter`       | `Filters/`     | Action filter ensuring user ID is present in claims |
-| `ApiControllerBase`         | `Controllers/` | Base controller with `RespondWithError(ErrorCode?)` helper |
-
-### Clean Architecture Layers
+# 2. Start the environment
+cd src/
+docker compose up -d --build
 ```
-Layla.Api             → Controllers, Hubs, Middleware, Config
-Layla.Core            → Entities, Interfaces, Services, DTOs, ErrorCode, Constants
-Layla.Infrastructure  → EF Core repos, AuthService, PresenceTracker, RabbitMQ
+Once healthy, services expose:
+* Unified API Gateway: `http://localhost:5000`
+* SQL Server: `localhost:1433`
+* MongoDB: `localhost:27017`
+* Neo4j browser: `http://localhost:7474`
+* RabbitMQ dashboard: `http://localhost:15672`
+
+### 2. Local Development (Consoles with Live Reload)
+We provide two unified dev runners in the root directory that start the API servers and clients in parallel without Docker requirements:
+
+#### Windows (PowerShell)
+```powershell
+# Run backend APIs only
+.\dev.ps1
+
+# Run backend APIs + Blazor Web Client
+.\dev.ps1 -Client web
+
+# Run backend APIs + WPF Desktop Client
+.\dev.ps1 -Client desktop
 ```
 
-## `server-worldbuilding` (`https://localhost:3000`)
-The project uses `@/` path aliases mapped to `src/` via `tsconfig.json`. All imports use `@/config/env`, `@/db/mongoose`, etc.
-The service implements graceful shutdown — `SIGTERM` and `SIGINT` handlers close HTTP, RabbitMQ, and Neo4j connections in order.
+#### Linux / macOS (Bash)
+```bash
+chmod +x dev.sh
+
+# Run backend APIs only
+./dev.sh
+
+# Run backend APIs + Blazor Web Client
+./dev.sh --client web
+
+# Run backend APIs + WPF Desktop Client
+./dev.sh -c desktop
+```
+
+---
+
+## Environment Variables Configuration
+
+Copy `src/.env.example` to `src/.env` and adjust the variables. The microservices rely on the following variables:
+* `WORLDBUILDING_ALLOWED_ORIGINS`: Comma-separated CORS origins containing localhost URLs (including `https://localhost:7126` and `http://localhost:5233` for the Blazor app, and `http://localhost:5000` for the Gateway).
+* `JWT_SECRET` / `JWT_SECRET_REFRESH`: Cifrado HS512 (mínimo 32 caracteres).
+* `SQL_PASSWORD` / `MONGO_INITDB_ROOT_PASSWORD` / `NEO4J_PASSWORD`: Passwords de bases de datos.
+* `RABBIT_USER` / `RABBIT_PASSWORD`: Credenciales de mensajería asíncrona.

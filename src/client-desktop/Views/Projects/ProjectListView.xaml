@@ -8,44 +8,45 @@
       d:DesignHeight="450" d:DesignWidth="800"
       ShowsNavigationUI="False"
       Title="ProjectListView"
-      Background="{DynamicResource WindowBackground}"
-      Foreground="{DynamicResource PrimaryText}">
+      Background="{DynamicResource CyberBgPrimaryBrush}"
+      Foreground="{DynamicResource CyberTextPrimaryBrush}">
     
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </Page.Resources>
 
-    <Grid Background="{DynamicResource WindowBackground}" Margin="10">
+    <Grid Background="{DynamicResource CyberBgPrimaryBrush}" Margin="10">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             
-            <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Grid Grid.Row="0" Margin="0,0,0,15">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 
-                <TextBlock Grid.Column="0" Text="My Projects" FontSize="24" FontWeight="Bold" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="0" Text="MY PROJECTS" Style="{StaticResource CyberDisplayText}" VerticalAlignment="Center"/>
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="Browse Public" Background="Transparent" Foreground="{DynamicResource AccentColor}" BorderThickness="0"
-                            Padding="10,5" Margin="0,0,10,0" Cursor="Hand" Click="BrowsePublicButton_Click"/>
-                    <Button Content="➕ Create Project" Background="{DynamicResource AccentColor}" Foreground="White" BorderThickness="0"
-                            Padding="10,5" Margin="0,0,15,0" Cursor="Hand" Command="{Binding OpenCreateModalCommand}"/>
-                    <Button Content="⚙ Settings" Background="Transparent" Foreground="{DynamicResource SecondaryText}" BorderThickness="0"
-                            Padding="10,5" Margin="0,0,10,0" Cursor="Hand" Click="SettingsButton_Click"/>
-                    <Button Content="🚪 Logout" Background="Transparent" Foreground="IndianRed" BorderThickness="0"
-                            Padding="10,5" Cursor="Hand" Click="LogoutButton_Click"/>
+                    <Button Content="BROWSE PUBLIC" Style="{StaticResource CyberButton}"
+                            Padding="10,5" Cursor="Hand" Click="BrowsePublicButton_Click"/>
+                    <Button Content="CREATE PROJECT" Style="{StaticResource CyberButton}"
+                            Padding="10,5" Cursor="Hand" Command="{Binding OpenCreateModalCommand}" Margin="6,0,0,0"/>
+                    <Button Content="SETTINGS" Style="{StaticResource CyberButton}"
+                            Padding="10,5" Cursor="Hand" Click="SettingsButton_Click" Margin="6,0,0,0"/>
+                    <Button Content="LOGOUT" Style="{StaticResource CyberButton}"
+                            BorderBrush="{DynamicResource CyberAccentWarningBrush}" Foreground="{DynamicResource CyberAccentWarningBrush}"
+                            Padding="10,5" Cursor="Hand" Click="LogoutButton_Click" Margin="6,0,0,0"/>
                 </StackPanel>
             </Grid>
             
             <ListView x:Name="ProjectsListView" Grid.Row="1" ItemsSource="{Binding Projects}" BorderThickness="0" Background="Transparent" MouseDoubleClick="ProjectsListView_MouseDoubleClick">
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <Border BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" CornerRadius="5" Padding="10" Margin="5,5,5,10" Background="{DynamicResource ControlBackground}" Cursor="Hand">
+                        <Border Style="{StaticResource CyberPanelBorder}" Padding="16" Margin="0,0,0,12" Background="{DynamicResource CyberBgSecondaryBrush}" Cursor="Hand">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -53,16 +54,18 @@
                                 </Grid.ColumnDefinitions>
                                 
                                 <StackPanel Grid.Column="0">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource PrimaryText}"/>
-                                        <Border Background="{DynamicResource AccentColor}" CornerRadius="3" Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center"
-                                                Visibility="{Binding IsPublic, Converter={StaticResource BoolToVis}}">
-                                            <TextBlock Text="PUBLIC" FontSize="10" Foreground="White" FontWeight="Bold"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                        <TextBlock Text="{Binding Title}" Style="{StaticResource CyberTitleText}"/>
+                                        
+                                        <Border CornerRadius="0" Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center" BorderThickness="1" BorderBrush="{DynamicResource CyberAccentPrimaryBrush}">
+                                            <TextBlock Text="PUBLIC" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentPrimaryBrush}"/>
                                         </Border>
-                                        <Border CornerRadius="3" Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center">
+                                        
+                                        <Border CornerRadius="0" Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center" BorderThickness="1">
                                             <Border.Style>
                                                 <Style TargetType="Border">
-                                                    <Setter Property="Background" Value="LightGray"/>
+                                                    <Setter Property="Background" Value="{DynamicResource CyberBgSecondaryBrush}"/>
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource CyberBorderActiveBrush}"/>
                                                     <Setter Property="Visibility" Value="Visible"/>
                                                     <Style.Triggers>
                                                         <DataTrigger Binding="{Binding UserRole}" Value="">
@@ -72,29 +75,46 @@
                                                             <Setter Property="Visibility" Value="Collapsed"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding UserRole}" Value="OWNER">
-                                                            <Setter Property="Background" Value="{DynamicResource AccentColor}"/>
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource CyberAccentPrimaryBrush}"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding UserRole}" Value="EDITOR">
-                                                            <Setter Property="Background" Value="#4FC3F7"/>
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource CyberTextPrimaryBrush}"/>
                                                         </DataTrigger>
                                                         <DataTrigger Binding="{Binding UserRole}" Value="READER">
-                                                            <Setter Property="Background" Value="#81C784"/>
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource CyberTextSecondaryBrush}"/>
                                                         </DataTrigger>
                                                     </Style.Triggers>
                                                 </Style>
                                             </Border.Style>
-                                            <TextBlock Text="{Binding UserRole}" FontSize="10" Foreground="White" FontWeight="Bold"/>
+                                            <TextBlock Text="{Binding UserRole}">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource CyberLabel}">
+                                                        <Setter Property="Foreground" Value="{DynamicResource CyberTextSecondaryBrush}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding UserRole}" Value="OWNER">
+                                                                <Setter Property="Foreground" Value="{DynamicResource CyberAccentPrimaryBrush}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding UserRole}" Value="EDITOR">
+                                                                <Setter Property="Foreground" Value="{DynamicResource CyberTextPrimaryBrush}"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding UserRole}" Value="READER">
+                                                                <Setter Property="Foreground" Value="{DynamicResource CyberTextSecondaryBrush}"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
                                         </Border>
                                     </StackPanel>
-                                    <TextBlock Text="{Binding LiteraryGenre}" FontStyle="Italic" Foreground="{DynamicResource SecondaryText}" Margin="0,2,0,5" />
-                                    <TextBlock Text="{Binding Synopsis}" TextWrapping="Wrap" MaxWidth="600" Foreground="{DynamicResource PrimaryText}"/>
+                                    <TextBlock Text="{Binding LiteraryGenre}" Style="{StaticResource CyberTechMonoText}" Foreground="{DynamicResource CyberTextSecondaryBrush}" Margin="0,0,0,4" />
+                                    <TextBlock Text="{Binding Synopsis}" Style="{StaticResource CyberBodyText}" TextWrapping="Wrap" MaxWidth="600" Margin="0,0,0,4"/>
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-                                    <Button Content="✏ Edit" Background="Transparent" Foreground="{DynamicResource AccentColor}" BorderThickness="0" Padding="5" Margin="0,0,5,0" Cursor="Hand" 
+                                    <Button Content="EDIT" Style="{StaticResource CyberButton}" Padding="8,4" Cursor="Hand" 
                                             Command="{Binding DataContext.OpenEditModalCommand, RelativeSource={RelativeSource AncestorType=ListView}}" CommandParameter="{Binding}"/>
-                                    <Button Content="🗑 Delete" Background="Transparent" Foreground="IndianRed" BorderThickness="0" Padding="5" Cursor="Hand" 
-                                            Command="{Binding DataContext.DeleteProjectCommand, RelativeSource={RelativeSource AncestorType=ListView}}" CommandParameter="{Binding}"/>
+                                    <Button Content="DELETE" Style="{StaticResource CyberButton}" BorderBrush="{DynamicResource CyberAccentWarningBrush}" Foreground="{DynamicResource CyberAccentWarningBrush}" Padding="8,4" Cursor="Hand" 
+                                            Command="{Binding DataContext.DeleteProjectCommand, RelativeSource={RelativeSource AncestorType=ListView}}" CommandParameter="{Binding}" Margin="4,0,0,0"/>
                                 </StackPanel>
                             </Grid>
                         </Border>
@@ -103,61 +123,71 @@
             </ListView>
         </Grid>
 
+        <!-- Create Project Modal -->
         <Border x:Name="CreateProjectModal" Visibility="{Binding IsCreateModalVisible, Converter={StaticResource BoolToVis}}" Background="#CC000000" Panel.ZIndex="100">
-            <Border Background="{DynamicResource WindowBackground}" Width="500" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="20" CornerRadius="8">
+            <Border Style="{StaticResource CyberPanelBorder}" Background="{DynamicResource CyberBgElevatedBrush}" Width="500" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="20">
                 <StackPanel>
-                    <TextBlock Text="Create New Project" FontSize="20" FontWeight="Bold" Margin="0,0,0,20" Foreground="{DynamicResource PrimaryText}"/>
+                    <TextBlock Text="CREATE NEW PROJECT" Style="{StaticResource CyberDisplayText}" FontSize="18" Margin="0,0,0,10"/>
                     
-                    <TextBlock Text="Title" FontWeight="SemiBold" Margin="0,0,0,5" Foreground="{DynamicResource PrimaryText}"/>
-                    <TextBox x:Name="NewProjectTitle" Margin="0,0,0,10" Padding="5" Background="{DynamicResource ControlBackground}" Foreground="{DynamicResource PrimaryText}" BorderBrush="{DynamicResource BorderColor}"
-                             Text="{Binding NewProjectTitle, UpdateSourceTrigger=PropertyChanged}"/>
+                    <StackPanel Margin="0,0,0,10">
+                        <TextBlock Text="TITLE" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
+                        <TextBox x:Name="NewProjectTitle" Text="{Binding NewProjectTitle, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
                     
-                    <TextBlock Text="Genre" FontWeight="SemiBold" Margin="0,0,0,5" Foreground="{DynamicResource PrimaryText}"/>
-                    <TextBox x:Name="NewProjectGenre" Margin="0,0,0,10" Padding="5" Background="{DynamicResource ControlBackground}" Foreground="{DynamicResource PrimaryText}" BorderBrush="{DynamicResource BorderColor}"
-                             Text="{Binding NewProjectGenre, UpdateSourceTrigger=PropertyChanged}"/>
+                    <StackPanel Margin="0,0,0,10">
+                        <TextBlock Text="GENRE" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
+                        <TextBox x:Name="NewProjectGenre" Text="{Binding NewProjectGenre, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
                     
-                    <TextBlock Text="Synopsis" FontWeight="SemiBold" Margin="0,0,0,5" Foreground="{DynamicResource PrimaryText}"/>
-                    <TextBox x:Name="NewProjectSynopsis" Height="80" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,0,0,10" Padding="5" Background="{DynamicResource ControlBackground}" Foreground="{DynamicResource PrimaryText}" BorderBrush="{DynamicResource BorderColor}"
-                             Text="{Binding NewProjectSynopsis, UpdateSourceTrigger=PropertyChanged}"/>
+                    <StackPanel Margin="0,0,0,10">
+                        <TextBlock Text="SYNOPSIS" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
+                        <TextBox x:Name="NewProjectSynopsis" Height="80" TextWrapping="Wrap" AcceptsReturn="True"
+                                 Text="{Binding NewProjectSynopsis, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
 
-                    <CheckBox Content="Public project" IsChecked="{Binding NewProjectIsPublic}" Margin="0,0,0,20" Foreground="{DynamicResource PrimaryText}"/>
+                    <CheckBox Content="Public project" IsChecked="{Binding NewProjectIsPublic}" Foreground="{DynamicResource CyberTextPrimaryBrush}" Margin="0,4,0,10"/>
 
-                    <TextBlock x:Name="CreateProjectError" Foreground="IndianRed" Visibility="{Binding CreateError, Converter={StaticResource BoolToVis}}" Margin="0,0,0,10" TextWrapping="Wrap"
+                    <TextBlock x:Name="CreateProjectError" Style="{StaticResource CyberTechMonoText}" Foreground="{DynamicResource CyberAccentWarningBrush}" Visibility="{Binding CreateError, Converter={StaticResource BoolToVis}}" TextWrapping="Wrap"
                                Text="{Binding CreateError}"/>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Cancel" Background="Transparent" BorderThickness="0" Foreground="Gray" Margin="0,0,10,0" Padding="15,5" Cursor="Hand" Command="{Binding CloseCreateModalCommand}"/>
-                        <Button x:Name="SaveProjectButton" Content="Create" Background="{DynamicResource AccentColor}" Foreground="White" BorderThickness="0" Padding="15,5" Cursor="Hand" Command="{Binding CreateProjectCommand}"/>
+                        <Button Content="CANCEL" Style="{StaticResource CyberButton}" Padding="15,5" Cursor="Hand" Command="{Binding CloseCreateModalCommand}"/>
+                        <Button x:Name="SaveProjectButton" Content="CREATE" Style="{StaticResource CyberButton}" Padding="15,5" Cursor="Hand" Command="{Binding CreateProjectCommand}" Margin="6,0,0,0"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
         </Border>
 
+        <!-- Edit Project Modal -->
         <Border x:Name="EditProjectModal" Visibility="{Binding IsEditModalVisible, Converter={StaticResource BoolToVis}}" Background="#CC000000" Panel.ZIndex="100">
-            <Border Background="{DynamicResource WindowBackground}" Width="500" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="20" CornerRadius="8">
+            <Border Style="{StaticResource CyberPanelBorder}" Background="{DynamicResource CyberBgElevatedBrush}" Width="500" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="20">
                 <StackPanel>
-                    <TextBlock Text="Edit Project" FontSize="20" FontWeight="Bold" Margin="0,0,0,20" Foreground="{DynamicResource PrimaryText}"/>
+                    <TextBlock Text="EDIT PROJECT" Style="{StaticResource CyberDisplayText}" FontSize="18" Margin="0,0,0,10"/>
                     
-                    <TextBlock Text="Title" FontWeight="SemiBold" Margin="0,0,0,5" Foreground="{DynamicResource PrimaryText}"/>
-                    <TextBox x:Name="EditProjectTitle" Margin="0,0,0,10" Padding="5" Background="{DynamicResource ControlBackground}" Foreground="{DynamicResource PrimaryText}" BorderBrush="{DynamicResource BorderColor}"
-                             Text="{Binding EditProjectTitle, UpdateSourceTrigger=PropertyChanged}"/>
+                    <StackPanel Margin="0,0,0,10">
+                        <TextBlock Text="TITLE" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
+                        <TextBox x:Name="EditProjectTitle" Text="{Binding EditProjectTitle, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
                     
-                    <TextBlock Text="Genre" FontWeight="SemiBold" Margin="0,0,0,5" Foreground="{DynamicResource PrimaryText}"/>
-                    <TextBox x:Name="EditProjectGenre" Margin="0,0,0,10" Padding="5" Background="{DynamicResource ControlBackground}" Foreground="{DynamicResource PrimaryText}" BorderBrush="{DynamicResource BorderColor}"
-                             Text="{Binding EditProjectGenre, UpdateSourceTrigger=PropertyChanged}"/>
+                    <StackPanel Margin="0,0,0,10">
+                        <TextBlock Text="GENRE" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
+                        <TextBox x:Name="EditProjectGenre" Text="{Binding EditProjectGenre, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
                     
-                    <TextBlock Text="Synopsis" FontWeight="SemiBold" Margin="0,0,0,5" Foreground="{DynamicResource PrimaryText}"/>
-                    <TextBox x:Name="EditProjectSynopsis" Height="80" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,0,0,10" Padding="5" Background="{DynamicResource ControlBackground}" Foreground="{DynamicResource PrimaryText}" BorderBrush="{DynamicResource BorderColor}"
-                             Text="{Binding EditProjectSynopsis, UpdateSourceTrigger=PropertyChanged}"/>
+                    <StackPanel Margin="0,0,0,10">
+                        <TextBlock Text="SYNOPSIS" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
+                        <TextBox x:Name="EditProjectSynopsis" Height="80" TextWrapping="Wrap" AcceptsReturn="True"
+                                 Text="{Binding EditProjectSynopsis, UpdateSourceTrigger=PropertyChanged}"/>
+                    </StackPanel>
 
-                    <CheckBox Content="Public project" IsChecked="{Binding EditProjectIsPublic}" Margin="0,0,0,20" Foreground="{DynamicResource PrimaryText}"/>
+                    <CheckBox Content="Public project" IsChecked="{Binding EditProjectIsPublic}" Foreground="{DynamicResource CyberTextPrimaryBrush}" Margin="0,4,0,10"/>
 
-                    <TextBlock x:Name="EditProjectError" Foreground="IndianRed" Visibility="{Binding EditError, Converter={StaticResource BoolToVis}}" Margin="0,0,0,10" TextWrapping="Wrap"
+                    <TextBlock x:Name="EditProjectError" Style="{StaticResource CyberTechMonoText}" Foreground="{DynamicResource CyberAccentWarningBrush}" Visibility="{Binding EditError, Converter={StaticResource BoolToVis}}" TextWrapping="Wrap"
                                Text="{Binding EditError}"/>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Cancel" Background="Transparent" BorderThickness="0" Foreground="Gray" Margin="0,0,10,0" Padding="15,5" Cursor="Hand" Command="{Binding CloseEditModalCommand}"/>
-                        <Button x:Name="UpdateProjectButton" Content="Save" Background="{DynamicResource AccentColor}" Foreground="White" BorderThickness="0" Padding="15,5" Cursor="Hand" Command="{Binding UpdateProjectCommand}"/>
+                        <Button Content="CANCEL" Style="{StaticResource CyberButton}" Padding="15,5" Cursor="Hand" Command="{Binding CloseEditModalCommand}"/>
+                        <Button x:Name="UpdateProjectButton" Content="SAVE" Style="{StaticResource CyberButton}" Padding="15,5" Cursor="Hand" Command="{Binding UpdateProjectCommand}" Margin="6,0,0,0"/>
                     </StackPanel>
                 </StackPanel>
             </Border>

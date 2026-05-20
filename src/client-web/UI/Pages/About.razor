@@ -1,29 +1,27 @@
 @page "/about"
 
-<PageTitle>About</PageTitle>
+<PageTitle>About // System Specification</PageTitle>
 
-<header class="max-w-5xl mx-auto mb-12">
-    <h2 class="text-amber-500 text-xs font-bold tracking-[0.3em] uppercase mb-3">Layla</h2>
-    <h1 class="text-stone-100 font-serif text-4xl md:text-5xl font-light tracking-tight">
-        About this project
-    </h1>
-    <div class="mt-4 w-16 h-px bg-amber-500"></div>
+<header class="max-w-5xl mx-auto mb-8 border-b border-[var(--border-subtle)] pb-4">
+    <span class="text-cyber-metadata">SYS_SPEC // SYSTEM INFO</span>
+    <h1 class="text-cyber-display mt-1 uppercase">About this system</h1>
 </header>
 
-<div class="max-w-3xl mx-auto text-stone-300 space-y-4 leading-relaxed">
+<div class="max-w-3xl mx-auto text-cyber-body space-y-4 leading-relaxed">
     <p>
-        Layla is a collaborative creative-writing platform. Authors co-write
-        novels, build worldbuilding wikis, and visualise narrative graphs in
-        real time.
+        LAYLA is a high-precision collaborative writing environment. Operations allow 
+        real-time novel co-authoring, technical worldbuilding wikis, and structured 
+        narrative visualization graphs.
     </p>
     <p>
-        This web client is one of three Layla front-ends — alongside a WPF
-        desktop application (the main authoring workspace) and an Android
-        companion. All three talk to the same backend pair: an ASP.NET Core
-        API for identity and projects, and a Node.js worldbuilding service
-        backed by MongoDB and Neo4j.
+        This web client serves as a public operational interface — operating alongside a 
+        high-fidelity WPF desktop application (the primary authoring workspace) and a 
+        mobile helper. Each client establishes secure RPC links to a distributed backend: 
+        an ASP.NET Core API for user identities and projects, and a worldbuilding engine 
+        integrated with Neo4j and MongoDB.
     </p>
-    <p class="text-stone-500 text-sm">
-        v1.0.0
-    </p>
+    <div class="pt-4 border-t border-[var(--border-subtle)] flex justify-between items-center text-cyber-metadata">
+        <span>CORE VER // 1.0.0</span>
+        <span class="text-[var(--accent-primary)]">SYS_ONLINE</span>
+    </div>
 </div>

@@ -7,72 +7,76 @@
 @inject ISessionManager Session
 @inject NavigationManager Navigation
 
-<PageTitle>@(_project?.Title ?? "Workspace") | Layla</PageTitle>
+<PageTitle>@(_project?.Title ?? "Workspace") // System Core</PageTitle>
 
-<div class="max-w-7xl mx-auto space-y-6">
+<div class="max-w-7xl mx-auto space-y-4">
     @if (_loading)
     {
-        <div class="flex items-center justify-center py-12">
-            <p class="text-stone-400 animate-pulse text-sm">Loading workspace...</p>
+        <div class="flex items-center justify-center py-16">
+            <p class="text-cyber-tech-mono text-sm text-[var(--text-disabled)] animate-pulse">ESTABLISHING WORKSPACE STREAMS...</p>
         </div>
     }
     else if (_project == null)
     {
-        <div class="bg-red-950/20 border border-red-900/50 p-6 rounded-lg max-w-lg mx-auto text-center mt-12">
-            <h3 class="text-red-400 font-medium text-lg mb-2">Project Not Found</h3>
-            <p class="text-stone-300 text-sm mb-4">The project you are looking for does not exist or you do not have permission to view it.</p>
-            <a href="/projects/my-projects" class="inline-flex px-4 py-2 bg-stone-800 text-stone-100 rounded hover:bg-stone-700 text-xs font-semibold uppercase tracking-wider transition-colors">
-                Back to My Projects
+        <div class="cyber-panel p-6 max-w-lg mx-auto text-center mt-12 border-[var(--accent-warning)] bg-[var(--bg-primary)]">
+            <h3 class="text-cyber-title text-[var(--accent-warning)] mb-2 uppercase">Access Refused</h3>
+            <p class="text-cyber-body text-xs mb-4">The requested project stream does not exist or your identity unit lacks read authorization.</p>
+            <a href="/projects/my-projects" class="cyber-button text-xs inline-flex">
+                [ Return to List ]
             </a>
         </div>
     }
     else
     {
         <!-- Header -->
-        <header class="p-6 bg-base-blue-3 border border-white/5 rounded-xl shadow-lg relative overflow-hidden">
-            <div class="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-transparent pointer-events-none"></div>
-            <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                    <div class="flex items-center gap-3 mb-2">
-                        <span class="text-amber-500 text-[10px] font-bold tracking-[0.2em] uppercase">Workspace</span>
-                        <span class="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-[10px] text-amber-400 font-medium">
+        <header class="cyber-panel p-4 bg-[var(--bg-secondary)]">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                        <span class="text-cyber-metadata">SYS_WORKSPACE</span>
+                        <span class="px-2 py-0.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-cyber-metadata text-[10px]">
                             @_project.LiteraryGenre
                         </span>
                         @if (!string.IsNullOrEmpty(_project.UserRole))
                         {
-                            <span class="px-2 py-0.5 bg-stone-800 border border-stone-700 rounded-full text-[10px] text-stone-300 font-medium">
-                                @_project.UserRole
+                            <span class="px-2 py-0.5 bg-[var(--bg-primary)] border border-[var(--accent-primary)] text-[var(--accent-primary)] text-cyber-metadata text-[10px]">
+                                @_project.UserRole.ToUpper()
                             </span>
                         }
                     </div>
-                    <h1 class="text-stone-100 font-serif text-3xl font-light tracking-tight mb-2">
+                    <h1 class="text-cyber-display uppercase mt-1">
                         @_project.Title
                     </h1>
-                    <p class="text-stone-400 text-sm max-w-3xl leading-relaxed">
+                    <p class="text-cyber-body text-xs max-w-3xl">
                         @_project.Synopsis
                     </p>
                 </div>
-                <div class="shrink-0 flex gap-2">
-                    <a href="/projects/my-projects" class="px-4 py-2 border border-white/10 text-stone-300 hover:text-stone-100 hover:bg-white/5 rounded-lg text-xs font-medium tracking-wide transition-all">
-                        Back to List
+                <div class="shrink-0 flex gap-2 items-center">
+                    <button @onclick="ToggleVoiceDrawer"
+                            id="voice-toggle-btn"
+                            class="cyber-button text-xs py-1 px-3">
+                        [ VOICE_LINK ]
+                    </button>
+                    <a href="/projects/my-projects" class="cyber-button text-xs py-1 px-3">
+                        [ BACK ]
                     </a>
                 </div>
             </div>
         </header>
 
         <!-- Navigation Tabs -->
-        <div class="border-b border-white/5">
-            <nav class="flex gap-6" aria-label="Tabs">
+        <div class="border-b border-[var(--border-subtle)] pb-px">
+            <nav class="flex gap-4" aria-label="Tabs">
                 @foreach (var tab in _tabs)
                 {
                     var isSelected = _activeTab == tab.Id;
                     <button @onclick="() => SetActiveTab(tab.Id)"
-                            class="pb-3 text-sm font-medium tracking-wider relative transition-all duration-200 outline-none
-                                   @(isSelected ? "text-amber-400" : "text-stone-400 hover:text-stone-200")">
+                            class="pb-2 text-xs font-mono uppercase tracking-wider relative transition-all duration-100 outline-none
+                                   @(isSelected ? "text-[var(--accent-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]")">
                         @tab.Label
                         @if (isSelected)
                         {
-                            <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500 rounded-full transition-all"></div>
+                            <div class="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--accent-primary)]"></div>
                         }
                     </button>
                 }
@@ -80,7 +84,7 @@
         </div>
 
         <!-- Dynamic Content -->
-        <div class="transition-opacity duration-300">
+        <div class="transition-opacity duration-100">
             @if (_activeTab == "manuscript")
             {
                 <ManuscriptTab ProjectId="ProjectId" />
@@ -94,6 +98,8 @@
                 <GraphTab ProjectId="ProjectId" />
             }
         </div>
+
+        <VoiceDrawer ProjectId="ProjectId" @bind-IsOpen="_voiceDrawerOpen" />
     }
 </div>
 
@@ -104,6 +110,12 @@
     private Project? _project;
     private bool _loading = true;
     private string _activeTab = "manuscript";
+    private bool _voiceDrawerOpen = false;
+
+    private void ToggleVoiceDrawer()
+    {
+        _voiceDrawerOpen = !_voiceDrawerOpen;
+    }
 
     private readonly List<(string Id, string Label)> _tabs = new()
     {

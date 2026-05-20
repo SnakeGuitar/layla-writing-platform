@@ -160,4 +160,23 @@ public class ProjectService : IProjectService
             return false;
         }
     }
+
+    public async Task<bool> JoinPublicProjectAsync(Guid projectId)
+    {
+        try
+        {
+            await _client.SendAsync<object>(new APIRequest
+            {
+                Endpoint = $"/api/projects/{projectId}/join",
+                Method = HttpMethod.Post,
+                Token = Token,
+            });
+            return true;
+        }
+        catch (APIException ex)
+        {
+            _logger.LogWarning(ex, "JoinPublicProjectAsync({Id}) failed (HTTP {Status}).", projectId, ex.Status);
+            return false;
+        }
+    }
 }

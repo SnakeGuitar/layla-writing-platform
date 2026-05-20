@@ -5,7 +5,9 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       mc:Ignorable="d"
       d:DesignHeight="600" d:DesignWidth="800"
-      Title="NarrativeGraphView" Background="{DynamicResource WindowBackground}">
+      Title="NarrativeGraphView"
+      Background="{DynamicResource CyberBgPrimaryBrush}"
+      Foreground="{DynamicResource CyberTextPrimaryBrush}">
 
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -17,57 +19,55 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Border Padding="20,10" Background="{DynamicResource SidebarBackground}"
-                BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,0,1">
+        <Border Padding="20,10" Background="{DynamicResource CyberBgSecondaryBrush}"
+                BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="0,0,0,1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                    <TextBlock Text="Narrative Graph" FontSize="18" FontWeight="SemiBold"
-                               Foreground="{DynamicResource PrimaryText}"/>
+                    <TextBlock Text="NARRATIVE GRAPH" Style="{StaticResource CyberDisplayText}" FontSize="18"/>
                     <TextBlock Text="{Binding StatusMessage}"
-                               Foreground="{DynamicResource AccentColor}" FontSize="11"
+                               Style="{StaticResource CyberTechMonoText}" Foreground="{DynamicResource CyberAccentPrimaryBrush}" FontSize="11"
                                TextTrimming="CharacterEllipsis"/>
                 </StackPanel>
-                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <!-- Legend -->
                     <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
-                        <Border Width="10" Height="10" CornerRadius="5" Background="#4FC3F7" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Character" FontSize="10" Foreground="{DynamicResource SecondaryText}" VerticalAlignment="Center"/>
+                        <Border Width="6" Height="6" CornerRadius="0" Background="{DynamicResource CyberAccentPrimaryBrush}" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Character" Style="{StaticResource CyberLabel}" VerticalAlignment="Center"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
-                        <Border Width="10" Height="10" CornerRadius="5" Background="#81C784" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Location" FontSize="10" Foreground="{DynamicResource SecondaryText}" VerticalAlignment="Center"/>
+                        <Border Width="6" Height="6" CornerRadius="0" Background="{DynamicResource CyberTextPrimaryBrush}" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Location" Style="{StaticResource CyberLabel}" VerticalAlignment="Center"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
-                        <Border Width="10" Height="10" CornerRadius="5" Background="#FFB74D" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Event" FontSize="10" Foreground="{DynamicResource SecondaryText}" VerticalAlignment="Center"/>
+                        <Border Width="6" Height="6" CornerRadius="0" Background="{DynamicResource CyberAccentWarningBrush}" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Event" Style="{StaticResource CyberLabel}" VerticalAlignment="Center"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
-                        <Border Width="10" Height="10" CornerRadius="5" Background="#CE93D8" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Object" FontSize="10" Foreground="{DynamicResource SecondaryText}" VerticalAlignment="Center"/>
+                        <Border Width="6" Height="6" CornerRadius="0" Background="{DynamicResource CyberTextSecondaryBrush}" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Object" Style="{StaticResource CyberLabel}" VerticalAlignment="Center"/>
                     </StackPanel>
                     <StackPanel Orientation="Horizontal" Margin="0,0,16,0">
-                        <Border Width="10" Height="10" CornerRadius="5" Background="#90A4AE" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Concept" FontSize="10" Foreground="{DynamicResource SecondaryText}" VerticalAlignment="Center"/>
+                        <Border Width="6" Height="6" CornerRadius="0" Background="{DynamicResource CyberTextDisabledBrush}" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Concept" Style="{StaticResource CyberLabel}" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <Button x:Name="AddRelationshipButton" Content="+ Relationship" Command="{Binding OpenAddRelationshipCommand}"
-                            Padding="10,4" Margin="0,0,8,0"
-                            Background="Transparent" Foreground="{DynamicResource AccentColor}"
-                            BorderBrush="{DynamicResource AccentColor}" BorderThickness="1"
-                            Cursor="Hand" FontSize="12"/>
-                    <Button Content="Refresh" Command="{Binding LoadGraphCommand}"
-                            Padding="10,4" Background="{DynamicResource AccentColor}" Foreground="White"
-                            BorderThickness="0" Cursor="Hand" FontSize="12"/>
+                    
+                    <Button x:Name="AddRelationshipButton" Content="ADD RELATIONSHIP" Command="{Binding OpenAddRelationshipCommand}"
+                            Style="{StaticResource CyberButton}" Padding="10,4" Margin="0,0,8,0" Cursor="Hand" FontSize="11"/>
+                    
+                    <Button Content="REFRESH" Command="{Binding LoadGraphCommand}"
+                            Style="{StaticResource CyberButton}" BorderBrush="{DynamicResource CyberAccentPrimaryBrush}" Foreground="{DynamicResource CyberAccentPrimaryBrush}"
+                            Padding="10,4" Cursor="Hand" FontSize="11"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="{DynamicResource CyberBgPrimaryBrush}">
             <Canvas x:Name="GraphCanvas" Width="1200" Height="800"
-                    Background="{DynamicResource ControlBackground}" Margin="20"
+                    Background="{DynamicResource CyberBgSecondaryBrush}" Margin="20"
                     MouseLeftButtonDown="GraphCanvas_MouseLeftButtonDown"
                     MouseMove="GraphCanvas_MouseMove"
                     MouseLeftButtonUp="GraphCanvas_MouseLeftButtonUp"/>
@@ -76,59 +76,38 @@
         <!-- ═══ Add Relationship Modal ═══ -->
         <Border Visibility="{Binding IsAddRelationshipVisible, Converter={StaticResource BoolToVis}}"
                 Background="#CC000000" Panel.ZIndex="100" Grid.RowSpan="2">
-            <Border Background="{DynamicResource WindowBackground}" Width="420"
+            <Border Style="{StaticResource CyberPanelBorder}" Background="{DynamicResource CyberBgElevatedBrush}" Width="420"
                     HorizontalAlignment="Center" VerticalAlignment="Center"
-                    Padding="20" CornerRadius="8">
+                    Padding="20">
                 <StackPanel>
-                    <TextBlock Text="Add Relationship" FontSize="18" FontWeight="Bold"
-                               Foreground="{DynamicResource PrimaryText}" Margin="0,0,0,15"/>
+                    <TextBlock Text="ADD RELATIONSHIP" Style="{StaticResource CyberDisplayText}" FontSize="18" Margin="0,0,0,15"/>
 
-                    <TextBlock Text="Source Entity:" FontSize="12" FontWeight="Medium"
-                               Foreground="{DynamicResource SecondaryText}" Margin="0,0,0,4"/>
+                    <TextBlock Text="SOURCE ENTITY:" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
                     <ComboBox ItemsSource="{Binding AvailableEntities}"
-                              SelectedItem="{Binding NewRelSource}"
-                              DisplayMemberPath="Name" Height="30" Margin="0,0,0,10"
-                              Background="{DynamicResource ControlBackground}"
-                              Foreground="{DynamicResource PrimaryText}"
-                              BorderBrush="{DynamicResource BorderColor}"/>
+                               SelectedItem="{Binding NewRelSource}"
+                               DisplayMemberPath="Name" Height="30" Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Target Entity:" FontSize="12" FontWeight="Medium"
-                               Foreground="{DynamicResource SecondaryText}" Margin="0,0,0,4"/>
+                    <TextBlock Text="TARGET ENTITY:" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
                     <ComboBox ItemsSource="{Binding AvailableEntities}"
-                              SelectedItem="{Binding NewRelTarget}"
-                              DisplayMemberPath="Name" Height="30" Margin="0,0,0,10"
-                              Background="{DynamicResource ControlBackground}"
-                              Foreground="{DynamicResource PrimaryText}"
-                              BorderBrush="{DynamicResource BorderColor}"/>
+                               SelectedItem="{Binding NewRelTarget}"
+                               DisplayMemberPath="Name" Height="30" Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Relationship Type:" FontSize="12" FontWeight="Medium"
-                               Foreground="{DynamicResource SecondaryText}" Margin="0,0,0,4"/>
+                    <TextBlock Text="RELATIONSHIP TYPE:" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
                     <ComboBox ItemsSource="{Binding RelationshipTypes}"
-                              SelectedItem="{Binding NewRelType}" Height="30" Margin="0,0,0,10"
-                              Background="{DynamicResource ControlBackground}"
-                              Foreground="{DynamicResource PrimaryText}"
-                              BorderBrush="{DynamicResource BorderColor}"/>
+                               SelectedItem="{Binding NewRelType}" Height="30" Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Label (optional):" FontSize="12" FontWeight="Medium"
-                               Foreground="{DynamicResource SecondaryText}" Margin="0,0,0,4"/>
+                    <TextBlock Text="LABEL (OPTIONAL):" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
                     <TextBox Text="{Binding NewRelLabel, UpdateSourceTrigger=PropertyChanged}"
-                             Height="28" Padding="5,3" Margin="0,0,0,10"
-                             Background="{DynamicResource ControlBackground}"
-                             Foreground="{DynamicResource PrimaryText}"
-                             BorderBrush="{DynamicResource BorderColor}"/>
+                              Height="28" Margin="0,0,0,10"/>
 
-                    <TextBlock Text="{Binding AddRelError}" Foreground="IndianRed" FontSize="12"
+                    <TextBlock Text="{Binding AddRelError}" Style="{StaticResource CyberTechMonoText}" Foreground="{DynamicResource CyberAccentWarningBrush}" FontSize="11"
                                Margin="0,0,0,8" TextWrapping="Wrap"/>
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Cancel" Padding="15,6" Margin="0,0,8,0"
-                                Background="Transparent" Foreground="{DynamicResource SecondaryText}"
-                                BorderThickness="0" Cursor="Hand"
+                        <Button Content="CANCEL" Style="{StaticResource CyberButton}" Padding="15,6" Margin="0,0,8,0" Cursor="Hand"
                                 Command="{Binding CancelAddRelationshipCommand}"/>
-                        <Button Content="Create" Padding="15,6"
-                                Background="{DynamicResource AccentColor}" Foreground="White"
-                                BorderThickness="0" Cursor="Hand" FontWeight="SemiBold"
-                                Command="{Binding ConfirmAddRelationshipCommand}"/>
+                        <Button Content="CREATE" Style="{StaticResource CyberButton}" BorderBrush="{DynamicResource CyberAccentPrimaryBrush}" Foreground="{DynamicResource CyberAccentPrimaryBrush}" Padding="15,6"
+                                Cursor="Hand" Command="{Binding ConfirmAddRelationshipCommand}"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
