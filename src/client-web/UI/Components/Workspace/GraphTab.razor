@@ -1,0 +1,419 @@
+@using client_web.Application.Services.Graph
+@using client_web.Models.Worldbuilding
+@using Microsoft.AspNetCore.Components.Web
+@inject IGraphService GraphService
+
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[700px]">
+    <!-- Left Column: SVG Interactive Narrative Canvas (3/4 Width) -->
+    <div class="lg:col-span-3 p-4 bg-base-blue-3 border border-white/5 rounded-xl flex flex-col h-full overflow-hidden shadow-md relative">
+        <div class="flex items-center justify-between border-b border-white/5 pb-3 mb-3 shrink-0">
+            <div class="flex items-center gap-2">
+                <h3 class="text-stone-200 text-sm font-semibold tracking-wider uppercase">Narrative Map</h3>
+                <span class="text-[10px] text-stone-500 bg-white/5 px-2 py-0.5 rounded font-mono">Neo4j Database Network</span>
+            </div>
+            <div class="flex gap-2">
+                <button @onclick="RecalculateLayout" 
+                        class="px-2 py-1 border border-white/10 hover:bg-white/5 text-stone-300 text-xs font-semibold rounded transition-all">
+                    Reset Coordinates
+                </button>
+            </div>
+        </div>
+
+        <!-- SVG Canvas Area -->
+        <div class="flex-1 bg-stone-950/45 rounded-lg border border-white/5 overflow-hidden relative select-none"
+             @onmousemove="HandleMouseMove"
+             @onmouseup="HandleMouseUp">
+            
+            @if (_loading)
+            {
+                <div class="absolute inset-0 flex items-center justify-center bg-stone-950/60 z-10">
+                    <p class="text-stone-400 animate-pulse text-xs">Loading narrative graph...</p>
+                </div>
+            }
+            else if (_graphResult == null || _graphResult.Nodes.Count == 0)
+            {
+                <div class="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+                    <span class="text-stone-600 text-4xl mb-3">🕸️</span>
+                    <p class="text-stone-400 text-sm mb-1 font-semibold">Graph is Empty</p>
+                    <p class="text-stone-500 text-xs max-w-xs leading-relaxed">
+                        Create wiki entries in the Lorebook tab first, then return here to design interactive networks!
+                    </p>
+                </div>
+            }
+            else
+            {
+                <svg width="100%" height="100%" class="w-full h-full cursor-grab active:cursor-grabbing">
+                    <defs>
+                        <!-- Directed Connection Arrow Marker -->
+                        <marker id="arrow" viewBox="0 0 10 10" refX="28" refY="5" 
+                                markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M 0 0 L 10 5 L 0 10 z" fill="#c0884a" />
+                        </marker>
+                    </defs>
+
+                    <!-- Render Connection Edges / Lines -->
+                    @foreach (var edge in _graphResult.Edges)
+                    {
+                        if (edge.Source != null && edge.Target != null)
+                        {
+                            var isSelected = _selectedEdge == edge;
+                            <g class="cursor-pointer" @onclick="() => SelectEdge(edge)" @onclick:stopPropagation="true">
+                                <!-- Thicker hit area line -->
+                                <line x1="@edge.Source.X" y1="@edge.Source.Y" 
+                                      x2="@edge.Target.X" y2="@edge.Target.Y" 
+                                      stroke="transparent" stroke-width="12" />
+
+                                <!-- Main visual line -->
+                                <line x1="@edge.Source.X" y1="@edge.Source.Y" 
+                                      x2="@edge.Target.X" y2="@edge.Target.Y" 
+                                      stroke="@(isSelected ? "#f59e0b" : "rgba(255,255,255,0.15)")" 
+                                      stroke-width="@(isSelected ? "2" : "1.5")"
+                                      stroke-dasharray="@(isSelected ? "4,4" : "none")"
+                                      marker-end="url(#arrow)" 
+                                      class="transition-all" />
+
+                                <!-- Relationship Label Pill at Midpoint -->
+                                @{
+                                    var midX = (edge.Source.X + edge.Target.X) / 2;
+                                    var midY = (edge.Source.Y + edge.Target.Y) / 2;
+                                }
+                                <g transform="translate(@midX, @midY)">
+                                    <rect x="-35" y="-7" width="70" height="14" rx="3" 
+                                          fill="#0c0d10" stroke="@(isSelected ? "#f59e0b" : "rgba(255,255,255,0.05)")" stroke-width="1" />
+                                    <text y="3" fill="@(isSelected ? "#f59e0b" : "#8a9099")" font-size="8" 
+                                          font-weight="bold" text-anchor="middle" font-family="sans-serif">
+                                        @edge.Label
+                                    </text>
+                                </g>
+                            </g>
+                        }
+                    }
+
+                    <!-- Render Nodes / Circles -->
+                    @foreach (var node in _graphResult.Nodes)
+                    {
+                        var isSelected = _selectedNode?.EntityId == node.EntityId;
+                        var colorClass = node.EntityType == "Character" ? "#3b82f6" :
+                                         node.EntityType == "Location" ? "#10b981" :
+                                         node.EntityType == "Event" ? "#a855f7" : "#f59e0b";
+
+                        <g class="cursor-pointer" transform="translate(0, 0)"
+                           @onmousedown="(e) => HandleMouseDown(node, e)"
+                           @onclick="() => SelectNode(node)" @onclick:stopPropagation="true">
+                            
+                            <!-- Circle outer halo on select -->
+                            @if (isSelected)
+                            {
+                                <circle cx="@node.X" cy="@node.Y" r="@(node.Radius + 4)" 
+                                        fill="none" stroke="#f59e0b" stroke-width="2" />
+                            }
+                            
+                            <!-- Base circle -->
+                            <circle cx="@node.X" cy="@node.Y" r="@node.Radius" 
+                                    fill="#16171a" stroke="@colorClass" stroke-width="2" 
+                                    class="transition-all hover:scale-105" />
+
+                            <!-- Node Text Label inside or below circle -->
+                            <text x="@node.X" y="@(node.Y + 3)" fill="#ffffff" font-size="10" 
+                                  font-weight="600" text-anchor="middle" font-family="sans-serif">
+                                @TruncateName(node.Name)
+                            </text>
+
+                            <!-- Mini Entity Type Badge at the top -->
+                            <rect x="@(node.X - 18)" y="@(node.Y - node.Radius - 4)" width="36" height="8" rx="2" 
+                                  fill="#0c0d10" stroke="@colorClass" stroke-width="0.5" />
+                            <text x="@node.X" y="@(node.Y - node.Radius + 2)" fill="@colorClass" font-size="6" 
+                                  font-weight="bold" text-anchor="middle" font-family="sans-serif" class="uppercase">
+                                @node.EntityType
+                            </text>
+                        </g>
+                    }
+                </svg>
+            }
+        </div>
+    </div>
+
+    <!-- Right Column: Relationship Creator & Inspector (1/4 Width) -->
+    <div class="lg:col-span-1 p-4 bg-base-blue-3 border border-white/5 rounded-xl flex flex-col h-full overflow-hidden shadow-md justify-between">
+        <div class="space-y-6 overflow-y-auto pr-1">
+            <!-- Selector Section -->
+            <div class="border-b border-white/5 pb-3">
+                <h3 class="text-stone-200 text-sm font-semibold tracking-wider uppercase mb-1">Graph Inspector</h3>
+                <p class="text-stone-500 text-[10px] leading-relaxed">
+                    Click nodes or connection lines on the canvas to inspect, delete, or build relationships. Drag nodes to customize layouts.
+                </p>
+            </div>
+
+            <!-- Context Inspector Panel -->
+            @if (_selectedNode != null)
+            {
+                <div class="p-3 bg-white/5 rounded-lg border border-white/5 space-y-2 text-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="text-amber-500 text-[9px] uppercase font-bold">Selected Node</span>
+                        <button @onclick="ClearSelections" class="text-stone-500 hover:text-stone-300">✕</button>
+                    </div>
+                    <h4 class="text-stone-200 font-bold text-sm">@_selectedNode.Name</h4>
+                    <p class="text-stone-400 text-[10px] leading-relaxed">Type: <strong class="text-stone-300">@_selectedNode.EntityType</strong></p>
+                    <button @onclick="() => StartRelationshipFrom(_selectedNode)" 
+                            class="w-full mt-2 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-300 text-[10px] font-bold rounded uppercase tracking-wider hover:bg-amber-500/20 transition-all">
+                        Link from here
+                    </button>
+                </div>
+            }
+            else if (_selectedEdge != null)
+            {
+                <div class="p-3 bg-white/5 rounded-lg border border-white/5 space-y-2 text-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="text-amber-500 text-[9px] uppercase font-bold">Selected Relationship</span>
+                        <button @onclick="ClearSelections" class="text-stone-500 hover:text-stone-300">✕</button>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-stone-400 font-medium">Source: <strong class="text-stone-200">@_selectedEdge.Source?.Name</strong></span>
+                        <span class="text-stone-400 font-medium">Target: <strong class="text-stone-200">@_selectedEdge.Target?.Name</strong></span>
+                        <span class="text-stone-400 font-medium">Type: <strong class="text-amber-400 uppercase font-mono text-[10px]">@_selectedEdge.Label</strong></span>
+                    </div>
+                    <button @onclick="DeleteRelationshipAsync" 
+                            class="w-full mt-2 py-1.5 bg-red-950/20 border border-red-900/40 text-red-400 text-[10px] font-bold rounded uppercase tracking-wider hover:bg-red-950/40 transition-all">
+                        Remove Relationship
+                    </button>
+                </div>
+            }
+
+            <!-- Relationship Creator Panel -->
+            <div class="space-y-3 pt-2">
+                <h4 class="text-stone-200 text-xs font-semibold uppercase tracking-wider">Create Relationship</h4>
+                
+                <div class="space-y-1 text-[11px]">
+                    <label class="text-stone-400">Source Entity</label>
+                    <select @bind="_creatorSourceId"
+                            class="w-full px-3 py-1.5 bg-stone-900 border border-white/10 rounded text-stone-200 focus:outline-none focus:border-amber-500">
+                        <option value="">-- Select Source --</option>
+                        @if (_graphResult != null)
+                        {
+                            @foreach (var n in _graphResult.Nodes)
+                            {
+                                <option value="@n.EntityId">@n.Name (@n.EntityType)</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="space-y-1 text-[11px]">
+                    <label class="text-stone-400">Target Entity</label>
+                    <select @bind="_creatorTargetId"
+                            class="w-full px-3 py-1.5 bg-stone-900 border border-white/10 rounded text-stone-200 focus:outline-none focus:border-amber-500">
+                        <option value="">-- Select Target --</option>
+                        @if (_graphResult != null)
+                        {
+                            @foreach (var n in _graphResult.Nodes)
+                            {
+                                <option value="@n.EntityId">@n.Name (@n.EntityType)</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="space-y-1 text-[11px]">
+                    <label class="text-stone-400">Relationship Type</label>
+                    <input @bind="_creatorType" placeholder="e.g. LOCATED_IN, FRIEND_OF"
+                           class="w-full px-3 py-1.5 bg-stone-900 border border-white/10 rounded text-stone-200 focus:outline-none focus:border-amber-500" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Creator Button -->
+        <div class="pt-4 border-t border-white/5 shrink-0">
+            <button @onclick="CreateRelationshipAsync"
+                    class="w-full py-2 bg-amber-500 text-stone-950 font-bold rounded-lg hover:bg-amber-400 text-xs uppercase tracking-wider transition-all">
+                Connect Entities
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Guid ProjectId { get; set; }
+
+    private GraphResult? _graphResult;
+    private bool _loading = true;
+
+    // Selections
+    private GraphNode? _selectedNode;
+    private GraphEdge? _selectedEdge;
+
+    // Coordinates drag state
+    private GraphNode? _draggedNode;
+    private double _lastMouseX;
+    private double _lastMouseY;
+
+    // Creator State
+    private string _creatorSourceId = string.Empty;
+    private string _creatorTargetId = string.Empty;
+    private string _creatorType = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadGraphAsync();
+    }
+
+    private async Task LoadGraphAsync()
+    {
+        _loading = true;
+        try
+        {
+            var res = await GraphService.GetGraphAsync(ProjectId);
+            _graphResult = res ?? new GraphResult();
+
+            // Link edge references and project circular coordinates
+            if (_graphResult.Nodes != null && _graphResult.Nodes.Count > 0)
+            {
+                DistributeNodesInCircle();
+                LinkEdges();
+            }
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void DistributeNodesInCircle()
+    {
+        if (_graphResult == null || _graphResult.Nodes == null) return;
+
+        var count = _graphResult.Nodes.Count;
+        for (int i = 0; i < count; i++)
+        {
+            var node = _graphResult.Nodes[i];
+            // Only distribute nodes that have default zero coordinates
+            if (node.X == 0 && node.Y == 0)
+            {
+                var angle = i * 2 * Math.PI / count;
+                // Center in a 550x550 virtual space, with radius 170
+                node.X = 280 + Math.Cos(angle) * 160;
+                node.Y = 250 + Math.Sin(angle) * 160;
+            }
+        }
+    }
+
+    private void RecalculateLayout()
+    {
+        if (_graphResult == null || _graphResult.Nodes == null) return;
+        
+        // Zero out coordinates to force re-distribution
+        foreach (var node in _graphResult.Nodes)
+        {
+            node.X = 0;
+            node.Y = 0;
+        }
+        DistributeNodesInCircle();
+    }
+
+    private void LinkEdges()
+    {
+        if (_graphResult == null || _graphResult.Edges == null || _graphResult.Nodes == null) return;
+
+        foreach (var edge in _graphResult.Edges)
+        {
+            edge.Source = _graphResult.Nodes.Find(n => n.EntityId == edge.SourceId);
+            edge.Target = _graphResult.Nodes.Find(n => n.EntityId == edge.TargetId);
+        }
+    }
+
+    private void SelectNode(GraphNode node)
+    {
+        _selectedEdge = null;
+        _selectedNode = node;
+    }
+
+    private void SelectEdge(GraphEdge edge)
+    {
+        _selectedNode = null;
+        _selectedEdge = edge;
+    }
+
+    private void ClearSelections()
+    {
+        _selectedNode = null;
+        _selectedEdge = null;
+    }
+
+    private void StartRelationshipFrom(GraphNode node)
+    {
+        _creatorSourceId = node.EntityId;
+    }
+
+    private void HandleMouseDown(GraphNode node, MouseEventArgs e)
+    {
+        _draggedNode = node;
+        _lastMouseX = e.ClientX;
+        _lastMouseY = e.ClientY;
+    }
+
+    private void HandleMouseMove(MouseEventArgs e)
+    {
+        if (_draggedNode != null)
+        {
+            var dx = e.ClientX - _lastMouseX;
+            var dy = e.ClientY - _lastMouseY;
+            _draggedNode.X += dx;
+            _draggedNode.Y += dy;
+            _lastMouseX = e.ClientX;
+            _lastMouseY = e.ClientY;
+        }
+    }
+
+    private void HandleMouseUp()
+    {
+        _draggedNode = null;
+    }
+
+    private async Task CreateRelationshipAsync()
+    {
+        if (string.IsNullOrEmpty(_creatorSourceId) || string.IsNullOrEmpty(_creatorTargetId) || string.IsNullOrEmpty(_creatorType))
+            return;
+
+        if (_creatorSourceId == _creatorTargetId) return;
+
+        var success = await GraphService.CreateRelationshipAsync(
+            ProjectId,
+            _creatorSourceId,
+            _creatorTargetId,
+            _creatorType.Trim().ToUpper(),
+            _creatorType.Trim().ToUpper()
+        );
+
+        if (success)
+        {
+            _creatorType = string.Empty;
+            _creatorTargetId = string.Empty;
+            _creatorSourceId = string.Empty;
+            ClearSelections();
+            await LoadGraphAsync();
+        }
+    }
+
+    private async Task DeleteRelationshipAsync()
+    {
+        if (_selectedEdge == null) return;
+
+        var success = await GraphService.DeleteRelationshipAsync(
+            ProjectId,
+            _selectedEdge.SourceId,
+            _selectedEdge.TargetId
+        );
+
+        if (success)
+        {
+            ClearSelections();
+            await LoadGraphAsync();
+        }
+    }
+
+    private string TruncateName(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return string.Empty;
+        return name.Length > 10 ? name.Substring(0, 8) + ".." : name;
+    }
+}

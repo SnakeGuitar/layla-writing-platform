@@ -1,0 +1,374 @@
+@using client_web.Application.Services.Wikis
+@using client_web.Models.Worldbuilding
+@inject IWikiService WikiService
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[700px]">
+    <!-- Left Column: Search, Filter, and Entries list -->
+    <div class="lg:col-span-1 p-4 bg-base-blue-3 border border-white/5 rounded-xl flex flex-col h-full overflow-hidden shadow-md">
+        <!-- Search & Add Entry Button -->
+        <div class="shrink-0 space-y-3 mb-4">
+            <div class="flex items-center justify-between">
+                <h3 class="text-stone-200 text-sm font-semibold tracking-wider uppercase">Wiki Entries</h3>
+                <button @onclick="ShowCreateForm" 
+                        class="px-2 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-300 hover:bg-amber-500/20 hover:text-amber-200 text-xs font-semibold rounded transition-all">
+                    + New Entry
+                </button>
+            </div>
+            
+            <input @bind="_searchText" @bind:event="oninput" placeholder="Search entries..."
+                   class="w-full px-3 py-1.5 bg-stone-900 border border-white/10 rounded-lg text-xs text-stone-200 focus:outline-none focus:border-amber-500/30" />
+            
+            <!-- Type Filters -->
+            <div class="flex flex-wrap gap-1">
+                @foreach (var type in _entityTypes)
+                {
+                    var isSelected = _filterType == type;
+                    <button @onclick="() => SetFilterType(type)"
+                            class="px-2 py-1 text-[10px] font-bold rounded uppercase tracking-wider border transition-all
+                                   @(isSelected ? "bg-amber-500/20 border-amber-500/30 text-amber-400" : "bg-transparent border-white/5 text-stone-400 hover:text-stone-200")">
+                        @type
+                    </button>
+                }
+            </div>
+        </div>
+
+        <!-- Create Entry Inline Form -->
+        @if (_showCreateForm)
+        {
+            <div class="p-3 bg-white/5 rounded-lg border border-white/5 mb-4 shrink-0 space-y-2 text-xs">
+                <h4 class="text-stone-200 font-semibold mb-1">Create Lore Entry</h4>
+                <input @bind="_newEntryName" placeholder="Entry Name (e.g. Elena Voss)" 
+                       class="w-full px-3 py-1.5 bg-stone-900 border border-white/10 rounded text-stone-200 focus:outline-none focus:border-amber-500" />
+                
+                <select @bind="_newEntryType" 
+                        class="w-full px-3 py-1.5 bg-stone-900 border border-white/10 rounded text-stone-200 focus:outline-none focus:border-amber-500">
+                    <option value="Character">Character</option>
+                    <option value="Location">Location</option>
+                    <option value="Event">Event</option>
+                    <option value="Object">Object</option>
+                </select>
+
+                <textarea @bind="_newEntryDescription" placeholder="Description..." rows="2"
+                          class="w-full px-3 py-1.5 bg-stone-900 border border-white/10 rounded text-stone-200 focus:outline-none focus:border-amber-500"></textarea>
+
+                <input @bind="_newEntryTags" placeholder="Tags (comma separated: pilot, rebel)" 
+                       class="w-full px-3 py-1.5 bg-stone-900 border border-white/10 rounded text-stone-200 focus:outline-none focus:border-amber-500" />
+
+                <div class="flex justify-end gap-2">
+                    <button @onclick="CancelCreateForm" class="px-2 py-1 text-stone-400 hover:text-stone-200">Cancel</button>
+                    <button @onclick="CreateEntryAsync" class="px-2 py-1 bg-amber-500 text-stone-950 font-bold rounded hover:bg-amber-400">Save</button>
+                </div>
+            </div>
+        }
+
+        <!-- Entries List -->
+        <div class="flex-1 overflow-y-auto pr-1 space-y-2">
+            @if (_loading)
+            {
+                <p class="text-stone-500 text-xs animate-pulse">Loading wiki entries...</p>
+            }
+            else
+            {
+                var filtered = GetFilteredEntries();
+                if (filtered.Count == 0)
+                {
+                    <p class="text-stone-500 text-xs text-center py-4">No matching lore entries found.</p>
+                }
+                else
+                {
+                    @foreach (var entry in filtered)
+                    {
+                        var isSelected = _selectedEntry?.EntityId == entry.EntityId;
+                        <div @onclick="() => SelectEntry(entry)"
+                             class="p-3 bg-stone-950/20 border rounded-lg cursor-pointer transition-all hover:bg-white/5 hover:border-white/10
+                                    @(isSelected ? "border-amber-500/50 bg-amber-500/5" : "border-white/5")">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span class="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded
+                                             @(entry.EntityType == "Character" ? "bg-blue-500/10 text-blue-400 border border-blue-500/25" :
+                                               entry.EntityType == "Location" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/25" :
+                                               entry.EntityType == "Event" ? "bg-purple-500/10 text-purple-400 border border-purple-500/25" :
+                                               "bg-amber-500/10 text-amber-400 border border-amber-500/25")">
+                                    @entry.EntityType
+                                </span>
+                                @if (entry.Neo4jSynced)
+                                {
+                                    <span class="text-[9px] text-emerald-500 font-medium">✓ Linked</span>
+                                }
+                            </div>
+                            <h4 class="text-stone-200 font-medium text-sm mb-1 truncate">@entry.Name</h4>
+                            <p class="text-stone-400 text-xs line-clamp-2 leading-relaxed">@entry.Description</p>
+                            @if (entry.Tags != null && entry.Tags.Count > 0)
+                            {
+                                <div class="flex flex-wrap gap-1 mt-2">
+                                    @foreach (var tag in entry.Tags)
+                                    {
+                                        <span class="text-[9px] text-stone-500 bg-white/5 px-1 rounded">#@tag</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+            }
+        </div>
+    </div>
+
+    <!-- Right Column: Detail / Edit panel -->
+    <div class="lg:col-span-2 p-6 bg-base-blue-3 border border-white/5 rounded-xl flex flex-col h-full overflow-hidden shadow-md">
+        @if (_selectedEntry == null)
+        {
+            <div class="flex-1 flex flex-col items-center justify-center text-center">
+                <span class="text-stone-600 text-5xl mb-4">📖</span>
+                <h3 class="text-stone-400 font-medium mb-1">No Lore Selected</h3>
+                <p class="text-stone-500 text-xs max-w-sm leading-relaxed">
+                    Select a lore card from the list to view its complete narrative description, classification tags, and real-time appearances in manuscripts.
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="flex-1 overflow-y-auto pr-2 space-y-6">
+                <!-- Header Block -->
+                <div class="flex items-center justify-between border-b border-white/5 pb-4">
+                    <div>
+                        <span class="text-[10px] uppercase tracking-wider font-bold text-amber-500">Lore Detail</span>
+                        <h2 class="text-stone-100 font-serif text-xl font-light">@_selectedEntry.Name</h2>
+                    </div>
+                    <button @onclick="DeleteEntryAsync" 
+                            class="px-3 py-1 border border-red-950 text-red-400 bg-red-950/10 hover:bg-red-950/30 rounded text-xs transition-all">
+                        Delete Lore
+                    </button>
+                </div>
+
+                <!-- Fields Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div class="space-y-1">
+                        <label class="text-stone-400 uppercase font-semibold text-[10px]">Name</label>
+                        <input @bind="_selectedEntry.Name" 
+                               class="w-full px-3 py-2 bg-stone-900/50 border border-white/10 rounded-lg text-stone-200 focus:outline-none focus:border-amber-500" />
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-stone-400 uppercase font-semibold text-[10px]">Entity Type</label>
+                        <select @bind="_selectedEntry.EntityType" 
+                                class="w-full px-3 py-2 bg-stone-900/50 border border-white/10 rounded-lg text-stone-200 focus:outline-none focus:border-amber-500">
+                            <option value="Character">Character</option>
+                            <option value="Location">Location</option>
+                            <option value="Event">Event</option>
+                            <option value="Object">Object</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="space-y-1 text-xs">
+                    <label class="text-stone-400 uppercase font-semibold text-[10px]">Tags (Comma separated)</label>
+                    <input @bind="_tagsCsv" 
+                           class="w-full px-3 py-2 bg-stone-900/50 border border-white/10 rounded-lg text-stone-200 focus:outline-none focus:border-amber-500" />
+                </div>
+
+                <div class="space-y-1 text-xs">
+                    <label class="text-stone-400 uppercase font-semibold text-[10px]">Lore Description</label>
+                    <textarea @bind="_selectedEntry.Description" rows="6"
+                              class="w-full px-3 py-2 bg-stone-900/50 border border-white/10 rounded-lg text-stone-200 focus:outline-none focus:border-amber-500 font-serif leading-relaxed"
+                              placeholder="Write the lore, backstory, descriptions, or secrets..."></textarea>
+                </div>
+
+                <!-- Update Button -->
+                <div class="flex justify-end pt-2">
+                    <button @onclick="UpdateEntryAsync" 
+                            class="px-4 py-2 bg-amber-500 text-stone-950 font-bold rounded-lg hover:bg-amber-400 text-xs transition-colors">
+                        Save Lore Changes
+                    </button>
+                </div>
+
+                <!-- Appearances section (Neo4j linkage) -->
+                <div class="border-t border-white/5 pt-4">
+                    <h3 class="text-stone-200 text-sm font-semibold tracking-wider uppercase mb-3">Chapter Appearances (Neo4j Linkages)</h3>
+                    @if (_loadingAppearances)
+                    {
+                        <p class="text-stone-500 text-xs animate-pulse">Scanning manuscripts for mentions...</p>
+                    }
+                    else if (_appearances == null || _appearances.Count == 0)
+                    {
+                        <p class="text-stone-600 text-xs italic">This entity has no tracked mentions in manuscripts. Use the entity name exactly in your chapters to link it automatically in the narrative graph.</p>
+                    }
+                    else
+                    {
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                            @foreach (var app in _appearances)
+                            {
+                                <div class="p-2 bg-white/5 rounded border border-white/5 flex flex-col">
+                                    <span class="text-[9px] uppercase tracking-wider text-amber-500 font-bold mb-0.5">@app.ManuscriptTitle</span>
+                                    <span class="text-stone-200 truncate font-serif">@app.ChapterTitle</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Guid ProjectId { get; set; }
+
+    private List<WikiEntry>? _entries;
+    private bool _loading = true;
+
+    // Filters and search
+    private string _searchText = string.Empty;
+    private string _filterType = "All";
+    private readonly List<string> _entityTypes = new() { "All", "Character", "Location", "Event", "Object" };
+
+    // Detail state
+    private WikiEntry? _selectedEntry;
+    private string _tagsCsv = string.Empty;
+    private List<AppearanceRecord>? _appearances;
+    private bool _loadingAppearances = false;
+
+    // Create Form state
+    private bool _showCreateForm = false;
+    private string _newEntryName = string.Empty;
+    private string _newEntryType = "Character";
+    private string _newEntryDescription = string.Empty;
+    private string _newEntryTags = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadEntriesAsync();
+    }
+
+    private async Task LoadEntriesAsync()
+    {
+        _loading = true;
+        try
+        {
+            var result = await WikiService.GetEntriesAsync(ProjectId);
+            _entries = result ?? new List<WikiEntry>();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private List<WikiEntry> GetFilteredEntries()
+    {
+        if (_entries == null) return new List<WikiEntry>();
+
+        return _entries.Where(e =>
+        {
+            var matchesType = _filterType == "All" || string.Equals(e.EntityType, _filterType, StringComparison.OrdinalIgnoreCase);
+            var matchesSearch = string.IsNullOrEmpty(_searchText) ||
+                                e.Name.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                                e.Description.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                                (e.Tags != null && e.Tags.Any(t => t.Contains(_searchText, StringComparison.OrdinalIgnoreCase)));
+            return matchesType && matchesSearch;
+        }).ToList();
+    }
+
+    private void SetFilterType(string type)
+    {
+        _filterType = type;
+    }
+
+    private void ShowCreateForm()
+    {
+        _showCreateForm = true;
+        _newEntryName = string.Empty;
+        _newEntryType = "Character";
+        _newEntryDescription = string.Empty;
+        _newEntryTags = string.Empty;
+    }
+
+    private void CancelCreateForm()
+    {
+        _showCreateForm = false;
+    }
+
+    private async Task CreateEntryAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_newEntryName)) return;
+
+        var tagsList = _newEntryTags
+            .Split(',')
+            .Select(t => t.Trim())
+            .Where(t => !string.IsNullOrEmpty(t))
+            .ToList();
+
+        var created = await WikiService.CreateEntryAsync(ProjectId, _newEntryName, _newEntryType, _newEntryDescription, tagsList);
+        if (created != null)
+        {
+            await LoadEntriesAsync();
+            _selectedEntry = created;
+            _tagsCsv = string.Join(", ", created.Tags);
+            await LoadAppearancesAsync(created.EntityId);
+            _showCreateForm = false;
+        }
+    }
+
+    private async Task SelectEntry(WikiEntry entry)
+    {
+        _selectedEntry = entry;
+        _tagsCsv = entry.Tags != null ? string.Join(", ", entry.Tags) : string.Empty;
+        await LoadAppearancesAsync(entry.EntityId);
+    }
+
+    private async Task LoadAppearancesAsync(string entityId)
+    {
+        _loadingAppearances = true;
+        _appearances = null;
+        try
+        {
+            _appearances = await WikiService.GetEntityAppearancesAsync(ProjectId, entityId);
+        }
+        catch (Exception)
+        {
+            _appearances = null;
+        }
+        finally
+        {
+            _loadingAppearances = false;
+        }
+    }
+
+    private async Task UpdateEntryAsync()
+    {
+        if (_selectedEntry == null) return;
+
+        var tagsList = _tagsCsv
+            .Split(',')
+            .Select(t => t.Trim())
+            .Where(t => !string.IsNullOrEmpty(t))
+            .ToList();
+
+        var updated = await WikiService.UpdateEntryAsync(
+            ProjectId,
+            _selectedEntry.EntityId,
+            _selectedEntry.Name,
+            _selectedEntry.EntityType,
+            _selectedEntry.Description,
+            tagsList
+        );
+
+        if (updated != null)
+        {
+            await LoadEntriesAsync();
+            _selectedEntry = updated;
+            _tagsCsv = string.Join(", ", updated.Tags);
+        }
+    }
+
+    private async Task DeleteEntryAsync()
+    {
+        if (_selectedEntry == null) return;
+
+        var success = await WikiService.DeleteEntryAsync(ProjectId, _selectedEntry.EntityId);
+        if (success)
+        {
+            _selectedEntry = null;
+            await LoadEntriesAsync();
+        }
+    }
+}
