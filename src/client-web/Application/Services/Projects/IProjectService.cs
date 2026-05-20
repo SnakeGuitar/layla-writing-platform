@@ -16,6 +16,7 @@ public interface IProjectService
     Task<Project?> CreateProjectAsync(CreateProjectRequest request);
     Task<Project?> UpdateProjectAsync(Guid id, UpdateProjectRequest request);
     Task<bool> DeleteProjectAsync(Guid id);
+    Task<bool> JoinPublicProjectAsync(Guid projectId);
 }
 
 /// <summary>

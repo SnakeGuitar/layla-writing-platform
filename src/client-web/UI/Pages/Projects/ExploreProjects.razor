@@ -1,0 +1,219 @@
+@page "/projects/explore"
+@using client_web.Application.Services.Projects
+@using client_web.Application.Services.Session
+@using client_web.Models
+@inject IProjectService ProjectService
+@inject ISessionManager Session
+@inject NavigationManager Navigation
+
+<PageTitle>Explorar Proyectos Públicos | Layla</PageTitle>
+
+<div class="max-w-5xl mx-auto space-y-8">
+    <!-- Header -->
+    <header class="mb-12">
+        <h2 class="text-amber-500 text-xs font-bold tracking-[0.3em] uppercase mb-3">Descubrir</h2>
+        <h1 class="text-stone-100 font-serif text-4xl md:text-5xl font-light tracking-tight">
+            Proyectos Públicos
+        </h1>
+        <p class="text-stone-400 text-sm mt-3 max-w-2xl leading-relaxed">
+            Explora las obras públicas de otros autores de la comunidad de Layla. Únete como lector o colaborador y participa en la creación de nuevos mundos.
+        </p>
+        <div class="mt-4 w-16 h-px bg-amber-500"></div>
+    </header>
+
+    <!-- Search and Controls -->
+    <div class="flex flex-col sm:flex-row gap-4 items-center justify-between p-4 bg-stone-900/40 border border-white/5 rounded-xl backdrop-blur-md">
+        <div class="relative w-full sm:max-w-xs">
+            <input type="text" @bind="_searchQuery" @bind:event="oninput" placeholder="Buscar por título, sinopsis..."
+                   id="search-explore-input"
+                   class="w-full pl-3 pr-10 py-2 bg-stone-950 border border-white/10 rounded-lg text-stone-200 text-sm focus:outline-none focus:border-amber-500/50 transition-colors" />
+            <span class="absolute right-3 top-2.5 text-stone-500">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                </svg>
+            </span>
+        </div>
+        <div class="text-xs text-stone-500">
+            Mostrando @FilteredProjects.Count de @_publicProjects.Count proyectos
+        </div>
+    </div>
+
+    <!-- Feedback Alerts -->
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <div class="p-4 bg-red-950/20 border border-red-900/50 rounded-xl text-red-400 text-sm flex gap-3 items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 shrink-0">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m9.75 9.75 4.5 4.5m0-4.5-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+            <span>@_error</span>
+        </div>
+    }
+
+    <!-- Projects Grid -->
+    @if (_loading)
+    {
+        <div class="flex flex-col items-center justify-center py-20 space-y-4">
+            <div class="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-stone-400 text-sm animate-pulse">Cargando catálogo de obras...</p>
+        </div>
+    }
+    else if (!FilteredProjects.Any())
+    {
+        <div class="text-center py-16 bg-stone-900/20 border border-white/5 rounded-xl p-8">
+            <p class="text-stone-500 text-sm">No se encontraron proyectos públicos disponibles.</p>
+        </div>
+    }
+    else
+    {
+        <div class="grid md:grid-cols-2 gap-6">
+            @foreach (var project in FilteredProjects)
+            {
+                <div class="p-6 bg-stone-900/30 border border-white/5 rounded-xl shadow-lg relative overflow-hidden flex flex-col justify-between hover:border-amber-500/20 hover:bg-stone-900/40 transition-all duration-300 group">
+                    <div class="absolute inset-0 bg-gradient-to-tr from-amber-500/[0.02] to-transparent pointer-events-none"></div>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="px-2.5 py-0.5 bg-amber-500/10 border border-amber-500/25 rounded-full text-[10px] text-amber-400 font-medium tracking-wide uppercase">
+                                @project.LiteraryGenre
+                            </span>
+                            <span class="text-[10px] text-stone-500">
+                                Act: @project.UpdatedAt.ToString("dd MMM yyyy")
+                            </span>
+                        </div>
+
+                        <div>
+                            <h3 class="text-stone-100 font-serif text-xl font-light group-hover:text-amber-400 transition-colors">
+                                @project.Title
+                            </h3>
+                            <p class="text-stone-400 text-xs mt-2 line-clamp-3 leading-relaxed">
+                                @project.Synopsis
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-white/5 flex items-center justify-between">
+                        <span class="text-[10px] text-stone-500 italic">Público</span>
+                        
+                        <button @onclick="() => JoinProjectAsync(project.Id)"
+                                disabled="@_joining"
+                                id="join-btn-@project.Id"
+                                class="px-4 py-1.5 bg-amber-500/10 hover:bg-amber-500 text-amber-400 hover:text-stone-950 border border-amber-500/30 hover:border-amber-500 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-300 disabled:opacity-50">
+                            @if (_joining && _activeJoiningId == project.Id)
+                            {
+                                <span class="inline-block w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin mr-1 align-middle"></span>
+                                <span>Uniéndose...</span>
+                            }
+                            else
+                            {
+                                <span>Unirse como Lector</span>
+                            }
+                        </button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private List<PublicProjectDto> _publicProjects = new();
+    private List<Project> _myProjects = new();
+    private bool _loading = true;
+    private bool _joining = false;
+    private Guid? _activeJoiningId;
+    private string _searchQuery = string.Empty;
+    private string? _error;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        var hadToken = Session.IsAuthenticated;
+        var restored = await Session.InitializeAsync();
+        if (restored && !hadToken)
+        {
+            await LoadDataAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+        _error = null;
+        try
+        {
+            var publicResult = await ProjectService.GetPublicProjectsAsync();
+            
+            if (Session.IsAuthenticated)
+            {
+                var myResult = await ProjectService.GetMyProjectsAsync();
+                _myProjects = myResult.ToList();
+            }
+
+            // Filter out projects that the user is already a member of
+            _publicProjects = publicResult
+                .Where(p => !_myProjects.Any(mp => mp.Id == p.Id))
+                .ToList();
+        }
+        catch (Exception)
+        {
+            _error = "Error al conectar con el servidor.";
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private List<PublicProjectDto> FilteredProjects =>
+        string.IsNullOrWhiteSpace(_searchQuery)
+            ? _publicProjects
+            : _publicProjects.Where(p =>
+                p.Title.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                p.Synopsis.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
+                p.LiteraryGenre.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    private async Task JoinProjectAsync(Guid projectId)
+    {
+        if (!Session.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/auth/login");
+            return;
+        }
+
+        _joining = true;
+        _activeJoiningId = projectId;
+        _error = null;
+        StateHasChanged();
+
+        try
+        {
+            var success = await ProjectService.JoinPublicProjectAsync(projectId);
+            if (success)
+            {
+                // Navigate directly to the newly joined project's workspace!
+                Navigation.NavigateTo($"/projects/{projectId}", forceLoad: true);
+            }
+            else
+            {
+                _error = "No se pudo unir al proyecto. Por favor, inténtelo de nuevo.";
+            }
+        }
+        catch (Exception)
+        {
+            _error = "Ocurrió un error inesperado al intentar unirse al proyecto.";
+        }
+        finally
+        {
+            _joining = false;
+            _activeJoiningId = null;
+            StateHasChanged();
+        }
+    }
+}
