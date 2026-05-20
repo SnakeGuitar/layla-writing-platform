@@ -14,7 +14,24 @@ public static class Builder
         {
             options.ListenAnyIP(7166, listen =>
                 {
-                    listen.UseHttps("/certs/aspnetapp.pfx", "YourStrongPasswordAF");
+                    string certPath = "/certs/aspnetapp.pfx";
+                    if (!File.Exists(certPath))
+                    {
+                        certPath = Path.Combine(AppContext.BaseDirectory, "Certs", "aspnetapp.pfx");
+                    }
+                    if (!File.Exists(certPath))
+                    {
+                        certPath = Path.Combine(Directory.GetCurrentDirectory(), "Certs", "aspnetapp.pfx");
+                    }
+
+                    if (File.Exists(certPath))
+                    {
+                        listen.UseHttps(certPath, "YourStrongPasswordAF");
+                    }
+                    else
+                    {
+                        listen.UseHttps();
+                    }
                 });
 
             options.ListenAnyIP(5287);

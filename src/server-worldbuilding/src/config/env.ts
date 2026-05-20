@@ -6,6 +6,31 @@ import { config as loadEnv } from "dotenv";
 loadEnv({ path: ".env.development", override: false });
 loadEnv({ override: false }); // fallback to .env if present
 
+// Dynamically construct URIs if not provided (e.g. during local host execution where .env.development defines separate parameters)
+if (!process.env["MONGODB_URI"]) {
+	const user = process.env["MONGO_USERNAME"] || "snake";
+	const pwd = process.env["MONGO_PASSWORD"] || "LaylaSecure2026!";
+	const host = process.env["MONGO_HOSTNAME"] || "localhost";
+	const port = process.env["MONGO_PORT"] || "27017";
+	const db = process.env["MONGO_DATABASE"] || "layla_worldbuilding";
+	const authSrc = process.env["MONGO_AUTH_SOURCE"] || "admin";
+	process.env["MONGODB_URI"] = `mongodb://${user}:${pwd}@${host}:${port}/${db}?authSource=${authSrc}`;
+}
+
+if (!process.env["NEO4J_URI"]) {
+	const host = process.env["NEO4J_HOSTNAME"] || "localhost";
+	const port = process.env["NEO4J_BOLT_PORT"] || "7687";
+	process.env["NEO4J_URI"] = `bolt://${host}:${port}`;
+}
+
+if (!process.env["RABBITMQ_URL"]) {
+	const user = process.env["RABBIT_USER"] || "layla_user";
+	const pwd = process.env["RABBIT_PASSWORD"] || "LaylaSecure2026!";
+	const host = process.env["RABBIT_HostName"] || "localhost";
+	const port = process.env["RABBIT_PORT"] || "5672";
+	process.env["RABBITMQ_URL"] = `amqp://${user}:${pwd}@${host}:${port}`;
+}
+
 /**
  * Required environment variables.
  * The application will throw at startup if any of these are missing.
@@ -67,7 +92,7 @@ if (tooShort.length > 0) {
  */
 export const config = {
 	/** HTTP server port. Defaults to `3000` if `PORT` is not set. */
-	port: process.env["PORT"]!,
+	port: process.env["PORT"] ?? "3000",
 
 	jwt: {
 		secret: process.env["JWT_SECRET"]!,
