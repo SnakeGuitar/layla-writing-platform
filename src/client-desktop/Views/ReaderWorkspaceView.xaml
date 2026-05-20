@@ -7,8 +7,8 @@
       d:DesignHeight="720" d:DesignWidth="1080"
       ShowsNavigationUI="False"
       Title="Reader Workspace"
-      Background="{DynamicResource WindowBackground}"
-      Foreground="{DynamicResource PrimaryText}">
+      Background="{DynamicResource CyberBgPrimaryBrush}"
+      Foreground="{DynamicResource CyberTextPrimaryBrush}">
 
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -22,8 +22,8 @@
         </Grid.ColumnDefinitions>
 
         <!-- Sidebar -->
-        <Border Grid.Column="0" Background="{DynamicResource SidebarBackground}"
-                BorderBrush="{DynamicResource BorderColor}" BorderThickness="0,0,1,0">
+        <Border Grid.Column="0" Background="{DynamicResource CyberBgSecondaryBrush}"
+                BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="0,0,1,0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -32,92 +32,75 @@
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <TextBlock Grid.Row="0" Text="{Binding CurrentProject.Title}" FontWeight="Bold" FontSize="16"
-                           VerticalAlignment="Center" Margin="15,10" TextTrimming="CharacterEllipsis"
-                           Foreground="{DynamicResource AccentColor}"/>
+                <TextBlock Grid.Row="0" Text="{Binding CurrentProject.Title}" Style="{StaticResource CyberTitleText}"
+                           VerticalAlignment="Center" Margin="15,15" TextTrimming="CharacterEllipsis"
+                           Foreground="{DynamicResource CyberAccentPrimaryBrush}"/>
 
                 <!-- Author status indicator -->
-                <Border Grid.Row="1" Margin="15,0,15,10" Padding="8,5" CornerRadius="4"
-                        Background="{DynamicResource ControlBackground}">
+                <Border Grid.Row="1" Margin="15,0,15,15" Padding="10,6" Style="{StaticResource CyberPanelBorder}"
+                        Background="{DynamicResource CyberBgElevatedBrush}">
                     <StackPanel Orientation="Horizontal">
-                        <Ellipse Width="10" Height="10" Margin="0,0,8,0">
-                            <Ellipse.Style>
-                                <Style TargetType="Ellipse">
-                                    <Setter Property="Fill" Value="Gray"/>
+                        <Border Width="6" Height="6" CornerRadius="0" Margin="0,0,8,0" VerticalAlignment="Center">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Background" Value="{DynamicResource CyberTextDisabledBrush}"/>
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsAuthorActive}" Value="True">
-                                            <Setter Property="Fill" Value="LimeGreen"/>
+                                            <Setter Property="Background" Value="{DynamicResource CyberAccentPrimaryBrush}"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
-                            </Ellipse.Style>
-                        </Ellipse>
-                        <TextBlock Text="{Binding AuthorStatusText}" FontSize="12" Foreground="{DynamicResource SecondaryText}"/>
+                            </Border.Style>
+                        </Border>
+                        <TextBlock Text="{Binding AuthorStatusText}" Style="{StaticResource CyberTechMonoText}" FontSize="11" Foreground="{DynamicResource CyberTextSecondaryBrush}"/>
                     </StackPanel>
                 </Border>
 
-                <!-- Read-only badge -->
+                <!-- Read-only badge & details -->
                 <StackPanel Grid.Row="2" Margin="15,0">
-                    <Border Background="#44FFD700" CornerRadius="4" Padding="8,5" Margin="0,0,0,10">
-                        <TextBlock Text="READ-ONLY MODE" FontSize="11" FontWeight="Bold"
-                                   Foreground="{DynamicResource PrimaryText}" HorizontalAlignment="Center"/>
+                    <Border BorderBrush="{DynamicResource CyberAccentWarningBrush}" BorderThickness="1" CornerRadius="0" Padding="8,5" Margin="0,0,0,15" Background="Transparent">
+                        <TextBlock Text="READ-ONLY MODE" Style="{StaticResource CyberLabel}"
+                                   Foreground="{DynamicResource CyberAccentWarningBrush}" HorizontalAlignment="Center"/>
                     </Border>
 
-                    <TextBlock Text="{Binding CurrentProject.Synopsis}" TextWrapping="Wrap" FontSize="12"
-                               Foreground="{DynamicResource SecondaryText}" Margin="0,0,0,10"/>
-                    <TextBlock FontSize="12" Foreground="{DynamicResource SecondaryText}" FontStyle="Italic">
-                        <Run Text="Genre: "/><Run Text="{Binding CurrentProject.LiteraryGenre}"/>
+                    <TextBlock Text="{Binding CurrentProject.Synopsis}" Style="{StaticResource CyberBodyText}" TextWrapping="Wrap" Margin="0,0,0,12"/>
+                    
+                    <TextBlock Style="{StaticResource CyberTechMonoText}" Foreground="{DynamicResource CyberTextSecondaryBrush}" Margin="0,0,0,15">
+                        <Run Text="GENRE: "/><Run Text="{Binding CurrentProject.LiteraryGenre}"/>
                     </TextBlock>
 
-                    <Button Content="← Back to Public Projects" Background="Transparent" BorderThickness="0"
-                            HorizontalAlignment="Left" Padding="0,10"
-                            Foreground="{DynamicResource SecondaryText}" Cursor="Hand"
+                    <Button Content="BACK TO PUBLIC" Style="{StaticResource CyberButton}"
+                            HorizontalAlignment="Stretch" Padding="10,6" Cursor="Hand"
                             Command="{Binding BackToPublicProjectsCommand}"/>
                 </StackPanel>
 
-                <Button Grid.Row="3" Content="🚪 Logout" Background="Transparent" BorderThickness="0"
-                        HorizontalAlignment="Left" Padding="15,10"
-                        Foreground="IndianRed" Cursor="Hand"
+                <Button Grid.Row="3" Content="LOGOUT" Style="{StaticResource CyberButton}"
+                        BorderBrush="{DynamicResource CyberAccentWarningBrush}"
+                        Foreground="{DynamicResource CyberAccentWarningBrush}"
+                        HorizontalAlignment="Stretch" Padding="15,10" Margin="15,15" Cursor="Hand"
                         Command="{Binding LogoutCommand}"/>
             </Grid>
         </Border>
 
         <GridSplitter Grid.Column="1" Width="2" HorizontalAlignment="Stretch"
-                      Background="{DynamicResource BorderColor}" Cursor="SizeWE"/>
+                      Background="{DynamicResource CyberBorderSubtleBrush}" Cursor="SizeWE"/>
 
         <!-- Main content area with tabs -->
-        <Grid Grid.Column="2" Background="{DynamicResource ControlBackground}">
+        <Grid Grid.Column="2" Background="{DynamicResource CyberBgPrimaryBrush}">
             <TabControl Background="Transparent" BorderThickness="0">
-                <TabControl.Resources>
-                    <Style TargetType="TabItem">
-                        <Setter Property="Background" Value="Transparent"/>
-                        <Setter Property="Foreground" Value="{DynamicResource SecondaryText}"/>
-                        <Setter Property="BorderThickness" Value="0,0,0,2"/>
-                        <Setter Property="BorderBrush" Value="Transparent"/>
-                        <Setter Property="Margin" Value="0,0,5,0"/>
-                        <Setter Property="Padding" Value="10,5"/>
-                        <Style.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="Foreground" Value="{DynamicResource AccentColor}"/>
-                                <Setter Property="BorderBrush" Value="{DynamicResource AccentColor}"/>
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </TabControl.Resources>
-
-                <TabItem Header="Manuscript (Read-Only)">
+                <TabItem Header="MANUSCRIPT">
                     <Frame x:Name="EditorFrame" NavigationUIVisibility="Hidden"/>
                 </TabItem>
 
-                <TabItem Header="Wiki">
+                <TabItem Header="WIKI">
                     <Frame x:Name="WikiFrame" NavigationUIVisibility="Hidden"/>
                 </TabItem>
 
-                <TabItem Header="Graph">
+                <TabItem Header="GRAPH">
                     <Frame x:Name="GraphFrame" NavigationUIVisibility="Hidden"/>
                 </TabItem>
 
-                <TabItem Header="Voice">
+                <TabItem Header="VOICE">
                     <Frame x:Name="VoiceFrame" NavigationUIVisibility="Hidden"/>
                 </TabItem>
             </TabControl>

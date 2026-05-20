@@ -56,19 +56,19 @@ namespace Layla.Desktop.Views
                 var run = new Run(diff.Text + " ");
                 if (diff.Type == DiffType.Inserted)
                 {
-                    run.Foreground = new SolidColorBrush(Color.FromRgb(46, 125, 50)); // Forest Green
-                    run.Background = new SolidColorBrush(Color.FromRgb(232, 245, 233)); // Pastel Green
+                    run.Foreground = new SolidColorBrush(Color.FromRgb(0, 229, 255)); // Luminescent Cyan
+                    run.Background = new SolidColorBrush(Color.FromArgb(0x1F, 0, 229, 255)); // Phosphor Cyan Glow
                     run.FontWeight = FontWeights.SemiBold;
                 }
                 else if (diff.Type == DiffType.Deleted)
                 {
-                    run.Foreground = new SolidColorBrush(Color.FromRgb(198, 40, 40)); // Red-orange
-                    run.Background = new SolidColorBrush(Color.FromRgb(255, 235, 238)); // Pastel Red
+                    run.Foreground = new SolidColorBrush(Color.FromRgb(255, 159, 0)); // Technical Amber
+                    run.Background = new SolidColorBrush(Color.FromArgb(0x1F, 255, 159, 0)); // Amber Glow
                     run.TextDecorations = TextDecorations.Strikethrough;
                 }
                 else
                 {
-                    run.Foreground = new SolidColorBrush(Color.FromRgb(224, 224, 224)); // Light grey (dark mode)
+                    run.Foreground = new SolidColorBrush(Color.FromRgb(244, 244, 245)); // Pure Silver
                 }
                 DiffParagraph.Inlines.Add(run);
             }

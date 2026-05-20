@@ -7,37 +7,37 @@
       d:DesignHeight="450" d:DesignWidth="800"
       ShowsNavigationUI="False"
       Title="Public Projects"
-      Background="{DynamicResource WindowBackground}"
-      Foreground="{DynamicResource PrimaryText}">
+      Background="{DynamicResource CyberBgPrimaryBrush}"
+      Foreground="{DynamicResource CyberTextPrimaryBrush}">
 
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </Page.Resources>
 
-    <Grid Background="{DynamicResource WindowBackground}" Margin="10">
+    <Grid Background="{DynamicResource CyberBgPrimaryBrush}" Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="0,0,0,10">
+        <Grid Grid.Row="0" Margin="0,0,0,15">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Column="0" Text="Public Projects" FontSize="24" FontWeight="Bold" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="0" Text="PUBLIC PROJECTS" Style="{StaticResource CyberDisplayText}" VerticalAlignment="Center"/>
 
-            <Button Grid.Column="1" Content="← My Projects" Background="Transparent" Foreground="{DynamicResource SecondaryText}"
-                    BorderThickness="0" Padding="10,5" Cursor="Hand" Command="{Binding BackToMyProjectsCommand}"/>
+            <Button Grid.Column="1" Content="BACK TO MY PROJECTS" Style="{StaticResource CyberButton}"
+                    Padding="10,5" Cursor="Hand" Command="{Binding BackToMyProjectsCommand}"/>
         </Grid>
 
         <ListView Grid.Row="1" ItemsSource="{Binding PublicProjects}" BorderThickness="0" Background="Transparent"
                   x:Name="PublicProjectsList" MouseDoubleClick="PublicProjectsList_MouseDoubleClick">
             <ListView.ItemTemplate>
                 <DataTemplate>
-                    <Border BorderBrush="{DynamicResource BorderColor}" BorderThickness="1" CornerRadius="5" Padding="10" Margin="5,5,5,10"
-                            Background="{DynamicResource ControlBackground}" Cursor="Hand">
+                    <Border Style="{StaticResource CyberPanelBorder}" Padding="16" Margin="0,0,0,12"
+                            Background="{DynamicResource CyberBgSecondaryBrush}" Cursor="Hand">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -45,21 +45,24 @@
                             </Grid.ColumnDefinitions>
 
                             <StackPanel Grid.Column="0">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding Title}" FontWeight="Bold" FontSize="16" Foreground="{DynamicResource PrimaryText}"/>
-                                    <Border Background="Green" CornerRadius="8" Width="12" Height="12" Margin="8,0,0,0" VerticalAlignment="Center"
-                                            Visibility="{Binding IsAuthorActive, Converter={StaticResource BoolToVis}}" ToolTip="Author is active"/>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="{Binding Title}" Style="{StaticResource CyberTitleText}"/>
+                                    <Border CornerRadius="0" Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center" BorderThickness="1" BorderBrush="{DynamicResource CyberAccentPrimaryBrush}"
+                                            Visibility="{Binding IsAuthorActive, Converter={StaticResource BoolToVis}}" ToolTip="Author is active">
+                                        <TextBlock Text="ACTIVE" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentPrimaryBrush}"/>
+                                    </Border>
                                 </StackPanel>
-                                <TextBlock Text="{Binding LiteraryGenre}" FontStyle="Italic" Foreground="{DynamicResource SecondaryText}" Margin="0,2,0,5"/>
-                                <TextBlock Text="{Binding Synopsis}" TextWrapping="Wrap" MaxWidth="600" Foreground="{DynamicResource PrimaryText}"/>
+                                <TextBlock Text="{Binding LiteraryGenre}" Style="{StaticResource CyberTechMonoText}" Foreground="{DynamicResource CyberTextSecondaryBrush}" Margin="0,0,0,4"/>
+                                <TextBlock Text="{Binding Synopsis}" Style="{StaticResource CyberBodyText}" TextWrapping="Wrap" MaxWidth="600" Margin="0,0,0,4"/>
                             </StackPanel>
 
                             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                <Button Content="View" Background="{DynamicResource AccentColor}" Foreground="White" BorderThickness="0"
-                                        Padding="10,5" Margin="0,0,5,0" Cursor="Hand"
+                                <Button Content="VIEW" Style="{StaticResource CyberButton}"
+                                        Padding="10,5" Margin="0,0,6,0" Cursor="Hand"
                                         Command="{Binding DataContext.ViewProjectCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
                                         CommandParameter="{Binding}"/>
-                                <Button Content="Join" Background="Green" Foreground="White" BorderThickness="0"
+                                <Button Content="JOIN" Style="{StaticResource CyberButton}"
+                                        BorderBrush="{DynamicResource CyberAccentPrimaryBrush}" Foreground="{DynamicResource CyberAccentPrimaryBrush}"
                                         Padding="10,5" Cursor="Hand"
                                         Command="{Binding DataContext.JoinProjectCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
                                         CommandParameter="{Binding}"/>
