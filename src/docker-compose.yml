@@ -1,4 +1,6 @@
 # Layla Project Infrastructure
+name: layla
+
 services:
   # --- 1. SQL Server (Identity & Metadata) ---
   sqlserver:
@@ -31,7 +33,7 @@ services:
     volumes:
       - mongo_data:/data/db
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:${MONGO_PORT}/test --quiet
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
       interval: 10s
       timeout: 5s
       retries: 5
@@ -50,7 +52,7 @@ services:
     volumes:
       - neo4j_data:/data
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:${NEO4J_BROWSER_PORT}/ || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474/ || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -66,6 +68,7 @@ services:
       - "${WORLDBUILDING_PORT_HTTP}:${WORLDBUILDING_PORT_HTTP}"
       - "${WORLDBUILDING_PORT_HTTPS}:${WORLDBUILDING_PORT_HTTPS}"
     environment:
+      - PORT=3000
       - PORT_HTTP=${WORLDBUILDING_PORT_HTTP}
       - PORT_HTTPS=${WORLDBUILDING_PORT_HTTPS}
       - JWT_SECRET=${JWT_SECRET}
@@ -88,7 +91,7 @@ services:
       rabbitmq:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "https://localhost:${WORLDBUILDING_PORT_HTTPS}/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -121,6 +124,12 @@ services:
       - RabbitMQ__Password=${RABBIT_PASSWORD}
       - RabbitMQ__VirtualHost=/
       - RabbitMQ__Exchange=worldbuilding.events
+      - EmailConfigs__Host=${EMAIL_HOST}
+      - EmailConfigs__Port=${EMAIL_PORT}
+      - EmailConfigs__Username=${EMAIL_USERNAME}
+      - EmailConfigs__Password=${EMAIL_PASSWORD}
+      - EmailConfigs__FromName=${EMAIL_FROM_NAME}
+      - EmailConfigs__FromEmail=${EMAIL_FROM_EMAIL}
       - DOTNET_USE_POLLING_FILE_WATCHER=1
       - DOTNET_RUNNING_IN_CONTAINER=true
       - DOTNET_SKIP_FIRST_TIME_EXPERIENCE=true
@@ -143,8 +152,8 @@ services:
   # --- 6. Web app - (.NET) ---
   layla-web:
     build:
-      context: ./client-web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: client-web/Dockerfile
     container_name: layla-web
     ports:
       - "${WEB_PORT_HTTPS}:${WEB_PORT_HTTPS}"
@@ -159,6 +168,8 @@ services:
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/app/certs/aspnetapp.pfx
       - ASPNETCORE_Kestrel__Certificates__Default__Password=YourStrongPasswordAF
       - ASPNETCORE_URLS=https://+:${WEB_PORT_HTTPS};http://+:${WEB_PORT_HTTP}
+      - ApiUrls__BackendURL=http://layla-api-gateway:5000
+      - ApiUrls__WorldbuildingURL=http://layla-worldbuilding:3000
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${WEB_PORT_HTTP}/health"]
       interval: 30s

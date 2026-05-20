@@ -16,7 +16,9 @@ RUN dotnet publish "./api-gateway.csproj" -c $BUILD_CONFIGURATION -o /app/publis
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS final
+USER root
 WORKDIR /app
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 EXPOSE 5000
 COPY --from=publish --chown=app:app --chmod=555 /app/publish .
 
