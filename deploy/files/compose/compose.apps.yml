@@ -1,0 +1,94 @@
+# VM2: layla-apps (192.168.56.11)
+# Servicios de aplicación. Build desde el código fuente montado en /vagrant.
+services:
+  server-core:
+    build:
+      context: /vagrant/src/server-core
+      dockerfile: Layla.Api/Dockerfile
+    container_name: server-core
+    ports:
+      - "${CORE_PORT_HTTPS}:${CORE_PORT_HTTPS}"
+      - "${CORE_PORT_HTTP}:${CORE_PORT_HTTP}"
+    environment:
+      - Ports__HTTPS=${CORE_PORT_HTTPS}
+      - Ports__HTTP=${CORE_PORT_HTTP}
+      - JwtSettings__Secret=${JWT_SECRET}
+      - JwtSettings__Issuer=${JWT_ISSUER}
+      - JwtSettings__Audience=${JWT_AUDIENCE}
+      - JwtSettings__ExpirationInMinutes=${JWT_ACCESS_TOKEN_EXPIRY}
+      - DatabaseConfigs__SQL__ConnectionString=Server=192.168.56.10,1433;Database=${SQL_DATABASE};User Id=${SQL_USERNAME};Password=${SQL_PASSWORD};TrustServerCertificate=True;
+      - DatabaseConfigs__SQL__CommandTimeoutSeconds=30
+      - DatabaseConfigs__SQL__MaxRetryCount=5
+      - DatabaseConfigs__SQL__MaxRetryDelay=00:00:10
+      - RabbitMQ__HostName=192.168.56.10
+      - RabbitMQ__Port=${RABBIT_PORT}
+      - RabbitMQ__UserName=${RABBIT_USER}
+      - RabbitMQ__Password=${RABBIT_PASSWORD}
+      - RabbitMQ__VirtualHost=/
+      - RabbitMQ__Exchange=worldbuilding.events
+      - EmailConfigs__Host=smtp.demo.local
+      - EmailConfigs__Port=587
+      - EmailConfigs__Username=demo@layla.local
+      - EmailConfigs__Password=demo-password-not-used
+      - EmailConfigs__FromName=Layla
+      - EmailConfigs__FromEmail=no-reply@layla.local
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - ASPNETCORE_ENVIRONMENT=${CORE_ENVIRONMENT}
+      - ASPNETCORE_URLS=https://+:${CORE_PORT_HTTPS};http://+:${CORE_PORT_HTTP}
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fk https://localhost:${CORE_PORT_HTTPS}/health || curl -f http://localhost:${CORE_PORT_HTTP}/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  server-worldbuilding:
+    build:
+      context: /vagrant/src/server-worldbuilding
+      dockerfile: Dockerfile
+    container_name: layla-worldbuilding
+    ports:
+      - "${WORLDBUILDING_PORT_HTTP}:${WORLDBUILDING_PORT_HTTP}"
+      - "${WORLDBUILDING_PORT_HTTPS}:${WORLDBUILDING_PORT_HTTPS}"
+    environment:
+      - PORT=${WORLDBUILDING_PORT_HTTP}
+      - PORT_HTTP=${WORLDBUILDING_PORT_HTTP}
+      - PORT_HTTPS=${WORLDBUILDING_PORT_HTTPS}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_SECRET_REFRESH=${JWT_SECRET_REFRESH}
+      - JWT_ACCESS_TOKEN_EXPIRY=${JWT_ACCESS_TOKEN_EXPIRY}
+      - JWT_REFRESH_TOKEN_EXPIRY=${JWT_REFRESH_TOKEN_EXPIRY}
+      - ALLOWED_ORIGINS=${WORLDBUILDING_ALLOWED_ORIGINS}
+      - MONGODB_URI=mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@192.168.56.10:${MONGO_PORT}/layla_worldbuilding?authSource=admin
+      - NEO4J_URI=bolt://192.168.56.10:${NEO4J_BOLT_PORT}
+      - NEO4J_USERNAME=${NEO4J_USERNAME}
+      - NEO4J_PASSWORD=${NEO4J_PASSWORD}
+      - RABBITMQ_URL=amqp://${RABBIT_USER}:${RABBIT_PASSWORD}@192.168.56.10:${RABBIT_PORT}
+      - RABBITMQ_EXCHANGE=worldbuilding.events
+      - RABBITMQ_QUEUE=worldbuilding.node.queue
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fk https://localhost:${WORLDBUILDING_PORT_HTTPS}/health || curl -f http://localhost:${WORLDBUILDING_PORT_HTTP}/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    restart: unless-stopped
+
+  layla-web:
+    build:
+      context: /vagrant/src/client-web
+      dockerfile: Dockerfile
+    container_name: layla-web
+    ports:
+      - "${WEB_PORT_HTTPS}:${WEB_PORT_HTTPS}"
+      - "${WEB_PORT_HTTP}:${WEB_PORT_HTTP}"
+    environment:
+      - Ports__HTTPS=${WEB_PORT_HTTPS}
+      - Ports__HTTP=${WEB_PORT_HTTP}
+      - DOTNET_RUNNING_IN_CONTAINER=true
+      - ASPNETCORE_ENVIRONMENT=${CORE_ENVIRONMENT}
+      - ASPNETCORE_URLS=https://+:${WEB_PORT_HTTPS};http://+:${WEB_PORT_HTTP}
+      - ApiUrls__BackendURL=http://192.168.56.12:5000
+      - ApiUrls__WorldbuildingURL=http://192.168.56.12:5000
+    restart: unless-stopped

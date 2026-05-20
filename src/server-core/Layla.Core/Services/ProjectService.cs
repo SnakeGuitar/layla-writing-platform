@@ -38,17 +38,20 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
     private readonly IProjectRepository _projectRepository;
     private readonly IAppUserRepository _appUserRepository;
     private readonly IEventPublisher _eventPublisher;
+    private readonly IOutboxRepository _outboxRepository;
 
     public ProjectService(
         IProjectRepository projectRepository,
         IAppUserRepository appUserRepository,
         IEventPublisher eventPublisher,
+        IOutboxRepository outboxRepository,
         ILogger<ProjectService> logger)
         : base(logger)
     {
         _projectRepository = projectRepository;
         _appUserRepository = appUserRepository;
         _eventPublisher = eventPublisher;
+        _outboxRepository = outboxRepository;
     }
 
     /// <summary>
@@ -210,6 +213,7 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
             {
                 await _projectRepository.AddProjectRoleAsync(projectRole, cancellationToken);
                 await _projectRepository.SaveChangesAsync(cancellationToken);
+                PublishCollaboratorJoinedEvent(projectId, userId, ProjectRoles.Reader, projectRole.AssignedAt);
             }
             catch (DbUpdateException ex)
             {
@@ -261,6 +265,7 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
             {
                 await _projectRepository.AddProjectRoleAsync(projectRole, cancellationToken);
                 await _projectRepository.SaveChangesAsync(cancellationToken);
+                PublishCollaboratorJoinedEvent(projectId, targetUser.Id, normalizedRole, projectRole.AssignedAt);
             }
             catch (DbUpdateException ex)
             {
@@ -306,8 +311,19 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
             if (role.Role == ProjectRoles.Owner)
                 return Result<bool>.Failure(ErrorCode.InvalidInput, "Cannot remove the project owner.");
 
-            await _projectRepository.RemoveProjectRoleAsync(role, cancellationToken);
-            await _projectRepository.SaveChangesAsync(cancellationToken);
+            var outboxMessage = new OutboxMessage
+            {
+                EventType = "ClientEvicted",
+                Payload = System.Text.Json.JsonSerializer.Serialize(new { ProjectId = projectId, UserId = collaboratorUserId })
+            };
+
+            await _projectRepository.ExecuteInTransactionAsync(async ct =>
+            {
+                await _projectRepository.RemoveProjectRoleAsync(role, ct);
+                await _outboxRepository.AddMessageAsync(outboxMessage, ct);
+            }, cancellationToken);
+
+            PublishCollaboratorRemovedEvent(projectId, collaboratorUserId);
 
             return Result<bool>.Success(true);
         }, "Failed to remove collaborator from project {ProjectId}", projectId);
@@ -338,6 +354,34 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
         if (!_eventPublisher.Publish(integrationEvent, exchangeName: ExchangeName,
                                     routingKey: ProjectCreatedRoutingKey))
             Logger.LogWarning("Integration event not published for project {ProjectId}. Node.js worldbuilding service may be out of sync.", project.Id);
+    }
+
+    private void PublishCollaboratorJoinedEvent(Guid projectId, string userId, string role, DateTime joinedAt)
+    {
+        var integrationEvent = new Layla.Core.IntegrationEvents.CollaboratorJoinedEvent
+        {
+            ProjectId = projectId.ToString(),
+            UserId = userId,
+            Role = role,
+            JoinedAt = joinedAt
+        };
+
+        if (!_eventPublisher.Publish(integrationEvent, exchangeName: ExchangeName,
+                                    routingKey: MessagingConstants.RoutingKeys.CollaboratorJoined))
+            Logger.LogWarning("Integration event not published for collaborator {UserId} joining project {ProjectId}.", userId, projectId);
+    }
+
+    private void PublishCollaboratorRemovedEvent(Guid projectId, string userId)
+    {
+        var integrationEvent = new Layla.Core.IntegrationEvents.CollaboratorRemovedEvent
+        {
+            ProjectId = projectId.ToString(),
+            UserId = userId
+        };
+
+        if (!_eventPublisher.Publish(integrationEvent, exchangeName: ExchangeName,
+                                    routingKey: MessagingConstants.RoutingKeys.CollaboratorRemoved))
+            Logger.LogWarning("Integration event not published for collaborator {UserId} leaving project {ProjectId}.", userId, projectId);
     }
 
     private static Project BuildProject(CreateProjectRequestDto request) => new()

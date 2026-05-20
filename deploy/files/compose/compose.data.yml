@@ -1,0 +1,79 @@
+# VM1: layla-data (192.168.56.10)
+# Solo bases de datos y mensajería — imágenes oficiales, sin build.
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: layla-sql
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=${SQL_PASSWORD}
+      - MSSQL_MEMORY_LIMIT_MB=${MSSQL_MEM_LIMIT}
+    ports:
+      - "${SQL_PORT}:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U ${SQL_USERNAME} -P ${SQL_PASSWORD} -Q 'SELECT 1' -C || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:4.4   # 4.4 no requiere AVX — compatible con VirtualBox sin tunear CPU
+    container_name: layla-mongo
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    ports:
+      - "${MONGO_PORT}:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongo localhost:27017/test --quiet
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  neo4j:
+    image: neo4j:5
+    container_name: layla-neo4j
+    ports:
+      - "${NEO4J_BROWSER_PORT}:7474"
+      - "${NEO4J_BOLT_PORT}:7687"
+    environment:
+      - NEO4J_AUTH=${NEO4J_USERNAME}/${NEO4J_PASSWORD}
+      - NEO4J_PLUGINS=["apoc"]
+    volumes:
+      - neo4j_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: layla-rabbit
+    ports:
+      - "${RABBIT_PORT}:5672"
+      - "${RABBIT_MANAGEMENT_PORT}:15672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBIT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBIT_PASSWORD}
+    volumes:
+      - rabbit_data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  sql_data:
+  mongo_data:
+  neo4j_data:
+  rabbit_data:

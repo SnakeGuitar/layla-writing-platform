@@ -16,5 +16,7 @@ public static class Services
         // server-core currently only publishes events; consumption lives in
         // server-worldbuilding (Node.js).
         builder.Services.AddCoreServices(builder.Configuration);
+
+        builder.Services.AddHostedService<Layla.Api.Workers.ClientEvictedConsumer>();
     }
 }

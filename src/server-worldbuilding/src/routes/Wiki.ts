@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { MiddlewareAuthenticate } from "@/middlewares/Auth";
-import { requireProjectAccess } from "@/middlewares/ProjectGuard";
+import { requireProjectAccess, requireWriteAccess } from "@/middlewares/ProjectGuard";
 import { asyncHandler } from "@/utils/asyncHandler";
 import * as WikiController from "@/controllers/Wiki.controller";
 
@@ -12,19 +12,30 @@ router.use(asyncHandler(requireProjectAccess()));
 router.get("/:projectId/entries", asyncHandler(WikiController.listEntries));
 
 router.get(
+	"/:projectId/detectable",
+	asyncHandler(WikiController.getDetectableEntities),
+);
+
+router.get(
 	"/:projectId/entries/:entityId",
 	asyncHandler(WikiController.getEntry),
 );
 
-router.post("/:projectId/entries", asyncHandler(WikiController.createEntry));
+router.post(
+	"/:projectId/entries",
+	requireWriteAccess(),
+	asyncHandler(WikiController.createEntry),
+);
 
 router.put(
 	"/:projectId/entries/:entityId",
+	requireWriteAccess(),
 	asyncHandler(WikiController.updateEntry),
 );
 
 router.delete(
 	"/:projectId/entries/:entityId",
+	requireWriteAccess(),
 	asyncHandler(WikiController.deleteEntry),
 );
 

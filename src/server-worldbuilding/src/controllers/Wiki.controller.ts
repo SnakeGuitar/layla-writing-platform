@@ -132,3 +132,22 @@ export const getEntityAppearances = async (
   );
   res.json(appearances);
 };
+
+/**
+ * GET /api/wiki/:projectId/detectable
+ *
+ * Returns a list of all wiki entities in a format optimized for the client-side Aho-Corasick tokenizer.
+ */
+export const getDetectableEntities = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const entries = await WikiService.listEntries(req.params["projectId"] as string);
+  const detectable = entries.map(e => ({
+    id: e.entityId,
+    mainToken: e.name,
+    aliases: e.aliases || [],
+    type: e.entityType
+  }));
+  res.json(detectable);
+};

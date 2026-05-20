@@ -85,11 +85,11 @@
     --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     --default-font-family: var(--font-sans);
     --default-mono-font-family: var(--font-mono);
-    --color-base-purple-1: #3a0647;
-    --color-base-blue-2: #041333;
-    --color-base-blue-3: #02040d;
-    --color-base-gray-1: #1f1f1f;
-    --color-base-gray-2: #292929;
+    --color-base-purple-1: #15161a;
+    --color-base-blue-2: #0c0d10;
+    --color-base-blue-3: #0a0b0e;
+    --color-base-gray-1: #16171a;
+    --color-base-gray-2: #1d1e22;
   }
 }
 @layer base {
@@ -1969,3 +1969,52 @@ p {
     }
   }
 }
+
+/* ============================================================
+   Sober uniform overrides (appended after Tailwind utilities).
+   Goal: neutralise the previous purple/amber-heavy look and give
+   every page the same understated dark-stone feel. Selector
+   specificity matches the original utility class so we override
+   without !important.
+   ============================================================ */
+
+/* Soften the bright amber accent across the app. */
+.text-amber-500       { color: #b48a52; }
+.text-amber-400       { color: #c79a64; }
+.text-amber-300       { color: #d9b07a; }
+.bg-amber-500         { background-color: #b48a52; }
+.bg-amber-400         { background-color: #c79a64; }
+.hover\:bg-amber-400:hover { background-color: #c79a64; }
+.hover\:text-amber-200:hover { color: #d9b07a; }
+.focus\:ring-amber-500:focus { --tw-ring-color: #b48a52; }
+
+/* Replace cyan link hover with neutral lighter stone. */
+.hover\:text-cyan-400:hover { color: #d6d3d1; }
+
+/* Card / panel base — uniform across pages. */
+.bg-base-gray-2 { background-color: #1d1e22; border: 1px solid #2a2b30; }
+
+/* Topbar + sidebar: flat neutral instead of bright gradient. */
+.from-base-blue-3, .to-base-blue-3,
+.from-base-purple-1, .to-base-purple-1,
+.from-base-blue-2,  .to-base-blue-2 {
+  --tw-gradient-from: #14151a;
+  --tw-gradient-to:   #0e0f12;
+  --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position),
+                        var(--tw-gradient-from) var(--tw-gradient-from-position),
+                        var(--tw-gradient-to)   var(--tw-gradient-to-position));
+}
+
+/* Auth screens: neutral background instead of purple glow. */
+main.bg-linear-to-t { background-image: none; background-color: #0e0f12; }
+
+/* Form inputs — unify focus ring (no neon amber blast). */
+input:focus, select:focus, textarea:focus {
+  outline: none;
+}
+
+/* Hamburger lines stay readable in the neutral bar. */
+.bg-black\/60, .bg-black\/70 { background-color: rgba(14,15,18,0.85); }
+
+/* Heading divider used on every page header. */
+.h-px.bg-amber-500 { background-color: #b48a52; }

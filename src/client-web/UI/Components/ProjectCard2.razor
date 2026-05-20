@@ -23,6 +23,13 @@
         <span class="absolute top-3 left-3 px-2 py-0.5 bg-amber-500 text-stone-950 text-[10px] font-bold tracking-[0.15em] uppercase">
             @LiteraryGenre
         </span>
+
+        @if (!string.IsNullOrEmpty(UserRole))
+        {
+            <span class="absolute top-3 right-3 px-2 py-0.5 text-[10px] font-bold tracking-wider rounded uppercase @GetRoleBadgeClass(UserRole)">
+                @UserRole
+            </span>
+        }
     </div>
 
     @* Content *@
@@ -64,7 +71,19 @@
     [Parameter, EditorRequired] public string LiteraryGenre { get; set; } = string.Empty;
     [Parameter] public string? CoverImageUrl { get; set; }
     [Parameter] public DateTime UpdatedAt { get; set; }
+    [Parameter] public string? UserRole { get; set; }
     [Parameter] public EventCallback<Guid> OnCardClick { get; set; }
+
+    private string GetRoleBadgeClass(string role)
+    {
+        return role.ToUpper() switch
+        {
+            "OWNER" => "bg-amber-500/20 text-amber-300 border border-amber-500/30",
+            "EDITOR" => "bg-sky-500/20 text-sky-300 border border-sky-500/30",
+            "READER" => "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30",
+            _ => "bg-stone-500/20 text-stone-300 border border-stone-500/30"
+        };
+    }
 
     private async Task OnClick()
     {

@@ -63,13 +63,18 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 */
 
 // ──  Exposition of ports ─────────────────────────────────────────────────────
-// TODO
-builder.WebHost.UseUrls(
-    $"https://+:{builder.Configuration["Ports:HTTPS"]};http://+:{builder.Configuration["Ports:HTTP"]};");
+// Puertos vía ASPNETCORE_URLS (env var) o config "Ports:HTTP". Solo HTTP en el gateway.
+string? httpPort = builder.Configuration["Ports:HTTP"];
+if (!string.IsNullOrWhiteSpace(httpPort))
+{
+    builder.WebHost.UseUrls($"http://+:{httpPort}");
+}
 
 WebApplication? app = builder.Build();
 
-app.UseHttpsRedirection();
+// Health endpoint del gateway propio (no proxied)
+app.MapGet("/health", () => "Healthy");
+
 app.UseCors();
 app.UseRateLimiter();
 app.Use(async (context, next) =>
@@ -82,8 +87,7 @@ app.Use(async (context, next) =>
 
     await next();
 });
-app.UseAuthentication();
-app.UseAuthorization();
+// Auth deshabilitada hasta que se configure AddAuthentication (ver bloque comentado arriba).
 app.MapReverseProxy(proxyPipeline =>
 {
     proxyPipeline.UseRateLimiter();

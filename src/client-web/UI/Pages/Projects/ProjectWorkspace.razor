@@ -1,0 +1,159 @@
+@page "/projects/{ProjectId:guid}"
+@using client_web.Application.Services.Projects
+@using client_web.Application.Services.Session
+@using client_web.Models
+@using client_web.UI.Components.Workspace
+@inject IProjectService ProjectService
+@inject ISessionManager Session
+@inject NavigationManager Navigation
+
+<PageTitle>@(_project?.Title ?? "Workspace") | Layla</PageTitle>
+
+<div class="max-w-7xl mx-auto space-y-6">
+    @if (_loading)
+    {
+        <div class="flex items-center justify-center py-12">
+            <p class="text-stone-400 animate-pulse text-sm">Loading workspace...</p>
+        </div>
+    }
+    else if (_project == null)
+    {
+        <div class="bg-red-950/20 border border-red-900/50 p-6 rounded-lg max-w-lg mx-auto text-center mt-12">
+            <h3 class="text-red-400 font-medium text-lg mb-2">Project Not Found</h3>
+            <p class="text-stone-300 text-sm mb-4">The project you are looking for does not exist or you do not have permission to view it.</p>
+            <a href="/projects/my-projects" class="inline-flex px-4 py-2 bg-stone-800 text-stone-100 rounded hover:bg-stone-700 text-xs font-semibold uppercase tracking-wider transition-colors">
+                Back to My Projects
+            </a>
+        </div>
+    }
+    else
+    {
+        <!-- Header -->
+        <header class="p-6 bg-base-blue-3 border border-white/5 rounded-xl shadow-lg relative overflow-hidden">
+            <div class="absolute inset-0 bg-gradient-to-r from-amber-500/5 to-transparent pointer-events-none"></div>
+            <div class="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div>
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="text-amber-500 text-[10px] font-bold tracking-[0.2em] uppercase">Workspace</span>
+                        <span class="px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-full text-[10px] text-amber-400 font-medium">
+                            @_project.LiteraryGenre
+                        </span>
+                        @if (!string.IsNullOrEmpty(_project.UserRole))
+                        {
+                            <span class="px-2 py-0.5 bg-stone-800 border border-stone-700 rounded-full text-[10px] text-stone-300 font-medium">
+                                @_project.UserRole
+                            </span>
+                        }
+                    </div>
+                    <h1 class="text-stone-100 font-serif text-3xl font-light tracking-tight mb-2">
+                        @_project.Title
+                    </h1>
+                    <p class="text-stone-400 text-sm max-w-3xl leading-relaxed">
+                        @_project.Synopsis
+                    </p>
+                </div>
+                <div class="shrink-0 flex gap-2">
+                    <a href="/projects/my-projects" class="px-4 py-2 border border-white/10 text-stone-300 hover:text-stone-100 hover:bg-white/5 rounded-lg text-xs font-medium tracking-wide transition-all">
+                        Back to List
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <div class="border-b border-white/5">
+            <nav class="flex gap-6" aria-label="Tabs">
+                @foreach (var tab in _tabs)
+                {
+                    var isSelected = _activeTab == tab.Id;
+                    <button @onclick="() => SetActiveTab(tab.Id)"
+                            class="pb-3 text-sm font-medium tracking-wider relative transition-all duration-200 outline-none
+                                   @(isSelected ? "text-amber-400" : "text-stone-400 hover:text-stone-200")">
+                        @tab.Label
+                        @if (isSelected)
+                        {
+                            <div class="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500 rounded-full transition-all"></div>
+                        }
+                    </button>
+                }
+            </nav>
+        </div>
+
+        <!-- Dynamic Content -->
+        <div class="transition-opacity duration-300">
+            @if (_activeTab == "manuscript")
+            {
+                <ManuscriptTab ProjectId="ProjectId" />
+            }
+            else if (_activeTab == "wiki")
+            {
+                <WikiTab ProjectId="ProjectId" />
+            }
+            else if (_activeTab == "graph")
+            {
+                <GraphTab ProjectId="ProjectId" />
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public Guid ProjectId { get; set; }
+
+    private Project? _project;
+    private bool _loading = true;
+    private string _activeTab = "manuscript";
+
+    private readonly List<(string Id, string Label)> _tabs = new()
+    {
+        ("manuscript", "Manuscripts"),
+        ("wiki", "Wiki Lorebook"),
+        ("graph", "Relational Graph")
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProjectAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        var hadToken = Session.IsAuthenticated;
+        var restored = await Session.InitializeAsync();
+        if (restored && !hadToken)
+        {
+            await LoadProjectAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadProjectAsync()
+    {
+        _loading = true;
+        try
+        {
+            if (!Session.IsAuthenticated)
+            {
+                _project = null;
+                return;
+            }
+            _project = await ProjectService.GetProjectByIdAsync(ProjectId);
+        }
+        catch (Exception)
+        {
+            _project = null;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void SetActiveTab(string tabId)
+    {
+        _activeTab = tabId;
+    }
+}

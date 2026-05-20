@@ -121,8 +121,8 @@ class WikiViewModel(
                         projectId, s.selectedEntry.entityId,
                         UpdateWikiEntryRequest(s.formName, s.formEntityType, s.formDescription, tagList)
                     )
-                    if (response.isSuccessful) {
-                        val updated = response.body()!!
+                    val updated = response.body()
+                    if (response.isSuccessful && updated != null) {
                         val entries = _state.value.entries.map {
                             if (it.entityId == updated.entityId) updated else it
                         }
@@ -138,8 +138,8 @@ class WikiViewModel(
                         projectId,
                         CreateWikiEntryRequest(s.formName, s.formEntityType, s.formDescription, tagList)
                     )
-                    if (response.isSuccessful) {
-                        val created = response.body()!!
+                    val created = response.body()
+                    if (response.isSuccessful && created != null) {
                         _state.value = _state.value.copy(
                             entries = _state.value.entries + created,
                             selectedEntry = created,

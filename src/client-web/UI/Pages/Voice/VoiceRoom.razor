@@ -4,6 +4,7 @@
 @using client_web.Application.Services.Voice
 @inject IVoiceService VoiceService
 @inject IJSRuntime JS
+@inject client_web.Application.Services.Session.ISessionManager SessionManager
 @implements IAsyncDisposable
 
 <div class="max-w-2xl mx-auto p-6">
@@ -25,9 +26,12 @@
     @if (!VoiceService.IsConnected)
     {
         <div class="mb-6">
-            <label class="block text-sm text-gray-400 mb-2">Auth Token</label>
-            <input type="text" @bind="_token" placeholder="Paste your JWT token"
-                   class="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white text-sm mb-3" />
+            @if (string.IsNullOrEmpty(_token))
+            {
+                <label class="block text-sm text-gray-400 mb-2">Auth Token</label>
+                <input type="text" @bind="_token" placeholder="Paste your JWT token"
+                       class="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white text-sm mb-3" />
+            }
             <button @onclick="ConnectAsync" disabled="@_isConnecting"
                     class="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white rounded-lg font-medium transition-colors">
                 @(_isConnecting ? "Connecting..." : "Join Voice Room")
@@ -105,6 +109,17 @@
                 identifier: "import",
                 args: "./js/voiceAudio.js"
             );
+
+            await SessionManager.InitializeAsync();
+            if (SessionManager.IsAuthenticated)
+            {
+                _token = SessionManager.CurrentToken ?? string.Empty;
+                StateHasChanged();
+                if (!string.IsNullOrEmpty(_token))
+                {
+                    await ConnectAsync();
+                }
+            }
         }
     }
 

@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using NAudio.Wave;
+using System.Threading.Channels;
 using System.Windows;
+using Microsoft.Extensions.Logging;
 
 namespace Layla.Desktop.Services.Projetcs;
 
@@ -12,18 +14,25 @@ public class VoiceConnection : IAsyncDisposable
     private const int BITS_PER_SAMPLE = 16;
     private const int FRAME_DURATION_MS = 20;
 
+    private readonly ILogger<VoiceConnection>? _logger = ServiceLocator.GetService<ILogger<VoiceConnection>>();
     private HubConnection? _hub;
     private WaveInEvent? _waveIn;
     private WaveOutEvent? _waveOut;
     private BufferedWaveProvider? _playbackBuffer;
     private Guid _currentProjectId;
     private bool _isSpeaking;
+    // Drop-oldest channel decouples the 50 Hz mic callback from network RTT.
+    // Without it, a transient network stall would queue unbounded async
+    // hub invocations and blow the heap.
+    private Channel<byte[]>? _sendChannel;
+    private CancellationTokenSource? _sendCts;
+    private Task? _sendPumpTask;
 
     public event Action<string, string, bool, string>? ParticipantJoined;       // userId, displayName, isSpeaking, role
     public event Action<string>? ParticipantLeft;                               // userId
     public event Action<string, string>? SpeakerStarted;                        // userId, displayName
     public event Action<string>? SpeakerStopped;                                // userId
-    public event Action<List<ParticipantInfo>>? RoomStateReceived;              // 
+    public event Action<List<ParticipantInfo>>? RoomStateReceived;              //
     public event Action<string>? ConnectionStateChanged;                        // "Connected", "Disconnected", "Reconnecting"
 
     public bool IsConnected => _hub?.State == HubConnectionState.Connected;
@@ -169,46 +178,87 @@ public class VoiceConnection : IAsyncDisposable
             BufferMilliseconds = FRAME_DURATION_MS
         };
 
-        _waveIn.DataAvailable += async (sender, e) =>
+        _sendChannel = Channel.CreateBounded<byte[]>(new BoundedChannelOptions(8)
         {
-            if (!_isSpeaking || _hub == null || _hub.State != HubConnectionState.Connected)
-                return;
-
-            try
-            {
-                byte[]? buffer = new byte[e.BytesRecorded];
-                Array.Copy(e.Buffer, buffer, e.BytesRecorded);
-                await _hub.InvokeAsync("SendAudio", _currentProjectId, buffer);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Audio send failed: {ex.Message}");
-            }
-        };
-
+            FullMode = BoundedChannelFullMode.DropOldest,
+            SingleReader = true,
+            SingleWriter = true,
+        });
+        _sendCts = new CancellationTokenSource();
+        _sendPumpTask = Task.Run(() => PumpSendChannelAsync(_sendChannel.Reader, _sendCts.Token));
+        _waveIn.DataAvailable += OnWaveInDataAvailable;
         _waveIn.StartRecording();
+    }
+
+    private void OnWaveInDataAvailable(object? sender, WaveInEventArgs e)
+    {
+        if (!_isSpeaking || _hub == null || _hub.State != HubConnectionState.Connected)
+            return;
+
+        var buffer = new byte[e.BytesRecorded];
+        Array.Copy(e.Buffer, buffer, e.BytesRecorded);
+        // TryWrite is fire-and-forget — drop-oldest semantics handle overflow.
+        _sendChannel?.Writer.TryWrite(buffer);
+    }
+
+    private async Task PumpSendChannelAsync(ChannelReader<byte[]> reader, CancellationToken ct)
+    {
+        try
+        {
+            await foreach (var frame in reader.ReadAllAsync(ct))
+            {
+                var hub = _hub;
+                if (hub == null || hub.State != HubConnectionState.Connected) continue;
+                try
+                {
+                    await hub.InvokeAsync("SendAudio", _currentProjectId, frame, ct);
+                }
+                catch (OperationCanceledException) { break; }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, "Audio send failed");
+                }
+            }
+        }
+        catch (OperationCanceledException) { /* shutdown */ }
     }
 
     private void StopAudioCapture()
     {
-        _waveIn?.StopRecording();
-        _waveIn?.Dispose();
-        _waveIn = null;
+        if (_waveIn != null)
+        {
+            _waveIn.DataAvailable -= OnWaveInDataAvailable;
+            _waveIn.StopRecording();
+            _waveIn.Dispose();
+            _waveIn = null;
+        }
+        _sendChannel?.Writer.TryComplete();
+        _sendCts?.Cancel();
+        try { _sendPumpTask?.Wait(TimeSpan.FromMilliseconds(200)); } catch { }
+        _sendCts?.Dispose();
+        _sendCts = null;
+        _sendChannel = null;
+        _sendPumpTask = null;
     }
 
     public async ValueTask DisposeAsync()
     {
+        // Order matters: dispose the SignalR hub FIRST so its callbacks
+        // (ReceiveAudio in particular) stop firing before we null out the
+        // playback buffer they touch. Reversing this risks a race where
+        // ReceiveAudio runs against a half-disposed BufferedWaveProvider.
         StopAudioCapture();
+
+        if (_hub != null)
+        {
+            try { await _hub.DisposeAsync(); } catch { }
+            _hub = null;
+        }
+
         _waveOut?.Stop();
         _waveOut?.Dispose();
         _waveOut = null;
         _playbackBuffer = null;
-
-        if (_hub != null)
-        {
-            await _hub.DisposeAsync();
-            _hub = null;
-        }
     }
 }
 

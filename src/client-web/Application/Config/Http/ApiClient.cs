@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using System.Net.Http.Headers;
+using client_web.Application.Services.Session;
 
 namespace client_web.Application.Config.Http;
 
@@ -8,11 +9,13 @@ public class ApiClient
 {
     private readonly HttpClient _http;
     private readonly ILogger<ApiClient> _logger;
+    private readonly ISessionManager _session;
 
-    public ApiClient(HttpClient http, ILogger<ApiClient> logger)
+    public ApiClient(HttpClient http, ILogger<ApiClient> logger, ISessionManager session)
     {
         _http = http;
         _logger = logger;
+        _session = session;
     }
 
     public async Task<T> SendAsync<T>(APIRequest request, CancellationToken ct = default)
@@ -41,6 +44,12 @@ public class ApiClient
         // and deserialize the body straight into T.
         if (!response.IsSuccessStatusCode)
         {
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            {
+                // Trigger auto-logout on 401
+                await _session.ClearAsync();
+            }
+
             throw new APIException(
                 ExtractErrorMessage(raw) ?? $"HTTP {(int)response.StatusCode}",
                 (int)response.StatusCode,

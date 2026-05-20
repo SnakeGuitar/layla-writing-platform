@@ -41,10 +41,10 @@ export const requireProjectAccess = () => {
       // is in place.
       const result = await session.run(
         `MATCH (p:Project { projectId: $projectId })
-         OPTIONAL MATCH (u:User { id: $userId })-[:MEMBER_OF]->(p)
-         WITH p, u
-         WHERE p.ownerId = $userId OR u IS NOT NULL
-         RETURN p LIMIT 1`,
+         OPTIONAL MATCH (u:User { id: $userId })-[r:MEMBER_OF]->(p)
+         WITH p, r
+         WHERE p.ownerId = $userId OR r IS NOT NULL
+         RETURN p.ownerId = $userId AS isOwner, r.role AS role LIMIT 1`,
         { projectId, userId: req.user.id },
       );
 
@@ -52,6 +52,12 @@ export const requireProjectAccess = () => {
         res.status(403).json({ error: "Access denied to this project" });
         return;
       }
+
+      const record = result.records[0];
+      const isOwner = record.get("isOwner") as boolean;
+      const role = record.get("role") as string | null;
+
+      req.projectRole = isOwner ? "OWNER" : (role || "READER");
 
       next();
     } catch (err) {
@@ -61,5 +67,23 @@ export const requireProjectAccess = () => {
     } finally {
       await session.close();
     }
+  };
+};
+
+/**
+ * Middleware that blocks write requests (POST, PUT, DELETE) if the user's role
+ * on the project is READER.
+ */
+export const requireWriteAccess = () => {
+  return (
+    req: InterfaceAuthRequest,
+    res: Response,
+    next: NextFunction,
+  ): void => {
+    if (!req.projectRole || req.projectRole === "READER") {
+      res.status(403).json({ error: "Forbidden: Write access required" });
+      return;
+    }
+    next();
   };
 };

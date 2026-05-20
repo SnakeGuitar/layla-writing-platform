@@ -27,10 +27,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-else
-{
-    app.UseHttpsRedirection();
-}
+// HTTPS redirection is intentionally NOT enabled in production:
+// the API Gateway (YARP) acts as the TLS terminator. Internal traffic
+// between gateway and service is HTTP within the private network.
 
 app.MapHealthChecks("/health");
 app.UseRateLimiter();
@@ -39,6 +38,7 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<VoiceHub>("/hubs/voice");
 app.MapHub<PresenceHub>("/hubs/presence");
+app.MapHub<ManuscriptHub>("/hubs/manuscript");
 
 using (var scope = app.Services.CreateScope())
 {

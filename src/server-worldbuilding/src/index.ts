@@ -10,6 +10,10 @@ import {
 	startProjectCreatedConsumer,
 	closeRabbitMQ,
 } from "@/consumers/projectCreated.consumer";
+import {
+	startCollaboratorConsumer,
+	closeCollaboratorRabbitMQ,
+} from "@/consumers/collaborator.consumer";
 import { startNeo4jSyncWorker } from "@/workers/neo4jSyncWorker";
 import { apiLimiter } from "@/middlewares/RateLimiter";
 import { swaggerSpec } from "@/docs/swagger";
@@ -77,6 +81,7 @@ const bootstrap = async () => {
 	await connectMongoDB();
 	await verifyNeo4jConnection();
 	await startProjectCreatedConsumer();
+	await startCollaboratorConsumer();
 
 	startNeo4jSyncWorker();
 
@@ -88,6 +93,7 @@ const bootstrap = async () => {
 		console.log("Shutting down server...");
 		await new Promise<void>((resolve) => server.close(() => resolve()));
 		await closeRabbitMQ();
+		await closeCollaboratorRabbitMQ();
 		await closeNeo4jDriver();
 		process.exit(0);
 	};

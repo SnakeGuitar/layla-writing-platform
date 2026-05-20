@@ -10,5 +10,7 @@ public static class MessagingConstants
     public static class RoutingKeys
     {
         public const string ProjectCreated = "project.created";
+        public const string CollaboratorJoined = "collaborator.joined";
+        public const string CollaboratorRemoved = "collaborator.removed";
     }
 }

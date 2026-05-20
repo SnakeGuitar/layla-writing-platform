@@ -5,7 +5,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.layla.android.data.api.PresenceSignalRClient
 import com.layla.android.data.model.ProjectDto
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,6 +26,9 @@ class ReaderWorkspaceViewModel(
 
     private val presenceClient = PresenceSignalRClient(baseUrl)
 
+    // Independent scope for cleanup work (see VoiceViewModel for rationale).
+    private val cleanupScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     private val _uiState = MutableStateFlow(
         ReaderUiState(
             isAuthorActive = project.isAuthorActive,
@@ -38,10 +43,14 @@ class ReaderWorkspaceViewModel(
 
     private fun connectAndWatch() {
         viewModelScope.launch(Dispatchers.IO) {
-            try {
+            val connected = try {
                 presenceClient.connect(token)
                 presenceClient.watchProject(project.id)
-            } catch (_: Exception) {}
+                true
+            } catch (_: Exception) {
+                false
+            }
+            if (!connected) return@launch
 
             // Observe presence updates
             presenceClient.presenceUpdates.collect { update ->
@@ -58,7 +67,7 @@ class ReaderWorkspaceViewModel(
 
     override fun onCleared() {
         super.onCleared()
-        viewModelScope.launch(Dispatchers.IO) {
+        cleanupScope.launch {
             try { presenceClient.disconnect() } catch (_: Exception) {}
         }
     }

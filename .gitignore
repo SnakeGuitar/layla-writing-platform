@@ -1,0 +1,48 @@
+# ----- Secrets / local dev config -----
+.env
+.env.*
+!.env.example
+!.env.shared.example
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/.env.development
+**/.env.local
+deploy/files/env/.env.shared
+
+# ----- Build artefacts -----
+build.log
+build_error*.log
+build_output*.txt
+**/build_errors*.txt
+**/build_output*.txt
+**/obj/
+**/bin/
+
+# ----- IDE / OS -----
+.vs/
+.vscode/
+.idea/
+*.user
+desktop.ini
+.DS_Store
+Thumbs.db
+
+# ----- Claude / tooling -----
+.antigravityrules
+.claude/
+
+# ----- Presentation build artifacts -----
+presentation/node_modules/
+presentation/package*.json
+presentation/*.pdf
+
+# ----- Node -----
+node_modules/
+dist/
+*.js.map
+
+# ----- Android -----
+*.apk
+*.aab
+**/.gradle/
+**/local.properties

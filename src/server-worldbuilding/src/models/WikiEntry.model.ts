@@ -15,6 +15,7 @@ const WikiEntrySchema = new Schema<IWikiEntry>(
     projectId: { type: String, required: true, index: true },
     entityId: { type: String, required: true, unique: true, index: true },
     name: { type: String, required: true, maxlength: 200 },
+    aliases: [{ type: String }],
     entityType: {
       type: String,
       enum: ["Character", "Location", "Event", "Object", "Concept"],
