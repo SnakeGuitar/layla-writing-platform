@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -211,5 +212,48 @@ public class ManuscriptApiService : IManuscriptApiService
             _logger.LogCritical("DeleteChapterAsync() - Method exception: {exception}" + ex.ToString());
         }
         return false;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> CreateMilestoneAsync(Guid projectId, string manuscriptId, Guid chapterId, string content)
+    {
+        AddAuthorizationHeader();
+        try
+        {
+            var payload = new
+            {
+                content,
+                mentions = Array.Empty<object>(),
+                isMilestone = true
+            };
+            string json = JsonSerializer.Serialize(payload);
+            using var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
+            HttpResponseMessage response = await _httpClient.PutAsync(
+                $"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/autosave", httpContent);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error creating milestone: {ex.Message}");
+        }
+        return false;
+    }
+
+    /// <inheritdoc/>
+    public async Task<List<ChapterVersion>?> GetChapterVersionsAsync(Guid projectId, string manuscriptId, Guid chapterId)
+    {
+        AddAuthorizationHeader();
+        try
+        {
+            HttpResponseMessage response = await _httpClient.GetAsync(
+                $"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/versions");
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadFromJsonAsync<List<ChapterVersion>>();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error getting chapter versions: {ex.Message}");
+        }
+        return null;
     }
 }

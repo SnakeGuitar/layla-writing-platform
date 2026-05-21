@@ -5,7 +5,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:Layla.Desktop.Views"
       mc:Ignorable="d" 
-      d:DesignHeight="450" d:DesignWidth="800"
+      d:DesignHeight="720" d:DesignWidth="1080"
       ShowsNavigationUI="False"
       Title="ProjectListView"
       Background="{DynamicResource CyberBgPrimaryBrush}"
@@ -15,109 +15,164 @@
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </Page.Resources>
 
-    <Grid Background="{DynamicResource CyberBgPrimaryBrush}" Margin="10">
+    <Grid Background="Transparent" Margin="24">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             
-            <Grid Grid.Row="0" Margin="0,0,0,15">
+            <!-- High-Tech Cyber Brutalist Header -->
+            <Grid Grid.Row="0" Margin="0,0,0,24">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 
-                <TextBlock Grid.Column="0" Text="MY PROJECTS" Style="{StaticResource CyberDisplayText}" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="0">
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                        <TextBlock Text="/01" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentAlertBrush}" Margin="0,0,8,0" VerticalAlignment="Bottom"/>
+                        <TextBlock Text="CORE ARCHIVE" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberTextSecondaryBrush}" VerticalAlignment="Bottom"/>
+                    </StackPanel>
+                    <TextBlock Text="PROJECT DATABASE" Style="{StaticResource CyberDisplayText}" FontSize="28" Foreground="{DynamicResource CyberAccentPrimaryBrush}"/>
+                    <!-- A beautiful brutalist line divider -->
+                    <Border BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="0,0,0,1" Margin="0,8,0,0" Height="2">
+                        <Grid>
+                            <Line X1="0" Y1="0" X2="100" Y2="0" Stroke="{DynamicResource CyberAccentPrimaryBrush}" StrokeThickness="2" Width="100" HorizontalAlignment="Left"/>
+                        </Grid>
+                    </Border>
+                </StackPanel>
                 
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+                    <!-- High-tech global status widget -->
+                    <Border BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="1" Padding="12,6" Margin="0,0,15,0" Background="#11ffffff">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="6" Height="6" Fill="{DynamicResource CyberAccentAlertBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="NODE_CYBR_01  //  SECURE_ACCESS_GRANTED  //  ACTIVE" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberTextPrimaryBrush}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Border>
+                    
                     <Button Content="BROWSE PUBLIC" Style="{StaticResource CyberButton}"
-                            Padding="10,5" Cursor="Hand" Click="BrowsePublicButton_Click"/>
+                            Padding="12,6" Cursor="Hand" Click="BrowsePublicButton_Click"/>
                     <Button Content="CREATE PROJECT" Style="{StaticResource CyberButton}"
-                            Padding="10,5" Cursor="Hand" Command="{Binding OpenCreateModalCommand}" Margin="6,0,0,0"/>
+                            BorderBrush="{DynamicResource CyberAccentAlertBrush}" Foreground="{DynamicResource CyberAccentAlertBrush}"
+                            Padding="12,6" Cursor="Hand" Command="{Binding OpenCreateModalCommand}" Margin="6,0,0,0"/>
                     <Button Content="SETTINGS" Style="{StaticResource CyberButton}"
-                            Padding="10,5" Cursor="Hand" Click="SettingsButton_Click" Margin="6,0,0,0"/>
+                            Padding="12,6" Cursor="Hand" Click="SettingsButton_Click" Margin="6,0,0,0"/>
                     <Button Content="LOGOUT" Style="{StaticResource CyberButton}"
                             BorderBrush="{DynamicResource CyberAccentWarningBrush}" Foreground="{DynamicResource CyberAccentWarningBrush}"
-                            Padding="10,5" Cursor="Hand" Click="LogoutButton_Click" Margin="6,0,0,0"/>
+                            Padding="12,6" Cursor="Hand" Click="LogoutButton_Click" Margin="6,0,0,0"/>
                 </StackPanel>
             </Grid>
             
+            <!-- Overhauled Project Cards List -->
             <ListView x:Name="ProjectsListView" Grid.Row="1" ItemsSource="{Binding Projects}" BorderThickness="0" Background="Transparent" MouseDoubleClick="ProjectsListView_MouseDoubleClick">
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <Border Style="{StaticResource CyberPanelBorder}" Padding="16" Margin="0,0,0,12" Background="{DynamicResource CyberBgSecondaryBrush}" Cursor="Hand">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-                                
-                                <StackPanel Grid.Column="0">
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                                        <TextBlock Text="{Binding Title}" Style="{StaticResource CyberTitleText}"/>
-                                        
-                                        <Border CornerRadius="0" Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center" BorderThickness="1" BorderBrush="{DynamicResource CyberAccentPrimaryBrush}">
-                                            <TextBlock Text="PUBLIC" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentPrimaryBrush}"/>
-                                        </Border>
-                                        
-                                        <Border CornerRadius="0" Padding="6,2" Margin="8,0,0,0" VerticalAlignment="Center" BorderThickness="1">
-                                            <Border.Style>
-                                                <Style TargetType="Border">
-                                                    <Setter Property="Background" Value="{DynamicResource CyberBgSecondaryBrush}"/>
-                                                    <Setter Property="BorderBrush" Value="{DynamicResource CyberBorderActiveBrush}"/>
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                    <Style.Triggers>
-                                                        <DataTrigger Binding="{Binding UserRole}" Value="">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding UserRole}" Value="{x:Null}">
-                                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding UserRole}" Value="OWNER">
-                                                            <Setter Property="BorderBrush" Value="{DynamicResource CyberAccentPrimaryBrush}"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding UserRole}" Value="EDITOR">
-                                                            <Setter Property="BorderBrush" Value="{DynamicResource CyberTextPrimaryBrush}"/>
-                                                        </DataTrigger>
-                                                        <DataTrigger Binding="{Binding UserRole}" Value="READER">
-                                                            <Setter Property="BorderBrush" Value="{DynamicResource CyberTextSecondaryBrush}"/>
-                                                        </DataTrigger>
-                                                    </Style.Triggers>
-                                                </Style>
-                                            </Border.Style>
-                                            <TextBlock Text="{Binding UserRole}">
-                                                <TextBlock.Style>
-                                                    <Style TargetType="TextBlock" BasedOn="{StaticResource CyberLabel}">
-                                                        <Setter Property="Foreground" Value="{DynamicResource CyberTextSecondaryBrush}"/>
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding UserRole}" Value="OWNER">
-                                                                <Setter Property="Foreground" Value="{DynamicResource CyberAccentPrimaryBrush}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding UserRole}" Value="EDITOR">
-                                                                <Setter Property="Foreground" Value="{DynamicResource CyberTextPrimaryBrush}"/>
-                                                            </DataTrigger>
-                                                            <DataTrigger Binding="{Binding UserRole}" Value="READER">
+                        <!-- Grid holding the card -->
+                        <Grid Margin="0,0,0,16">
+                            <Border x:Name="CardBorder" BorderThickness="1" BorderBrush="{DynamicResource CyberBorderSubtleBrush}" Background="#D00B0B0F" Padding="18">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    
+                                    <StackPanel Grid.Column="0">
+                                        <!-- Top Info Bar -->
+                                        <Grid Margin="0,0,0,10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            
+                                            <!-- Brutalist numeric label -->
+                                            <TextBlock Grid.Column="0" Text="/PROJ_SECURE_0X" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                            
+                                            <!-- Status / Roles -->
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                                                <Border CornerRadius="0" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center" BorderThickness="1" BorderBrush="{DynamicResource CyberAccentPrimaryBrush}">
+                                                    <TextBlock Text="PUBLIC" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentPrimaryBrush}"/>
+                                                </Border>
+                                                
+                                                <Border CornerRadius="0" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center" BorderThickness="1">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Background" Value="Transparent"/>
+                                                            <Setter Property="BorderBrush" Value="{DynamicResource CyberBorderSubtleBrush}"/>
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding UserRole}" Value="">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding UserRole}" Value="{x:Null}">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding UserRole}" Value="OWNER">
+                                                                    <Setter Property="BorderBrush" Value="{DynamicResource CyberAccentAlertBrush}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding UserRole}" Value="EDITOR">
+                                                                    <Setter Property="BorderBrush" Value="{DynamicResource CyberAccentSecondaryBrush}"/>
+                                                                </DataTrigger>
+                                                                <DataTrigger Binding="{Binding UserRole}" Value="READER">
+                                                                    <Setter Property="BorderBrush" Value="{DynamicResource CyberTextSecondaryBrush}"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="{Binding UserRole}">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource CyberLabel}">
                                                                 <Setter Property="Foreground" Value="{DynamicResource CyberTextSecondaryBrush}"/>
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </TextBlock.Style>
-                                            </TextBlock>
-                                        </Border>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding UserRole}" Value="OWNER">
+                                                                        <Setter Property="Foreground" Value="{DynamicResource CyberAccentAlertBrush}"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding UserRole}" Value="EDITOR">
+                                                                        <Setter Property="Foreground" Value="{DynamicResource CyberAccentSecondaryBrush}"/>
+                                                                    </DataTrigger>
+                                                                    <DataTrigger Binding="{Binding UserRole}" Value="READER">
+                                                                        <Setter Property="Foreground" Value="{DynamicResource CyberTextSecondaryBrush}"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                </Border>
+                                            </StackPanel>
+                                        </Grid>
+                                        
+                                        <!-- Main Title -->
+                                        <TextBlock Text="{Binding Title}" Style="{StaticResource CyberTitleText}" FontSize="18" Foreground="#FFFFFF" Margin="0,0,0,4"/>
+                                        
+                                        <!-- Genre with code style -->
+                                        <TextBlock Text="{Binding LiteraryGenre}" Style="{StaticResource CyberTechMonoText}" Foreground="{DynamicResource CyberAccentSecondaryBrush}" Margin="0,0,0,8" />
+                                        
+                                        <!-- Tech division dash pattern -->
+                                        <TextBlock Text="--------------------------------------------------------------------------------------------------" Style="{StaticResource CyberTechMonoText}" Foreground="#11ffffff" Margin="0,0,0,10"/>
+                                        
+                                        <!-- Synopsis -->
+                                        <TextBlock Text="{Binding Synopsis}" Style="{StaticResource CyberBodyText}" TextWrapping="Wrap" MaxWidth="700" Margin="0,0,0,4"/>
                                     </StackPanel>
-                                    <TextBlock Text="{Binding LiteraryGenre}" Style="{StaticResource CyberTechMonoText}" Foreground="{DynamicResource CyberTextSecondaryBrush}" Margin="0,0,0,4" />
-                                    <TextBlock Text="{Binding Synopsis}" Style="{StaticResource CyberBodyText}" TextWrapping="Wrap" MaxWidth="600" Margin="0,0,0,4"/>
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-                                    <Button Content="EDIT" Style="{StaticResource CyberButton}" Padding="8,4" Cursor="Hand" 
-                                            Command="{Binding DataContext.OpenEditModalCommand, RelativeSource={RelativeSource AncestorType=ListView}}" CommandParameter="{Binding}"/>
-                                    <Button Content="DELETE" Style="{StaticResource CyberButton}" BorderBrush="{DynamicResource CyberAccentWarningBrush}" Foreground="{DynamicResource CyberAccentWarningBrush}" Padding="8,4" Cursor="Hand" 
-                                            Command="{Binding DataContext.DeleteProjectCommand, RelativeSource={RelativeSource AncestorType=ListView}}" CommandParameter="{Binding}" Margin="4,0,0,0"/>
-                                </StackPanel>
-                            </Grid>
-                        </Border>
+        
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
+                                        <Button Content="OPEN" Style="{StaticResource CyberButton}" BorderBrush="{DynamicResource CyberAccentPrimaryBrush}" Foreground="{DynamicResource CyberAccentPrimaryBrush}" Padding="12,5" Cursor="Hand" Click="OpenButton_Click" />
+                                        <Button Content="EDIT" Style="{StaticResource CyberButton}" Padding="12,5" Cursor="Hand" Margin="6,0,0,0"
+                                                Command="{Binding DataContext.OpenEditModalCommand, RelativeSource={RelativeSource AncestorType=ListView}}" CommandParameter="{Binding}"/>
+                                        <Button Content="DELETE" Style="{StaticResource CyberButton}" BorderBrush="{DynamicResource CyberAccentWarningBrush}" Foreground="{DynamicResource CyberAccentWarningBrush}" Padding="12,5" Cursor="Hand" 
+                                                Command="{Binding DataContext.DeleteProjectCommand, RelativeSource={RelativeSource AncestorType=ListView}}" CommandParameter="{Binding}" Margin="6,0,0,0"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <!-- Visual left bar on selected/hover -->
+                            <Rectangle x:Name="SelectedStripe" Width="4" HorizontalAlignment="Left" Fill="{DynamicResource CyberAccentPrimaryBrush}" VerticalAlignment="Stretch" Visibility="Collapsed"/>
+                        </Grid>
+                        <DataTemplate.Triggers>
+                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+                                <Setter TargetName="CardBorder" Property="BorderBrush" Value="{DynamicResource CyberAccentPrimaryBrush}"/>
+                                <Setter TargetName="SelectedStripe" Property="Visibility" Value="Visible"/>
+                            </DataTrigger>
+                        </DataTemplate.Triggers>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>

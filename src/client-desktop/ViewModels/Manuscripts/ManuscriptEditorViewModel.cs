@@ -62,6 +62,20 @@ public partial class ManuscriptEditorViewModel : ObservableObject
     /// <summary>Wiki entities detected in the currently loaded chapter.</summary>
     public ObservableCollection<Mention> CurrentMentions { get; } = new();
 
+    /// <summary>Version snapshots for the currently loaded chapter, newest first.</summary>
+    public ObservableCollection<ChapterVersion> ChapterVersions { get; } = new();
+
+    /// <summary><c>true</c> while chapter version history is being fetched.</summary>
+    [ObservableProperty]
+    private bool _isLoadingHistory;
+
+    /// <summary>
+    /// Last user-visible status message set by commands to surface
+    /// milestone or restore outcomes without throwing dialogs from the ViewModel.
+    /// </summary>
+    [ObservableProperty]
+    private string _statusMessage = string.Empty;
+
     /// <summary>
     /// Raised on the calling thread when the view should reload the RTF content
     /// from <see cref="CurrentChapter"/> into the editor control.
@@ -395,5 +409,117 @@ public partial class ManuscriptEditorViewModel : ObservableObject
         Chapter? targetCh = CurrentChapters.FirstOrDefault(c => c.ChapterId.ToString() == chapterId);
         if (targetCh != null)
             await SelectChapterAsync(targetCh);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // VERSION HISTORY & MILESTONES
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Loads the version history for the currently active chapter and populates
+    /// <see cref="ChapterVersions"/>, ordered newest-first.
+    /// </summary>
+    [RelayCommand]
+    public async Task LoadHistoryAsync()
+    {
+        if (CurrentChapter == null || SelectedManuscript == null) return;
+        IsLoadingHistory = true;
+        try
+        {
+            List<ChapterVersion>? versions = await _apiService.GetChapterVersionsAsync(
+                _projectId,
+                SelectedManuscript.ManuscriptId,
+                CurrentChapter.ChapterId
+            );
+            ChapterVersions.Clear();
+            if (versions != null)
+            {
+                foreach (ChapterVersion v in versions.OrderByDescending(v => v.CreatedAt))
+                    ChapterVersions.Add(v);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Failed to load version history: {ex.Message}");
+        }
+        finally
+        {
+            IsLoadingHistory = false;
+        }
+    }
+
+    /// <summary>
+    /// Saves the current chapter content as a named milestone snapshot and
+    /// refreshes the history panel so the new entry appears immediately.
+    /// </summary>
+    /// <param name="currentRtf">
+    /// The RTF text currently in the editor, passed in by the view
+    /// so the ViewModel never has to reach into WPF directly.
+    /// </param>
+    [RelayCommand]
+    public async Task CreateMilestoneAsync(string currentRtf)
+    {
+        if (CurrentChapter == null || SelectedManuscript == null) return;
+        StatusMessage = "Creating milestone snapshot...";
+        try
+        {
+            bool ok = await _apiService.CreateMilestoneAsync(
+                _projectId,
+                SelectedManuscript.ManuscriptId,
+                CurrentChapter.ChapterId,
+                currentRtf
+            );
+            StatusMessage = ok
+                ? "✔ Milestone created"
+                : "Failed to create milestone — check server connection.";
+            if (ok)
+                await LoadHistoryAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Milestone error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Restores the chapter to the content of the given version after user confirmation,
+    /// then fires <see cref="ContentReloadRequested"/> so the editor reloads.
+    /// </summary>
+    [RelayCommand]
+    public async Task RestoreVersionAsync(ChapterVersion? version)
+    {
+        if (version == null || CurrentChapter == null || SelectedManuscript == null) return;
+
+        var confirm = System.Windows.MessageBox.Show(
+            $"Restore the chapter to the version from {version.CreatedAt:yyyy-MM-dd HH:mm}? This cannot be undone.",
+            "Confirm Restore",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Warning
+        );
+        if (confirm != System.Windows.MessageBoxResult.Yes) return;
+
+        StatusMessage = "Restoring version...";
+        try
+        {
+            // Retrieve the full content of that version and write it back to CurrentChapter
+            List<ChapterVersion>? allVersions = await _apiService.GetChapterVersionsAsync(
+                _projectId, SelectedManuscript.ManuscriptId, CurrentChapter.ChapterId);
+
+            ChapterVersion? full = allVersions?.FirstOrDefault(v => v.VersionId == version.VersionId);
+            if (full == null || string.IsNullOrEmpty(full.Content))
+            {
+                StatusMessage = "Version content could not be retrieved.";
+                return;
+            }
+
+            CurrentChapter.Content = full.Content;
+            ContentReloadRequested?.Invoke();
+            StatusMessage = $"✔ Restored to {version.CreatedAt:yyyy-MM-dd HH:mm}";
+            await LoadHistoryAsync();
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Restore failed: {ex.Message}";
+        }
     }
 }

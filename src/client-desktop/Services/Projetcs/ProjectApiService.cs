@@ -209,6 +209,15 @@ public class ProjectApiService : IProjectApiService
             {
                 if (SessionManager.IsAuthenticated)
                     options.AccessTokenProvider = () => Task.FromResult<string?>(SessionManager.CurrentToken);
+                options.HttpMessageHandlerFactory = handler =>
+                {
+                    if (handler is HttpClientHandler clientHandler)
+                    {
+                        clientHandler.ServerCertificateCustomValidationCallback =
+                            (message, cert, chain, errors) => true;
+                    }
+                    return handler;
+                };
             })
             .WithAutomaticReconnect()
             .Build();

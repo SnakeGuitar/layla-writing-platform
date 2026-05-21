@@ -1,6 +1,6 @@
 # Layla
 
-Collaborative creative-writing and worldbuilding platform. Multiple authors can co-write novels, manage wiki entries, visualize narrative graphs, and communicate through a voice session — all in real time.
+Real-time collaborative creative-writing and worldbuilding platform. Multiple authors can co-write novels, manage wiki entries, visualize narrative graphs, and communicate through a voice session — all in real time.
 
 ---
 

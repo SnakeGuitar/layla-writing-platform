@@ -12,12 +12,46 @@ public static class Builder
     {
         builder.WebHost.ConfigureKestrel(options =>
         {
-            options.ListenAnyIP(7166, listen =>
-                {
-                    listen.UseHttps("/certs/aspnetapp.pfx", "YourStrongPasswordAF");
-                });
+            int.TryParse(builder.Configuration["Ports:HTTPS"] ?? "5288", out int httpsPort);
+            int.TryParse(builder.Configuration["Ports:HTTP"] ?? "5287", out int httpPort);
 
-            options.ListenAnyIP(5287);
+            options.ListenAnyIP(httpsPort, listen =>
+            {
+                string? certPath = builder.Configuration["ASPNETCORE_Kestrel:Certificates:Default:Path"];
+                string certPassword = builder.Configuration["ASPNETCORE_Kestrel:Certificates:Default:Password"] ?? "YourStrongPasswordAF";
+
+                if (string.IsNullOrEmpty(certPath) || !File.Exists(certPath))
+                {
+                    certPath = "/app/certs_static/aspnetapp.pfx";
+                }
+                if (!File.Exists(certPath))
+                {
+                    certPath = "/app/certs/aspnetapp.pfx";
+                }
+                if (!File.Exists(certPath))
+                {
+                    certPath = "/certs/aspnetapp.pfx";
+                }
+                if (!File.Exists(certPath))
+                {
+                    certPath = Path.Combine(AppContext.BaseDirectory, "Certs", "aspnetapp.pfx");
+                }
+                if (!File.Exists(certPath))
+                {
+                    certPath = Path.Combine(Directory.GetCurrentDirectory(), "Certs", "aspnetapp.pfx");
+                }
+
+                if (File.Exists(certPath))
+                {
+                    listen.UseHttps(certPath, certPassword);
+                }
+                else
+                {
+                    listen.UseHttps();
+                }
+            });
+
+            options.ListenAnyIP(httpPort);
         });
 
         builder.Services.AddControllers()
@@ -65,9 +99,11 @@ public static class Builder
 
         builder.Services.AddInfrastructureServices(builder.Configuration);
         builder.Services.AddSignalR();
+        int.TryParse(builder.Configuration["Ports:HTTPS"] ?? "5288", out int httpsPortConf);
+        int.TryParse(builder.Configuration["Ports:HTTP"] ?? "5287", out int httpPortConf);
         string bindHost = builder.Environment.IsProduction() ? "+" : "localhost";
         builder.WebHost.UseUrls(
-            $"https://{bindHost}:{builder.Configuration["Ports:HTTPS"]};http://{bindHost}:{builder.Configuration["Ports:HTTP"]};");
+            $"https://{bindHost}:{httpsPortConf};http://{bindHost}:{httpPortConf};");
         builder.Services.AddHealthChecks();
     }
 }

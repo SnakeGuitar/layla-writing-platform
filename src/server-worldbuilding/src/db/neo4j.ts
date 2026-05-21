@@ -30,15 +30,33 @@ export const getNeo4jDriver = (): Driver => {
 	return driver;
 };
 
+const MAX_RETRIES = 5;
+const RETRY_DELAY_MS = 3000;
+
 /**
  * Verifies that the Neo4j driver can reach the server.
  * Called during application bootstrap to fail fast if Neo4j is unavailable.
  *
+ * Retries up to {@link MAX_RETRIES} times with a {@link RETRY_DELAY_MS} ms
+ * backoff between attempts. Throws if all attempts fail.
+ *
  * @throws {Error} If connection fails
  */
 export const verifyNeo4jConnection = async (): Promise<void> => {
-	await getNeo4jDriver().verifyConnectivity();
-	console.log("Neo4j connected.");
+	for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+		try {
+			await getNeo4jDriver().verifyConnectivity();
+			console.log("Neo4j connected.");
+			return;
+		} catch (error) {
+			console.error(
+				`Neo4j: attempt ${attempt}/${MAX_RETRIES} failed.\n`,
+				error,
+			);
+			if (attempt === MAX_RETRIES) throw error;
+			await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+		}
+	}
 };
 
 /**

@@ -15,10 +15,11 @@ services:
     volumes:
       - sql_data:/var/opt/mssql
     healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U ${SQL_USERNAME} -P ${SQL_PASSWORD} -Q \"SELECT 1\" -C || exit 1"]
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${SQL_PASSWORD} -Q \"SELECT 1\" -C || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 20s
     restart: unless-stopped
 
   # --- 2. MongoDB (Manuscripts & Wiki) ---
@@ -33,10 +34,11 @@ services:
     volumes:
       - mongo_data:/data/db
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      test: ["CMD-SHELL", "mongosh --eval 'db.runCommand({connectionStatus: 1}).ok' --quiet || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
     restart: unless-stopped
 
   # --- 3. Neo4j (Worldbuilding) ---
@@ -52,10 +54,11 @@ services:
     volumes:
       - neo4j_data:/data
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:7474/ || exit 1"]
+      test: ["CMD-SHELL", "cypher-shell -u ${NEO4J_USERNAME} -p ${NEO4J_PASSWORD} 'RETURN 1' || exit 1"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 20s
     restart: unless-stopped
 
   # --- 4. Worldbuilding API (Node.js) ---
@@ -216,10 +219,11 @@ services:
     volumes:
       - rabbit_data:/var/lib/rabbitmq
     healthcheck:
-      test: rabbitmq-diagnostics -q ping
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 15s
     restart: unless-stopped
 
 volumes:
