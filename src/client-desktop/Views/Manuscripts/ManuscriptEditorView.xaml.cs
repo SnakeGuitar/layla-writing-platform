@@ -2,6 +2,7 @@ using Layla.Desktop.Models.Manuscripts;
 using Layla.Desktop.Models.Wikis;
 using Layla.Desktop.Services;
 using Layla.Desktop.Services.Projetcs;
+using Layla.Desktop.ViewModels;
 using Layla.Desktop.ViewModels.Manuscripts;
 using Microsoft.Win32;
 using System.Diagnostics;
@@ -27,12 +28,14 @@ public partial class ManuscriptEditorView : Page
     private readonly ManuscriptEditorViewModel _viewModel;
     private bool _isLoaded = false;
     private bool _isReadOnly = false;
+    public bool IsEditablePage => !_isReadOnly;
     private bool _suppressToolbarSync = false;
     private Timer? _debounceTimer;
 
     private AdornerLayer? _adornerLayer;
     private ImageResizerAdorner? _currentAdorner;
     private Image? _selectedImage;
+    private CollaboratorCursorAdorner? _cursorAdorner;
 
     private bool _isPickingFontColor = true;
 
@@ -66,7 +69,264 @@ public partial class ManuscriptEditorView : Page
         DataContext = _viewModel;
         _viewModel.Initialize(projectId);
         _viewModel.ContentReloadRequested += OnContentReloadRequested;
+        _viewModel.EvictedFromProject += OnEvictedFromProject;
+        _viewModel.WikiTokenizerUpdated += OnWikiTokenizerUpdated;
+        _viewModel.RequestShowDiff += OnRequestShowDiff;
+        _viewModel.CollaboratorCursorMoved += OnCollaboratorCursorMoved;
+        _viewModel.RequestFlushAction = async () => await FlushPendingSavesAsync();
         this.Loaded += OnLoaded;
+        this.Unloaded += OnUnloaded;
+
+        // Ctrl+S triggers the manual save. The KeyBinding lives on the page
+        // so the shortcut works no matter which child control has focus.
+        KeyBinding saveBinding = new(
+            new RelayCommandWrapper(async () => await ManualSaveAsync()),
+            Key.S, ModifierKeys.Control);
+        this.InputBindings.Add(saveBinding);
+
+    }
+
+    // Tiny ICommand adapter so we can wire Ctrl+S via KeyBinding without
+    // pulling in CommunityToolkit.Mvvm's RelayCommand for a one-off use.
+    private sealed class RelayCommandWrapper : System.Windows.Input.ICommand
+    {
+        private readonly Func<Task> _action;
+        public RelayCommandWrapper(Func<Task> action) => _action = action;
+        public event EventHandler? CanExecuteChanged { add { } remove { } }
+        public bool CanExecute(object? parameter) => true;
+        public async void Execute(object? parameter) => await _action();
+    }
+
+    private IEnumerable<Run> GetRunsFromInlines(InlineCollection inlines)
+    {
+        foreach (Inline? inline in inlines)
+        {
+            if (inline is Run run) yield return run;
+            else if (inline is Span span)
+            {
+                foreach (Run childRun in GetRunsFromInlines(span.Inlines)) yield return childRun;
+            }
+        }
+    }
+
+    private IEnumerable<Run> GetAllRuns(FlowDocument document)
+    {
+        return GetRunsFromBlocks(document.Blocks);
+    }
+
+    private IEnumerable<Run> GetRunsFromBlocks(BlockCollection blocks)
+    {
+        foreach (Block? block in blocks)
+        {
+            if (block is Paragraph p)
+            {
+                foreach (Run run in GetRunsFromInlines(p.Inlines)) yield return run;
+            }
+            else if (block is List list)
+            {
+                foreach (ListItem? listItem in list.ListItems)
+                {
+                    foreach (Run run in GetRunsFromBlocks(listItem.Blocks)) yield return run;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Scans all text runs in the FlowDocument and programmatically injects
+    /// interactive wiki hyperlinks for matches detected by the Aho-Corasick tokenizer.
+    /// </summary>
+    private void RunVisualTokenization()
+    {
+        if (_suppressToolbarSync || !_isLoaded || _viewModel.CurrentChapter == null) return;
+
+        _suppressToolbarSync = true;
+        try
+        {
+            List<Run> runs = GetAllRuns(EditorRichTextBox.Document).ToList();
+            TextRange textRange = new(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
+            var detectable = _viewModel.Tokenizer.FindMentions(textRange.Text);
+
+            foreach (Run run in runs)
+            {
+                // Skip if the run is already nested under a Hyperlink
+                if (run.Parent is Hyperlink) continue;
+
+                string text = run.Text;
+                foreach (var match in detectable)
+                {
+                    int index = text.IndexOf(match.MatchedText, StringComparison.OrdinalIgnoreCase);
+                    if (index >= 0)
+                    {
+                        TextPointer pointer = run.ContentStart.GetPositionAtOffset(index);
+                        TextPointer endPointer = pointer.GetPositionAtOffset(match.MatchedText.Length);
+
+                        Border tooltipBorder = new()
+                        {
+                            Background = (Brush)FindResource("ControlBackground"),
+                            BorderBrush = (Brush)FindResource("AccentColor"),
+                            BorderThickness = new Thickness(1),
+                            CornerRadius = new CornerRadius(6),
+                            Padding = new Thickness(12),
+                            MaxWidth = 250
+                        };
+                        StackPanel tooltipStack = new();
+                        tooltipStack.Children.Add(new TextBlock
+                        {
+                            Text = match.MatchedText,
+                            FontWeight = FontWeights.Bold,
+                            FontSize = 14,
+                            Foreground = (Brush)FindResource("PrimaryText")
+                        });
+                        tooltipStack.Children.Add(new TextBlock
+                        {
+                            Text = match.EntityType.ToUpper(),
+                            FontSize = 10,
+                            Foreground = (Brush)FindResource("AccentColor"),
+                            Margin = new Thickness(0, 2, 0, 8),
+                            FontWeight = FontWeights.SemiBold
+                        });
+                        tooltipStack.Children.Add(new TextBlock
+                        {
+                            Text = "Click to view full details in the Wiki.",
+                            Foreground = (Brush)FindResource("SecondaryText"),
+                            FontSize = 11,
+                            TextWrapping = TextWrapping.Wrap
+                        });
+                        tooltipBorder.Child = tooltipStack;
+
+                        Hyperlink hyperlink = new(pointer, endPointer)
+                        {
+                            NavigateUri = new Uri($"wiki://{match.EntityId}"),
+                            ToolTip = new ToolTip
+                            {
+                                Content = tooltipBorder,
+                                Background = Brushes.Transparent,
+                                BorderThickness = new Thickness(0),
+                                HasDropShadow = true
+                            }
+                        };
+                        hyperlink.RequestNavigate += (s, e) =>
+                        {
+                            WorkspaceMediator.RequestNavigateToWikiEntry(match.EntityId);
+                        };
+
+                        // Apply premium styled aesthetic
+                        hyperlink.Foreground = new SolidColorBrush(Color.FromRgb(103, 58, 183)); // Modern Slate Indigo
+                        hyperlink.TextDecorations = TextDecorations.Underline;
+                        hyperlink.Cursor = Cursors.Hand;
+
+                        // Only process the first match per run to avoid concurrent modification issues
+                        // If there are more matches, they'll be picked up in subsequent debounced passes.
+                        break;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Tokenization error: {ex.Message}");
+        }
+        finally
+        {
+            _suppressToolbarSync = false;
+        }
+    }
+
+    private void OnWikiTokenizerUpdated()
+    {
+        Dispatcher.Invoke(() => RunVisualTokenization());
+    }
+
+
+    private void OnEvictedFromProject(Guid projectId)
+    {
+        Application.Current.Dispatcher.Invoke(async () =>
+        {
+            MessageBox.Show("Your collaborator access to this project has been revoked by the owner.", "Access Revoked", MessageBoxButton.OK, MessageBoxImage.Error);
+
+            try
+            {
+                await FlushPendingSavesAsync();
+            }
+            catch { }
+
+            Page? parentPage = GetParentPage(this);
+            if (parentPage?.NavigationService != null)
+            {
+                parentPage.NavigationService.Navigate(new ProjectListView());
+            }
+            else
+            {
+                this.NavigationService?.Navigate(new ProjectListView());
+            }
+        });
+    }
+
+    private async void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        // Belt-and-suspenders: a Page hosted inside a Frame does not always
+        // get its Unloaded raised reliably when the OUTER page navigates
+        // away — that is why WorkspaceView ALSO explicitly calls
+        // FlushPendingSavesAsync before navigating. Keep this path so
+        // direct navigation away from the editor still flushes.
+        try
+        {
+            await FlushPendingSavesAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Unloaded flush failed: {ex.Message}");
+        }
+
+        _debounceTimer?.Dispose();
+        _debounceTimer = null;
+        _viewModel.ContentReloadRequested -= OnContentReloadRequested;
+        _viewModel.EvictedFromProject -= OnEvictedFromProject;
+        _viewModel.WikiTokenizerUpdated -= OnWikiTokenizerUpdated;
+        _viewModel.RequestShowDiff -= OnRequestShowDiff;
+        _viewModel.CollaboratorCursorMoved -= OnCollaboratorCursorMoved;
+        _viewModel.RequestFlushAction = null;
+
+        if (_cursorAdorner != null)
+        {
+            AdornerLayer layer = AdornerLayer.GetAdornerLayer(EditorRichTextBox);
+            layer?.Remove(_cursorAdorner);
+            _cursorAdorner = null;
+        }
+    }
+
+    /// <summary>
+    /// Forces a final write of the current editor content to the server.
+    /// Called by the host workspace BEFORE it navigates away so that the
+    /// user's typing survives even when the Unloaded chain on the nested
+    /// Page does not fire (a known WPF Frame edge case). Idempotent —
+    /// safe to call repeatedly.
+    /// </summary>
+    public async Task FlushPendingSavesAsync()
+    {
+        if (!_isLoaded || _isReadOnly || _viewModel.CurrentChapter == null)
+            return;
+
+        string rtf;
+        string plainText;
+        try
+        {
+            TextRange textRange = new(
+                EditorRichTextBox.Document.ContentStart,
+                EditorRichTextBox.Document.ContentEnd);
+            plainText = textRange.Text;
+            using MemoryStream ms = new();
+            textRange.Save(ms, DataFormats.Rtf);
+            rtf = Encoding.UTF8.GetString(ms.ToArray());
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"FlushPendingSavesAsync: extract RTF failed: {ex.Message}");
+            return;
+        }
+
+        await _viewModel.FlushSaveAsync(new SaveContentArgs { RtfContent = rtf, PlainText = plainText });
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -85,6 +345,17 @@ public partial class ManuscriptEditorView : Page
                 EditorRichTextBox.IsReadOnly = true;
                 foreach (ToolBarTray child in GetVisualChildren<ToolBarTray>(this))
                     child.Visibility = Visibility.Collapsed;
+
+                AddManuscriptButton.Visibility = Visibility.Collapsed;
+                DeleteManuscriptButton.Visibility = Visibility.Collapsed;
+                AddChapterButton.Visibility = Visibility.Collapsed;
+            }
+
+            AdornerLayer layer = AdornerLayer.GetAdornerLayer(EditorRichTextBox);
+            if (layer is not null)
+            {
+                _cursorAdorner = new(EditorRichTextBox);
+                layer.Add(_cursorAdorner);
             }
         }
         catch (Exception ex)
@@ -124,6 +395,15 @@ public partial class ManuscriptEditorView : Page
         Application.Current.Dispatcher.Invoke(() => LoadCurrentChapterContent());
     }
 
+    private void OnCollaboratorCursorMoved(string userId, int offset)
+    {
+        Application.Current.Dispatcher.InvokeAsync(() =>
+        {
+            _cursorAdorner?.UpdateCursor(userId, offset);
+        });
+    }
+
+
     /// <summary>
     /// Replaces the editor's <see cref="FlowDocument"/> with the RTF content stored in
     /// <see cref="ManuscriptEditorViewModel.CurrentChapter"/>.
@@ -159,6 +439,54 @@ public partial class ManuscriptEditorView : Page
         }
     }
 
+    private async void SaveButton_Click(object sender, RoutedEventArgs e)
+    {
+        await ManualSaveAsync();
+    }
+
+    /// <summary>
+    /// User-triggered save. Bypasses the 1 s auto-save debounce, waits for
+    /// any in-flight auto-save to finish, then forces a fresh write of the
+    /// current editor content. Surfaces the outcome (success / offline /
+    /// error) through StatusMessage so the user gets immediate feedback.
+    /// </summary>
+    private async Task ManualSaveAsync()
+    {
+        if (!_isLoaded || _isReadOnly || _viewModel.CurrentChapter == null)
+        {
+            _viewModel.StatusMessage = "Nothing to save yet — load a chapter first.";
+            return;
+        }
+
+        _viewModel.StatusMessage = "Saving...";
+
+        try
+        {
+            await FlushPendingSavesAsync();
+
+            _viewModel.StatusMessage = _viewModel.HasUnsavedOfflineChanges
+                ? "Saved locally (offline). The worldbuilding service rejected or dropped the request — content will sync the next time you open this chapter while the server is up."
+                : $"Saved \"{_viewModel.CurrentChapter.Title}\" ✓";
+        }
+        catch (Exception ex)
+        {
+            _viewModel.StatusMessage = $"Save failed: {ex.Message}";
+        }
+    }
+
+    private async void AddManuscriptButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isReadOnly) return;
+        try
+        {
+            await _viewModel.AddManuscriptCommand.ExecuteAsync(null);
+        }
+        catch (Exception ex)
+        {
+            _viewModel.StatusMessage = $"Add manuscript failed: {ex.Message}";
+        }
+    }
+
     private async void ManuscriptComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         if (!_isLoaded) return;
@@ -170,6 +498,99 @@ public partial class ManuscriptEditorView : Page
         catch (Exception ex)
         {
             Debug.WriteLine($"ManuscriptComboBox_SelectionChanged failed: {ex.Message}");
+        }
+    }
+
+    private async void AddChapterButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isReadOnly) return;
+        try
+        {
+            await _viewModel.AddChapterCommand.ExecuteAsync(null);
+        }
+        catch (Exception ex)
+        {
+            _viewModel.StatusMessage = $"Add chapter failed: {ex.Message}";
+        }
+    }
+
+    private async void DeleteChapterButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isReadOnly) return;
+        if (sender is not Button btn || btn.Tag is not Chapter chapter) return;
+
+        // Deleting the last chapter is allowed — the ViewModel auto-creates
+        // a fresh empty Chapter 1 so the manuscript never ends up unusable.
+        string lastChapterNote = _viewModel.CurrentChapters.Count <= 1
+            ? "\n\nThis is the only chapter; a new empty Chapter 1 will be created."
+            : string.Empty;
+
+        MessageBoxResult confirm = MessageBox.Show(
+            $"Delete the chapter \"{chapter.Title}\"?{lastChapterNote}\n\nThis cannot be undone.",
+            "Delete chapter",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning,
+            MessageBoxResult.No);
+
+        if (confirm != MessageBoxResult.Yes) return;
+
+        try
+        {
+            await _viewModel.DeleteChapterCommand.ExecuteAsync(chapter);
+        }
+        catch (Exception ex)
+        {
+            _viewModel.StatusMessage = $"Delete failed: {ex.Message}";
+        }
+    }
+
+    private async void DeleteManuscriptButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_isReadOnly) return;
+        Manuscript? target = _viewModel.SelectedManuscript;
+        if (target == null)
+        {
+            _viewModel.StatusMessage = "No manuscript selected.";
+            return;
+        }
+
+        // Deleting the last manuscript is allowed — the ViewModel auto-
+        // creates a fresh empty Manuscript 1 with Chapter 1 so the editor
+        // always has somewhere to write.
+        string lastNote = _viewModel.Manuscripts.Count <= 1
+            ? "\n\nThis is the only manuscript; a new empty Manuscript 1 will be created in its place."
+            : string.Empty;
+
+        MessageBoxResult confirm = MessageBox.Show(
+            $"Permanently delete the manuscript \"{target.Title}\" and all of its chapters?{lastNote}\n\nThis cannot be undone.",
+            "Delete manuscript",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning,
+            MessageBoxResult.No);
+
+        if (confirm != MessageBoxResult.Yes) return;
+
+        try
+        {
+            await _viewModel.DeleteManuscriptCommand.ExecuteAsync(target);
+        }
+        catch (Exception ex)
+        {
+            _viewModel.StatusMessage = $"Delete failed: {ex.Message}";
+        }
+    }
+
+    private async void ManuscriptComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_isLoaded) return;
+        try
+        {
+            if (ManuscriptComboBox.SelectedItem is Manuscript selected)
+                await _viewModel.SelectManuscriptItemCommand.ExecuteAsync(selected);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"ManuscriptComboBox_SelectionChanged failed: {ex.Message}");
         }
     }
 
@@ -567,4 +988,51 @@ public partial class ManuscriptEditorView : Page
                 yield return grandChild;
         }
     }
+
+    private void OnRequestShowDiff(ChapterVersionFull fullVersion)
+    {
+        Dispatcher.Invoke(async () =>
+        {
+            try
+            {
+                // Extract current editor RTF content
+                string currentRtf = string.Empty;
+                TextRange textRange = new(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
+                using (MemoryStream ms = new())
+                {
+                    textRange.Save(ms, DataFormats.Rtf);
+                    currentRtf = System.Text.Encoding.UTF8.GetString(ms.ToArray());
+                }
+
+                ChapterDiffWindow diffWindow = new(fullVersion, currentRtf);
+                Window parentWindow = Window.GetWindow(this);
+                if (parentWindow != null)
+                {
+                    diffWindow.Owner = parentWindow;
+                }
+
+                if (diffWindow.ShowDialog() == true && diffWindow.Restored)
+                {
+                    // User clicked "Restore to this Version" inside the diff dialog
+                    await _viewModel.RestoreVersionCommand.ExecuteAsync(fullVersion);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(
+                    $"Error displaying comparison window:\n\n{ex.Message}\n\nDetails:\n{ex.StackTrace}",
+                    "Comparison Window Error",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
+            }
+        });
+    }
+
+    private Page? GetParentPage(DependencyObject child)
+    {
+        DependencyObject parent = VisualTreeHelper.GetParent(child);
+        return parent == null ? null : parent is Page page ? page : GetParentPage(parent);
+    }
+
 }

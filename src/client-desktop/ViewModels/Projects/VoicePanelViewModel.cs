@@ -2,17 +2,21 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Layla.Desktop.Models.Projects;
 using Layla.Desktop.Services;
+using Layla.Desktop.Services.Logger;
 using Layla.Desktop.Services.Projetcs;
+using Microsoft.Extensions.Logging;
 using System.Collections.ObjectModel;
 using System.Windows;
 using System.Windows.Media;
 
 namespace Layla.Desktop.ViewModels.Projects;
 
-public partial class VoicePanelViewModel : ObservableObject
+public partial class VoicePanelViewModel : ObservableObject, IDisposable
 {
     private Guid _projectId;
     private VoiceConnection? _voice;
+    private IProjectApiService? _subscribedApi;
+    private readonly ILogger<VoicePanelViewModel> _logger;
 
     [ObservableProperty]
     private ObservableCollection<VoiceParticipantViewModel> _participants = new();
@@ -46,6 +50,7 @@ public partial class VoicePanelViewModel : ObservableObject
 
     public VoicePanelViewModel()
     {
+        _logger = Log.For<VoicePanelViewModel>();
     }
 
     [ObservableProperty]
@@ -68,13 +73,14 @@ public partial class VoicePanelViewModel : ObservableObject
             if (api == null) return;
 
             api.ParticipantsUpdated += OnParticipantsUpdated;
+            _subscribedApi = api;
 
             await api.ConnectPresenceHubAsync();
             await api.WatchProjectAsync(_projectId);
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to start watching presence: {ex.Message}");
+            Debug.WriteLine($"Failed to start watching presence: {ex.Message}");
         }
     }
 
@@ -143,9 +149,11 @@ public partial class VoicePanelViewModel : ObservableObject
     [RelayCommand]
     private async Task StartSpeakingAsync()
     {
-        if (_voice == null || !_voice.IsConnected) return;
+        if (_voice is null || !_voice.IsConnected) return;
 
-        VoiceParticipantViewModel? localUser = Participants.FirstOrDefault(p => p.UserId == SessionManager.CurrentUserId);
+        VoiceParticipantViewModel? localUser =
+            Participants.FirstOrDefault(
+                p => p.UserId == SessionManager.CurrentUserId);
         if (localUser?.Role == "Reader")
         {
             PttStatusText = "Listen only mode";
@@ -195,7 +203,9 @@ public partial class VoicePanelViewModel : ObservableObject
         {
             Participants.Clear();
             foreach (ParticipantInfo p in participants)
-                Participants.Add(new VoiceParticipantViewModel(p.UserId, p.DisplayName, p.IsSpeaking, p.Role));
+                Participants.Add(new(
+                    p.UserId, p.DisplayName, p.IsSpeaking, p.Role)
+                );
 
             IsEmptyRoomVisible = Participants.Count == 0;
         };
@@ -203,7 +213,9 @@ public partial class VoicePanelViewModel : ObservableObject
         _voice.ParticipantJoined += (userId, displayName, isSpeaking, role) =>
         {
             if (Participants.All(p => p.UserId != userId))
-                Participants.Add(new VoiceParticipantViewModel(userId, displayName, isSpeaking, role));
+                Participants.Add(new(
+                    userId, displayName, isSpeaking, role)
+                );
 
             IsEmptyRoomVisible = false;
         };
@@ -247,4 +259,22 @@ public partial class VoicePanelViewModel : ObservableObject
             _voice = null;
         }
     }
+
+    // ProjectApiService is a Singleton; without unsubscribing it retains
+    // this Transient VoicePanelViewModel for the rest of the app lifetime.
+    public void Dispose()
+    {
+        if (_subscribedApi != null)
+        {
+            _subscribedApi.ParticipantsUpdated -= OnParticipantsUpdated;
+            _subscribedApi = null;
+        }
+        if (_voice != null)
+        {
+            _ = _voice.DisposeAsync();
+            _voice = null;
+        }
+        GC.SuppressFinalize(this);
+    }
+
 }

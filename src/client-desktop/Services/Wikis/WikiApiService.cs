@@ -1,5 +1,6 @@
 using Layla.Desktop.Models.Wikis;
-using System.Diagnostics;
+using Layla.Desktop.Services.Logger;
+using Microsoft.Extensions.Logging;
 using System.Net.Http;
 using System.Net.Http.Json;
 
@@ -9,10 +10,12 @@ namespace Layla.Desktop.Services.Wikis;
 public class WikiApiService : IWikiApiService
 {
     private readonly HttpClient _httpClient;
+    private readonly ILogger<WikiApiService> _logger;
 
     public WikiApiService()
     {
         _httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.WORLDBUILDING_API_URL);
+        _logger = Log.For<WikiApiService>();
     }
 
     private void AddAuthorizationHeader()
@@ -37,7 +40,7 @@ public class WikiApiService : IWikiApiService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[WikiApiService] GetEntries failed: {ex.Message}");
+            _logger.LogCritical("GetEntriesAsync() - Method exception: {exception}", ex.ToString());
             return null;
         }
     }
@@ -52,7 +55,7 @@ public class WikiApiService : IWikiApiService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[WikiApiService] GetEntry failed: {ex.Message}");
+            _logger.LogCritical("GetEntryAsync() - Method exception: {exception}", ex.ToString());
             return null;
         }
     }
@@ -70,7 +73,7 @@ public class WikiApiService : IWikiApiService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[WikiApiService] CreateEntry failed: {ex.Message}");
+            _logger.LogCritical("CreateEntryAsync() - Method exception: {exception}", ex.ToString());
             return null;
         }
     }
@@ -93,7 +96,7 @@ public class WikiApiService : IWikiApiService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[WikiApiService] UpdateEntry failed: {ex.Message}");
+            _logger.LogCritical("UpdateEntryAsync() - Method exception: {exception}", ex.ToString());
             return null;
         }
     }
@@ -109,7 +112,7 @@ public class WikiApiService : IWikiApiService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[WikiApiService] DeleteEntry failed: {ex.Message}");
+            _logger.LogCritical("DeleteEntryAsync() - Method exception: {exception}" + ex.ToString());
             return false;
         }
     }
@@ -125,7 +128,7 @@ public class WikiApiService : IWikiApiService
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[WikiApiService] GetEntityAppearances failed: {ex.Message}");
+            _logger.LogCritical("GetEntityAppearancesAsync() - Method exception: {exception}", ex.ToString());
             return null;
         }
     }

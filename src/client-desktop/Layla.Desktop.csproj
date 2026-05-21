@@ -9,8 +9,39 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Data\**" />
+    <EmbeddedResource Remove="Data\**" />
+    <None Remove="Data\**" />
+    <Page Remove="Data\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Noto\NotoSans-Bold.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Noto\NotoSans-BoldItalic.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Noto\NotoSans-Italic.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Noto\NotoSans-Regular.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Roboto\Roboto-Black.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Roboto\Roboto-BlackItalic.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Roboto\Roboto-Bold.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Roboto\Roboto-BoldItalic.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Roboto\Roboto-Italic.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Roboto\Roboto-Light.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Roboto\Roboto-LightItalic.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Roboto\Roboto-Medium.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Roboto\Roboto-MediumItalic.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Roboto\Roboto-Regular.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Roboto\Roboto-Thin.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Roboto\Roboto-ThinItalic.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Roboto\RobotoCondensed-Bold.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Roboto\RobotoCondensed-BoldItalic.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Roboto\RobotoCondensed-Italic.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Roboto\RobotoCondensed-Light.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Roboto\RobotoCondensed-LightItalic.ttf" />
+    <Content Remove="C:\Users\fofor\.nuget\packages\materialdesignthemes\5.3.0\contentFiles\any\net8.0-windows7.0\Resources\Roboto\RobotoCondensed-Regular.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
 	  <Folder Include="Themes\" />
-	  <Folder Include="Data\" />
 	  <Resource Include="Fonts\Inter-Regular.ttf" />
 	  <Resource Include="Fonts\Inter-Bold.ttf" />
 	  <Resource Include="Fonts\Inter-SemiBold.ttf" />
