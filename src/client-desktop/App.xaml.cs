@@ -8,6 +8,8 @@ using Layla.Desktop.ViewModels.Manuscripts;
 using Layla.Desktop.ViewModels.Projects;
 using Layla.Desktop.ViewModels.User;
 using Layla.Desktop.ViewModels.Wikis;
+using Layla.Client.Shared.Hub;
+using Layla.Client.Shared.Services;
 using MaterialDesignThemes.Wpf;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
@@ -157,6 +159,12 @@ public partial class App : Application
         services.AddSingleton<IWikiApiService, WikiApiService>();
         services.AddSingleton<IGraphApiService, GraphApiService>();
         services.AddSingleton<LocalCacheManager>();
+        services.AddSingleton<ManuscriptHubClient>();
+        services.AddSingleton<ICollaborationApiService>(sp =>
+        {
+            var httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.WORLDBUILDING_API_URL);
+            return new CollaborationApiService(httpClient);
+        });
 
         services.AddTransient<ManuscriptEditorViewModel>();
         services.AddTransient<ProjectListViewModel>();
