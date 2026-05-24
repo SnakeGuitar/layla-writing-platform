@@ -8,8 +8,8 @@
       d:DesignHeight="720" d:DesignWidth="1080"
       ShowsNavigationUI="False"
       Title="Workspace"
-      Background="{DynamicResource CyberBgPrimaryBrush}"
-      Foreground="{DynamicResource CyberTextPrimaryBrush}">
+      Background="{DynamicResource NmBgBaseBrush}"
+      Foreground="{DynamicResource NmTextPrimaryBrush}">
 
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -22,122 +22,78 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- Redesigned Tech Console Sidebar -->
-        <Border Grid.Column="0" Background="{DynamicResource CyberBgSecondaryBrush}" 
-                BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="0,0,1,0">
+        <!-- Elegant Neumorphic Sidebar -->
+        <Border Grid.Column="0" Background="{DynamicResource NmSurfaceBrush}" 
+                BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="0,0,1,0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="60"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Project Title & Tech Badge -->
-                <Grid Grid.Row="0" Margin="15,0">
+                <!-- Project Title & Badge -->
+                <Grid Grid.Row="0" Margin="20,0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="{Binding CurrentProject.Title}" Style="{StaticResource CyberTitleText}" 
+                    <TextBlock Grid.Column="0" Text="{Binding CurrentProject.Title}" Style="{StaticResource NmTitleText}" 
                                VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
-                               Foreground="{DynamicResource CyberAccentPrimaryBrush}"/>
-                    <Border Grid.Column="1" BorderBrush="{DynamicResource CyberAccentPrimaryBrush}" BorderThickness="1" Padding="4,2" VerticalAlignment="Center">
-                        <TextBlock Text="PRJ" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentPrimaryBrush}" FontSize="8"/>
+                               Foreground="{DynamicResource NmAccentBrush}"/>
+                    <Border Grid.Column="1" Background="#20A29BFE" CornerRadius="8" Padding="6,3" VerticalAlignment="Center" Margin="5,0,0,0">
+                        <TextBlock Text="PRJ" Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmAccentBrush}" FontSize="8" FontWeight="Bold"/>
                     </Border>
                 </Grid>
 
-                <!-- Navigation Console Buttons -->
-                <StackPanel Grid.Row="1" Margin="15,10,15,0">
-                    <Button Content="BACK TO PROJECTS" 
-                            Style="{StaticResource CyberButton}"
-                            HorizontalAlignment="Stretch" Padding="12,8"
+                <!-- Clean Navigation Buttons -->
+                <StackPanel Grid.Row="1" Margin="20,10,20,0">
+                    <Button Content="Volver a Proyectos" 
+                            Style="{StaticResource NmButtonGhost}"
+                            HorizontalAlignment="Stretch" Padding="12,10"
                             Cursor="Hand"
                             Command="{Binding BackToProjectsCommand}"/>
-                    <Button Content="COLLABORATORS" 
-                            Style="{StaticResource CyberButton}"
-                            HorizontalAlignment="Stretch" Padding="12,8" Margin="0,6,0,0"
+                    <Button Content="Colaboradores" 
+                            Style="{StaticResource NmButtonPrimary}"
+                            HorizontalAlignment="Stretch" Padding="12,10" Margin="0,12,0,0"
                             Cursor="Hand"
                             Command="{Binding OpenCollaboratorsModalCommand}"/>
-                    <Button Content="SETTINGS" 
-                            Style="{StaticResource CyberButton}"
-                            HorizontalAlignment="Stretch" Padding="12,8" Margin="0,6,0,0"
+                    <Button Content="Configuración" 
+                            Style="{StaticResource NmButtonGhost}"
+                            HorizontalAlignment="Stretch" Padding="12,10" Margin="0,12,0,0"
                             Cursor="Hand"
                             Command="{Binding OpenSettingsCommand}"/>
                 </StackPanel>
 
-                <!-- Aesthetic Middle Gridlines -->
-                <Grid Grid.Row="2" Background="Transparent" Margin="15,15,15,10">
-                    <!-- Slash visual divider pattern -->
-                    <TextBlock Text="///////////////////////////////////////&#x0a;///////////////////////////////////////&#x0a;///////////////////////////////////////" 
-                               Style="{StaticResource CyberTechMonoText}" Foreground="#06ffffff" FontSize="10" TextAlignment="Center" VerticalAlignment="Center"/>
-                </Grid>
-
-                <!-- Brutalist System Status Monitor -->
-                <Border Grid.Row="3" BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="0,1,0,0" Padding="15,15,15,10">
-                    <StackPanel>
-                        <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
-                            <TextBlock Text="/02" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentAlertBrush}" Margin="0,0,6,0"/>
-                            <TextBlock Text="SYSTEM MONITOR" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberTextSecondaryBrush}"/>
-                        </StackPanel>
-                        
-                        <Grid Margin="0,0,0,6">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="CONN_STABILITY" Style="{StaticResource CyberLabel}" FontSize="8"/>
-                            <TextBlock Grid.Column="1" Text=" IIIIIIIIIIIIIIIIIIIIII" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentPrimaryBrush}" FontSize="8" HorizontalAlignment="Center"/>
-                            <TextBlock Grid.Column="2" Text="98%" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentPrimaryBrush}" FontSize="8"/>
-                        </Grid>
-                        
-                        <Grid Margin="0,0,0,6">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="ROLE_PRIVILEGE" Style="{StaticResource CyberLabel}" FontSize="8"/>
-                            <TextBlock Grid.Column="1" Text=" ///////////////////" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentSecondaryBrush}" FontSize="8" HorizontalAlignment="Center"/>
-                            <TextBlock Grid.Column="2" Text="SECURE" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentSecondaryBrush}" FontSize="8"/>
-                        </Grid>
-                        
-                        <Border BorderBrush="{DynamicResource CyberAccentAlertBrush}" BorderThickness="1" Background="#0C1F0C" Padding="6,4" Margin="0,6,0,0">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <Ellipse Width="5" Height="5" Fill="{DynamicResource CyberAccentAlertBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                <TextBlock Text="ALL SYSTEMS OPERATIONAL" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentAlertBrush}" FontSize="8"/>
-                            </StackPanel>
-                        </Border>
-                    </StackPanel>
-                </Border>
+                <!-- Spacer -->
+                <Grid Grid.Row="2" Background="Transparent" />
 
                 <!-- Disconnect Session Button -->
-                <Border Grid.Row="4" Padding="15,0,15,15" Background="Transparent">
-                    <Button Content="DISCONNECT SESSION" 
-                            Style="{StaticResource CyberButton}"
-                            BorderBrush="{DynamicResource CyberAccentWarningBrush}"
-                            Foreground="{DynamicResource CyberAccentWarningBrush}"
-                            HorizontalAlignment="Stretch" Padding="0,8"
+                <Border Grid.Row="3" Padding="20,0,20,20" Background="Transparent">
+                    <Button Content="Desconectar Sesión" 
+                            Style="{StaticResource NmButtonGhost}"
+                            Foreground="{DynamicResource NmErrorBrush}"
+                            HorizontalAlignment="Stretch" Padding="0,10"
                             Cursor="Hand"
                             Command="{Binding LogoutCommand}"/>
                 </Border>
             </Grid>
         </Border>
 
+        <!-- Grid Splitter -->
         <GridSplitter Grid.Column="1" Width="2" HorizontalAlignment="Stretch" 
-                      Background="{DynamicResource CyberBorderSubtleBrush}" Cursor="SizeWE"/>
+                      Background="{DynamicResource NmShadowDarkBrush}" Cursor="SizeWE"/>
 
         <!-- Main Workspace Area -->
-        <Grid Grid.Column="2" Background="Transparent" Margin="12,0,0,0">
+        <Grid Grid.Column="2" Background="Transparent" Margin="20,0,0,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             
-            <!-- Technical Workspace Header Bar -->
-            <Border Grid.Row="0" BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="0,0,0,1" Padding="10,15,15,10" Background="#0C0A15" Margin="0,0,0,10">
+            <!-- Clean Header Bar -->
+            <Border Grid.Row="0" BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="0,0,0,1" Padding="10,20,20,15" Background="Transparent">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -145,108 +101,139 @@
                     </Grid.ColumnDefinitions>
                     
                     <StackPanel Grid.Column="0" Orientation="Horizontal">
-                        <TextBlock Text="LAYLA_OS_v2.0" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,15,0"/>
-                        <TextBlock Text="||" Foreground="{DynamicResource CyberTextDisabledBrush}" Style="{StaticResource CyberLabel}" VerticalAlignment="Center" Margin="0,0,15,0"/>
-                        <TextBlock Text="SECURE WORKSPACE INTERFACE" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberTextSecondaryBrush}" VerticalAlignment="Center"/>
+                        <TextBlock Text="LAYLA // ESCRITORIO" Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmAccentBrush}" FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                        <TextBlock Text="•" Foreground="{DynamicResource NmTextSecondaryBrush}" Style="{StaticResource NmLabelText}" VerticalAlignment="Center" Margin="0,0,15,0"/>
+                        <TextBlock Text="Espacio de escritura colaborativa" Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmTextSecondaryBrush}" VerticalAlignment="Center"/>
                     </StackPanel>
                     
-                    <StackPanel Grid.Column="1" Orientation="Horizontal">
-                        <TextBlock Text="SYS.TIME: UTC+0 // 23:47:12  " Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberTextSecondaryBrush}" VerticalAlignment="Center"/>
-                        <Ellipse Width="6" Height="6" Fill="{DynamicResource CyberAccentPrimaryBrush}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="SISTEMA ACTIVO" Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmSuccessBrush}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                        <Ellipse Width="6" Height="6" Fill="{DynamicResource NmSuccessBrush}" Margin="8,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
                 </Grid>
             </Border>
             
-            <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0">
-                <TabItem Header="MANUSCRIPT EDITOR">
+            <!-- Workspace Tabs -->
+            <TabControl Grid.Row="1" Background="Transparent" BorderThickness="0" Margin="0,10,0,0">
+                <TabItem Header="MANUSCRITOS">
                     <Frame x:Name="EditorFrame" NavigationUIVisibility="Hidden"/>
                 </TabItem>
 
-                <TabItem Header="WIKI DATABASE">
+                <TabItem Header="BASE WIKI">
                     <Frame x:Name="WikiFrame" NavigationUIVisibility="Hidden"/>
                 </TabItem>
 
-                <TabItem Header="NEURAL GRAPH">
+                <TabItem Header="GRAFO NARRATIVO">
                     <Frame x:Name="GraphFrame" NavigationUIVisibility="Hidden"/>
                 </TabItem>
 
-                <TabItem Header="VOICE COMM">
+                <TabItem Header="SALA DE VOZ">
                     <Frame x:Name="VoiceFrame" NavigationUIVisibility="Hidden"/>
                 </TabItem>
             </TabControl>
         </Grid>
 
-        <!-- Collaborators Modal -->
+        <!-- Collaborators Modal Overlay -->
         <Border Visibility="{Binding IsCollaboratorsModalVisible, Converter={StaticResource BoolToVis}}"
-                Background="#CC000000" Panel.ZIndex="100" Grid.ColumnSpan="3">
-            <Border Style="{StaticResource CyberPanelBorder}" Background="{DynamicResource CyberBgElevatedBrush}" Width="500" MaxHeight="500"
-                    HorizontalAlignment="Center" VerticalAlignment="Center" Padding="20">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
+                Background="#AA141420" Panel.ZIndex="100" Grid.ColumnSpan="3">
+            <Grid Width="500" MaxHeight="500" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <!-- Light shadow border -->
+                <Border CornerRadius="12" Background="Transparent">
+                    <Border.Effect>
+                        <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="6" Direction="135" BlurRadius="12" Opacity="0.9"/>
+                    </Border.Effect>
+                </Border>
+                <!-- Dark shadow border -->
+                <Border CornerRadius="12" Background="Transparent">
+                    <Border.Effect>
+                        <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="6" Direction="315" BlurRadius="12" Opacity="0.6"/>
+                    </Border.Effect>
+                </Border>
+                
+                <Border CornerRadius="12" Background="{DynamicResource NmSurfaceBrush}" Padding="20">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Text="COLLABORATORS" Style="{StaticResource CyberDisplayText}"
-                               Margin="0,0,0,15"/>
+                        <TextBlock Grid.Row="0" Text="Colaboradores" Style="{StaticResource NmTitleText}" FontSize="20"
+                                   Foreground="{DynamicResource NmAccentBrush}" Margin="0,0,0,15"/>
 
-                    <!-- Invite section -->
-                    <StackPanel Grid.Row="1" Margin="0,0,0,15">
-                        <TextBlock Text="INVITE BY EMAIL" Style="{StaticResource CyberLabel}" Margin="0,0,0,5"/>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBox Grid.Column="0" 
-                                     Text="{Binding InviteEmail, UpdateSourceTrigger=PropertyChanged}"/>
-                            <Button Grid.Column="1" Content="INVITE" Margin="5,0,0,0"
-                                    Style="{StaticResource CyberButton}" Padding="15,5" Cursor="Hand"
-                                    Command="{Binding InviteCollaboratorCommand}"/>
-                        </Grid>
-                        <TextBlock Text="{Binding InviteError}" Style="{StaticResource CyberTechMonoText}" Foreground="{DynamicResource CyberAccentWarningBrush}"
-                                   Margin="0,5,0,0" TextWrapping="Wrap"
-                                   Visibility="{Binding InviteError, Converter={StaticResource BoolToVis}}"/>
-                    </StackPanel>
+                        <!-- Invite Section -->
+                        <StackPanel Grid.Row="1" Margin="0,0,0,15">
+                            <TextBlock Text="INVITAR POR CORREO ELECTRÓNICO" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBox Grid.Column="0" Style="{StaticResource NmInputStyle}"
+                                         Text="{Binding InviteEmail, UpdateSourceTrigger=PropertyChanged}"/>
+                                <Button Grid.Column="1" Content="Enviar Invitación" Margin="8,0,0,0"
+                                        Style="{StaticResource NmButtonPrimary}" Padding="15,6" Cursor="Hand"
+                                        Command="{Binding InviteCollaboratorCommand}"/>
+                                </Grid>
+                            <TextBlock Text="{Binding InviteError}" Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmErrorBrush}"
+                                       Margin="0,5,0,0" TextWrapping="Wrap"
+                                       Visibility="{Binding InviteError, Converter={StaticResource BoolToVis}}"/>
+                        </StackPanel>
 
-                    <!-- Collaborators list -->
-                    <ListView Grid.Row="2" ItemsSource="{Binding Collaborators}" BorderThickness="0"
-                               Background="Transparent" MaxHeight="250">
-                        <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <Border BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="0,0,0,1"
-                                        Padding="5" Margin="0,2">
-                                    <Grid>
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Grid.Column="0">
-                                            <TextBlock Text="{Binding DisplayName}" Style="{StaticResource CyberTitleText}" FontSize="12"/>
-                                            <TextBlock Text="{Binding Email}" Style="{StaticResource CyberTechMonoText}" FontSize="10"
-                                                       Foreground="{DynamicResource CyberTextSecondaryBrush}"/>
-                                        </StackPanel>
-                                        <TextBlock Grid.Column="1" Text="{Binding Role}" Style="{StaticResource CyberLabel}" VerticalAlignment="Center"
-                                                   Margin="10,0"/>
-                                        <Button Grid.Column="2" Content="X" Style="{StaticResource CyberButton}" BorderBrush="{DynamicResource CyberAccentWarningBrush}"
-                                                Foreground="{DynamicResource CyberAccentWarningBrush}" Padding="6,2" Cursor="Hand"
-                                                VerticalAlignment="Center"
-                                                Command="{Binding DataContext.RemoveCollaboratorCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
-                                                CommandParameter="{Binding}"/>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
+                        <!-- Collaborators List -->
+                        <ListView Grid.Row="2" ItemsSource="{Binding Collaborators}" BorderThickness="0"
+                                   Background="Transparent" MaxHeight="250" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="0,0,0,1"
+                                            Padding="5,8" Margin="0,2">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding DisplayName}" Style="{StaticResource NmTitleText}" FontSize="13" Foreground="{DynamicResource NmTextPrimaryBrush}"/>
+                                                <TextBlock Text="{Binding Email}" Style="{StaticResource NmBodyText}" FontSize="11"
+                                                           Foreground="{DynamicResource NmTextSecondaryBrush}"/>
+                                            </StackPanel>
+                                            <Border Grid.Column="1" CornerRadius="12" Padding="8,3" Background="#26A29BFE" VerticalAlignment="Center" Margin="10,0">
+                                                <TextBlock Text="{Binding Role}" Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmAccentBrush}" FontSize="9" FontWeight="Bold"/>
+                                            </Border>
+                                            <Button Grid.Column="2" Content="Eliminar" Style="{StaticResource NmButtonGhost}" Foreground="{DynamicResource NmErrorBrush}" Padding="8,4" Cursor="Hand"
+                                                    VerticalAlignment="Center"
+                                                    Command="{Binding DataContext.RemoveCollaboratorCommand, RelativeSource={RelativeSource AncestorType=ListView}}"
+                                                    CommandParameter="{Binding}"/>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="Padding" Value="0"/>
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ListBoxItem">
+                                                <Border Background="Transparent" Padding="0">
+                                                    <ContentPresenter />
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                        </ListView>
 
-                    <Button Grid.Row="3" Content="CLOSE" Style="{StaticResource CyberButton}"
-                            Padding="15,5" Cursor="Hand" HorizontalAlignment="Right"
-                            Margin="0,10,0,0" Command="{Binding CloseCollaboratorsModalCommand}"/>
-                </Grid>
-            </Border>
+                        <Button Grid.Row="3" Content="Cerrar" Style="{StaticResource NmButtonGhost}"
+                                Padding="16,8" Cursor="Hand" HorizontalAlignment="Right"
+                                Margin="0,15,0,0" Command="{Binding CloseCollaboratorsModalCommand}"/>
+                    </Grid>
+                </Border>
+            </Grid>
         </Border>
     </Grid>
 </Page>

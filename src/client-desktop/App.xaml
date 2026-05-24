@@ -13,7 +13,7 @@
                 <ResourceDictionary Source="Themes/LightTheme.xaml"/>
                 <ResourceDictionary Source="Themes/DarkTheme.xaml"/>
                 <ResourceDictionary Source="Themes/SpaceTheme.xaml"/>
-                <ResourceDictionary Source="Themes/CyberMinimalismTheme.xaml"/>
+                <ResourceDictionary Source="Themes/NeumorphismTheme.xaml"/>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>

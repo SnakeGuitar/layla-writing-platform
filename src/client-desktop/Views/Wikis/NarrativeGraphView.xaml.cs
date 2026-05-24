@@ -25,11 +25,11 @@ public partial class NarrativeGraphView : Page
 
     private static readonly Dictionary<string, Color> EntityColors = new()
     {
-        { "Character", (Color)ColorConverter.ConvertFromString("#4FC3F7")! },
-        { "Location",  (Color)ColorConverter.ConvertFromString("#81C784")! },
-        { "Event",     (Color)ColorConverter.ConvertFromString("#FFB74D")! },
-        { "Object",    (Color)ColorConverter.ConvertFromString("#CE93D8")! },
-        { "Concept",   (Color)ColorConverter.ConvertFromString("#90A4AE")! },
+        { "Character", (Color)ColorConverter.ConvertFromString("#A5D8FF")! },
+        { "Location",  (Color)ColorConverter.ConvertFromString("#B2F2BB")! },
+        { "Event",     (Color)ColorConverter.ConvertFromString("#FFD8A8")! },
+        { "Object",    (Color)ColorConverter.ConvertFromString("#E5DBFF")! },
+        { "Concept",   (Color)ColorConverter.ConvertFromString("#CFD8DC")! },
     };
 
     public NarrativeGraphView(Guid projectId)
@@ -168,18 +168,30 @@ public partial class NarrativeGraphView : Page
         SolidColorBrush brush = new(color);
 
         // Outer container for dragging and click detection
+        Color shadowColor = Colors.Black;
+        if (Application.Current.Resources.Contains("NmShadowDarkColor"))
+        {
+            shadowColor = (Color)Application.Current.Resources["NmShadowDarkColor"];
+        }
+
         Border nodeGroup = new()
         {
             Width = node.Radius * 2,
             Height = node.Radius * 2,
             CornerRadius = new(node.Radius),
             Background = brush,
-            BorderBrush = (Brush)FindResource("BorderColor"),
-            BorderThickness = new(2),
-            Opacity = 0.9,
+            BorderThickness = new(0),
             Cursor = Cursors.Hand,
             ToolTip = $"{node.Name} ({node.EntityType})\nDrag to move · Click to view in Wiki",
-            Tag = node.EntityId
+            Tag = node.EntityId,
+            Effect = new System.Windows.Media.Effects.DropShadowEffect
+            {
+                Color = shadowColor,
+                ShadowDepth = 3,
+                BlurRadius = 6,
+                Opacity = 0.5,
+                Direction = 315
+            }
         };
 
         StackPanel stack = new()
@@ -191,9 +203,9 @@ public partial class NarrativeGraphView : Page
         stack.Children.Add(new TextBlock()
         {
             Text = node.Name,
-            Foreground = Brushes.White,
+            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1E1E2E")!),
             FontWeight = FontWeights.Bold,
-            FontSize = 12,
+            FontSize = 11.5,
             HorizontalAlignment = HorizontalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis,
             MaxWidth = node.Radius * 1.8
@@ -202,8 +214,8 @@ public partial class NarrativeGraphView : Page
         stack.Children.Add(new TextBlock()
         {
             Text = node.EntityType,
-            Foreground = new SolidColorBrush(Color.FromArgb(180, 255, 255, 255)),
-            FontSize = 9,
+            Foreground = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#5E5E6E")!),
+            FontSize = 8.5,
             HorizontalAlignment = HorizontalAlignment.Center
         });
 

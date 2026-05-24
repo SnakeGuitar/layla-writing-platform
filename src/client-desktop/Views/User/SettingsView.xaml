@@ -8,73 +8,141 @@
       d:DesignHeight="720" d:DesignWidth="1080"
       ShowsNavigationUI="False"
       Title="Settings"
-      Background="{DynamicResource CyberBgPrimaryBrush}"
-      Foreground="{DynamicResource CyberTextPrimaryBrush}">
+      Background="{DynamicResource NmBgBaseBrush}"
+      Foreground="{DynamicResource NmTextPrimaryBrush}">
 
-    <Grid Margin="30">
+    <Page.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+    </Page.Resources>
+
+    <Grid Margin="40">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
+        <!-- Back Navigation Button -->
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,25">
-            <Button Content="BACK TO WORKSPACE" Style="{StaticResource CyberButton}" 
-                    Padding="10,5" Cursor="Hand" Command="{Binding GoBackCommand}"/>
+            <Button Content="Volver al espacio de trabajo" Style="{StaticResource NmButtonGhost}" 
+                    Padding="12,6" Cursor="Hand" Command="{Binding GoBackCommand}"/>
         </StackPanel>
 
-        <TextBlock Grid.Row="1" Text="SETTINGS" Style="{StaticResource CyberDisplayText}" Margin="0,0,0,30"/>
+        <!-- Screen Title -->
+        <TextBlock Grid.Row="1" Text="Configuración" Style="{StaticResource NmDisplayText}" FontSize="28" FontWeight="SemiBold" Margin="0,0,0,30"/>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,0,20">
-            <TextBlock Text="APP THEME:" Style="{StaticResource CyberLabel}" Width="150" VerticalAlignment="Center"/>
-            <ComboBox x:Name="ThemeComboBox" Width="200" 
-                      SelectedValue="{Binding CurrentTheme}" SelectedValuePath="Tag">
-                <ComboBoxItem Content="Light" Tag="LightTheme"/>
-                <ComboBoxItem Content="Dark (Cyber)" Tag="CyberMinimalismTheme"/>
-            </ComboBox>
-        </StackPanel>
+        <!-- Settings Cards Layout -->
+        <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Orientation="Vertical" Width="550" HorizontalAlignment="Left">
+                
+                <!-- CARD 1: APARIENCIA -->
+                <Grid Margin="0,0,0,24">
+                    <!-- Light shadow border -->
+                    <Border CornerRadius="12" Background="Transparent">
+                        <Border.Effect>
+                            <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="4" Direction="135" BlurRadius="8" Opacity="0.9"/>
+                        </Border.Effect>
+                    </Border>
+                    <!-- Dark shadow border -->
+                    <Border CornerRadius="12" Background="Transparent">
+                        <Border.Effect>
+                            <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="4" Direction="315" BlurRadius="8" Opacity="0.5"/>
+                        </Border.Effect>
+                    </Border>
+                    
+                    <!-- Content area -->
+                    <Border CornerRadius="12" Background="{DynamicResource NmSurfaceBrush}" Padding="20">
+                        <StackPanel>
+                            <TextBlock Text="Apariencia" Style="{StaticResource NmTitleText}" Margin="0,0,0,18" Foreground="{DynamicResource NmAccentBrush}"/>
+                            
+                            <!-- Theme Selection -->
+                            <Grid Margin="0,0,0,18">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Tema de la aplicación:" Style="{StaticResource NmLabelText}" VerticalAlignment="Center"/>
+                                <ComboBox x:Name="ThemeComboBox" Grid.Column="1" Width="200" HorizontalAlignment="Left"
+                                          SelectedValue="{Binding CurrentTheme}" SelectedValuePath="Tag">
+                                    <ComboBoxItem Content="Claro Neumórfico" Tag="LightTheme"/>
+                                    <ComboBoxItem Content="Oscuro Neumórfico" Tag="NeumorphismTheme"/>
+                                </ComboBox>
+                            </Grid>
 
-        <StackPanel Grid.Row="3" Orientation="Vertical" VerticalAlignment="Top" Margin="0,10,0,0">
+                            <!-- Fullscreen Mode -->
+                            <Grid Margin="0,0,0,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Modo pantalla completa:" Style="{StaticResource NmLabelText}" VerticalAlignment="Center"/>
+                                <CheckBox x:Name="FullscreenCheckBox" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding IsFullscreen}" Content="Habilitar" Style="{StaticResource CheckBox}"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
 
-            <!-- Fullscreen -->
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,24">
-                <TextBlock Text="FULLSCREEN MODE:" Style="{StaticResource CyberLabel}" Width="150" VerticalAlignment="Center"/>
-                <CheckBox x:Name="FullscreenCheckBox" VerticalAlignment="Center" IsChecked="{Binding IsFullscreen}" Foreground="{DynamicResource CyberTextPrimaryBrush}">
-                    <CheckBox.LayoutTransform>
-                        <ScaleTransform ScaleX="1.2" ScaleY="1.2" />
-                    </CheckBox.LayoutTransform>
-                </CheckBox>
+                <!-- CARD 2: CONEXIÓN -->
+                <Grid Margin="0,0,0,24">
+                    <!-- Light shadow border -->
+                    <Border CornerRadius="12" Background="Transparent">
+                        <Border.Effect>
+                            <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="4" Direction="135" BlurRadius="8" Opacity="0.9"/>
+                        </Border.Effect>
+                    </Border>
+                    <!-- Dark shadow border -->
+                    <Border CornerRadius="12" Background="Transparent">
+                        <Border.Effect>
+                            <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="4" Direction="315" BlurRadius="8" Opacity="0.5"/>
+                        </Border.Effect>
+                    </Border>
+                    
+                    <!-- Content area -->
+                    <Border CornerRadius="12" Background="{DynamicResource NmSurfaceBrush}" Padding="20">
+                        <StackPanel>
+                            <TextBlock Text="Conexión" Style="{StaticResource NmTitleText}" Margin="0,0,0,18" Foreground="{DynamicResource NmAccentBrush}"/>
+                            
+                            <!-- Server Core URL -->
+                            <Grid Margin="0,0,0,15">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="URL del Servidor Principal:" Style="{StaticResource NmLabelText}" VerticalAlignment="Center"/>
+                                <TextBox x:Name="ServerCoreUrlBox" Grid.Column="1" Width="300" HorizontalAlignment="Left" Text="{Binding ServerCoreUrl, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource NmInputStyle}" VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <!-- Worldbuilding URL -->
+                            <Grid Margin="0,0,0,20">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="URL de Worldbuilding:" Style="{StaticResource NmLabelText}" VerticalAlignment="Center"/>
+                                <TextBox x:Name="WorldbuildingUrlBox" Grid.Column="1" Width="300" HorizontalAlignment="Left" Text="{Binding WorldbuildingUrl, UpdateSourceTrigger=PropertyChanged}"
+                                         Style="{StaticResource NmInputStyle}" VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <!-- Save Actions -->
+                            <StackPanel Orientation="Horizontal" Margin="0,5,0,15">
+                                <Button Content="Guardar conexión" Style="{StaticResource NmButtonPrimary}" Padding="16,8"
+                                        Command="{Binding SaveConnectionCommand}" Cursor="Hand"/>
+                                <TextBlock Text="{Binding ConnectionSaveStatus}" Style="{StaticResource NmLabelText}"
+                                           Foreground="{DynamicResource NmSuccessBrush}"
+                                           VerticalAlignment="Center" Margin="14,0,0,0" FontWeight="SemiBold"/>
+                            </StackPanel>
+
+                            <!-- Defaults Info -->
+                            <TextBlock Style="{StaticResource NmBodyText}" FontSize="11" Foreground="{DynamicResource NmTextSecondaryBrush}">
+                                Configuración por defecto: Server Core = https://localhost:5288 · Worldbuilding = http://localhost:3000
+                                <LineBreak/>Entorno Docker: Server Core = https://localhost:5288 · Worldbuilding = http://localhost:3000
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+                
             </StackPanel>
-
-            <!-- Connection settings -->
-            <TextBlock Text="CONNECTION" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentPrimaryBrush}" Margin="0,0,0,12"/>
-
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <TextBlock Text="SERVER CORE URL:" Style="{StaticResource CyberLabel}" Width="150" VerticalAlignment="Center"/>
-                <TextBox x:Name="ServerCoreUrlBox" Width="320" Text="{Binding ServerCoreUrl, UpdateSourceTrigger=PropertyChanged}"
-                         Style="{StaticResource CyberTextBox}" VerticalAlignment="Center"/>
-            </StackPanel>
-
-            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                <TextBlock Text="WORLDBUILDING URL:" Style="{StaticResource CyberLabel}" Width="150" VerticalAlignment="Center"/>
-                <TextBox x:Name="WorldbuildingUrlBox" Width="320" Text="{Binding WorldbuildingUrl, UpdateSourceTrigger=PropertyChanged}"
-                         Style="{StaticResource CyberTextBox}" VerticalAlignment="Center"/>
-            </StackPanel>
-
-            <StackPanel Orientation="Horizontal" Margin="0,10,0,4">
-                <Button Content="SAVE CONNECTION" Style="{StaticResource CyberButton}" Padding="12,6"
-                        Command="{Binding SaveConnectionCommand}" Cursor="Hand"/>
-                <TextBlock Text="{Binding ConnectionSaveStatus}" Style="{StaticResource CyberLabel}"
-                           Foreground="{DynamicResource CyberAccentAlertBrush}"
-                           VerticalAlignment="Center" Margin="14,0,0,0"/>
-            </StackPanel>
-
-            <TextBlock Margin="150,6,0,0" FontSize="9" Foreground="{DynamicResource SecondaryText}"
-                       FontFamily="{StaticResource TechnicalFont}">
-                Defaults: Server Core = https://localhost:5288 · Worldbuilding = http://localhost:3000
-                <LineBreak/>Docker: Server Core = https://localhost:5288 · Worldbuilding = http://localhost:3000
-            </TextBlock>
-        </StackPanel>
+        </ScrollViewer>
     </Grid>
 </Page>

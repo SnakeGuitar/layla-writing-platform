@@ -236,7 +236,8 @@ public partial class WorkspaceViewModel : ObservableObject
             if (success)
             {
                 await LoadCollaboratorsAsync();
-                _logger.LogTrace("RemoveCollaboratorAsync() - Collaborator removed.") }
+                _logger.LogTrace("RemoveCollaboratorAsync() - Collaborator removed.");
+            }
             else
             {
                 MessageBox.Show(

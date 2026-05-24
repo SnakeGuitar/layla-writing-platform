@@ -23,7 +23,7 @@ public partial class App : Application
 {
 
     private string ConfigPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Layla", "theme.txt");
-    public string CurrentTheme { get; private set; } = "CyberMinimalismTheme";
+    public string CurrentTheme { get; private set; } = "NeumorphismTheme";
 
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -50,14 +50,14 @@ public partial class App : Application
         ServiceProvider? provider = services.BuildServiceProvider();
         ServiceLocator.Initialize(provider);
 
-        string theme = "CyberMinimalismTheme";
+        string theme = "NeumorphismTheme";
         try
         {
             if (File.Exists(this.ConfigPath))
             {
                 string saved = File.ReadAllText(this.ConfigPath).Trim();
-                // Migrate old SpaceTheme to CyberMinimalismTheme
-                if (saved == "SpaceTheme") saved = "CyberMinimalismTheme";
+                // Migrate old SpaceTheme and CyberMinimalismTheme to NeumorphismTheme
+                if (saved == "SpaceTheme" || saved == "CyberMinimalismTheme") saved = "NeumorphismTheme";
                 theme = saved;
             }
         }

@@ -51,24 +51,30 @@ namespace Layla.Desktop.Views
         {
             DiffParagraph.Inlines.Clear();
 
+            Color textPrimary = Colors.Black;
+            if (Application.Current.Resources.Contains("NmTextPrimaryColor"))
+            {
+                textPrimary = (Color)Application.Current.Resources["NmTextPrimaryColor"];
+            }
+
             foreach (var diff in diffs)
             {
                 var run = new Run(diff.Text + " ");
                 if (diff.Type == DiffType.Inserted)
                 {
-                    run.Foreground = new SolidColorBrush(Color.FromRgb(0, 229, 255)); // Luminescent Cyan
-                    run.Background = new SolidColorBrush(Color.FromArgb(0x1F, 0, 229, 255)); // Phosphor Cyan Glow
+                    run.Foreground = new SolidColorBrush(Color.FromRgb(0, 184, 148)); // Soft Green
+                    run.Background = new SolidColorBrush(Color.FromArgb(38, 0, 184, 148)); // 15% opacity
                     run.FontWeight = FontWeights.SemiBold;
                 }
                 else if (diff.Type == DiffType.Deleted)
                 {
-                    run.Foreground = new SolidColorBrush(Color.FromRgb(255, 159, 0)); // Technical Amber
-                    run.Background = new SolidColorBrush(Color.FromArgb(0x1F, 255, 159, 0)); // Amber Glow
+                    run.Foreground = new SolidColorBrush(Color.FromRgb(214, 48, 49)); // Soft Red
+                    run.Background = new SolidColorBrush(Color.FromArgb(38, 214, 48, 49)); // 15% opacity
                     run.TextDecorations = TextDecorations.Strikethrough;
                 }
                 else
                 {
-                    run.Foreground = new SolidColorBrush(Color.FromRgb(244, 244, 245)); // Pure Silver
+                    run.Foreground = new SolidColorBrush(textPrimary);
                 }
                 DiffParagraph.Inlines.Add(run);
             }

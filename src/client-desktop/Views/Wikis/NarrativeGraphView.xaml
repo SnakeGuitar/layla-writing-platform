@@ -6,8 +6,8 @@
       mc:Ignorable="d"
       d:DesignHeight="600" d:DesignWidth="800"
       Title="NarrativeGraphView"
-      Background="{DynamicResource CyberBgPrimaryBrush}"
-      Foreground="{DynamicResource CyberTextPrimaryBrush}">
+      Background="{DynamicResource NmBgBaseBrush}"
+      Foreground="{DynamicResource NmTextPrimaryBrush}">
 
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
@@ -19,98 +19,115 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <Border Padding="20,10" Background="{DynamicResource CyberBgSecondaryBrush}"
-                BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="0,0,0,1">
+        <!-- Elegant Header -->
+        <Border Padding="20,12" Background="{DynamicResource NmSurfaceBrush}"
+                BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="0,0,0,1">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
+                
                 <StackPanel Orientation="Vertical" VerticalAlignment="Center">
-                    <TextBlock Text="NARRATIVE GRAPH" Style="{StaticResource CyberDisplayText}" FontSize="18"/>
+                    <TextBlock Text="Grafo Narrativo" Style="{StaticResource NmTitleText}" FontSize="20" Foreground="{DynamicResource NmAccentBrush}"/>
                     <TextBlock Text="{Binding StatusMessage}"
-                               Style="{StaticResource CyberTechMonoText}" Foreground="{DynamicResource CyberAccentPrimaryBrush}" FontSize="11"
-                               TextTrimming="CharacterEllipsis"/>
+                               Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmTextSecondaryBrush}" FontSize="11"
+                               TextTrimming="CharacterEllipsis" Margin="0,3,0,0"/>
                 </StackPanel>
+                
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <!-- Legend -->
-                    <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
-                        <Border Width="6" Height="6" CornerRadius="0" Background="{DynamicResource CyberAccentPrimaryBrush}" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Character" Style="{StaticResource CyberLabel}" VerticalAlignment="Center"/>
+                    <!-- Clean Pastel Legend -->
+                    <StackPanel Orientation="Horizontal" Margin="0,0,12,0" VerticalAlignment="Center">
+                        <Border Width="8" Height="8" CornerRadius="4" Background="#A5D8FF" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Personaje" Style="{StaticResource NmLabelText}" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
-                        <Border Width="6" Height="6" CornerRadius="0" Background="{DynamicResource CyberTextPrimaryBrush}" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Location" Style="{StaticResource CyberLabel}" VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,12,0" VerticalAlignment="Center">
+                        <Border Width="8" Height="8" CornerRadius="4" Background="#B2F2BB" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Lugar" Style="{StaticResource NmLabelText}" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
-                        <Border Width="6" Height="6" CornerRadius="0" Background="{DynamicResource CyberAccentWarningBrush}" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Event" Style="{StaticResource CyberLabel}" VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,12,0" VerticalAlignment="Center">
+                        <Border Width="8" Height="8" CornerRadius="4" Background="#FFD8A8" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Suceso" Style="{StaticResource NmLabelText}" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,12,0">
-                        <Border Width="6" Height="6" CornerRadius="0" Background="{DynamicResource CyberTextSecondaryBrush}" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Object" Style="{StaticResource CyberLabel}" VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,12,0" VerticalAlignment="Center">
+                        <Border Width="8" Height="8" CornerRadius="4" Background="#E5DBFF" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Objeto" Style="{StaticResource NmLabelText}" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
                     </StackPanel>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,16,0">
-                        <Border Width="6" Height="6" CornerRadius="0" Background="{DynamicResource CyberTextDisabledBrush}" Margin="0,0,4,0" VerticalAlignment="Center"/>
-                        <TextBlock Text="Concept" Style="{StaticResource CyberLabel}" VerticalAlignment="Center"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,20,0" VerticalAlignment="Center">
+                        <Border Width="8" Height="8" CornerRadius="4" Background="#CFD8DC" Margin="0,0,5,0" VerticalAlignment="Center"/>
+                        <TextBlock Text="Concepto" Style="{StaticResource NmLabelText}" FontSize="10" FontWeight="SemiBold" VerticalAlignment="Center"/>
                     </StackPanel>
                     
-                    <Button x:Name="AddRelationshipButton" Content="ADD RELATIONSHIP" Command="{Binding OpenAddRelationshipCommand}"
-                            Style="{StaticResource CyberButton}" Padding="10,4" Margin="0,0,8,0" Cursor="Hand" FontSize="11"/>
+                    <Button x:Name="AddRelationshipButton" Content="Añadir Relación" Command="{Binding OpenAddRelationshipCommand}"
+                            Style="{StaticResource NmButtonGhost}" Padding="12,6" Margin="0,0,8,0" Cursor="Hand"/>
                     
-                    <Button Content="REFRESH" Command="{Binding LoadGraphCommand}"
-                            Style="{StaticResource CyberButton}" BorderBrush="{DynamicResource CyberAccentPrimaryBrush}" Foreground="{DynamicResource CyberAccentPrimaryBrush}"
-                            Padding="10,4" Cursor="Hand" FontSize="11"/>
+                    <Button Content="Actualizar" Command="{Binding LoadGraphCommand}"
+                            Style="{StaticResource NmButtonPrimary}"
+                            Padding="14,6" Cursor="Hand"/>
                 </StackPanel>
             </Grid>
         </Border>
 
-        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="{DynamicResource CyberBgPrimaryBrush}">
+        <!-- Neumorphic Canvas Area -->
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="{DynamicResource NmBgBaseBrush}">
             <Canvas x:Name="GraphCanvas" Width="1200" Height="800"
-                    Background="{DynamicResource CyberBgSecondaryBrush}" Margin="20"
+                    Background="{DynamicResource NmBgBaseBrush}" Margin="20"
                     MouseLeftButtonDown="GraphCanvas_MouseLeftButtonDown"
                     MouseMove="GraphCanvas_MouseMove"
                     MouseLeftButtonUp="GraphCanvas_MouseLeftButtonUp"/>
         </ScrollViewer>
 
-        <!-- ═══ Add Relationship Modal ═══ -->
+        <!-- ═══ Add Relationship Modal Overlay ═══ -->
         <Border Visibility="{Binding IsAddRelationshipVisible, Converter={StaticResource BoolToVis}}"
-                Background="#CC000000" Panel.ZIndex="100" Grid.RowSpan="2">
-            <Border Style="{StaticResource CyberPanelBorder}" Background="{DynamicResource CyberBgElevatedBrush}" Width="420"
-                    HorizontalAlignment="Center" VerticalAlignment="Center"
-                    Padding="20">
-                <StackPanel>
-                    <TextBlock Text="ADD RELATIONSHIP" Style="{StaticResource CyberDisplayText}" FontSize="18" Margin="0,0,0,15"/>
+                Background="#AA141420" Panel.ZIndex="100" Grid.RowSpan="2">
+            <Grid Width="420" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <!-- Light shadow border -->
+                <Border CornerRadius="12" Background="Transparent">
+                    <Border.Effect>
+                        <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="6" Direction="135" BlurRadius="12" Opacity="0.9"/>
+                    </Border.Effect>
+                </Border>
+                <!-- Dark shadow border -->
+                <Border CornerRadius="12" Background="Transparent">
+                    <Border.Effect>
+                        <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="6" Direction="315" BlurRadius="12" Opacity="0.6"/>
+                    </Border.Effect>
+                </Border>
+                
+                <Border CornerRadius="12" Background="{DynamicResource NmSurfaceBrush}" Padding="20">
+                    <StackPanel>
+                        <TextBlock Text="Añadir Relación" Style="{StaticResource NmTitleText}" FontSize="20" Margin="0,0,0,20" Foreground="{DynamicResource NmAccentBrush}"/>
 
-                    <TextBlock Text="SOURCE ENTITY:" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
-                    <ComboBox ItemsSource="{Binding AvailableEntities}"
-                               SelectedItem="{Binding NewRelSource}"
-                               DisplayMemberPath="Name" Height="30" Margin="0,0,0,10"/>
+                        <TextBlock Text="ENTIDAD ORIGEN:" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                        <ComboBox ItemsSource="{Binding AvailableEntities}"
+                                   SelectedItem="{Binding NewRelSource}"
+                                   DisplayMemberPath="Name" Height="38" Margin="0,0,0,15"/>
 
-                    <TextBlock Text="TARGET ENTITY:" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
-                    <ComboBox ItemsSource="{Binding AvailableEntities}"
-                               SelectedItem="{Binding NewRelTarget}"
-                               DisplayMemberPath="Name" Height="30" Margin="0,0,0,10"/>
+                        <TextBlock Text="ENTIDAD DESTINO:" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                        <ComboBox ItemsSource="{Binding AvailableEntities}"
+                                   SelectedItem="{Binding NewRelTarget}"
+                                   DisplayMemberPath="Name" Height="38" Margin="0,0,0,15"/>
 
-                    <TextBlock Text="RELATIONSHIP TYPE:" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
-                    <ComboBox ItemsSource="{Binding RelationshipTypes}"
-                               SelectedItem="{Binding NewRelType}" Height="30" Margin="0,0,0,10"/>
+                        <TextBlock Text="TIPO DE RELACIÓN:" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                        <ComboBox ItemsSource="{Binding RelationshipTypes}"
+                                   SelectedItem="{Binding NewRelType}" Height="38" Margin="0,0,0,15"/>
 
-                    <TextBlock Text="LABEL (OPTIONAL):" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
-                    <TextBox Text="{Binding NewRelLabel, UpdateSourceTrigger=PropertyChanged}"
-                              Height="28" Margin="0,0,0,10"/>
+                        <TextBlock Text="DESCRIPCIÓN / ETIQUETA (OPCIONAL):" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                        <TextBox Style="{StaticResource NmInputStyle}" Text="{Binding NewRelLabel, UpdateSourceTrigger=PropertyChanged}"
+                                  Height="38" Margin="0,0,0,15"/>
 
-                    <TextBlock Text="{Binding AddRelError}" Style="{StaticResource CyberTechMonoText}" Foreground="{DynamicResource CyberAccentWarningBrush}" FontSize="11"
-                               Margin="0,0,0,8" TextWrapping="Wrap"/>
+                        <TextBlock Text="{Binding AddRelError}" Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmErrorBrush}"
+                                   Margin="0,0,0,12" TextWrapping="Wrap"/>
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="CANCEL" Style="{StaticResource CyberButton}" Padding="15,6" Margin="0,0,8,0" Cursor="Hand"
-                                Command="{Binding CancelAddRelationshipCommand}"/>
-                        <Button Content="CREATE" Style="{StaticResource CyberButton}" BorderBrush="{DynamicResource CyberAccentPrimaryBrush}" Foreground="{DynamicResource CyberAccentPrimaryBrush}" Padding="15,6"
-                                Cursor="Hand" Command="{Binding ConfirmAddRelationshipCommand}"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="Cancelar" Style="{StaticResource NmButtonGhost}" Padding="16,8" Margin="0,0,8,0" Cursor="Hand"
+                                    Command="{Binding CancelAddRelationshipCommand}"/>
+                            <Button Content="Crear Relación" Style="{StaticResource NmButtonPrimary}" Padding="18,8"
+                                    Cursor="Hand" Command="{Binding ConfirmAddRelationshipCommand}"/>
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
-            </Border>
+                </Border>
+            </Grid>
         </Border>
     </Grid>
 </Page>

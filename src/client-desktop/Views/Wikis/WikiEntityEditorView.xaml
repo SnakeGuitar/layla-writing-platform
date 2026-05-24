@@ -6,80 +6,84 @@
       mc:Ignorable="d"
       d:DesignHeight="600" d:DesignWidth="900"
       Title="WikiEntityEditorView"
-      Background="{DynamicResource CyberBgPrimaryBrush}"
-      Foreground="{DynamicResource CyberTextPrimaryBrush}">
+      Background="{DynamicResource NmBgBaseBrush}"
+      Foreground="{DynamicResource NmTextPrimaryBrush}">
 
     <Grid>
         <Grid.ColumnDefinitions>
-            <!-- Entity list -->
+            <!-- Entity list sidebar -->
             <ColumnDefinition Width="250" MinWidth="180" MaxWidth="380"/>
             <ColumnDefinition Width="2"/>
             <!-- Editor form -->
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="2"/>
             <!-- Appearances (narrative arc) -->
-            <ColumnDefinition Width="220" MinWidth="160" MaxWidth="320"/>
+            <ColumnDefinition Width="230" MinWidth="160" MaxWidth="320"/>
         </Grid.ColumnDefinitions>
 
         <!-- ═══ LEFT: Entity List ═══ -->
-        <Border Grid.Column="0" Background="{DynamicResource CyberBgSecondaryBrush}"
-                BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="0,0,1,0">
+        <Border Grid.Column="0" Background="{DynamicResource NmSurfaceBrush}"
+                BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="0,0,1,0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <Border Padding="12,10" BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="0,0,0,1">
+                <!-- List Header -->
+                <Border Padding="15,12" BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="0,0,0,1">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="WIKI ENTRIES" Style="{StaticResource CyberLabel}" VerticalAlignment="Center"/>
-                        <Button x:Name="NewButton" Grid.Column="1" Content="NEW" Style="{StaticResource CyberButton}" Padding="8,4" Cursor="Hand"
+                        <TextBlock Text="ENTRADAS WIKI" Style="{StaticResource NmLabelText}" FontWeight="Bold" Foreground="{DynamicResource NmAccentBrush}" VerticalAlignment="Center"/>
+                        <Button x:Name="NewButton" Grid.Column="1" Content="NUEVA" Style="{StaticResource NmButtonPrimary}" Padding="10,5" FontSize="11" Cursor="Hand"
                                 Command="{Binding NewEntryCommand}"/>
                     </Grid>
                 </Border>
 
+                <!-- ListBox with 3D physical Neumorphic Pill selection -->
                 <ListBox Grid.Row="1" ItemsSource="{Binding Entries}"
                           SelectedItem="{Binding SelectedEntry}"
-                          Background="Transparent" BorderThickness="0" Padding="5,5"
+                          Background="Transparent" BorderThickness="0" Padding="12"
                           SelectionChanged="EntryListBox_SelectionChanged">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <Grid Margin="0,1">
+                            <Grid Margin="0,1" SnapsToDevicePixels="True">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"/>
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
-                                <Border Width="6" Height="6" CornerRadius="0" Margin="0,0,8,0" VerticalAlignment="Center">
+                                
+                                <!-- Soft Pastel Circular Type Dot -->
+                                <Border Width="8" Height="8" CornerRadius="4" Margin="0,0,10,0" VerticalAlignment="Center">
                                     <Border.Style>
                                         <Style TargetType="Border">
-                                            <Setter Property="Background" Value="{DynamicResource CyberTextPrimaryBrush}"/>
+                                            <Setter Property="Background" Value="{DynamicResource NmTextSecondaryBrush}"/>
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding EntityType}" Value="Character">
-                                                    <Setter Property="Background" Value="{DynamicResource CyberAccentPrimaryBrush}"/>
+                                                    <Setter Property="Background" Value="#A5D8FF"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding EntityType}" Value="Location">
-                                                    <Setter Property="Background" Value="{DynamicResource CyberTextPrimaryBrush}"/>
+                                                    <Setter Property="Background" Value="#B2F2BB"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding EntityType}" Value="Event">
-                                                    <Setter Property="Background" Value="{DynamicResource CyberAccentWarningBrush}"/>
+                                                    <Setter Property="Background" Value="#FFD8A8"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding EntityType}" Value="Object">
-                                                    <Setter Property="Background" Value="{DynamicResource CyberTextSecondaryBrush}"/>
+                                                    <Setter Property="Background" Value="#E5DBFF"/>
                                                 </DataTrigger>
                                                 <DataTrigger Binding="{Binding EntityType}" Value="Concept">
-                                                    <Setter Property="Background" Value="{DynamicResource CyberTextDisabledBrush}"/>
+                                                    <Setter Property="Background" Value="#CFD8DC"/>
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
                                     </Border.Style>
                                 </Border>
                                 <StackPanel Grid.Column="1">
-                                    <TextBlock Text="{Binding Name}" Style="{StaticResource CyberTitleText}" FontSize="12" TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Text="{Binding EntityType}" Style="{StaticResource CyberTechMonoText}" FontSize="10" Foreground="{DynamicResource CyberTextSecondaryBrush}"/>
+                                    <TextBlock Text="{Binding Name}" Style="{StaticResource NmTitleText}" FontSize="13.5" TextTrimming="CharacterEllipsis"/>
+                                    <TextBlock Text="{Binding EntityType}" Style="{StaticResource NmLabelText}" FontSize="11" Foreground="{DynamicResource NmTextSecondaryBrush}"/>
                                 </StackPanel>
                             </Grid>
                         </DataTemplate>
@@ -87,137 +91,224 @@
                     <ListBox.ItemContainerStyle>
                         <Style TargetType="ListBoxItem">
                             <Setter Property="Background" Value="Transparent"/>
-                            <Setter Property="Padding" Value="6,5"/>
-                            <Setter Property="Margin" Value="0,1"/>
+                            <Setter Property="Padding" Value="10,8"/>
+                            <Setter Property="Margin" Value="0,4"/>
                             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Grid x:Name="ItemGrid">
+                                            <!-- Raised Shadows (Normal) -->
+                                            <Border x:Name="ShadowLight" CornerRadius="8" Background="Transparent">
+                                                <Border.Effect>
+                                                    <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="2" Direction="135" BlurRadius="4" Opacity="0.9"/>
+                                                </Border.Effect>
+                                            </Border>
+                                            <Border x:Name="ShadowDark" CornerRadius="8" Background="Transparent">
+                                                <Border.Effect>
+                                                    <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="2" Direction="315" BlurRadius="4" Opacity="0.5"/>
+                                                </Border.Effect>
+                                            </Border>
+
+                                            <!-- Sunken Inset Shadows (Selected) -->
+                                            <Border x:Name="SunkenDark" CornerRadius="8" Background="{DynamicResource NmBgBaseBrush}" BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="1.5,1.5,0,0" Visibility="Collapsed"/>
+                                            <Border x:Name="SunkenLight" CornerRadius="8" Background="Transparent" BorderBrush="{DynamicResource NmShadowLightBrush}" BorderThickness="0,0,1.5,1.5" Visibility="Collapsed"/>
+
+                                            <!-- Main Surface -->
+                                            <Border x:Name="MainBorder" CornerRadius="8" Background="{DynamicResource NmSurfaceBrush}" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter/>
+                                            </Border>
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsSelected" Value="True">
+                                                <Setter TargetName="ShadowLight" Property="Visibility" Value="Collapsed"/>
+                                                <Setter TargetName="ShadowDark" Property="Visibility" Value="Collapsed"/>
+                                                <Setter TargetName="SunkenDark" Property="Visibility" Value="Visible"/>
+                                                <Setter TargetName="SunkenLight" Property="Visibility" Value="Visible"/>
+                                                <Setter TargetName="MainBorder" Property="Background" Value="Transparent"/>
+                                                <Setter Property="Foreground" Value="{DynamicResource NmAccentBrush}"/>
+                                            </Trigger>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="MainBorder" Property="Background" Value="{DynamicResource NmShadowLightBrush}"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
                         </Style>
                     </ListBox.ItemContainerStyle>
                 </ListBox>
             </Grid>
         </Border>
 
+        <!-- Splitter -->
         <GridSplitter Grid.Column="1" Width="2" HorizontalAlignment="Stretch"
-                      Background="{DynamicResource CyberBorderSubtleBrush}" Cursor="SizeWE"/>
+                      Background="{DynamicResource NmShadowDarkBrush}" Cursor="SizeWE"/>
 
-        <!-- ═══ CENTER: Editor Form ═══ -->
-        <Grid Grid.Column="2" Margin="20">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="15"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="10"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="10"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="10"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="10"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="20"/>
-                <RowDefinition Height="Auto"/>
-            </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="100"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
+        <!-- ═══ CENTER: Neumorphic Editor Form ═══ -->
+        <Grid Grid.Column="2" Margin="25">
+            <!-- Light shadow border -->
+            <Border CornerRadius="12" Background="Transparent">
+                <Border.Effect>
+                    <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="4" Direction="135" BlurRadius="8" Opacity="0.9"/>
+                </Border.Effect>
+            </Border>
+            <!-- Dark shadow border -->
+            <Border CornerRadius="12" Background="Transparent">
+                <Border.Effect>
+                    <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="4" Direction="315" BlurRadius="8" Opacity="0.5"/>
+                </Border.Effect>
+            </Border>
+            
+            <Border CornerRadius="12" Background="{DynamicResource NmSurfaceBrush}" Padding="25">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="15"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="12"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="12"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="12"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="15"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="110"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
 
-            <!-- Header -->
-            <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="WIKI ENTRY" Style="{StaticResource CyberDisplayText}" FontSize="18"/>
+                    <!-- Header -->
+                    <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Text="Entrada de la Wiki" Style="{StaticResource NmTitleText}" FontSize="20" Foreground="{DynamicResource NmAccentBrush}"/>
 
-            <!-- Name -->
-            <TextBlock Grid.Row="2" Grid.Column="0" Text="NAME:" Style="{StaticResource CyberLabel}" VerticalAlignment="Center"/>
-            <TextBox x:Name="NameTextBox" Grid.Row="2" Grid.Column="1" Height="30"
-                      Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
+                    <!-- Name -->
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="NOMBRE:" Style="{StaticResource NmLabelText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <TextBox x:Name="NameTextBox" Grid.Row="2" Grid.Column="1" Height="38" Style="{StaticResource NmInputStyle}"
+                              Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
 
-            <!-- Type -->
-            <TextBlock Grid.Row="4" Grid.Column="0" Text="TYPE:" Style="{StaticResource CyberLabel}" VerticalAlignment="Center"/>
-            <ComboBox x:Name="TypeComboBox" Grid.Row="4" Grid.Column="1" Height="30"
-                      ItemsSource="{Binding EntityTypes}"
-                      SelectedItem="{Binding EntityType}"/>
+                    <!-- Type -->
+                    <TextBlock Grid.Row="4" Grid.Column="0" Text="TIPO:" Style="{StaticResource NmLabelText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <ComboBox x:Name="TypeComboBox" Grid.Row="4" Grid.Column="1" Height="38"
+                              ItemsSource="{Binding EntityTypes}"
+                              SelectedItem="{Binding EntityType}"/>
 
-            <!-- Tags -->
-            <TextBlock Grid.Row="6" Grid.Column="0" Text="TAGS:" Style="{StaticResource CyberLabel}" VerticalAlignment="Center"/>
-            <TextBox x:Name="TagsTextBox" Grid.Row="6" Grid.Column="1" Height="30"
-                      ToolTip="Separate with commas"
-                      Text="{Binding Tags, UpdateSourceTrigger=PropertyChanged}"/>
+                    <!-- Tags -->
+                    <TextBlock Grid.Row="6" Grid.Column="0" Text="ETIQUETAS:" Style="{StaticResource NmLabelText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    <TextBox x:Name="TagsTextBox" Grid.Row="6" Grid.Column="1" Height="38" Style="{StaticResource NmInputStyle}"
+                              ToolTip="Separar con comas"
+                              Text="{Binding Tags, UpdateSourceTrigger=PropertyChanged}"/>
 
-            <!-- Description -->
-            <TextBlock Grid.Row="8" Grid.Column="0" Text="DESCRIPTION:" Style="{StaticResource CyberLabel}" VerticalAlignment="Top" Margin="0,5,0,0"/>
-            <TextBox x:Name="DescriptionTextBox" Grid.Row="8" Grid.Column="1"
-                      TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
-                      Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"/>
+                    <!-- Description -->
+                    <TextBlock Grid.Row="8" Grid.Column="0" Text="DESCRIPCIÓN:" Style="{StaticResource NmLabelText}" FontWeight="SemiBold" VerticalAlignment="Top" Margin="0,8,0,0"/>
+                    <!-- Recessed input container for multi-line description -->
+                    <Grid Grid.Row="8" Grid.Column="1">
+                        <Border CornerRadius="6" Background="{DynamicResource NmBgBaseBrush}" BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="1.5,1.5,0,0"/>
+                        <Border CornerRadius="6" Background="Transparent" BorderBrush="{DynamicResource NmShadowLightBrush}" BorderThickness="0,0,1.5,1.5"/>
+                        <TextBox x:Name="DescriptionTextBox" Background="Transparent" Foreground="{DynamicResource NmTextPrimaryBrush}" BorderThickness="0" Padding="12,10" FontSize="13" FontFamily="Segoe UI"
+                                 TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
+                                 Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"/>
+                    </Grid>
 
-            <!-- Buttons + status -->
-            <Grid Grid.Row="12" Grid.ColumnSpan="2">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{Binding StatusMessage}"
-                           Style="{StaticResource CyberTechMonoText}" Foreground="{DynamicResource CyberAccentPrimaryBrush}" FontSize="11"
-                           VerticalAlignment="Center" Margin="0,0,12,0" TextWrapping="Wrap"/>
-                
-                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="VIEW GRAPH" Width="110" Height="30" Margin="0,0,10,0"
-                            Style="{StaticResource CyberButton}" Command="{Binding ViewInGraphCommand}"/>
-                    
-                    <Button x:Name="DeleteButton" Content="DELETE" Width="90" Height="30" Margin="0,0,10,0"
-                            Style="{StaticResource CyberButton}" BorderBrush="{DynamicResource CyberAccentWarningBrush}" Foreground="{DynamicResource CyberAccentWarningBrush}"
-                            Command="{Binding DeleteCommand}"/>
-                    
-                    <Button x:Name="SaveButton" Content="SAVE" Width="100" Height="30"
-                            Style="{StaticResource CyberButton}" BorderBrush="{DynamicResource CyberAccentPrimaryBrush}" Foreground="{DynamicResource CyberAccentPrimaryBrush}"
-                            Command="{Binding SaveCommand}"/>
-                </StackPanel>
-            </Grid>
+                    <!-- Buttons + status -->
+                    <Grid Grid.Row="10" Grid.ColumnSpan="2" Margin="0,10,0,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="{Binding StatusMessage}"
+                                   Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmAccentBrush}" FontWeight="SemiBold"
+                                   VerticalAlignment="Center" Margin="0,0,12,0" TextWrapping="Wrap"/>
+                        
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="Ver Grafo" Width="110" Height="38" Margin="0,0,8,0"
+                                    Style="{StaticResource NmButtonGhost}" Command="{Binding ViewInGraphCommand}"/>
+                            
+                            <Button x:Name="DeleteButton" Content="Eliminar" Width="90" Height="38" Margin="0,0,8,0"
+                                    Style="{StaticResource NmButtonGhost}" Foreground="{DynamicResource NmErrorBrush}"
+                                    Command="{Binding DeleteCommand}"/>
+                            
+                            <Button x:Name="SaveButton" Content="Guardar" Width="100" Height="38"
+                                    Style="{StaticResource NmButtonPrimary}"
+                                    Command="{Binding SaveCommand}"/>
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </Border>
         </Grid>
 
+        <!-- Splitter -->
         <GridSplitter Grid.Column="3" Width="2" HorizontalAlignment="Stretch"
-                      Background="{DynamicResource CyberBorderSubtleBrush}" Cursor="SizeWE"/>
+                      Background="{DynamicResource NmShadowDarkBrush}" Cursor="SizeWE"/>
 
         <!-- ═══ RIGHT: Narrative Arc (Appearances) ═══ -->
-        <Border Grid.Column="4" Background="{DynamicResource CyberBgSecondaryBrush}"
-                BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="1,0,0,0">
+        <Border Grid.Column="4" Background="{DynamicResource NmSurfaceBrush}"
+                BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="1,0,0,0">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <Border Padding="12,10" BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="0,0,0,1">
-                    <TextBlock Text="NARRATIVE ARC" Style="{StaticResource CyberLabel}"/>
+                <Border Padding="15,12" BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="0,0,0,1">
+                    <TextBlock Text="ARCO NARRATIVO" Style="{StaticResource NmLabelText}" FontWeight="Bold" Foreground="{DynamicResource NmAccentBrush}"/>
                 </Border>
 
+                <!-- Appearances List -->
                 <ListBox Grid.Row="1" ItemsSource="{Binding Appearances}"
-                          Background="Transparent" BorderThickness="0" Padding="5,5"
+                          Background="Transparent" BorderThickness="0" Padding="12"
                           SelectionChanged="AppearanceListBox_SelectionChanged">
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <Border Style="{StaticResource CyberPanelBorder}" Background="{DynamicResource CyberBgSecondaryBrush}"
-                                    Padding="6,5" Margin="0,2">
-                                <StackPanel>
-                                    <TextBlock Text="{Binding ChapterTitle}" Style="{StaticResource CyberTitleText}" FontSize="12" TextTrimming="CharacterEllipsis"/>
-                                    <TextBlock Text="{Binding ManuscriptTitle}" Style="{StaticResource CyberTechMonoText}" FontSize="10" Foreground="{DynamicResource CyberTextSecondaryBrush}"/>
-                                </StackPanel>
-                            </Border>
+                            <Grid Margin="0,4" SnapsToDevicePixels="True">
+                                <!-- Light shadow border -->
+                                <Border CornerRadius="8" Background="Transparent">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="2" Direction="135" BlurRadius="4" Opacity="0.9"/>
+                                    </Border.Effect>
+                                </Border>
+                                <!-- Dark shadow border -->
+                                <Border CornerRadius="8" Background="Transparent">
+                                    <Border.Effect>
+                                        <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="2" Direction="315" BlurRadius="4" Opacity="0.5"/>
+                                    </Border.Effect>
+                                </Border>
+
+                                <Border CornerRadius="8" Background="{DynamicResource NmSurfaceBrush}" Padding="10" Cursor="Hand">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding ChapterTitle}" Style="{StaticResource NmTitleText}" FontSize="13" TextTrimming="CharacterEllipsis"/>
+                                        <TextBlock Text="{Binding ManuscriptTitle}" Style="{StaticResource NmLabelText}" FontSize="11" Foreground="{DynamicResource NmTextSecondaryBrush}" Margin="0,3,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
                     <ListBox.ItemContainerStyle>
                         <Style TargetType="ListBoxItem">
                             <Setter Property="Background" Value="Transparent"/>
                             <Setter Property="Padding" Value="0"/>
-                            <Setter Property="Margin" Value="0"/>
                             <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="ListBoxItem">
+                                        <Border Background="Transparent" Padding="0">
+                                            <ContentPresenter />
+                                        </Border>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
                         </Style>
                     </ListBox.ItemContainerStyle>
                 </ListBox>
 
-                <!-- Empty state -->
-                <TextBlock Grid.Row="1" Text="Select an entity to see which chapters it appears in."
-                           TextWrapping="Wrap" Padding="12,20" TextAlignment="Center"
+                <!-- Empty State -->
+                <TextBlock Grid.Row="1" Text="Selecciona una entidad para ver en qué capítulos aparece."
+                           TextAlignment="Center"
+                           TextWrapping="Wrap" Padding="20,40"
                            HorizontalAlignment="Center" VerticalAlignment="Top">
                     <TextBlock.Style>
-                        <Style TargetType="TextBlock" BasedOn="{StaticResource CyberBodyText}">
+                        <Style TargetType="TextBlock" BasedOn="{StaticResource NmBodyText}">
                             <Setter Property="Visibility" Value="Collapsed"/>
                             <Style.Triggers>
                                 <DataTrigger Binding="{Binding Appearances.Count}" Value="0">

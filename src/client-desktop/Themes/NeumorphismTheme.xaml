@@ -3,17 +3,17 @@
                     xmlns:system="clr-namespace:System;assembly=mscorlib">
 
     <!-- ================================================================= -->
-    <!-- NEUMORPHIC LIGHT THEME – DESIGN TOKENS (COLORS)                   -->
+    <!-- NEUMORPHIC DARK THEME – DESIGN TOKENS (COLORS)                    -->
     <!-- ================================================================= -->
-    <Color x:Key="NmBgBaseColor">#E0E5EC</Color>
-    <Color x:Key="NmSurfaceColor">#E0E5EC</Color>
-    <Color x:Key="NmShadowLightColor">#FFFFFF</Color>
-    <Color x:Key="NmShadowDarkColor">#A3B1C6</Color>
-    <Color x:Key="NmTextPrimaryColor">#2D3436</Color>
-    <Color x:Key="NmTextSecondaryColor">#636E72</Color>
-    <Color x:Key="NmAccentColor">#6C5CE7</Color>
-    <Color x:Key="NmErrorColor">#D63031</Color>
-    <Color x:Key="NmSuccessColor">#00B894</Color>
+    <Color x:Key="NmBgBaseColor">#1E1E2E</Color>
+    <Color x:Key="NmSurfaceColor">#1E1E2E</Color>
+    <Color x:Key="NmShadowLightColor">#2A2A3E</Color>
+    <Color x:Key="NmShadowDarkColor">#141420</Color>
+    <Color x:Key="NmTextPrimaryColor">#E8E8F0</Color>
+    <Color x:Key="NmTextSecondaryColor">#9090A8</Color>
+    <Color x:Key="NmAccentColor">#A29BFE</Color>
+    <Color x:Key="NmErrorColor">#FF7675</Color>
+    <Color x:Key="NmSuccessColor">#55EFC4</Color>
 
     <!-- BRUSHES -->
     <SolidColorBrush x:Key="NmBgBaseBrush" Color="{StaticResource NmBgBaseColor}" />
@@ -35,7 +35,7 @@
     <SolidColorBrush x:Key="BorderColor" Color="{StaticResource NmShadowDarkColor}" />
     <SolidColorBrush x:Key="ControlBackground" Color="{StaticResource NmSurfaceColor}" />
     <SolidColorBrush x:Key="ErrorText" Color="{StaticResource NmErrorColor}" />
-    <Color x:Key="AcrylicTintColor">#E0E5EC</Color>
+    <Color x:Key="AcrylicTintColor">#1E1E2E</Color>
     <system:Double x:Key="AcrylicTintOpacity">0.9</system:Double>
 
     <!-- ================================================================= -->
@@ -223,7 +223,7 @@
                         <!-- Hover: Solid soft accent color -->
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="MainBorder" Property="Background" Value="{DynamicResource NmAccentBrush}" />
-                            <Setter Property="Foreground" Value="#FFFFFF" /> <!-- White text contrast on violet accent -->
+                            <Setter Property="Foreground" Value="#1E1E2E" /> <!-- Dark text contrast on violet accent -->
                         </Trigger>
                         <!-- Pressed: sunken state -->
                         <Trigger Property="IsPressed" Value="True">
@@ -309,11 +309,11 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Background" Value="#10000000"/>
+                            <Setter Property="Background" Value="#10FFFFFF"/>
                             <Setter Property="Foreground" Value="{DynamicResource NmTextPrimaryBrush}"/>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter Property="Background" Value="#1A000000"/>
+                            <Setter Property="Background" Value="#1AFFFFFF"/>
                             <Setter Property="Foreground" Value="{DynamicResource NmAccentBrush}"/>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
@@ -465,7 +465,7 @@
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter Property="Background" Value="{StaticResource NmAccentBrush}" />
-                            <Setter Property="Foreground" Value="#FFFFFF" />
+                            <Setter Property="Foreground" Value="#1E1E2E" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>

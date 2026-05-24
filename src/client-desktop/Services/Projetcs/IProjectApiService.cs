@@ -22,7 +22,6 @@ public interface IProjectApiService
     event Action? SessionDisplaced;
 
     Task ConnectPresenceHubAsync();
-    Task ConnectVoiceHubAsync(Guid projectId);
     Task AuthorHeartbeatAsync(Guid projectId, string role = "Author");
     Task WatchProjectAsync(Guid projectId);
 }

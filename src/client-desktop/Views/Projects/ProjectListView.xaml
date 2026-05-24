@@ -8,70 +8,65 @@
       d:DesignHeight="720" d:DesignWidth="1080"
       ShowsNavigationUI="False"
       Title="ProjectListView"
-      Background="{DynamicResource CyberBgPrimaryBrush}"
-      Foreground="{DynamicResource CyberTextPrimaryBrush}">
+      Background="{DynamicResource NmBgBaseBrush}"
+      Foreground="{DynamicResource NmTextPrimaryBrush}">
     
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </Page.Resources>
 
-    <Grid Background="Transparent" Margin="24">
+    <Grid Background="Transparent" Margin="30">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             
-            <!-- High-Tech Cyber Brutalist Header -->
-            <Grid Grid.Row="0" Margin="0,0,0,24">
+            <!-- Clean display header (no tech monitors or lines) -->
+            <Grid Grid.Row="0" Margin="0,0,0,30">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 
-                <StackPanel Grid.Column="0">
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                        <TextBlock Text="/01" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentAlertBrush}" Margin="0,0,8,0" VerticalAlignment="Bottom"/>
-                        <TextBlock Text="CORE ARCHIVE" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberTextSecondaryBrush}" VerticalAlignment="Bottom"/>
-                    </StackPanel>
-                    <TextBlock Text="PROJECT DATABASE" Style="{StaticResource CyberDisplayText}" FontSize="28" Foreground="{DynamicResource CyberAccentPrimaryBrush}"/>
-                    <!-- A beautiful brutalist line divider -->
-                    <Border BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="0,0,0,1" Margin="0,8,0,0" Height="2">
-                        <Grid>
-                            <Line X1="0" Y1="0" X2="100" Y2="0" Stroke="{DynamicResource CyberAccentPrimaryBrush}" StrokeThickness="2" Width="100" HorizontalAlignment="Left"/>
-                        </Grid>
-                    </Border>
+                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                    <TextBlock Text="Mis proyectos" Style="{StaticResource NmDisplayText}" FontSize="32" FontWeight="SemiBold" Foreground="{DynamicResource NmAccentBrush}"/>
+                    <TextBlock Text="Gestiona y colabora en tus manuscritos" Style="{StaticResource NmBodyText}" Margin="0,4,0,0"/>
                 </StackPanel>
                 
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
-                    <!-- High-tech global status widget -->
-                    <Border BorderBrush="{DynamicResource CyberBorderSubtleBrush}" BorderThickness="1" Padding="12,6" Margin="0,0,15,0" Background="#11ffffff">
-                        <StackPanel Orientation="Horizontal">
-                            <Ellipse Width="6" Height="6" Fill="{DynamicResource CyberAccentAlertBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                            <TextBlock Text="NODE_CYBR_01  //  SECURE_ACCESS_GRANTED  //  ACTIVE" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberTextPrimaryBrush}" VerticalAlignment="Center"/>
-                        </StackPanel>
-                    </Border>
-                    
-                    <Button Content="BROWSE PUBLIC" Style="{StaticResource CyberButton}"
-                            Padding="12,6" Cursor="Hand" Click="BrowsePublicButton_Click"/>
-                    <Button Content="CREATE PROJECT" Style="{StaticResource CyberButton}"
-                            BorderBrush="{DynamicResource CyberAccentAlertBrush}" Foreground="{DynamicResource CyberAccentAlertBrush}"
-                            Padding="12,6" Cursor="Hand" Command="{Binding OpenCreateModalCommand}" Margin="6,0,0,0"/>
-                    <Button Content="SETTINGS" Style="{StaticResource CyberButton}"
-                            Padding="12,6" Cursor="Hand" Click="SettingsButton_Click" Margin="6,0,0,0"/>
-                    <Button Content="LOGOUT" Style="{StaticResource CyberButton}"
-                            BorderBrush="{DynamicResource CyberAccentWarningBrush}" Foreground="{DynamicResource CyberAccentWarningBrush}"
-                            Padding="12,6" Cursor="Hand" Click="LogoutButton_Click" Margin="6,0,0,0"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Button Content="Explorar públicos" Style="{StaticResource NmButtonGhost}"
+                            Padding="14,8" Cursor="Hand" Click="BrowsePublicButton_Click" Margin="0,0,6,0"/>
+                    <Button Content="Crear proyecto" Style="{StaticResource NmButtonPrimary}"
+                            Padding="16,8" Cursor="Hand" Command="{Binding OpenCreateModalCommand}" Margin="0,0,6,0"/>
+                    <Button Content="Configuración" Style="{StaticResource NmButtonGhost}"
+                            Padding="14,8" Cursor="Hand" Click="SettingsButton_Click" Margin="0,0,6,0"/>
+                    <Button Content="Cerrar sesión" Style="{StaticResource NmButtonGhost}" Foreground="{DynamicResource NmErrorBrush}"
+                            Padding="14,8" Cursor="Hand" Click="LogoutButton_Click"/>
                 </StackPanel>
             </Grid>
             
-            <!-- Overhauled Project Cards List -->
-            <ListView x:Name="ProjectsListView" Grid.Row="1" ItemsSource="{Binding Projects}" BorderThickness="0" Background="Transparent" MouseDoubleClick="ProjectsListView_MouseDoubleClick">
+            <!-- Neumorphic Project Cards List -->
+            <ListView x:Name="ProjectsListView" Grid.Row="1" ItemsSource="{Binding Projects}" BorderThickness="0" Background="Transparent" MouseDoubleClick="ProjectsListView_MouseDoubleClick" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                 <ListView.ItemTemplate>
                     <DataTemplate>
-                        <!-- Grid holding the card -->
-                        <Grid Margin="0,0,0,16">
-                            <Border x:Name="CardBorder" BorderThickness="1" BorderBrush="{DynamicResource CyberBorderSubtleBrush}" Background="#D00B0B0F" Padding="18">
+                        <!-- Grid holding the double-shadow neumorphic card -->
+                        <Grid Margin="10,10,10,20">
+                            <!-- Light shadow border -->
+                            <Border CornerRadius="12" Background="Transparent">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="4" Direction="135" BlurRadius="8" Opacity="0.9"/>
+                                </Border.Effect>
+                            </Border>
+                            <!-- Dark shadow border -->
+                            <Border CornerRadius="12" Background="Transparent">
+                                <Border.Effect>
+                                    <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="4" Direction="315" BlurRadius="8" Opacity="0.5"/>
+                                </Border.Effect>
+                            </Border>
+                            
+                            <!-- Content card surface -->
+                            <Border CornerRadius="12" Background="{DynamicResource NmSurfaceBrush}" Padding="20">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
@@ -79,27 +74,28 @@
                                     </Grid.ColumnDefinitions>
                                     
                                     <StackPanel Grid.Column="0">
-                                        <!-- Top Info Bar -->
-                                        <Grid Margin="0,0,0,10">
+                                        <!-- Top Info Bar: Status / Roles -->
+                                        <Grid Margin="0,0,0,12">
                                             <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
                                                 <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             
-                                            <!-- Brutalist numeric label -->
-                                            <TextBlock Grid.Column="0" Text="/PROJ_SECURE_0X" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                                            <!-- Genre -->
+                                            <TextBlock Grid.Column="0" Text="{Binding LiteraryGenre}" Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmAccentBrush}" FontWeight="SemiBold"/>
                                             
-                                            <!-- Status / Roles -->
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                                                <Border CornerRadius="0" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center" BorderThickness="1" BorderBrush="{DynamicResource CyberAccentPrimaryBrush}">
-                                                    <TextBlock Text="PUBLIC" Style="{StaticResource CyberLabel}" Foreground="{DynamicResource CyberAccentPrimaryBrush}"/>
+                                            <!-- Soft Round Role Pills -->
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                                <!-- Public Badge -->
+                                                <Border CornerRadius="12" Padding="10,4" Margin="8,0,0,0" Background="#20A29BFE">
+                                                    <TextBlock Text="PÚBLICO" Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmAccentBrush}" FontSize="9" FontWeight="Bold"/>
                                                 </Border>
                                                 
-                                                <Border CornerRadius="0" Padding="8,2" Margin="8,0,0,0" VerticalAlignment="Center" BorderThickness="1">
+                                                <!-- User Role Badge -->
+                                                <Border CornerRadius="12" Padding="10,4" Margin="8,0,0,0" VerticalAlignment="Center">
                                                     <Border.Style>
                                                         <Style TargetType="Border">
                                                             <Setter Property="Background" Value="Transparent"/>
-                                                            <Setter Property="BorderBrush" Value="{DynamicResource CyberBorderSubtleBrush}"/>
                                                             <Setter Property="Visibility" Value="Visible"/>
                                                             <Style.Triggers>
                                                                 <DataTrigger Binding="{Binding UserRole}" Value="">
@@ -109,30 +105,30 @@
                                                                     <Setter Property="Visibility" Value="Collapsed"/>
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding UserRole}" Value="OWNER">
-                                                                    <Setter Property="BorderBrush" Value="{DynamicResource CyberAccentAlertBrush}"/>
+                                                                    <Setter Property="Background" Value="#2655EFC4"/> <!-- 15% Success green -->
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding UserRole}" Value="EDITOR">
-                                                                    <Setter Property="BorderBrush" Value="{DynamicResource CyberAccentSecondaryBrush}"/>
+                                                                    <Setter Property="Background" Value="#26A29BFE"/> <!-- 15% Accent violet -->
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding UserRole}" Value="READER">
-                                                                    <Setter Property="BorderBrush" Value="{DynamicResource CyberTextSecondaryBrush}"/>
+                                                                    <Setter Property="Background" Value="#269090A8"/> <!-- 15% Secondary text gray -->
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
                                                     </Border.Style>
-                                                    <TextBlock Text="{Binding UserRole}">
+                                                    <TextBlock Text="{Binding UserRole}" FontSize="9" FontWeight="Bold">
                                                         <TextBlock.Style>
-                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource CyberLabel}">
-                                                                <Setter Property="Foreground" Value="{DynamicResource CyberTextSecondaryBrush}"/>
+                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource NmLabelText}">
+                                                                <Setter Property="Foreground" Value="{DynamicResource NmTextSecondaryBrush}"/>
                                                                 <Style.Triggers>
                                                                     <DataTrigger Binding="{Binding UserRole}" Value="OWNER">
-                                                                        <Setter Property="Foreground" Value="{DynamicResource CyberAccentAlertBrush}"/>
+                                                                        <Setter Property="Foreground" Value="{DynamicResource NmSuccessBrush}"/>
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding UserRole}" Value="EDITOR">
-                                                                        <Setter Property="Foreground" Value="{DynamicResource CyberAccentSecondaryBrush}"/>
+                                                                        <Setter Property="Foreground" Value="{DynamicResource NmAccentBrush}"/>
                                                                     </DataTrigger>
                                                                     <DataTrigger Binding="{Binding UserRole}" Value="READER">
-                                                                        <Setter Property="Foreground" Value="{DynamicResource CyberTextSecondaryBrush}"/>
+                                                                        <Setter Property="Foreground" Value="{DynamicResource NmTextSecondaryBrush}"/>
                                                                     </DataTrigger>
                                                                 </Style.Triggers>
                                                             </Style>
@@ -143,109 +139,142 @@
                                         </Grid>
                                         
                                         <!-- Main Title -->
-                                        <TextBlock Text="{Binding Title}" Style="{StaticResource CyberTitleText}" FontSize="18" Foreground="#FFFFFF" Margin="0,0,0,4"/>
-                                        
-                                        <!-- Genre with code style -->
-                                        <TextBlock Text="{Binding LiteraryGenre}" Style="{StaticResource CyberTechMonoText}" Foreground="{DynamicResource CyberAccentSecondaryBrush}" Margin="0,0,0,8" />
-                                        
-                                        <!-- Tech division dash pattern -->
-                                        <TextBlock Text="--------------------------------------------------------------------------------------------------" Style="{StaticResource CyberTechMonoText}" Foreground="#11ffffff" Margin="0,0,0,10"/>
+                                        <TextBlock Text="{Binding Title}" Style="{StaticResource NmTitleText}" FontSize="20" Margin="0,0,0,8" Foreground="{DynamicResource NmTextPrimaryBrush}"/>
                                         
                                         <!-- Synopsis -->
-                                        <TextBlock Text="{Binding Synopsis}" Style="{StaticResource CyberBodyText}" TextWrapping="Wrap" MaxWidth="700" Margin="0,0,0,4"/>
+                                        <TextBlock Text="{Binding Synopsis}" Style="{StaticResource NmBodyText}" TextWrapping="Wrap" MaxWidth="700" Margin="0,0,0,4" LineHeight="18"/>
                                     </StackPanel>
         
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom">
-                                        <Button Content="OPEN" Style="{StaticResource CyberButton}" BorderBrush="{DynamicResource CyberAccentPrimaryBrush}" Foreground="{DynamicResource CyberAccentPrimaryBrush}" Padding="12,5" Cursor="Hand" Click="OpenButton_Click" />
-                                        <Button Content="EDIT" Style="{StaticResource CyberButton}" Padding="12,5" Cursor="Hand" Margin="6,0,0,0"
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="20,0,0,0">
+                                        <Button Content="Abrir" Style="{StaticResource NmButtonPrimary}" Padding="16,8" Cursor="Hand" Click="OpenButton_Click" />
+                                        <Button Content="Editar" Style="{StaticResource NmButtonGhost}" Padding="14,8" Cursor="Hand" Margin="6,0,0,0"
                                                 Command="{Binding DataContext.OpenEditModalCommand, RelativeSource={RelativeSource AncestorType=ListView}}" CommandParameter="{Binding}"/>
-                                        <Button Content="DELETE" Style="{StaticResource CyberButton}" BorderBrush="{DynamicResource CyberAccentWarningBrush}" Foreground="{DynamicResource CyberAccentWarningBrush}" Padding="12,5" Cursor="Hand" 
+                                        <Button Content="Eliminar" Style="{StaticResource NmButtonGhost}" Foreground="{DynamicResource NmErrorBrush}" Padding="14,8" Cursor="Hand" 
                                                 Command="{Binding DataContext.DeleteProjectCommand, RelativeSource={RelativeSource AncestorType=ListView}}" CommandParameter="{Binding}" Margin="6,0,0,0"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>
-                            <!-- Visual left bar on selected/hover -->
-                            <Rectangle x:Name="SelectedStripe" Width="4" HorizontalAlignment="Left" Fill="{DynamicResource CyberAccentPrimaryBrush}" VerticalAlignment="Stretch" Visibility="Collapsed"/>
                         </Grid>
-                        <DataTemplate.Triggers>
-                            <DataTrigger Binding="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
-                                <Setter TargetName="CardBorder" Property="BorderBrush" Value="{DynamicResource CyberAccentPrimaryBrush}"/>
-                                <Setter TargetName="SelectedStripe" Property="Visibility" Value="Visible"/>
-                            </DataTrigger>
-                        </DataTemplate.Triggers>
                     </DataTemplate>
                 </ListView.ItemTemplate>
+                <ListView.ItemContainerStyle>
+                    <!-- Make standard ListBoxItem look perfectly flat in ListView -->
+                    <Style TargetType="ListBoxItem">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="Padding" Value="0"/>
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="ListBoxItem">
+                                    <Border Background="Transparent" Padding="0">
+                                        <ContentPresenter />
+                                    </Border>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ListView.ItemContainerStyle>
             </ListView>
         </Grid>
 
         <!-- Create Project Modal -->
-        <Border x:Name="CreateProjectModal" Visibility="{Binding IsCreateModalVisible, Converter={StaticResource BoolToVis}}" Background="#CC000000" Panel.ZIndex="100">
-            <Border Style="{StaticResource CyberPanelBorder}" Background="{DynamicResource CyberBgElevatedBrush}" Width="500" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="20">
-                <StackPanel>
-                    <TextBlock Text="CREATE NEW PROJECT" Style="{StaticResource CyberDisplayText}" FontSize="18" Margin="0,0,0,10"/>
-                    
-                    <StackPanel Margin="0,0,0,10">
-                        <TextBlock Text="TITLE" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
-                        <TextBox x:Name="NewProjectTitle" Text="{Binding NewProjectTitle, UpdateSourceTrigger=PropertyChanged}"/>
-                    </StackPanel>
-                    
-                    <StackPanel Margin="0,0,0,10">
-                        <TextBlock Text="GENRE" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
-                        <TextBox x:Name="NewProjectGenre" Text="{Binding NewProjectGenre, UpdateSourceTrigger=PropertyChanged}"/>
-                    </StackPanel>
-                    
-                    <StackPanel Margin="0,0,0,10">
-                        <TextBlock Text="SYNOPSIS" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
-                        <TextBox x:Name="NewProjectSynopsis" Height="80" TextWrapping="Wrap" AcceptsReturn="True"
-                                 Text="{Binding NewProjectSynopsis, UpdateSourceTrigger=PropertyChanged}"/>
-                    </StackPanel>
+        <Border x:Name="CreateProjectModal" Visibility="{Binding IsCreateModalVisible, Converter={StaticResource BoolToVis}}" Background="#AA141420" Panel.ZIndex="100" Margin="-30">
+            <Grid Width="500" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <!-- Light shadow border -->
+                <Border CornerRadius="12" Background="Transparent">
+                    <Border.Effect>
+                        <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="6" Direction="135" BlurRadius="12" Opacity="0.9"/>
+                    </Border.Effect>
+                </Border>
+                <!-- Dark shadow border -->
+                <Border CornerRadius="12" Background="Transparent">
+                    <Border.Effect>
+                        <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="6" Direction="315" BlurRadius="12" Opacity="0.6"/>
+                    </Border.Effect>
+                </Border>
+                
+                <Border CornerRadius="12" Background="{DynamicResource NmSurfaceBrush}" Padding="25">
+                    <StackPanel>
+                        <TextBlock Text="Crear nuevo proyecto" Style="{StaticResource NmTitleText}" FontSize="20" Margin="0,0,0,20" Foreground="{DynamicResource NmAccentBrush}"/>
+                        
+                        <StackPanel Margin="0,0,0,15">
+                            <TextBlock Text="TÍTULO" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                            <TextBox x:Name="NewProjectTitle" Style="{StaticResource NmInputStyle}" Text="{Binding NewProjectTitle, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        
+                        <StackPanel Margin="0,0,0,15">
+                            <TextBlock Text="GÉNERO" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                            <TextBox x:Name="NewProjectGenre" Style="{StaticResource NmInputStyle}" Text="{Binding NewProjectGenre, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        
+                        <StackPanel Margin="0,0,0,15">
+                            <TextBlock Text="SINOPSIS" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                            <TextBox x:Name="NewProjectSynopsis" Style="{StaticResource NmInputStyle}" Height="80" TextWrapping="Wrap" AcceptsReturn="True"
+                                     Text="{Binding NewProjectSynopsis, UpdateSourceTrigger=PropertyChanged}" VerticalScrollBarVisibility="Auto"/>
+                        </StackPanel>
 
-                    <CheckBox Content="Public project" IsChecked="{Binding NewProjectIsPublic}" Foreground="{DynamicResource CyberTextPrimaryBrush}" Margin="0,4,0,10"/>
+                        <CheckBox Content="Proyecto público" IsChecked="{Binding NewProjectIsPublic}" Foreground="{DynamicResource NmTextPrimaryBrush}" Margin="0,4,0,20"/>
 
-                    <TextBlock x:Name="CreateProjectError" Style="{StaticResource CyberTechMonoText}" Foreground="{DynamicResource CyberAccentWarningBrush}" Visibility="{Binding CreateError, Converter={StaticResource BoolToVis}}" TextWrapping="Wrap"
-                               Text="{Binding CreateError}"/>
+                        <TextBlock x:Name="CreateProjectError" Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmErrorBrush}" Visibility="{Binding CreateError, Converter={StaticResource BoolToVis}}" TextWrapping="Wrap" Margin="0,0,0,15"
+                                   Text="{Binding CreateError}"/>
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="CANCEL" Style="{StaticResource CyberButton}" Padding="15,5" Cursor="Hand" Command="{Binding CloseCreateModalCommand}"/>
-                        <Button x:Name="SaveProjectButton" Content="CREATE" Style="{StaticResource CyberButton}" Padding="15,5" Cursor="Hand" Command="{Binding CreateProjectCommand}" Margin="6,0,0,0"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="Cancelar" Style="{StaticResource NmButtonGhost}" Padding="16,8" Cursor="Hand" Command="{Binding CloseCreateModalCommand}"/>
+                            <Button x:Name="SaveProjectButton" Content="Crear" Style="{StaticResource NmButtonPrimary}" Padding="18,8" Cursor="Hand" Command="{Binding CreateProjectCommand}" Margin="10,0,0,0"/>
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
-            </Border>
+                </Border>
+            </Grid>
         </Border>
 
         <!-- Edit Project Modal -->
-        <Border x:Name="EditProjectModal" Visibility="{Binding IsEditModalVisible, Converter={StaticResource BoolToVis}}" Background="#CC000000" Panel.ZIndex="100">
-            <Border Style="{StaticResource CyberPanelBorder}" Background="{DynamicResource CyberBgElevatedBrush}" Width="500" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="20">
-                <StackPanel>
-                    <TextBlock Text="EDIT PROJECT" Style="{StaticResource CyberDisplayText}" FontSize="18" Margin="0,0,0,10"/>
-                    
-                    <StackPanel Margin="0,0,0,10">
-                        <TextBlock Text="TITLE" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
-                        <TextBox x:Name="EditProjectTitle" Text="{Binding EditProjectTitle, UpdateSourceTrigger=PropertyChanged}"/>
-                    </StackPanel>
-                    
-                    <StackPanel Margin="0,0,0,10">
-                        <TextBlock Text="GENRE" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
-                        <TextBox x:Name="EditProjectGenre" Text="{Binding EditProjectGenre, UpdateSourceTrigger=PropertyChanged}"/>
-                    </StackPanel>
-                    
-                    <StackPanel Margin="0,0,0,10">
-                        <TextBlock Text="SYNOPSIS" Style="{StaticResource CyberLabel}" Margin="0,0,0,4"/>
-                        <TextBox x:Name="EditProjectSynopsis" Height="80" TextWrapping="Wrap" AcceptsReturn="True"
-                                 Text="{Binding EditProjectSynopsis, UpdateSourceTrigger=PropertyChanged}"/>
-                    </StackPanel>
+        <Border x:Name="EditProjectModal" Visibility="{Binding IsEditModalVisible, Converter={StaticResource BoolToVis}}" Background="#AA141420" Panel.ZIndex="100" Margin="-30">
+            <Grid Width="500" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <!-- Light shadow border -->
+                <Border CornerRadius="12" Background="Transparent">
+                    <Border.Effect>
+                        <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="6" Direction="135" BlurRadius="12" Opacity="0.9"/>
+                    </Border.Effect>
+                </Border>
+                <!-- Dark shadow border -->
+                <Border CornerRadius="12" Background="Transparent">
+                    <Border.Effect>
+                        <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="6" Direction="315" BlurRadius="12" Opacity="0.6"/>
+                    </Border.Effect>
+                </Border>
+                
+                <Border CornerRadius="12" Background="{DynamicResource NmSurfaceBrush}" Padding="25">
+                    <StackPanel>
+                        <TextBlock Text="Editar proyecto" Style="{StaticResource NmTitleText}" FontSize="20" Margin="0,0,0,20" Foreground="{DynamicResource NmAccentBrush}"/>
+                        
+                        <StackPanel Margin="0,0,0,15">
+                            <TextBlock Text="TÍTULO" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                            <TextBox x:Name="EditProjectTitle" Style="{StaticResource NmInputStyle}" Text="{Binding EditProjectTitle, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        
+                        <StackPanel Margin="0,0,0,15">
+                            <TextBlock Text="GÉNERO" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                            <TextBox x:Name="EditProjectGenre" Style="{StaticResource NmInputStyle}" Text="{Binding EditProjectGenre, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+                        
+                        <StackPanel Margin="0,0,0,15">
+                            <TextBlock Text="SINOPSIS" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                            <TextBox x:Name="EditProjectSynopsis" Style="{StaticResource NmInputStyle}" Height="80" TextWrapping="Wrap" AcceptsReturn="True"
+                                     Text="{Binding EditProjectSynopsis, UpdateSourceTrigger=PropertyChanged}" VerticalScrollBarVisibility="Auto"/>
+                        </StackPanel>
 
-                    <CheckBox Content="Public project" IsChecked="{Binding EditProjectIsPublic}" Foreground="{DynamicResource CyberTextPrimaryBrush}" Margin="0,4,0,10"/>
+                        <CheckBox Content="Proyecto público" IsChecked="{Binding EditProjectIsPublic}" Foreground="{DynamicResource NmTextPrimaryBrush}" Margin="0,4,0,20"/>
 
-                    <TextBlock x:Name="EditProjectError" Style="{StaticResource CyberTechMonoText}" Foreground="{DynamicResource CyberAccentWarningBrush}" Visibility="{Binding EditError, Converter={StaticResource BoolToVis}}" TextWrapping="Wrap"
-                               Text="{Binding EditError}"/>
+                        <TextBlock x:Name="EditProjectError" Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmErrorBrush}" Visibility="{Binding EditError, Converter={StaticResource BoolToVis}}" TextWrapping="Wrap" Margin="0,0,0,15"
+                                   Text="{Binding EditError}"/>
 
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="CANCEL" Style="{StaticResource CyberButton}" Padding="15,5" Cursor="Hand" Command="{Binding CloseEditModalCommand}"/>
-                        <Button x:Name="UpdateProjectButton" Content="SAVE" Style="{StaticResource CyberButton}" Padding="15,5" Cursor="Hand" Command="{Binding UpdateProjectCommand}" Margin="6,0,0,0"/>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <Button Content="Cancelar" Style="{StaticResource NmButtonGhost}" Padding="16,8" Cursor="Hand" Command="{Binding CloseEditModalCommand}"/>
+                            <Button x:Name="UpdateProjectButton" Content="Guardar" Style="{StaticResource NmButtonPrimary}" Padding="18,8" Cursor="Hand" Command="{Binding UpdateProjectCommand}" Margin="10,0,0,0"/>
+                        </StackPanel>
                     </StackPanel>
-                </StackPanel>
-            </Border>
+                </Border>
+            </Grid>
         </Border>
     </Grid>
 </Page>

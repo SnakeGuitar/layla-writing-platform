@@ -5,7 +5,9 @@ using Layla.Desktop.Services;
 using Layla.Desktop.Services.Logger;
 using Layla.Desktop.Services.Projetcs;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Windows;
 using System.Windows.Media;
 

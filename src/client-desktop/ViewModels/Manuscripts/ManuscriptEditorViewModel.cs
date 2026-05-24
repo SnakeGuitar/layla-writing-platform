@@ -1,130 +1,257 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Layla.Desktop.Models;
 using Layla.Desktop.Models.Manuscripts;
 using Layla.Desktop.Models.Wikis;
 using Layla.Desktop.Services;
 using Layla.Desktop.Services.Manuscripts;
+using System;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace Layla.Desktop.ViewModels.Manuscripts;
+using Layla.Client.Shared.Hub;
+using Layla.Client.Shared.Services;
+using Layla.Client.Shared.Tokenizer;
+using Layla.Client.Shared.Models;
 
-/// <summary>
-/// ViewModel for the manuscript editor.
-/// Manages the list of manuscripts, the chapter navigation for the selected manuscript,
-/// and the currently loaded chapter content. Exposes CRUD commands for both manuscripts
-/// and chapters, and fires <see cref="ContentReloadRequested"/> when the view should
-/// replace the RTF content in the editor.
-/// </summary>
-public partial class ManuscriptEditorViewModel : ObservableObject
+namespace Layla.Desktop.ViewModels.Manuscripts
 {
-    private readonly IManuscriptApiService _apiService;
-    private readonly LocalCacheManager _cache;
-    private Guid _projectId;
-
-    /// <summary><c>true</c> while the initial manuscript list is being fetched.</summary>
-    [ObservableProperty]
-    private bool _isLoading;
-
-    /// <summary><c>true</c> while a chapter auto-save is in progress.</summary>
-    [ObservableProperty]
-    private bool _isSaving;
-
     /// <summary>
-    /// <c>true</c> when the last auto-save could not reach the API and the chapter was
-    /// persisted to the local cache instead. Cleared as soon as the next save succeeds.
-    /// Bindable by the view to show an offline/unsaved indicator in the editor footer.
+    /// ViewModel for the manuscript editor.
+    /// Manages the list of manuscripts, the chapter navigation for the selected manuscript,
+    /// and the currently loaded chapter content. Exposes CRUD commands for both manuscripts
+    /// and chapters, and fires <see cref="ContentReloadRequested"/> when the view should
+    /// replace the RTF content in the editor.
     /// </summary>
-    [ObservableProperty]
-    private bool _hasUnsavedOfflineChanges;
-
-    /// <summary>Formatted word count shown in the editor footer (e.g. "342 words").</summary>
-    [ObservableProperty]
-    private string _wordCountText = "0 words";
-
-    /// <summary>The chapter whose content is currently displayed in the editor, with full RTF.</summary>
-    [ObservableProperty]
-    private Chapter? _currentChapter;
-
-    /// <summary>The manuscript currently selected in the sidebar ComboBox.</summary>
-    [ObservableProperty]
-    private Manuscript? _selectedManuscript;
-
-    /// <summary>The chapter currently selected in the sidebar ListBox.</summary>
-    [ObservableProperty]
-    private Chapter? _selectedChapterItem;
-
-    /// <summary>All manuscripts belonging to the current project, ordered by <see cref="Manuscript.Order"/>.</summary>
-    public ObservableCollection<Manuscript> Manuscripts { get; } = new();
-
-    /// <summary>Chapters of <see cref="SelectedManuscript"/>, ordered by <see cref="Chapter.Order"/>.</summary>
-    public ObservableCollection<Chapter> CurrentChapters { get; } = new();
-
-    /// <summary>Wiki entities detected in the currently loaded chapter.</summary>
-    public ObservableCollection<Mention> CurrentMentions { get; } = new();
-
-    /// <summary>Version snapshots for the currently loaded chapter, newest first.</summary>
-    public ObservableCollection<ChapterVersion> ChapterVersions { get; } = new();
-
-    /// <summary><c>true</c> while chapter version history is being fetched.</summary>
-    [ObservableProperty]
-    private bool _isLoadingHistory;
-
-    /// <summary>
-    /// Last user-visible status message set by commands to surface
-    /// milestone or restore outcomes without throwing dialogs from the ViewModel.
-    /// </summary>
-    [ObservableProperty]
-    private string _statusMessage = string.Empty;
-
-    /// <summary>
-    /// Raised on the calling thread when the view should reload the RTF content
-    /// from <see cref="CurrentChapter"/> into the editor control.
-    /// </summary>
-    public event Action? ContentReloadRequested;
-
-    /// <summary>Initialises the ViewModel via dependency injection.</summary>
-    public ManuscriptEditorViewModel(IManuscriptApiService apiService, LocalCacheManager cache)
+    public partial class ManuscriptEditorViewModel : ObservableObject
     {
-        _apiService = apiService;
-        _cache = cache;
-    }
+        private readonly IManuscriptApiService _apiService;
+        private readonly ICollaborationApiService _collaborationApiService;
+        private readonly ManuscriptHubClient _hubClient;
+        private readonly LocalCacheManager _cache;
+        private Guid _projectId;
+        private Guid? _activeChapterId;
 
-    /// <summary>
-    /// Sets the project context. Must be called before any command is executed.
-    /// </summary>
-    public void Initialize(Guid projectId)
-    {
-        _projectId = projectId;
-    }
+        /// <summary>High-performance Aho-Corasick tokenizer for this project.</summary>
+        public WikiTokenizer Tokenizer { get; } = new();
 
-    /// <summary>
-    /// Fetches all manuscripts from the API and populates <see cref="Manuscripts"/>.
-    /// If the project has no manuscripts, creates a default one with a single chapter.
-    /// </summary>
-    [RelayCommand]
-    private async Task LoadManuscriptAsync()
-    {
-        IsLoading = true;
-        try
+        /// <summary>Fired when the current user has been evicted from the project.</summary>
+        public event Action<Guid>? EvictedFromProject;
+
+        /// <summary>Fired when the wiki entities have changed and the tokenizer is rebuilt.</summary>
+        public event Action? WikiTokenizerUpdated;
+
+        /// <summary>Fired when another collaborator's cursor moves inside the active chapter.</summary>
+        public event Action<string, int>? CollaboratorCursorMoved;
+
+        // Serialises saves so two in-flight calls cannot interleave on the
+        // same chapter — but still allows a forced flush to wait for the
+        // current save instead of being silently dropped (the old `IsSaving`
+        // boolean guard discarded the flush on Unloaded, which was the root
+        // cause of "rich text is lost when leaving the editor").
+        private readonly SemaphoreSlim _saveLock = new(1, 1);
+
+        /// <summary><c>true</c> while the initial manuscript list is being fetched.</summary>
+        [ObservableProperty]
+        private bool _isLoading;
+
+        /// <summary><c>true</c> while a chapter auto-save is in progress.</summary>
+        [ObservableProperty]
+        private bool _isSaving;
+
+        /// <summary>
+        /// <c>true</c> when the last auto-save could not reach the API and the chapter was
+        /// persisted to the local cache instead. Cleared as soon as the next save succeeds.
+        /// Bindable by the view to show an offline/unsaved indicator in the editor footer.
+        /// </summary>
+        [ObservableProperty]
+        private bool _hasUnsavedOfflineChanges;
+
+        /// <summary>Formatted word count shown in the editor footer (e.g. "342 words").</summary>
+        [ObservableProperty]
+        private string _wordCountText = "0 words";
+
+        /// <summary>
+        /// Last user-visible status message. Set by commands to surface failures
+        /// (server unreachable, no manuscript selected, etc.) without throwing
+        /// dialogs from the ViewModel. Bound to the editor footer.
+        /// </summary>
+        [ObservableProperty]
+        private string _statusMessage = string.Empty;
+
+        /// <summary>The chapter whose content is currently displayed in the editor, with full RTF.</summary>
+        [ObservableProperty]
+        private Chapter? _currentChapter;
+
+        /// <summary>The manuscript currently selected in the sidebar ComboBox.</summary>
+        [ObservableProperty]
+        private Manuscript? _selectedManuscript;
+
+        /// <summary>The chapter currently selected in the sidebar ListBox.</summary>
+        [ObservableProperty]
+        private Chapter? _selectedChapterItem;
+
+        /// <summary>Timeline list of all chapter versions.</summary>
+        public ObservableCollection<ChapterVersionMeta> ChapterVersions { get; } = new();
+
+        [ObservableProperty]
+        private bool _isLoadingHistory;
+
+        /// <summary>All manuscripts belonging to the current project, ordered by <see cref="Manuscript.Order"/>.</summary>
+        public ObservableCollection<Manuscript> Manuscripts { get; } = new();
+
+        /// <summary>Chapters of <see cref="SelectedManuscript"/>, ordered by <see cref="Chapter.Order"/>.</summary>
+        public ObservableCollection<Chapter> CurrentChapters { get; } = new();
+
+        /// <summary>Wiki entities detected in the currently loaded chapter.</summary>
+        public ObservableCollection<Mention> CurrentMentions { get; } = new();
+
+        /// <summary>
+        /// Raised on the calling thread when the view should reload the RTF content
+        /// from <see cref="CurrentChapter"/> into the editor control.
+        /// </summary>
+        public event Action? ContentReloadRequested;
+
+        /// <summary>Raised when the view should open the Diff Comparison window.</summary>
+        public event Action<ChapterVersionFull>? RequestShowDiff;
+
+        /// <summary>Delegate to request the View to flush current rich text to the active chapter.</summary>
+        public Func<Task>? RequestFlushAction { get; set; }
+
+        /// <summary>Initialises the ViewModel via dependency injection.</summary>
+        public ManuscriptEditorViewModel(
+            IManuscriptApiService apiService,
+            LocalCacheManager cache,
+            ICollaborationApiService collaborationApiService,
+            ManuscriptHubClient hubClient)
         {
-            List<Manuscript>? manuscripts = await _apiService.GetManuscriptsByProjectAsync(_projectId);
+            _apiService = apiService;
+            _cache = cache;
+            _collaborationApiService = collaborationApiService;
+            _hubClient = hubClient;
 
-            Manuscripts.Clear();
-            CurrentChapters.Clear();
-
-            if (manuscripts != null && manuscripts.Count > 0)
+            // Wire SignalR -> ViewModel events
+            _hubClient.ClientEvicted += projectId =>
             {
-                foreach (Manuscript? m in manuscripts.OrderBy(m => m.Order))
-                    Manuscripts.Add(m);
+                if (projectId == _projectId)
+                    EvictedFromProject?.Invoke(projectId);
+            };
 
-                await SelectManuscriptAsync(Manuscripts.First());
-            }
-            else
+            _hubClient.WikiEntitiesChanged += async () =>
             {
-                Manuscript? newMs = await _apiService.CreateManuscriptAsync(_projectId, "Manuscript 1", 0);
-                if (newMs != null)
+                await RebuildTokenizerAsync();
+                WikiTokenizerUpdated?.Invoke();
+            };
+
+            _hubClient.CursorMoved += (userId, offset) =>
+            {
+                CollaboratorCursorMoved?.Invoke(userId, offset);
+            };
+        }
+
+        /// <summary>
+        /// Rebuilds the Aho-Corasick tokenizer with current detectable wiki entities.
+        /// </summary>
+        public async Task RebuildTokenizerAsync()
+        {
+            try
+            {
+                var detectable = await _collaborationApiService.GetDetectableEntitiesAsync(_projectId);
+                if (detectable != null)
                 {
-                    Chapter? firstChapter = await _apiService.CreateChapterAsync(_projectId, newMs.ManuscriptId, "Chapter 1", string.Empty, 0);
+                    Tokenizer.Build(detectable);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to build tokenizer: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Broadcasts our cursor position to other collaborators.
+        /// </summary>
+        public async Task BroadcastCursorPositionAsync(int offset)
+        {
+            if (_activeChapterId.HasValue)
+            {
+                try
+                {
+                    await _hubClient.SendCursorMovedAsync(_projectId, _activeChapterId.Value.ToString(), offset);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to send cursor offset: {ex.Message}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Sets the project context and connects to the collaboration hub.
+        /// </summary>
+        public async void Initialize(Guid projectId)
+        {
+            _projectId = projectId;
+
+            // Initial tokenizer load
+            await RebuildTokenizerAsync();
+            WikiTokenizerUpdated?.Invoke();
+
+            // Connect to SignalR collaboration hub
+            try
+            {
+                await _hubClient.ConnectAsync(
+                    $"{ConfigurationService.SERVER_CORE_URL}/hubs/manuscript",
+                    () => Task.FromResult<string?>(SessionManager.CurrentToken)
+                );
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = "SignalR collaboration hub unreachable.";
+                System.Diagnostics.Debug.WriteLine($"Failed to connect to SignalR hub: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Fetches all manuscripts from the API and populates <see cref="Manuscripts"/>.
+        /// If the project has no manuscripts, creates a default one with a single chapter.
+        /// </summary>
+        [RelayCommand]
+        private async Task LoadManuscriptAsync()
+        {
+            IsLoading = true;
+            StatusMessage = string.Empty;
+            try
+            {
+                var manuscripts = await _apiService.GetManuscriptsByProjectAsync(_projectId);
+                if (manuscripts == null)
+                {
+                    StatusMessage = "Worldbuilding service is unreachable. Start it with: cd src/server-worldbuilding && pnpm run dev";
+                    return;
+                }
+
+                Manuscripts.Clear();
+                CurrentChapters.Clear();
+
+                if (manuscripts.Count > 0)
+                {
+                    foreach (var m in manuscripts.OrderBy(m => m.Order))
+                        Manuscripts.Add(m);
+
+                    await SelectManuscriptAsync(Manuscripts.First());
+                }
+                else
+                {
+                    var newMs = await _apiService.CreateManuscriptAsync(_projectId, "Manuscript 1", 0);
+                    if (newMs == null)
+                    {
+                        StatusMessage = "Could not create the initial manuscript. The server returned an error.";
+                        return;
+                    }
+
+                    var firstChapter = await _apiService.CreateChapterAsync(_projectId, newMs.ManuscriptId, "Chapter 1", string.Empty, 0);
                     if (firstChapter != null)
                         newMs.Chapters.Add(firstChapter);
 
@@ -132,394 +259,588 @@ public partial class ManuscriptEditorViewModel : ObservableObject
                     await SelectManuscriptAsync(newMs);
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Failed to load manuscripts: {ex.Message}");
-        }
-        finally
-        {
-            IsLoading = false;
-        }
-    }
-
-    /// <summary>
-    /// Switches the active manuscript, refreshes <see cref="CurrentChapters"/>,
-    /// and selects the first chapter.
-    /// </summary>
-    private async Task SelectManuscriptAsync(Manuscript manuscript)
-    {
-        SelectedManuscript = manuscript;
-        CurrentChapters.Clear();
-
-        Manuscript? fresh = await _apiService.GetManuscriptAsync(_projectId, manuscript.ManuscriptId);
-        if (fresh != null)
-        {
-            foreach (Chapter? ch in fresh.Chapters.OrderBy(c => c.Order))
-                CurrentChapters.Add(ch);
-        }
-
-        if (CurrentChapters.Any())
-            await SelectChapterAsync(CurrentChapters.First());
-        else
-            CurrentChapter = null;
-    }
-
-    /// <summary>
-    /// Command counterpart of <see cref="SelectManuscriptAsync"/> — no-op when the
-    /// requested manuscript is already selected.
-    /// </summary>
-    [RelayCommand]
-    public async Task SelectManuscriptItemAsync(Manuscript? manuscript)
-    {
-        if (manuscript == null || manuscript.ManuscriptId == SelectedManuscript?.ManuscriptId) return;
-        await SelectManuscriptAsync(manuscript);
-    }
-
-    /// <summary>
-    /// Fetches the full chapter content from the API and sets <see cref="CurrentChapter"/>,
-    /// then raises <see cref="ContentReloadRequested"/> so the view reloads the editor.
-    /// Falls back to the offline cache when the API is unreachable so any unsaved work
-    /// from a previous session is not lost.
-    /// </summary>
-    private async Task SelectChapterAsync(Chapter chapterIndex)
-    {
-        if (SelectedManuscript == null) return;
-
-        Chapter? fullChapter = await _apiService.GetChapterAsync(_projectId, SelectedManuscript.ManuscriptId, chapterIndex.ChapterId);
-
-        // Offline fallback: if the API is unreachable, try the local cache so the user
-        // can keep editing the most recent offline copy.
-        if (fullChapter == null)
-        {
-            string? cached = await _cache.LoadChapterAsync(SelectedManuscript.ManuscriptId, chapterIndex.ChapterId.ToString());
-            if (cached != null)
+            catch (Exception ex)
             {
-                chapterIndex.Content = cached;
-                HasUnsavedOfflineChanges = true;
+                StatusMessage = $"Failed to load manuscripts: {ex.Message}";
+                System.Diagnostics.Debug.WriteLine($"Failed to load manuscripts: {ex.Message}");
+            }
+            finally
+            {
+                IsLoading = false;
             }
         }
-        else
+
+        /// <summary>
+        /// Switches the active manuscript, refreshes <see cref="CurrentChapters"/>,
+        /// and selects the first chapter.
+        /// </summary>
+        private async Task SelectManuscriptAsync(Manuscript manuscript)
         {
-            HasUnsavedOfflineChanges = false;
+            if (RequestFlushAction != null)
+            {
+                await RequestFlushAction();
+            }
+            SelectedManuscript = manuscript;
+            CurrentChapters.Clear();
+
+            var fresh = await _apiService.GetManuscriptAsync(_projectId, manuscript.ManuscriptId);
+            if (fresh != null)
+            {
+                foreach (var ch in fresh.Chapters.OrderBy(c => c.Order))
+                    CurrentChapters.Add(ch);
+            }
+
+            if (CurrentChapters.Any())
+                await SelectChapterAsync(CurrentChapters.First());
+            else
+                CurrentChapter = null;
         }
 
-        CurrentChapter = fullChapter ?? chapterIndex;
-        SelectedChapterItem = chapterIndex;
-
-        CurrentMentions.Clear();
-        if (CurrentChapter?.Mentions != null)
+        /// <summary>
+        /// Command counterpart of <see cref="SelectManuscriptAsync"/> — no-op when the
+        /// requested manuscript is already selected.
+        /// </summary>
+        [RelayCommand]
+        public async Task SelectManuscriptItemAsync(Manuscript? manuscript)
         {
-            foreach (Mention mention in CurrentChapter.Mentions)
-                CurrentMentions.Add(mention);
+            if (manuscript == null || manuscript.ManuscriptId == SelectedManuscript?.ManuscriptId) return;
+            await SelectManuscriptAsync(manuscript);
         }
 
-        ContentReloadRequested?.Invoke();
-    }
-
-    /// <summary>
-    /// Command counterpart of <see cref="SelectChapterAsync"/> — no-op when the
-    /// requested chapter is already active.
-    /// </summary>
-    [RelayCommand]
-    public async Task SelectChapterItemAsync(Chapter? chapter)
-    {
-        if (chapter == null || chapter.ChapterId == CurrentChapter?.ChapterId) return;
-        await SelectChapterAsync(chapter);
-    }
-
-    /// <summary>
-    /// Creates a new manuscript appended after the existing ones, bootstraps it with
-    /// a single default chapter, and switches the editor to it.
-    /// </summary>
-    [RelayCommand]
-    private async Task AddManuscriptAsync()
-    {
-        int order = Manuscripts.Count;
-        Manuscript? newMs = await _apiService.CreateManuscriptAsync(_projectId, $"Manuscript {order + 1}", order);
-        if (newMs != null)
+        private async Task SelectChapterAsync(Chapter chapterIndex)
         {
-            Chapter? firstChapter = await _apiService.CreateChapterAsync(_projectId, newMs.ManuscriptId, "Chapter 1", string.Empty, 0);
+            if (SelectedManuscript == null) return;
+
+            if (RequestFlushAction != null)
+            {
+                await RequestFlushAction();
+            }
+
+            // Leave previous chapter SignalR group if any
+            if (_activeChapterId.HasValue)
+            {
+                try
+                {
+                    await _hubClient.LeaveChapterGroupAsync(_projectId, _activeChapterId.Value.ToString());
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to leave SignalR group: {ex.Message}");
+                }
+            }
+
+            var fullChapter = await _apiService.GetChapterAsync(_projectId, SelectedManuscript.ManuscriptId, chapterIndex.ChapterId);
+
+            // Offline fallback: if the API is unreachable, try the local cache so the user
+            // can keep editing the most recent offline copy.
+            if (fullChapter == null)
+            {
+                var cached = await _cache.LoadChapterAsync(SelectedManuscript.ManuscriptId, chapterIndex.ChapterId.ToString());
+                if (cached != null)
+                {
+                    chapterIndex.Content = cached;
+                    HasUnsavedOfflineChanges = true;
+                }
+            }
+            else
+            {
+                HasUnsavedOfflineChanges = false;
+            }
+
+            CurrentChapter = fullChapter ?? chapterIndex;
+            SelectedChapterItem = chapterIndex;
+            _activeChapterId = chapterIndex.ChapterId;
+
+            // Join new chapter SignalR group
+            try
+            {
+                await _hubClient.JoinChapterGroupAsync(_projectId, _activeChapterId.Value.ToString());
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to join SignalR group: {ex.Message}");
+            }
+
+            // Load Version History in background
+            _ = LoadHistoryAsync();
+
+            CurrentMentions.Clear();
+            if (CurrentChapter?.Mentions != null)
+            {
+                foreach (var mention in CurrentChapter.Mentions)
+                    CurrentMentions.Add(mention);
+            }
+
+            ContentReloadRequested?.Invoke();
+        }
+
+        /// <summary>
+        /// Command counterpart of <see cref="SelectChapterAsync"/> — no-op when the
+        /// requested chapter is already active.
+        /// </summary>
+        [RelayCommand]
+        public async Task SelectChapterItemAsync(Chapter? chapter)
+        {
+            if (chapter == null || chapter.ChapterId == CurrentChapter?.ChapterId) return;
+            await SelectChapterAsync(chapter);
+        }
+
+        /// <summary>
+        /// Creates a new manuscript appended after the existing ones, bootstraps it with
+        /// a single default chapter, and switches the editor to it.
+        /// </summary>
+        [RelayCommand]
+        private async Task AddManuscriptAsync()
+        {
+            if (RequestFlushAction != null)
+            {
+                await RequestFlushAction();
+            }
+            StatusMessage = "Creating manuscript...";
+            var order = Manuscripts.Count;
+            var newMs = await _apiService.CreateManuscriptAsync(_projectId, $"Manuscript {order + 1}", order);
+            if (newMs == null)
+            {
+                StatusMessage = "Could not create manuscript. Worldbuilding service unreachable.";
+                return;
+            }
+
+            var firstChapter = await _apiService.CreateChapterAsync(_projectId, newMs.ManuscriptId, "Chapter 1", string.Empty, 0);
             if (firstChapter != null)
                 newMs.Chapters.Add(firstChapter);
 
             Manuscripts.Add(newMs);
             await SelectManuscriptAsync(newMs);
+            StatusMessage = $"Manuscript \"{newMs.Title}\" created.";
         }
-    }
 
-    /// <summary>
-    /// Deletes the specified manuscript and all its chapters.
-    /// Refuses to delete when only one manuscript remains.
-    /// </summary>
-    [RelayCommand]
-    private async Task DeleteManuscriptAsync(Manuscript? manuscript)
-    {
-        if (manuscript == null || Manuscripts.Count <= 1) return;
-
-        bool deleted = await _apiService.DeleteManuscriptAsync(_projectId, manuscript.ManuscriptId);
-        if (deleted)
+        /// <summary>
+        /// Deletes the specified manuscript and all its chapters.
+        /// Refuses to delete when only one manuscript remains.
+        /// </summary>
+        [RelayCommand]
+        private async Task DeleteManuscriptAsync(Manuscript? manuscript)
         {
-            Manuscripts.Remove(manuscript);
-            if (SelectedManuscript?.ManuscriptId == manuscript.ManuscriptId && Manuscripts.Any())
-                await SelectManuscriptAsync(Manuscripts.First());
-        }
-    }
+            if (manuscript == null) return;
 
-    /// <summary>
-    /// Renames the currently selected manuscript and refreshes the observable collection
-    /// so the sidebar ComboBox reflects the change.
-    /// </summary>
-    [RelayCommand]
-    private async Task RenameManuscriptAsync(string? newTitle)
-    {
-        if (SelectedManuscript == null || string.IsNullOrWhiteSpace(newTitle)) return;
-
-        Manuscript? updated = await _apiService.UpdateManuscriptAsync(_projectId, SelectedManuscript.ManuscriptId, newTitle, null);
-        if (updated != null)
-        {
-            SelectedManuscript.Title = newTitle;
-            int index = Manuscripts.IndexOf(SelectedManuscript);
-            if (index >= 0)
-                Manuscripts[index] = SelectedManuscript;
-        }
-    }
-
-    /// <summary>
-    /// Creates a new chapter at the end of the current manuscript's chapter list
-    /// and switches the editor to it.
-    /// </summary>
-    [RelayCommand]
-    private async Task AddChapterAsync()
-    {
-        if (SelectedManuscript == null) return;
-
-        int order = CurrentChapters.Count;
-        Chapter? newChapter = await _apiService.CreateChapterAsync(
-            _projectId, SelectedManuscript.ManuscriptId,
-            $"Chapter {order + 1}", string.Empty, order);
-
-        if (newChapter != null)
-        {
-            CurrentChapters.Add(newChapter);
-            await SelectChapterAsync(newChapter);
-        }
-    }
-
-    /// <summary>
-    /// Deletes the specified chapter from the current manuscript.
-    /// Refuses to delete when only one chapter remains.
-    /// </summary>
-    [RelayCommand]
-    private async Task DeleteChapterAsync(Chapter? chapter)
-    {
-        if (chapter == null || SelectedManuscript == null || CurrentChapters.Count <= 1) return;
-
-        bool deleted = await _apiService.DeleteChapterAsync(_projectId, SelectedManuscript.ManuscriptId, chapter.ChapterId);
-        if (deleted)
-        {
-            CurrentChapters.Remove(chapter);
-            if (CurrentChapter?.ChapterId == chapter.ChapterId && CurrentChapters.Any())
-                await SelectChapterAsync(CurrentChapters.First());
-        }
-    }
-
-    /// <summary><c>true</c> when a chapter is loaded and the editor can accept input.</summary>
-    public bool CanEdit => CurrentChapter != null;
-
-    /// <summary>
-    /// Persists <paramref name="rtfContent"/> to the API for <see cref="CurrentChapter"/>.
-    /// Guards against concurrent saves with <see cref="IsSaving"/>. On network failure the
-    /// content is written to the local cache and <see cref="HasUnsavedOfflineChanges"/>
-    /// is raised so the view can display an offline indicator. On success the cache entry
-    /// is cleared so it only ever contains work that has not reached the server.
-    /// </summary>
-    [RelayCommand]
-    public async Task SaveContentAsync(string rtfContent)
-    {
-        if (IsSaving || CurrentChapter == null || SelectedManuscript == null) return;
-        IsSaving = true;
-
-        string manuscriptId = SelectedManuscript.ManuscriptId;
-        string chapterId = CurrentChapter.ChapterId.ToString();
-
-        try
-        {
-            Chapter? saved = await _apiService.UpdateChapterAsync(
-                _projectId,
-                manuscriptId,
-                CurrentChapter.ChapterId,
-                CurrentChapter.Title,
-                rtfContent,
-                CurrentChapter.Order
-            );
-
-            if (saved == null)
+            var deleted = await _apiService.DeleteManuscriptAsync(_projectId, manuscript.ManuscriptId);
+            if (!deleted)
             {
-                // API reachable but returned no result — treat as a soft failure and cache.
+                StatusMessage = "Delete failed. Worldbuilding service unreachable.";
+                return;
+            }
+
+            Manuscripts.Remove(manuscript);
+            var deletedTitle = manuscript.Title;
+
+            if (SelectedManuscript?.ManuscriptId == manuscript.ManuscriptId)
+            {
+                if (Manuscripts.Any())
+                {
+                    await SelectManuscriptAsync(Manuscripts.First());
+                }
+                else
+                {
+                    // Last manuscript gone — the project would be unusable
+                    // without one. Bootstrap a fresh default so the user
+                    // always has somewhere to write rather than landing on
+                    // an empty editor with no actions available.
+                    SelectedManuscript = null;
+                    CurrentChapters.Clear();
+                    CurrentChapter = null;
+                    SelectedChapterItem = null;
+                    CurrentMentions.Clear();
+                    ContentReloadRequested?.Invoke();
+                    await AddManuscriptAsync();
+                    StatusMessage = $"Manuscript \"{deletedTitle}\" deleted. Created a new empty manuscript.";
+                    return;
+                }
+            }
+
+            StatusMessage = $"Manuscript \"{deletedTitle}\" deleted.";
+        }
+
+        /// <summary>
+        /// Renames the currently selected manuscript and refreshes the observable collection
+        /// so the sidebar ComboBox reflects the change.
+        /// </summary>
+        [RelayCommand]
+        private async Task RenameManuscriptAsync(string? newTitle)
+        {
+            if (SelectedManuscript == null || string.IsNullOrWhiteSpace(newTitle)) return;
+
+            var updated = await _apiService.UpdateManuscriptAsync(_projectId, SelectedManuscript.ManuscriptId, newTitle, null);
+            if (updated != null)
+            {
+                SelectedManuscript.Title = newTitle;
+                var index = Manuscripts.IndexOf(SelectedManuscript);
+                if (index >= 0)
+                    Manuscripts[index] = SelectedManuscript;
+            }
+        }
+
+        /// <summary>
+        /// Creates a new chapter at the end of the current manuscript's chapter list
+        /// and switches the editor to it.
+        /// </summary>
+        [RelayCommand]
+        private async Task AddChapterAsync()
+        {
+            if (SelectedManuscript == null)
+            {
+                StatusMessage = "Cannot add a chapter: no manuscript is loaded yet. Wait for the editor to finish loading.";
+                return;
+            }
+
+            if (RequestFlushAction != null)
+            {
+                await RequestFlushAction();
+            }
+
+            StatusMessage = "Creating chapter...";
+            var order = CurrentChapters.Count;
+            var newChapter = await _apiService.CreateChapterAsync(
+                _projectId, SelectedManuscript.ManuscriptId,
+                $"Chapter {order + 1}", string.Empty, order);
+
+            if (newChapter != null)
+            {
+                CurrentChapters.Add(newChapter);
+                await SelectChapterAsync(newChapter);
+                StatusMessage = $"Chapter \"{newChapter.Title}\" created.";
+            }
+            else
+            {
+                StatusMessage = "Could not create chapter. Check that the worldbuilding service is running.";
+            }
+        }
+
+        /// <summary>
+        /// Deletes the specified chapter from the current manuscript.
+        /// Refuses to delete when only one chapter remains.
+        /// </summary>
+        [RelayCommand]
+        private async Task DeleteChapterAsync(Chapter? chapter)
+        {
+            if (chapter == null || SelectedManuscript == null) return;
+
+            var deleted = await _apiService.DeleteChapterAsync(_projectId, SelectedManuscript.ManuscriptId, chapter.ChapterId);
+            if (!deleted)
+            {
+                StatusMessage = "Delete failed. Worldbuilding service unreachable.";
+                return;
+            }
+
+            CurrentChapters.Remove(chapter);
+            var deletedTitle = chapter.Title;
+
+            if (CurrentChapter?.ChapterId == chapter.ChapterId)
+            {
+                if (CurrentChapters.Any())
+                {
+                    await SelectChapterAsync(CurrentChapters.First());
+                }
+                else
+                {
+                    // Last chapter gone — same rationale as DeleteManuscriptAsync:
+                    // a manuscript with zero chapters is unusable, so bootstrap
+                    // a fresh empty Chapter 1 the user can start writing in.
+                    CurrentChapter = null;
+                    SelectedChapterItem = null;
+                    CurrentMentions.Clear();
+                    ContentReloadRequested?.Invoke();
+                    await AddChapterAsync();
+                    StatusMessage = $"Chapter \"{deletedTitle}\" deleted. Created a new empty chapter.";
+                    return;
+                }
+            }
+
+            StatusMessage = $"Chapter \"{deletedTitle}\" deleted.";
+        }
+
+        /// <summary><c>true</c> when a chapter is loaded and the editor can accept input.</summary>
+        public bool CanEdit => CurrentChapter != null;
+
+        /// <summary>
+        /// Persists <paramref name="args"/> to the API for <see cref="CurrentChapter"/>.
+        /// Guards against concurrent saves with <see cref="IsSaving"/>. On network failure the
+        /// content is written to the local cache and <see cref="HasUnsavedOfflineChanges"/>
+        /// is raised so the view can display an offline indicator. On success the cache entry
+        /// is cleared so it only ever contains work that has not reached the server.
+        /// </summary>
+        [RelayCommand]
+        public Task SaveContentAsync(SaveContentArgs args) => SaveContentInternalAsync(args.RtfContent, args.PlainText, force: false, isMilestone: false);
+
+        /// <summary>
+        /// Like <see cref="SaveContentAsync"/> but waits for any in-progress save
+        /// to complete before issuing its own write, instead of being dropped.
+        /// Called from the view's <c>Unloaded</c> handler so the user's last
+        /// edits are always flushed before navigating away.
+        /// </summary>
+        public Task FlushSaveAsync(SaveContentArgs args) => SaveContentInternalAsync(args.RtfContent, args.PlainText, force: true, isMilestone: false);
+
+        public Task SaveMilestoneAsync(SaveContentArgs args) => SaveContentInternalAsync(args.RtfContent, args.PlainText, force: true, isMilestone: true);
+
+        private async Task SaveContentInternalAsync(string rtfContent, string plainText, bool force, bool isMilestone)
+        {
+            if (CurrentChapter == null || SelectedManuscript == null) return;
+
+            // Non-forced (debounced auto-save) skips when a save is already in
+            // flight — the in-flight call already has the latest content the
+            // user typed up to ~1 second ago, so a second write would be wasted.
+            // Forced flush always waits, ensuring no edits are lost on unload.
+            if (!force && IsSaving) return;
+
+            await _saveLock.WaitAsync();
+            IsSaving = true;
+
+            var manuscriptId = SelectedManuscript.ManuscriptId;
+            var chapterId = CurrentChapter.ChapterId.ToString();
+
+            try
+            {
+                // Run tokenizer scan on plain text to find wiki mentions
+                var matches = Tokenizer.FindMentions(plainText);
+                var mentions = matches.Select(m => new MentionPayload
+                {
+                    EntityId = m.EntityId,
+                    Name = m.MatchedText,
+                    EntityType = m.EntityType
+                }).ToList();
+
+                var success = await _collaborationApiService.AutosaveChapterAsync(
+                    _projectId,
+                    manuscriptId,
+                    chapterId,
+                    rtfContent,
+                    mentions,
+                    isMilestone
+                );
+
+                if (!success)
+                {
+                    // API reachable but returned no result or failed — treat as a soft failure and cache.
+                    await _cache.SaveChapterAsync(manuscriptId, chapterId, rtfContent);
+                    HasUnsavedOfflineChanges = true;
+                    return;
+                }
+
+                // Update UI mentions collection
+                CurrentMentions.Clear();
+                var modelMentions = new List<Mention>();
+                foreach (var mention in matches)
+                {
+                    var mentionModel = new Mention
+                    {
+                        EntityId = mention.EntityId,
+                        Name = mention.MatchedText,
+                        EntityType = mention.EntityType
+                    };
+                    CurrentMentions.Add(mentionModel);
+                    modelMentions.Add(mentionModel);
+                }
+
+                // Successful server save — drop any stale offline copy and the
+                // in-memory chapter content so a subsequent re-load reflects it.
+                CurrentChapter.Content = rtfContent;
+                CurrentChapter.Mentions = modelMentions;
+                _cache.ClearChapter(manuscriptId, chapterId);
+                HasUnsavedOfflineChanges = false;
+                
+                if (isMilestone)
+                {
+                    StatusMessage = "Milestone snapshot created successfully!";
+                    await LoadHistoryAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Auto-save failed: {ex.Message}");
                 await _cache.SaveChapterAsync(manuscriptId, chapterId, rtfContent);
                 HasUnsavedOfflineChanges = true;
-                return;
             }
-
-            if (saved.Mentions != null)
+            finally
             {
-                CurrentMentions.Clear();
-                foreach (Mention mention in saved.Mentions)
-                    CurrentMentions.Add(mention);
+                IsSaving = false;
+                _saveLock.Release();
             }
-
-            // Successful server save — drop any stale offline copy.
-            _cache.ClearChapter(manuscriptId, chapterId);
-            HasUnsavedOfflineChanges = false;
         }
-        catch (Exception ex)
+
+        /// <summary>Updates <see cref="WordCountText"/> from a raw word <paramref name="count"/>.</summary>
+        public void UpdateWordCount(int count)
         {
-            System.Diagnostics.Debug.WriteLine($"Auto-save failed: {ex.Message}");
-            await _cache.SaveChapterAsync(manuscriptId, chapterId, rtfContent);
-            HasUnsavedOfflineChanges = true;
+            WordCountText = $"{count} word{(count != 1 ? "s" : "")}";
         }
-        finally
+
+        /// <summary>
+        /// Programmatically navigates to a specific chapter within a specific manuscript.
+        /// Called by the workspace mediator when cross-tab navigation is requested
+        /// (e.g. clicking an appearance in the wiki panel).
+        /// </summary>
+        public async Task NavigateToChapterAsync(string manuscriptId, string chapterId)
         {
-            IsSaving = false;
+            // Switch manuscript if needed
+            var targetMs = Manuscripts.FirstOrDefault(m => m.ManuscriptId == manuscriptId);
+            if (targetMs == null) return;
+
+            if (SelectedManuscript?.ManuscriptId != manuscriptId)
+                await SelectManuscriptAsync(targetMs);
+
+            // Switch chapter
+            var targetCh = CurrentChapters.FirstOrDefault(c => c.ChapterId.ToString() == chapterId);
+            if (targetCh != null)
+                await SelectChapterAsync(targetCh);
         }
-    }
 
-    /// <summary>Updates <see cref="WordCountText"/> from a raw word <paramref name="count"/>.</summary>
-    public void UpdateWordCount(int count)
-    {
-        WordCountText = $"{count} word{(count != 1 ? "s" : "")}";
-    }
-
-    /// <summary>
-    /// Programmatically navigates to a specific chapter within a specific manuscript.
-    /// Called by the workspace mediator when cross-tab navigation is requested
-    /// (e.g. clicking an appearance in the wiki panel).
-    /// </summary>
-    public async Task NavigateToChapterAsync(string manuscriptId, string chapterId)
-    {
-        // Switch manuscript if needed
-        Manuscript? targetMs = Manuscripts.FirstOrDefault(m => m.ManuscriptId == manuscriptId);
-        if (targetMs == null) return;
-
-        if (SelectedManuscript?.ManuscriptId != manuscriptId)
-            await SelectManuscriptAsync(targetMs);
-
-        // Switch chapter
-        Chapter? targetCh = CurrentChapters.FirstOrDefault(c => c.ChapterId.ToString() == chapterId);
-        if (targetCh != null)
-            await SelectChapterAsync(targetCh);
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // VERSION HISTORY & MILESTONES
-    // ─────────────────────────────────────────────────────────────────────────
-
-    /// <summary>
-    /// Loads the version history for the currently active chapter and populates
-    /// <see cref="ChapterVersions"/>, ordered newest-first.
-    /// </summary>
-    [RelayCommand]
-    public async Task LoadHistoryAsync()
-    {
-        if (CurrentChapter == null || SelectedManuscript == null) return;
-        IsLoadingHistory = true;
-        try
+        [RelayCommand]
+        public async Task LoadHistoryAsync()
         {
-            List<ChapterVersion>? versions = await _apiService.GetChapterVersionsAsync(
-                _projectId,
-                SelectedManuscript.ManuscriptId,
-                CurrentChapter.ChapterId
+            if (CurrentChapter == null || SelectedManuscript == null) return;
+            IsLoadingHistory = true;
+            try
+            {
+                var versions = await _collaborationApiService.GetChapterVersionsAsync(
+                    _projectId,
+                    SelectedManuscript.ManuscriptId,
+                    CurrentChapter.ChapterId.ToString()
+                );
+                ChapterVersions.Clear();
+                if (versions != null)
+                {
+                    foreach (var v in versions.OrderByDescending(v => v.CreatedAt))
+                    {
+                        ChapterVersions.Add(v);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load version history: {ex.Message}");
+            }
+            finally
+            {
+                IsLoadingHistory = false;
+            }
+        }
+
+
+
+        [RelayCommand]
+        public async Task RestoreVersionAsync(ChapterVersionMeta? version)
+        {
+            if (version == null || CurrentChapter == null || SelectedManuscript == null) return;
+            var confirm = System.Windows.MessageBox.Show(
+                $"Are you sure you want to restore the editor to the version created on {version.CreatedAt}?",
+                "Confirm Restoration",
+                System.Windows.MessageBoxButton.YesNo,
+                System.Windows.MessageBoxImage.Warning
             );
-            ChapterVersions.Clear();
-            if (versions != null)
+            if (confirm != System.Windows.MessageBoxResult.Yes) return;
+
+            StatusMessage = "Restoring version...";
+            try
             {
-                foreach (ChapterVersion v in versions.OrderByDescending(v => v.CreatedAt))
-                    ChapterVersions.Add(v);
+                var restored = await _collaborationApiService.RestoreVersionAsync(
+                    _projectId,
+                    SelectedManuscript.ManuscriptId,
+                    CurrentChapter.ChapterId.ToString(),
+                    version.Id
+                );
+
+                if (restored)
+                {
+                    StatusMessage = $"Restored to version from {version.CreatedAt}!";
+                    
+                    // Fetch full restored content to update the editor
+                    var fullVersion = await _collaborationApiService.GetChapterVersionAsync(
+                        _projectId,
+                        SelectedManuscript.ManuscriptId,
+                        CurrentChapter.ChapterId.ToString(),
+                        version.Id
+                    );
+                    
+                    if (fullVersion != null)
+                    {
+                        CurrentChapter.Content = fullVersion.Content;
+                    }
+                    
+                    // Reload content in the RichTextBox
+                    ContentReloadRequested?.Invoke();
+                    await LoadHistoryAsync();
+                }
+                else
+                {
+                    StatusMessage = "Failed to restore version.";
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Restore failed: {ex.Message}";
             }
         }
-        catch (Exception ex)
+
+        [RelayCommand]
+        public async Task CompareDiffAsync(ChapterVersionMeta? version)
         {
-            System.Diagnostics.Debug.WriteLine($"Failed to load version history: {ex.Message}");
+            if (version == null || CurrentChapter == null || SelectedManuscript == null) return;
+            StatusMessage = "Fetching historical version content...";
+            try
+            {
+                var fullVersion = await _collaborationApiService.GetChapterVersionAsync(
+                    _projectId,
+                    SelectedManuscript.ManuscriptId,
+                    CurrentChapter.ChapterId.ToString(),
+                    version.Id
+                );
+
+                if (fullVersion != null)
+                {
+                    StatusMessage = "Loaded version details.";
+                    RequestShowDiff?.Invoke(fullVersion);
+                }
+                else
+                {
+                    StatusMessage = "Failed to load version content.";
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Failed to fetch version: {ex.Message}";
+            }
         }
-        finally
+
+        [RelayCommand]
+        public async Task CreateMilestoneAsync(string currentRtf)
         {
-            IsLoadingHistory = false;
+            if (CurrentChapter == null || SelectedManuscript == null) return;
+            StatusMessage = "Creating milestone snapshot...";
+            try
+            {
+                bool ok = await _apiService.CreateMilestoneAsync(
+                    _projectId,
+                    SelectedManuscript.ManuscriptId,
+                    CurrentChapter.ChapterId,
+                    currentRtf
+                );
+                StatusMessage = ok
+                    ? "✔ Milestone created"
+                    : "Failed to create milestone — check server connection.";
+                if (ok)
+                    await LoadHistoryAsync();
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Milestone error: {ex.Message}";
+            }
         }
     }
 
     /// <summary>
-    /// Saves the current chapter content as a named milestone snapshot and
-    /// refreshes the history panel so the new entry appears immediately.
+    /// Arguments for saving manuscript chapter content including both rich-text and plain-text.
     /// </summary>
-    /// <param name="currentRtf">
-    /// The RTF text currently in the editor, passed in by the view
-    /// so the ViewModel never has to reach into WPF directly.
-    /// </param>
-    [RelayCommand]
-    public async Task CreateMilestoneAsync(string currentRtf)
+    public class SaveContentArgs
     {
-        if (CurrentChapter == null || SelectedManuscript == null) return;
-        StatusMessage = "Creating milestone snapshot...";
-        try
-        {
-            bool ok = await _apiService.CreateMilestoneAsync(
-                _projectId,
-                SelectedManuscript.ManuscriptId,
-                CurrentChapter.ChapterId,
-                currentRtf
-            );
-            StatusMessage = ok
-                ? "✔ Milestone created"
-                : "Failed to create milestone — check server connection.";
-            if (ok)
-                await LoadHistoryAsync();
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Milestone error: {ex.Message}";
-        }
-    }
-
-    /// <summary>
-    /// Restores the chapter to the content of the given version after user confirmation,
-    /// then fires <see cref="ContentReloadRequested"/> so the editor reloads.
-    /// </summary>
-    [RelayCommand]
-    public async Task RestoreVersionAsync(ChapterVersion? version)
-    {
-        if (version == null || CurrentChapter == null || SelectedManuscript == null) return;
-
-        var confirm = System.Windows.MessageBox.Show(
-            $"Restore the chapter to the version from {version.CreatedAt:yyyy-MM-dd HH:mm}? This cannot be undone.",
-            "Confirm Restore",
-            System.Windows.MessageBoxButton.YesNo,
-            System.Windows.MessageBoxImage.Warning
-        );
-        if (confirm != System.Windows.MessageBoxResult.Yes) return;
-
-        StatusMessage = "Restoring version...";
-        try
-        {
-            // Retrieve the full content of that version and write it back to CurrentChapter
-            List<ChapterVersion>? allVersions = await _apiService.GetChapterVersionsAsync(
-                _projectId, SelectedManuscript.ManuscriptId, CurrentChapter.ChapterId);
-
-            ChapterVersion? full = allVersions?.FirstOrDefault(v => v.VersionId == version.VersionId);
-            if (full == null || string.IsNullOrEmpty(full.Content))
-            {
-                StatusMessage = "Version content could not be retrieved.";
-                return;
-            }
-
-            CurrentChapter.Content = full.Content;
-            ContentReloadRequested?.Invoke();
-            StatusMessage = $"✔ Restored to {version.CreatedAt:yyyy-MM-dd HH:mm}";
-            await LoadHistoryAsync();
-        }
-        catch (Exception ex)
-        {
-            StatusMessage = $"Restore failed: {ex.Message}";
-        }
+        public string RtfContent { get; set; } = string.Empty;
+        public string PlainText { get; set; } = string.Empty;
     }
 }
