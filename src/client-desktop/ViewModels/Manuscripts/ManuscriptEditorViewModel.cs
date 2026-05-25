@@ -179,6 +179,16 @@ namespace Layla.Desktop.ViewModels.Manuscripts
                 CollaboratorTextChanged?.Invoke(userId, rtfContent);
             };
 
+            _hubClient.MilestoneCreated += async (projectId, chapterId) =>
+            {
+                if (projectId == _projectId
+                    && _activeChapterId.HasValue
+                    && chapterId == _activeChapterId.Value.ToString())
+                {
+                    await LoadHistoryAsync();
+                }
+            };
+
             _hubClient.ChapterSaved += (projectId, chapterId) =>
             {
                 // Reload when a collaborator saves the active chapter.
@@ -950,7 +960,11 @@ namespace Layla.Desktop.ViewModels.Manuscripts
                     ? "✔ Milestone created"
                     : "Failed to create milestone — check server connection.";
                 if (ok)
+                {
                     await LoadHistoryAsync();
+                    try { await _hubClient.NotifyMilestoneCreatedAsync(_projectId, CurrentChapter.ChapterId.ToString()); }
+                    catch { /* best-effort */ }
+                }
             }
             catch (Exception ex)
             {

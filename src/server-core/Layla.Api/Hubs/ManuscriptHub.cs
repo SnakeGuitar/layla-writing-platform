@@ -91,6 +91,16 @@ public class ManuscriptHub : Hub
         await Clients.OthersInGroup(groupName).SendAsync("OnChapterSaved", projectId, chapterId);
     }
 
+    /// <summary>
+    /// Notifies collaborators in the chapter group that a new milestone was
+    /// created so their version-history panels reload without polling.
+    /// </summary>
+    public async Task NotifyMilestoneCreated(Guid projectId, string chapterId)
+    {
+        var groupName = GetChapterGroupName(projectId, chapterId);
+        await Clients.OthersInGroup(groupName).SendAsync("OnMilestoneCreated", projectId, chapterId);
+    }
+
     public async Task LeaveChapterGroup(Guid projectId, string chapterId)
     {
         _connectionMap.TryRemove(Context.ConnectionId, out _);

@@ -44,6 +44,9 @@ public sealed class ManuscriptHubClient : IAsyncDisposable
     /// </summary>
     public event Action<Guid, string>? ChapterSaved;
 
+    /// <summary>Raised when a collaborator creates a milestone. Receivers should reload version history.</summary>
+    public event Action<Guid, string>? MilestoneCreated;
+
     /// <summary>Raised when the underlying connection state changes.</summary>
     public event Action<HubConnectionState>? ConnectionStateChanged;
 
@@ -134,6 +137,11 @@ public sealed class ManuscriptHubClient : IAsyncDisposable
             TextChanged?.Invoke(userId, rtfContent);
         });
 
+        _connection.On<Guid, string>("OnMilestoneCreated", (projectId, chapterId) =>
+        {
+            MilestoneCreated?.Invoke(projectId, chapterId);
+        });
+
         _connection.Reconnecting += error =>
         {
             _logger?.LogWarning(error, "ManuscriptHub reconnecting...");
@@ -181,6 +189,13 @@ public sealed class ManuscriptHubClient : IAsyncDisposable
     {
         EnsureConnected();
         await _connection!.InvokeAsync("SendCursorMoved", projectId, chapterId, positionOffset, ct);
+    }
+
+    /// <summary>Notifies collaborators that a milestone was just created so they reload version history.</summary>
+    public async Task NotifyMilestoneCreatedAsync(Guid projectId, string chapterId, CancellationToken ct = default)
+    {
+        if (_connection?.State != HubConnectionState.Connected) return; // best-effort
+        await _connection!.InvokeAsync("NotifyMilestoneCreated", projectId, chapterId, ct);
     }
 
     /// <summary>
