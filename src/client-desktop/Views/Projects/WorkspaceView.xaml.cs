@@ -69,6 +69,7 @@ public partial class WorkspaceView : Page
         WorkspaceMediator.NavigateToWikiEntry -= OnNavigateToWikiEntry;
         WorkspaceMediator.NavigateToChapter -= OnNavigateToChapter;
         WorkspaceMediator.NavigateToGraph -= OnNavigateToGraph;
+        _viewModel.Dispose();
     }
 
     private void OnNavigateToWikiEntry(string entityId)

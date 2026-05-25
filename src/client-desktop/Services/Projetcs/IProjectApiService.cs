@@ -25,4 +25,5 @@ public interface IProjectApiService
     Task ConnectPresenceHubAsync();
     Task AuthorHeartbeatAsync(Guid projectId, string role = "Author");
     Task WatchProjectAsync(Guid projectId);
+    Task DisconnectPresenceHubAsync();
 }

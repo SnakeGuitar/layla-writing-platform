@@ -70,7 +70,7 @@ public partial class WorkspaceViewModel : ObservableObject
             MessageBox.Show(
                 "Sesión terminada: Se ha iniciado sesión en otro dispositivo con esta cuenta.",
                 "Seguridad", MessageBoxButton.OK, MessageBoxImage.Warning);
-            Logout();
+            _ = LogoutAsync();
         });
     }
 
@@ -148,6 +148,7 @@ public partial class WorkspaceViewModel : ObservableObject
     public void Dispose()
     {
         StopHeartbeat();
+        _ = _projectApiService.DisconnectPresenceHubAsync();
         _projectApiService.SessionDisplaced -= OnSessionDisplaced;
         _projectApiService.ParticipantsUpdated -= OnParticipantsUpdated;
         GC.SuppressFinalize(this);
@@ -156,19 +157,21 @@ public partial class WorkspaceViewModel : ObservableObject
 
 
     [RelayCommand]
-    private void Logout()
+    private async Task LogoutAsync()
     {
         SessionManager.ClearSession();
         StopHeartbeat();
+        try { await _projectApiService.DisconnectPresenceHubAsync(); } catch { }
         OnLogout?.Invoke(this, EventArgs.Empty);
 
         _logger.LogInformation("Logout() - User logged out and session cleared.");
     }
 
     [RelayCommand]
-    private void BackToProjects()
+    private async Task BackToProjectsAsync()
     {
         StopHeartbeat();
+        try { await _projectApiService.DisconnectPresenceHubAsync(); } catch { }
         OnBackToProjects?.Invoke(this, EventArgs.Empty);
 
         _logger.LogTrace("BackToProjects() - Navigating back to projects list from project {ProjectId}", CurrentProject?.Id);

@@ -55,7 +55,7 @@
                             Style="{StaticResource NmButtonGhost}"
                             HorizontalAlignment="Stretch" Padding="12,10"
                             Cursor="Hand"
-                            Command="{Binding BackToProjectsCommand}"/>
+                            Command="{Binding BackToProjectsAsyncCommand}"/>
                     <Button Content="Colaboradores"
                             HorizontalAlignment="Stretch" Padding="12,10" Margin="0,12,0,0"
                             Cursor="Hand"
@@ -87,7 +87,7 @@
                             Foreground="{DynamicResource NmErrorBrush}"
                             HorizontalAlignment="Stretch" Padding="0,10"
                             Cursor="Hand"
-                            Command="{Binding LogoutCommand}"/>
+                            Command="{Binding LogoutAsyncCommand}"/>
                 </Border>
             </Grid>
         </Border>
