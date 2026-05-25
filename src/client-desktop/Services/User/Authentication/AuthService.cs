@@ -117,6 +117,54 @@ public class AuthService : IAuthService
         }
     }
 
+    public async Task<(bool Success, string? Error)> UpdateProfileAsync(string? displayName, string? bio, string? avatarUrl)
+    {
+        try
+        {
+            var userId = SessionManager.CurrentUserId;
+            if (string.IsNullOrEmpty(userId))
+                return (false, "No active session.");
+
+            AddAuthorizationHeader();
+
+            var payload = new Dictionary<string, object?>();
+            if (displayName != null) payload["displayName"] = displayName;
+            if (bio != null) payload["bio"] = bio;
+            if (avatarUrl != null) payload["avatarUrl"] = avatarUrl;
+
+            var response = await _httpClient.PutAsJsonAsync($"/api/users/{userId}", payload);
+            if (!response.IsSuccessStatusCode)
+                return (false, $"Server returned {(int)response.StatusCode}.");
+
+            var updated = await response.Content.ReadFromJsonAsync<AuthResponse>();
+            if (updated == null)
+                return (false, "Invalid response from server.");
+
+            // Persist updated profile data in the session
+            SessionManager.SaveSession(
+                SessionManager.CurrentToken,
+                SessionManager.CurrentEmail,
+                updated.DisplayName,
+                SessionManager.CurrentUserId,
+                updated.AvatarUrl);
+
+            return (true, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning("UpdateProfileAsync failed: {Message}", ex.Message);
+            return (false, "Network error. Could not connect to the server.");
+        }
+    }
+
+    private void AddAuthorizationHeader()
+    {
+        _httpClient.DefaultRequestHeaders.Authorization =
+            SessionManager.IsAuthenticated
+                ? new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", SessionManager.CurrentToken)
+                : null;
+    }
+
     public async Task<AuthResult> VerifyEmailAsync(VerifyEmailRequest request)
     {
         try

@@ -140,7 +140,8 @@ public partial class SignUpViewModel : ObservableObject
                     response.Response.Token,
                     response.Response.Email,
                     response.Response.DisplayName,
-                    response.Response.UserId);
+                    response.Response.UserId,
+                    response.Response.AvatarUrl);
                 OnRegistrationSuccess?.Invoke(this, EventArgs.Empty);
             }
             else

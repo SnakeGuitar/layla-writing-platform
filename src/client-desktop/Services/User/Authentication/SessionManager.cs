@@ -33,6 +33,7 @@ namespace Layla.Desktop.Services
     public static string CurrentEmail { get; set; } = string.Empty;
     public static string CurrentDisplayName { get; set; } = string.Empty;
     public static string CurrentUserId { get; set; } = string.Empty;
+    public static string? CurrentAvatarUrl { get; set; }
 
         public static bool IsAuthenticated => !string.IsNullOrEmpty(CurrentToken);
 
@@ -40,12 +41,13 @@ namespace Layla.Desktop.Services
         // decrypting under this user's DPAPI key in shared scenarios.
         private static readonly byte[] Entropy = Encoding.UTF8.GetBytes("Layla.Desktop.Session.v1");
 
-    public static void SaveSession(string token, string email, string name, string userId)
+    public static void SaveSession(string token, string email, string name, string userId, string? avatarUrl = null)
     {
         CurrentToken = token;
         CurrentEmail = email;
         CurrentDisplayName = name;
         CurrentUserId = userId;
+        CurrentAvatarUrl = avatarUrl;
 
             try
             {
@@ -59,6 +61,7 @@ namespace Layla.Desktop.Services
                     CurrentEmail = CurrentEmail,
                     CurrentDisplayName = CurrentDisplayName,
                     CurrentUserId = CurrentUserId,
+                    CurrentAvatarUrl = CurrentAvatarUrl,
                 });
                 var plaintext = Encoding.UTF8.GetBytes(json);
                 var encrypted = ProtectedData.Protect(plaintext, Entropy, DataProtectionScope.CurrentUser);
@@ -92,6 +95,7 @@ namespace Layla.Desktop.Services
                     CurrentEmail = session.CurrentEmail;
                     CurrentDisplayName = session.CurrentDisplayName;
                     CurrentUserId = session.CurrentUserId;
+                    CurrentAvatarUrl = session.CurrentAvatarUrl;
                 }
             }
             catch
@@ -114,8 +118,9 @@ namespace Layla.Desktop.Services
                     CurrentEmail = session.CurrentEmail;
                     CurrentDisplayName = session.CurrentDisplayName;
                     CurrentUserId = session.CurrentUserId;
+                    CurrentAvatarUrl = session.CurrentAvatarUrl;
                     // Migrate to encrypted file and remove the plaintext copy.
-                    SaveSession(CurrentToken, CurrentEmail, CurrentDisplayName, CurrentUserId);
+                    SaveSession(CurrentToken, CurrentEmail, CurrentDisplayName, CurrentUserId, CurrentAvatarUrl);
                     File.Delete(legacy);
                 }
             }
@@ -128,6 +133,7 @@ namespace Layla.Desktop.Services
             CurrentEmail = string.Empty;
             CurrentDisplayName = string.Empty;
             CurrentUserId = string.Empty;
+            CurrentAvatarUrl = null;
             try { if (File.Exists(SessionPath)) File.Delete(SessionPath); } catch { }
             var legacy = Path.ChangeExtension(SessionPath, ".json");
             try { if (File.Exists(legacy)) File.Delete(legacy); } catch { }
@@ -139,6 +145,7 @@ namespace Layla.Desktop.Services
             public string CurrentEmail { get; set; } = string.Empty;
             public string CurrentDisplayName { get; set; } = string.Empty;
             public string CurrentUserId { get; set; } = string.Empty;
+            public string? CurrentAvatarUrl { get; set; }
         }
     }
 }

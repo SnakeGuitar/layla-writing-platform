@@ -53,7 +53,8 @@ public partial class LoginViewModel : ObservableObject
                     response.Response.Token,
                     response.Response.Email,
                     response.Response.DisplayName,
-                    response.Response.UserId);
+                    response.Response.UserId,
+                    response.Response.AvatarUrl);
 
                 // Fire an event or use a navigation service to signal success
                 OnLoginSuccess?.Invoke(this, EventArgs.Empty);
