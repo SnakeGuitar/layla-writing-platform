@@ -45,6 +45,9 @@ public class AppUserRepository : IAppUserRepository
 
         user.DisplayName = request.DisplayName ?? user.DisplayName;
         user.Bio = request.Bio ?? user.Bio;
+        // Empty string = explicit clear; null = leave unchanged
+        if (request.AvatarUrl != null)
+            user.AvatarUrl = request.AvatarUrl == string.Empty ? null : request.AvatarUrl;
 
         cancellationToken.ThrowIfCancellationRequested();
         var result = await _userManager.UpdateAsync(user);

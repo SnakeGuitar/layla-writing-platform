@@ -114,6 +114,7 @@ public class AuthService(
                 UserId = user.Id,
                 Email = user.Email,
                 DisplayName = user.DisplayName,
+                AvatarUrl = user.AvatarUrl,
                 Token = ""
             });
         }, "Failed to register user {Email}", request.Email);
@@ -153,6 +154,7 @@ public class AuthService(
             Token = token,
             Email = user.Email ?? "",
             DisplayName = user.DisplayName ?? "",
+            AvatarUrl = user.AvatarUrl,
             ExpiresAt = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpirationInMinutes)
         });
     }
