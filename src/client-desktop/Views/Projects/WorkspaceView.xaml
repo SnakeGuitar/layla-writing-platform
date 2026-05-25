@@ -56,25 +56,9 @@
                             VerticalAlignment="Center"
                             ToolTip="Colapsar menú"
                             Cursor="Hand">
-                        <!-- Panel-toggle icon: outer rect + left panel divider -->
-                        <Viewbox Width="16" Height="14" Stretch="Uniform">
-                            <Canvas Width="16" Height="14">
-                                <Rectangle Width="15.5" Height="13.5"
-                                           Canvas.Left="0.25" Canvas.Top="0.25"
-                                           Stroke="{DynamicResource NmTextPrimaryBrush}"
-                                           StrokeThickness="1.5" Fill="Transparent"
-                                           RadiusX="1" RadiusY="1"/>
-                                <Line X1="5.5" Y1="0.25" X2="5.5" Y2="13.75"
-                                      Stroke="{DynamicResource NmTextPrimaryBrush}"
-                                      StrokeThickness="1.5"/>
-                                <!-- Left panel fill to indicate the sidebar area -->
-                                <Rectangle Width="5" Height="13"
-                                           Canvas.Left="0.5" Canvas.Top="0.5"
-                                           Fill="{DynamicResource NmAccentBrush}"
-                                           Opacity="0.25"
-                                           RadiusX="1" RadiusY="1"/>
-                            </Canvas>
-                        </Viewbox>
+                        <TextBlock Text="☰" FontSize="16"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
                     </Button>
 
                     <!-- Project title — hidden when collapsed -->
@@ -112,18 +96,7 @@
                             ToolTip="Volver a Proyectos"
                             Command="{Binding BackToProjectsCommand}">
                         <StackPanel Orientation="Horizontal">
-                            <Viewbox Width="15" Height="15" Stretch="Uniform" VerticalAlignment="Center">
-                                <Canvas Width="15" Height="15">
-                                    <Polyline Points="9,2 3,7.5 9,13"
-                                              Stroke="{DynamicResource NmTextPrimaryBrush}"
-                                              StrokeThickness="1.8" StrokeLineJoin="Round"
-                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                              Fill="Transparent"/>
-                                    <Line X1="3" Y1="7.5" X2="13" Y2="7.5"
-                                          Stroke="{DynamicResource NmTextPrimaryBrush}"
-                                          StrokeThickness="1.8" StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                                </Canvas>
-                            </Viewbox>
+                            <TextBlock Text="←" FontSize="15" VerticalAlignment="Center"/>
                             <TextBlock x:Name="BackBtnText"
                                        Text="Volver a Proyectos"
                                        VerticalAlignment="Center"
@@ -149,20 +122,7 @@
                             </Style>
                         </Button.Style>
                         <StackPanel Orientation="Horizontal">
-                            <Viewbox Width="15" Height="15" Stretch="Uniform" VerticalAlignment="Center">
-                                <Canvas Width="15" Height="15">
-                                    <Ellipse Width="5.5" Height="5.5" Canvas.Left="1.5" Canvas.Top="1"
-                                             Stroke="{DynamicResource NmTextOnAccentBrush}" StrokeThickness="1.4" Fill="Transparent"/>
-                                    <Path Data="M 0,14 Q 0,9 4.25,9"
-                                          Stroke="{DynamicResource NmTextOnAccentBrush}" StrokeThickness="1.4"
-                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" Fill="Transparent"/>
-                                    <Ellipse Width="5" Height="5" Canvas.Left="7.5" Canvas.Top="1.5"
-                                             Stroke="{DynamicResource NmTextOnAccentBrush}" StrokeThickness="1.4" Fill="Transparent"/>
-                                    <Path Data="M 9.5,9.5 Q 15,9.5 15,14"
-                                          Stroke="{DynamicResource NmTextOnAccentBrush}" StrokeThickness="1.4"
-                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" Fill="Transparent"/>
-                                </Canvas>
-                            </Viewbox>
+                            <TextBlock Text="👥" FontSize="13" VerticalAlignment="Center"/>
                             <TextBlock x:Name="CollabBtnText"
                                        Text="Colaboradores"
                                        VerticalAlignment="Center"
@@ -180,18 +140,7 @@
                             ToolTip="Configuración"
                             Command="{Binding OpenSettingsCommand}">
                         <StackPanel Orientation="Horizontal">
-                            <Viewbox Width="15" Height="15" Stretch="Uniform" VerticalAlignment="Center">
-                                <Canvas Width="15" Height="15">
-                                    <Ellipse Width="5" Height="5" Canvas.Left="5" Canvas.Top="5"
-                                             Stroke="{DynamicResource NmTextPrimaryBrush}" StrokeThickness="1.4" Fill="Transparent"/>
-                                    <Path Data="M 7.5,0.5 L 7.5,2.5 M 7.5,12.5 L 7.5,14.5
-                                                M 0.5,7.5 L 2.5,7.5 M 12.5,7.5 L 14.5,7.5
-                                                M 2.6,2.6 L 4,4 M 11,11 L 12.4,12.4
-                                                M 12.4,2.6 L 11,4 M 4,11 L 2.6,12.4"
-                                          Stroke="{DynamicResource NmTextPrimaryBrush}" StrokeThickness="1.4"
-                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" Fill="Transparent"/>
-                                </Canvas>
-                            </Viewbox>
+                            <TextBlock Text="⚙" FontSize="14" VerticalAlignment="Center"/>
                             <TextBlock x:Name="SettingsBtnText"
                                        Text="Configuración"
                                        VerticalAlignment="Center"
@@ -215,16 +164,7 @@
                             ToolTip="Desconectar Sesión"
                             Command="{Binding LogoutCommand}">
                         <StackPanel Orientation="Horizontal">
-                            <Viewbox Width="15" Height="15" Stretch="Uniform" VerticalAlignment="Center">
-                                <Canvas Width="15" Height="15">
-                                    <Path Data="M 9,1.5 A 6,6 0 1 1 3,7.5"
-                                          Stroke="{DynamicResource NmErrorBrush}" StrokeThickness="1.5"
-                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" Fill="Transparent"/>
-                                    <Line X1="7.5" Y1="1" X2="7.5" Y2="8"
-                                          Stroke="{DynamicResource NmErrorBrush}" StrokeThickness="1.5"
-                                          StrokeStartLineCap="Round" StrokeEndLineCap="Round"/>
-                                </Canvas>
-                            </Viewbox>
+                            <TextBlock Text="⏻" FontSize="14" VerticalAlignment="Center"/>
                             <TextBlock x:Name="LogoutBtnText"
                                        Text="Desconectar Sesión"
                                        VerticalAlignment="Center"
