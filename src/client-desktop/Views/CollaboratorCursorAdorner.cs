@@ -32,12 +32,17 @@ namespace Layla.Desktop.Views
             IsHitTestVisible = false;
         }
 
+        /// <summary>
+        /// Updates or creates the cursor marker for <paramref name="userId"/>.
+        /// Stale entries (no update in 2 minutes) are pruned on each call as a
+        /// safety net — the primary cleanup path is <see cref="RemoveCursor"/>
+        /// triggered by <c>OnCursorRemoved</c> when the user disconnects.
+        /// </summary>
         public void UpdateCursor(string userId, int offset, string? displayName = null)
         {
             if (!_cursors.TryGetValue(userId, out var info))
             {
                 var color = _colors[_cursors.Count % _colors.Length];
-                // Use the provided display name; fall back to first 5 chars of userId
                 var label = !string.IsNullOrEmpty(displayName)
                     ? displayName
                     : userId.Substring(0, Math.Min(userId.Length, 5));
@@ -50,13 +55,27 @@ namespace Layla.Desktop.Views
             }
             info.Offset = offset;
             info.LastMoved = DateTime.UtcNow;
-            
-            // Clean up stale cursors
-            var threshold = DateTime.UtcNow.AddMinutes(-5);
-            var staleKeys = _cursors.Where(kvp => kvp.Value.LastMoved < threshold).Select(kvp => kvp.Key).ToList();
+
+            // Safety-net: prune cursors that haven't updated in 2 minutes.
+            // Normal disconnect path uses RemoveCursor() so this is just a fallback
+            // for edge cases (e.g. server restart without OnDisconnectedAsync firing).
+            var threshold = DateTime.UtcNow.AddMinutes(-2);
+            var staleKeys = _cursors.Where(kvp => kvp.Value.LastMoved < threshold)
+                                    .Select(kvp => kvp.Key).ToList();
             foreach (var key in staleKeys) _cursors.Remove(key);
 
             InvalidateVisual();
+        }
+
+        /// <summary>
+        /// Immediately removes the cursor for <paramref name="userId"/> from the
+        /// adorner. Called when the hub broadcasts <c>OnCursorRemoved</c> — i.e.
+        /// when the collaborator disconnects (gracefully or abruptly).
+        /// </summary>
+        public void RemoveCursor(string userId)
+        {
+            if (_cursors.Remove(userId))
+                InvalidateVisual();
         }
 
         protected override void OnRender(DrawingContext drawingContext)

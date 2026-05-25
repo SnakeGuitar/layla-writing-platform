@@ -43,8 +43,11 @@ namespace Layla.Desktop.ViewModels.Manuscripts
         /// <summary>Fired when the wiki entities have changed and the tokenizer is rebuilt.</summary>
         public event Action? WikiTokenizerUpdated;
 
-        /// <summary>Fired when another collaborator's cursor moves inside the active chapter.</summary>
-        public event Action<string, int>? CollaboratorCursorMoved;
+        /// <summary>Fired when another collaborator's cursor moves inside the active chapter. Args: userId, displayName, offset.</summary>
+        public event Action<string, string, int>? CollaboratorCursorMoved;
+
+        /// <summary>Fired when a collaborator disconnects and their cursor marker should be removed. Arg: userId.</summary>
+        public event Action<string>? CollaboratorCursorRemoved;
 
         // Serialises saves so two in-flight calls cannot interleave on the
         // same chapter — but still allows a forced flush to wait for the
@@ -155,9 +158,14 @@ namespace Layla.Desktop.ViewModels.Manuscripts
                 WikiTokenizerUpdated?.Invoke();
             };
 
-            _hubClient.CursorMoved += (userId, offset) =>
+            _hubClient.CursorMoved += (userId, displayName, offset) =>
             {
-                CollaboratorCursorMoved?.Invoke(userId, offset);
+                CollaboratorCursorMoved?.Invoke(userId, displayName, offset);
+            };
+
+            _hubClient.CursorRemoved += userId =>
+            {
+                CollaboratorCursorRemoved?.Invoke(userId);
             };
 
             _hubClient.ChapterSaved += (projectId, chapterId) =>

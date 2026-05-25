@@ -78,6 +78,7 @@ public partial class ManuscriptEditorView : Page
         _viewModel.WikiTokenizerUpdated += OnWikiTokenizerUpdated;
         _viewModel.RequestShowDiff += OnRequestShowDiff;
         _viewModel.CollaboratorCursorMoved += OnCollaboratorCursorMoved;
+        _viewModel.CollaboratorCursorRemoved += OnCollaboratorCursorRemoved;
         _viewModel.RemoteChapterSaved += OnRemoteChapterSaved;
         _viewModel.RequestFlushAction = async () => await FlushPendingSavesAsync();
         this.Loaded += OnLoaded;
@@ -294,6 +295,7 @@ public partial class ManuscriptEditorView : Page
         _viewModel.WikiTokenizerUpdated -= OnWikiTokenizerUpdated;
         _viewModel.RequestShowDiff -= OnRequestShowDiff;
         _viewModel.CollaboratorCursorMoved -= OnCollaboratorCursorMoved;
+        _viewModel.CollaboratorCursorRemoved -= OnCollaboratorCursorRemoved;
         _viewModel.RemoteChapterSaved -= OnRemoteChapterSaved;
         _viewModel.RequestFlushAction = null;
 
@@ -404,11 +406,19 @@ public partial class ManuscriptEditorView : Page
         Application.Current.Dispatcher.Invoke(() => LoadCurrentChapterContent());
     }
 
-    private void OnCollaboratorCursorMoved(string userId, int offset)
+    private void OnCollaboratorCursorMoved(string userId, string displayName, int offset)
     {
         Application.Current.Dispatcher.InvokeAsync(() =>
         {
-            _cursorAdorner?.UpdateCursor(userId, offset);
+            _cursorAdorner?.UpdateCursor(userId, offset, displayName);
+        });
+    }
+
+    private void OnCollaboratorCursorRemoved(string userId)
+    {
+        Application.Current.Dispatcher.InvokeAsync(() =>
+        {
+            _cursorAdorner?.RemoveCursor(userId);
         });
     }
 

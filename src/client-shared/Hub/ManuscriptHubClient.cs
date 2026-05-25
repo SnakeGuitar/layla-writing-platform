@@ -20,8 +20,11 @@ public sealed class ManuscriptHubClient : IAsyncDisposable
 
     // ── Events ──────────────────────────────────────────────────────────
 
-    /// <summary>Raised when another collaborator's cursor moves.</summary>
-    public event Action<string, int>? CursorMoved;
+    /// <summary>Raised when another collaborator's cursor moves. Args: userId, displayName, offset.</summary>
+    public event Action<string, string, int>? CursorMoved;
+
+    /// <summary>Raised when a collaborator disconnects and their cursor should be removed. Arg: userId.</summary>
+    public event Action<string>? CursorRemoved;
 
     /// <summary>Raised when the current user has been evicted from a project.</summary>
     public event Action<Guid>? ClientEvicted;
@@ -94,9 +97,14 @@ public sealed class ManuscriptHubClient : IAsyncDisposable
             .Build();
 
         // Wire server → client events
-        _connection.On<string, int>("OnCursorMoved", (userId, offset) =>
+        _connection.On<string, string, int>("OnCursorMoved", (userId, displayName, offset) =>
         {
-            CursorMoved?.Invoke(userId, offset);
+            CursorMoved?.Invoke(userId, displayName, offset);
+        });
+
+        _connection.On<string>("OnCursorRemoved", userId =>
+        {
+            CursorRemoved?.Invoke(userId);
         });
 
         _connection.On<Guid>("ClientEvicted", projectId =>
