@@ -349,6 +349,10 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
             role.Role = normalizedRole;
             await _projectRepository.SaveChangesAsync(cancellationToken);
 
+            // Sync the new role to Neo4j so the worldbuilding service access
+            // guard uses the updated role immediately.
+            PublishCollaboratorJoinedEvent(projectId, collaboratorUserId, normalizedRole, role.AssignedAt);
+
             var userResult = await _appUserRepository.GetAppUserByIdAsync(Guid.Parse(collaboratorUserId), cancellationToken);
             if (!userResult.IsSuccess || userResult.Data == null)
                 return Result<CollaboratorResponseDto>.Failure(ErrorCode.UserNotFound);
