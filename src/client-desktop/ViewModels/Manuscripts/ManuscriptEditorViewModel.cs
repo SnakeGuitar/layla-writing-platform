@@ -53,6 +53,10 @@ namespace Layla.Desktop.ViewModels.Manuscripts
         // cause of "rich text is lost when leaving the editor").
         private readonly SemaphoreSlim _saveLock = new(1, 1);
 
+        /// <summary><c>true</c> when the editor is opened in read-only mode (READER role or public viewer).</summary>
+        [ObservableProperty]
+        private bool _isReadOnly;
+
         /// <summary><c>true</c> while the initial manuscript list is being fetched.</summary>
         [ObservableProperty]
         private bool _isLoading;
@@ -240,6 +244,11 @@ namespace Layla.Desktop.ViewModels.Manuscripts
                         Manuscripts.Add(m);
 
                     await SelectManuscriptAsync(Manuscripts.First());
+                }
+                else if (IsReadOnly)
+                {
+                    // Readers cannot create content — show a neutral placeholder.
+                    StatusMessage = "Este proyecto aún no tiene manuscritos.";
                 }
                 else
                 {

@@ -68,6 +68,7 @@ public partial class ManuscriptEditorView : Page
         _isReadOnly = isReadOnly;
         _viewModel = ServiceLocator.GetService<ManuscriptEditorViewModel>() ??
             throw new InvalidOperationException("ViewModel not found");
+        _viewModel.IsReadOnly = isReadOnly;
         DataContext = _viewModel;
         _viewModel.Initialize(projectId);
         _viewModel.ContentReloadRequested += OnContentReloadRequested;

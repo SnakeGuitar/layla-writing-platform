@@ -159,8 +159,17 @@
                     <TextBlock Grid.Column="0" Text="Editor de Manuscrito" Style="{StaticResource NmTitleText}" FontSize="18" Foreground="{DynamicResource NmAccentBrush}" VerticalAlignment="Center"/>
                     <Button Grid.Column="1" x:Name="SaveButton" Content="💾 Guardar"
                             ToolTip="Guardar capítulo actual (Ctrl+S)"
-                            Style="{StaticResource NmButtonPrimary}" Padding="16,6"
-                            Cursor="Hand" Click="SaveButton_Click"/>
+                            Padding="16,6" Cursor="Hand" Click="SaveButton_Click">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource NmButtonPrimary}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                 </Grid>
             </Border>
 
@@ -448,8 +457,17 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
 
-                        <!-- Action Bar: Create Snapshot Milestone -->
+                        <!-- Action Bar: Create Snapshot Milestone (owners/editors only) -->
                         <Border Grid.Row="0" Padding="5,10" BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="0,0,0,1">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
                             <Button Content="Crear Hito Narrativo ⭐️"
                                     Click="CreateMilestoneButton_Click"
                                     Style="{StaticResource NmButtonPrimary}" Padding="10,8" FontSize="11.5" FontWeight="SemiBold"
@@ -527,7 +545,18 @@
                                                 <Button Grid.Column="1" Content="Restaurar"
                                                         Command="{Binding DataContext.RestoreVersionCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                                                         CommandParameter="{Binding}"
-                                                        Style="{StaticResource NmButtonGhost}" Foreground="{DynamicResource NmSuccessBrush}" Margin="4,0,0,0" Padding="5,4" FontSize="10" Cursor="Hand"/>
+                                                        Margin="4,0,0,0" Padding="5,4" FontSize="10" Cursor="Hand">
+                                                    <Button.Style>
+                                                        <Style TargetType="Button" BasedOn="{StaticResource NmButtonGhost}">
+                                                            <Setter Property="Foreground" Value="{DynamicResource NmSuccessBrush}"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding DataContext.IsReadOnly, RelativeSource={RelativeSource AncestorType=ListBox}}" Value="True">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Button.Style>
+                                                </Button>
                                             </Grid>
                                         </Grid>
                                     </Border>
