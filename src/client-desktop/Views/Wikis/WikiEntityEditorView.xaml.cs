@@ -10,11 +10,12 @@ public partial class WikiEntityEditorView : Page
 {
     private readonly WikiEntityEditorViewModel _viewModel;
 
-    public WikiEntityEditorView(Guid projectId)
+    public WikiEntityEditorView(Guid projectId, bool isReadOnly = false)
     {
         InitializeComponent();
         _viewModel = ServiceLocator.GetService<WikiEntityEditorViewModel>()
             ?? throw new("WikiEntityEditorViewModel not registered");
+        _viewModel.IsReadOnly = isReadOnly;
         _viewModel.Initialize(projectId);
         DataContext = _viewModel;
 

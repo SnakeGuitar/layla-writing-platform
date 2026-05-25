@@ -37,9 +37,10 @@ public partial class WorkspaceView : Page
         if (_viewModel.CurrentProject != null)
         {
             Guid projectId = _viewModel.CurrentProject.Id;
-            _editorView = new ManuscriptEditorView(projectId);
-            _wikiView = new WikiEntityEditorView(projectId);
-            _graphView = new NarrativeGraphView(projectId);
+            bool isReadOnly = _viewModel.IsReadOnly;
+            _editorView = new ManuscriptEditorView(projectId, isReadOnly);
+            _wikiView = new WikiEntityEditorView(projectId, isReadOnly);
+            _graphView = new NarrativeGraphView(projectId, isReadOnly);
 
             EditorFrame.Navigate(_editorView);
             WikiFrame.Navigate(_wikiView);

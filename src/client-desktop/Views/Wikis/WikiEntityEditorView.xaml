@@ -10,6 +10,16 @@
       Foreground="{DynamicResource NmTextPrimaryBrush}">
 
     <Grid>
+        <Grid.Resources>
+            <!-- Collapses an element when IsReadOnly = True -->
+            <Style x:Key="HideWhenReadOnly" TargetType="Button">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                        <Setter Property="Visibility" Value="Collapsed"/>
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+        </Grid.Resources>
         <Grid.ColumnDefinitions>
             <!-- Entity list sidebar -->
             <ColumnDefinition Width="250" MinWidth="180" MaxWidth="380"/>
@@ -38,8 +48,18 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="ENTRADAS WIKI" Style="{StaticResource NmLabelText}" FontWeight="Bold" Foreground="{DynamicResource NmAccentBrush}" VerticalAlignment="Center"/>
-                        <Button x:Name="NewButton" Grid.Column="1" Content="NUEVA" Style="{StaticResource NmButtonPrimary}" Padding="10,5" FontSize="11" Cursor="Hand"
-                                Command="{Binding NewEntryCommand}"/>
+                        <Button x:Name="NewButton" Grid.Column="1" Content="NUEVA" Padding="10,5" FontSize="11" Cursor="Hand"
+                                Command="{Binding NewEntryCommand}">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource NmButtonPrimary}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
                     </Grid>
                 </Border>
 
@@ -188,13 +208,24 @@
                     <TextBox x:Name="NameTextBox" Grid.Row="2" Grid.Column="1" Height="42"
                              Foreground="{DynamicResource NmTextPrimaryBrush}"
                              Style="{StaticResource NmInputStyle}"
+                             IsReadOnly="{Binding IsReadOnly}"
                              Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
 
                     <!-- Type -->
                     <TextBlock Grid.Row="4" Grid.Column="0" Text="TIPO:" Style="{StaticResource NmLabelText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                     <ComboBox x:Name="TypeComboBox" Grid.Row="4" Grid.Column="1" Height="38"
                               ItemsSource="{Binding EntityTypes}"
-                              SelectedItem="{Binding EntityType}"/>
+                              SelectedItem="{Binding EntityType}">
+                        <ComboBox.Style>
+                            <Style TargetType="ComboBox">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ComboBox.Style>
+                    </ComboBox>
 
                     <!-- Tags -->
                     <TextBlock Grid.Row="6" Grid.Column="0" Text="ETIQUETAS:" Style="{StaticResource NmLabelText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
@@ -202,6 +233,7 @@
                              Foreground="{DynamicResource NmTextPrimaryBrush}"
                              Style="{StaticResource NmInputStyle}"
                              ToolTip="Separar con comas"
+                             IsReadOnly="{Binding IsReadOnly}"
                              Text="{Binding Tags, UpdateSourceTrigger=PropertyChanged}"/>
 
                     <!-- Description -->
@@ -212,6 +244,7 @@
                         <Border CornerRadius="6" Background="Transparent" BorderBrush="{DynamicResource NmShadowLightBrush}" BorderThickness="0,0,1.5,1.5"/>
                         <TextBox x:Name="DescriptionTextBox" Background="Transparent" Foreground="{DynamicResource NmTextPrimaryBrush}" BorderThickness="0" Padding="12,10" FontSize="13" FontFamily="{DynamicResource InterfaceFont}"
                                  TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
+                                 IsReadOnly="{Binding IsReadOnly}"
                                  Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"/>
                     </Grid>
 
@@ -230,12 +263,31 @@
                                     Style="{StaticResource NmButtonGhost}" Command="{Binding ViewInGraphCommand}"/>
                             
                             <Button x:Name="DeleteButton" Content="Eliminar" Width="90" Height="38" Margin="0,0,8,0"
-                                    Style="{StaticResource NmButtonGhost}" Foreground="{DynamicResource NmErrorBrush}"
-                                    Command="{Binding DeleteCommand}"/>
-                            
+                                    Command="{Binding DeleteCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource NmButtonGhost}">
+                                        <Setter Property="Foreground" Value="{DynamicResource NmErrorBrush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+
                             <Button x:Name="SaveButton" Content="Guardar" Width="100" Height="38"
-                                    Style="{StaticResource NmButtonPrimary}"
-                                    Command="{Binding SaveCommand}"/>
+                                    Command="{Binding SaveCommand}">
+                                <Button.Style>
+                                    <Style TargetType="Button" BasedOn="{StaticResource NmButtonPrimary}">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsReadOnly}" Value="True">
+                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
                         </StackPanel>
                     </Grid>
                 </Grid>

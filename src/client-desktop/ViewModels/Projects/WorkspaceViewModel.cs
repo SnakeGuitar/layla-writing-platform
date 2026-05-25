@@ -58,6 +58,18 @@ public partial class WorkspaceViewModel : ObservableObject
         });
     }
 
+    /// <summary>
+    /// <c>true</c> when the current user is the project OWNER — controls
+    /// visibility of the Collaborators management button.
+    /// </summary>
+    public bool IsOwner => CurrentProject?.UserRole == "OWNER";
+
+    /// <summary>
+    /// <c>true</c> when the current user has only read access (role READER).
+    /// Passed down to the editor, wiki and graph views.
+    /// </summary>
+    public bool IsReadOnly => CurrentProject?.UserRole == "READER";
+
     public void Initialize(Project project)
     {
         CurrentProject = project;

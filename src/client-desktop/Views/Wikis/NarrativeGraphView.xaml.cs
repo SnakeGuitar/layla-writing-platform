@@ -14,6 +14,8 @@ public partial class NarrativeGraphView : Page
 {
     private readonly NarrativeGraphViewModel _viewModel;
 
+    private bool _isReadOnly;
+
     // Drag state
     private GraphNode? _dragNode;
     private Point _dragOffset;
@@ -32,9 +34,10 @@ public partial class NarrativeGraphView : Page
         { "Concept",   (Color)ColorConverter.ConvertFromString("#CFD8DC")! },
     };
 
-    public NarrativeGraphView(Guid projectId)
+    public NarrativeGraphView(Guid projectId, bool isReadOnly = false)
     {
         InitializeComponent();
+        _isReadOnly = isReadOnly;
         _viewModel = ServiceLocator.GetService<NarrativeGraphViewModel>()
             ?? throw new InvalidOperationException("NarrativeGraphViewModel not registered");
         _viewModel.Initialize(projectId);
@@ -43,7 +46,12 @@ public partial class NarrativeGraphView : Page
         ((INotifyCollectionChanged)_viewModel.Nodes).CollectionChanged += (_, _) => DrawGraph();
         ((INotifyCollectionChanged)_viewModel.Edges).CollectionChanged += (_, _) => DrawGraph();
 
-        Loaded += async (_, _) => await _viewModel.LoadGraphCommand.ExecuteAsync(null);
+        Loaded += async (_, _) =>
+        {
+            if (_isReadOnly)
+                AddRelationshipButton.Visibility = System.Windows.Visibility.Collapsed;
+            await _viewModel.LoadGraphCommand.ExecuteAsync(null);
+        };
     }
 
     // ═══ GRAPH RENDERING ═══
@@ -75,15 +83,18 @@ public partial class NarrativeGraphView : Page
             StrokeThickness = 2,
             StrokeDashArray = edge.Type == "APPEARS_IN" ? new() { 4, 2 } : null,
             Cursor = Cursors.Hand,
-            ToolTip = $"{edge.Type}: {edge.Label}\n(Right-click to delete)"
+            ToolTip = _isReadOnly
+                ? $"{edge.Type}: {edge.Label}"
+                : $"{edge.Type}: {edge.Label}\n(Clic derecho para eliminar)"
         };
 
-        // Right-click to delete edge
-        line.MouseRightButtonUp += (s, e) =>
-        {
-            e.Handled = true;
-            _viewModel.DeleteRelationshipCommand.Execute(edge);
-        };
+        // Right-click to delete edge (disabled in read-only mode)
+        if (!_isReadOnly)
+            line.MouseRightButtonUp += (s, e) =>
+            {
+                e.Handled = true;
+                _viewModel.DeleteRelationshipCommand.Execute(edge);
+            };
 
         _edgeElements[line] = edge;
         GraphCanvas.Children.Add(line);
@@ -115,11 +126,12 @@ public partial class NarrativeGraphView : Page
                 FontWeight = FontWeights.Medium
             };
 
-            border.MouseRightButtonUp += (s, e) =>
-            {
-                e.Handled = true;
-                _viewModel.DeleteRelationshipCommand.Execute(edge);
-            };
+            if (!_isReadOnly)
+                border.MouseRightButtonUp += (s, e) =>
+                {
+                    e.Handled = true;
+                    _viewModel.DeleteRelationshipCommand.Execute(edge);
+                };
 
             _edgeElements[border] = edge;
             border.Measure(new(double.PositiveInfinity, double.PositiveInfinity));

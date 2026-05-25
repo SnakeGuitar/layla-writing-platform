@@ -17,6 +17,13 @@ public partial class WikiEntityEditorViewModel : ObservableObject
     private readonly IWikiApiService _wikiApi;
     private Guid _projectId;
 
+    /// <summary>
+    /// When <c>true</c> the form fields and write buttons are hidden/disabled.
+    /// Set by the view according to the user's project role.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isReadOnly;
+
     /// <summary><c>true</c> while loading entries from the API.</summary>
     [ObservableProperty]
     private bool _isLoading;

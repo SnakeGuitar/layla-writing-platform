@@ -32,8 +32,8 @@ public partial class ReaderWorkspaceView : Page
         {
             Guid projectId = _viewModel.CurrentProject.Id;
             EditorFrame.Navigate(new ManuscriptEditorView(projectId, isReadOnly: true));
-            WikiFrame.Navigate(new WikiEntityEditorView(projectId));
-            GraphFrame.Navigate(new NarrativeGraphView(projectId));
+            WikiFrame.Navigate(new WikiEntityEditorView(projectId, isReadOnly: true));
+            GraphFrame.Navigate(new NarrativeGraphView(projectId, isReadOnly: true));
             VoiceFrame.Navigate(new VoicePanelView(projectId));
 
             await _viewModel.StartWatchingPresenceAsync();
