@@ -120,7 +120,7 @@ public partial class WorkspaceView : Page
     /// Animates the <see cref="SidebarColumn"/> width via a <see cref="DispatcherTimer"/>
     /// because WPF does not natively animate <see cref="System.Windows.GridLength"/>.
     /// </summary>
-    private void ToggleSidebar_Click(object sender, RoutedEventArgs e)
+    private void ToggleSidebar_Click(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
         _isSidebarExpanded = !_isSidebarExpanded;
 
@@ -150,7 +150,7 @@ public partial class WorkspaceView : Page
         };
         timer.Start();
 
-        ToggleSidebarButton.ToolTip = _isSidebarExpanded ? "Colapsar menú" : "Expandir menú";
+        ToolTipService.SetToolTip(ToggleSidebarButton, _isSidebarExpanded ? "Colapsar menú" : "Expandir menú");
     }
 
     /// <summary>

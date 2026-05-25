@@ -33,60 +33,55 @@
                 ClipToBounds="True">
             <Grid>
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="60"/>
+                    <RowDefinition Height="44"/>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                     <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <!-- Header: toggle button + project title -->
-                <Grid Grid.Row="0" Margin="8,0">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
+                <!-- Row 0: toggle button in its own row — no nested column grid -->
+                <Border Grid.Row="0"
+                        Background="Transparent"
+                        Padding="8,4">
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Toggle: plain TextBlock wrapped in a Border acts as button,
+                             avoiding ALL implicit Button style/template interference. -->
+                        <Border x:Name="ToggleSidebarButton"
+                                Width="32" Height="32"
+                                CornerRadius="8"
+                                Background="#18A29BFE"
+                                Cursor="Hand"
+                                ToolTip="Colapsar menú"
+                                MouseLeftButtonDown="ToggleSidebar_Click">
+                            <TextBlock Text="☰"
+                                       FontSize="15"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource NmAccentBrush}"
+                                       HorizontalAlignment="Center"
+                                       VerticalAlignment="Center"/>
+                        </Border>
 
-                    <!-- Sidebar toggle button — Style="{x:Null}" bypasses the implicit
-                         NmButtonPrimary style whose ContentPresenter.Resources override
-                         TextBlock Foreground to White, making the glyph invisible. -->
-                    <Button x:Name="ToggleSidebarButton"
-                            Grid.Column="0"
-                            Click="ToggleSidebar_Click"
-                            Style="{x:Null}"
-                            Background="Transparent"
-                            BorderThickness="0"
-                            Width="36" Height="36" Padding="0"
-                            VerticalAlignment="Center"
-                            ToolTip="Colapsar menú"
-                            Cursor="Hand">
-                        <TextBlock Text="☰" FontSize="16"
+                        <!-- Project title — hidden when collapsed -->
+                        <TextBlock x:Name="SidebarTitleText"
+                                   Text="{Binding CurrentProject.Title}"
+                                   Style="{StaticResource NmTitleText}"
+                                   VerticalAlignment="Center"
+                                   TextTrimming="CharacterEllipsis"
                                    Foreground="{DynamicResource NmAccentBrush}"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"/>
-                    </Button>
+                                   Margin="8,0,4,0"/>
 
-                    <!-- Project title — hidden when collapsed -->
-                    <TextBlock x:Name="SidebarTitleText"
-                               Grid.Column="1"
-                               Text="{Binding CurrentProject.Title}"
-                               Style="{StaticResource NmTitleText}"
-                               VerticalAlignment="Center"
-                               TextTrimming="CharacterEllipsis"
-                               Foreground="{DynamicResource NmAccentBrush}"
-                               Margin="8,0,0,0"/>
-
-                    <!-- PRJ badge — hidden when collapsed -->
-                    <Border x:Name="SidebarBadge"
-                            Grid.Column="2"
-                            Background="#20A29BFE" CornerRadius="8"
-                            Padding="6,3" VerticalAlignment="Center" Margin="5,0,4,0">
-                        <TextBlock Text="PRJ"
-                                   Style="{StaticResource NmLabelText}"
-                                   Foreground="{DynamicResource NmAccentBrush}"
-                                   FontSize="8" FontWeight="Bold"/>
-                    </Border>
-                </Grid>
+                        <!-- PRJ badge — hidden when collapsed -->
+                        <Border x:Name="SidebarBadge"
+                                Background="#20A29BFE" CornerRadius="8"
+                                Padding="6,3" VerticalAlignment="Center">
+                            <TextBlock Text="PRJ"
+                                       Style="{StaticResource NmLabelText}"
+                                       Foreground="{DynamicResource NmAccentBrush}"
+                                       FontSize="8" FontWeight="Bold"/>
+                        </Border>
+                    </StackPanel>
+                </Border>
 
                 <!-- Navigation buttons -->
                 <StackPanel Grid.Row="1" Margin="8,8,8,0">
