@@ -47,13 +47,16 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Sidebar toggle button — always visible -->
+                    <!-- Sidebar toggle button — Style="{x:Null}" bypasses the implicit
+                         NmButtonPrimary style whose ContentPresenter.Resources override
+                         TextBlock Foreground to White, making the glyph invisible. -->
                     <Button x:Name="ToggleSidebarButton"
                             Grid.Column="0"
                             Click="ToggleSidebar_Click"
+                            Style="{x:Null}"
                             Background="Transparent"
                             BorderThickness="0"
-                            Width="36" Height="36" Padding="4"
+                            Width="36" Height="36" Padding="0"
                             VerticalAlignment="Center"
                             ToolTip="Colapsar menú"
                             Cursor="Hand">
