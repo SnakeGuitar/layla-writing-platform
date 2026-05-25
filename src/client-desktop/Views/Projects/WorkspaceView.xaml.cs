@@ -8,6 +8,7 @@ using Layla.Desktop.Views.Wikis;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Threading;
 
 namespace Layla.Desktop.Views.Projects;
 
@@ -17,6 +18,11 @@ public partial class WorkspaceView : Page
     private ManuscriptEditorView? _editorView;
     private WikiEntityEditorView? _wikiView;
     private NarrativeGraphView? _graphView;
+
+    // ── Sidebar collapse/expand ──────────────────────────────────────────
+    private bool _isSidebarExpanded = true;
+    private const double SidebarExpandedWidth  = 260;
+    private const double SidebarCollapsedWidth = 52;
 
     public WorkspaceView(Project currentProject)
     {
@@ -107,6 +113,65 @@ public partial class WorkspaceView : Page
             if (tabControl != null)
                 tabControl.SelectedIndex = 2;
         });
+    }
+
+    /// <summary>
+    /// Toggles the sidebar between expanded (260 px) and collapsed (52 px, icon-only).
+    /// Animates the <see cref="SidebarColumn"/> width via a <see cref="DispatcherTimer"/>
+    /// because WPF does not natively animate <see cref="System.Windows.GridLength"/>.
+    /// </summary>
+    private void ToggleSidebar_Click(object sender, RoutedEventArgs e)
+    {
+        _isSidebarExpanded = !_isSidebarExpanded;
+
+        double targetWidth  = _isSidebarExpanded ? SidebarExpandedWidth  : SidebarCollapsedWidth;
+        double startWidth   = SidebarColumn.Width.Value;
+        double totalDelta   = targetWidth - startWidth;
+        const int steps     = 16;
+        int currentStep     = 0;
+
+        // Flip text / alignment immediately so they don't flicker mid-animation
+        ApplySidebarTextVisibility(_isSidebarExpanded);
+
+        DispatcherTimer timer = new() { Interval = TimeSpan.FromMilliseconds(12) };
+        timer.Tick += (_, _) =>
+        {
+            currentStep++;
+            // Ease-in-out (smoothstep)
+            double t = (double)currentStep / steps;
+            double eased = t * t * (3 - 2 * t);
+            SidebarColumn.Width = new System.Windows.GridLength(startWidth + totalDelta * eased);
+
+            if (currentStep >= steps)
+            {
+                SidebarColumn.Width = new System.Windows.GridLength(targetWidth);
+                timer.Stop();
+            }
+        };
+        timer.Start();
+
+        ToggleSidebarButton.ToolTip = _isSidebarExpanded ? "Colapsar menú" : "Expandir menú";
+    }
+
+    /// <summary>
+    /// Shows or hides the text labels and header elements depending on sidebar state.
+    /// </summary>
+    private void ApplySidebarTextVisibility(bool expanded)
+    {
+        Visibility text  = expanded ? Visibility.Visible   : Visibility.Collapsed;
+        var        align = expanded ? HorizontalAlignment.Left : HorizontalAlignment.Center;
+
+        SidebarTitleText.Visibility = text;
+        SidebarBadge.Visibility     = text;
+        BackBtnText.Visibility      = text;
+        CollabBtnText.Visibility    = text;
+        SettingsBtnText.Visibility  = text;
+        LogoutBtnText.Visibility    = text;
+
+        BackBtn.HorizontalContentAlignment     = align;
+        CollabBtn.HorizontalContentAlignment   = align;
+        SettingsBtn.HorizontalContentAlignment = align;
+        LogoutBtn.HorizontalContentAlignment   = align;
     }
 
     private TabControl? FindTabControl()
