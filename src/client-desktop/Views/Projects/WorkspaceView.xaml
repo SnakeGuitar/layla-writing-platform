@@ -51,12 +51,14 @@
                     <Button x:Name="ToggleSidebarButton"
                             Grid.Column="0"
                             Click="ToggleSidebar_Click"
-                            Style="{StaticResource NmButtonGhost}"
-                            Width="36" Height="36" Padding="0"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Width="36" Height="36" Padding="4"
                             VerticalAlignment="Center"
                             ToolTip="Colapsar menú"
                             Cursor="Hand">
                         <TextBlock Text="☰" FontSize="16"
+                                   Foreground="{DynamicResource NmAccentBrush}"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"/>
                     </Button>
