@@ -185,8 +185,10 @@
 
                     <!-- Name -->
                     <TextBlock Grid.Row="2" Grid.Column="0" Text="NOMBRE:" Style="{StaticResource NmLabelText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                    <TextBox x:Name="NameTextBox" Grid.Row="2" Grid.Column="1" Height="38" Style="{StaticResource NmInputStyle}"
-                              Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBox x:Name="NameTextBox" Grid.Row="2" Grid.Column="1" Height="42"
+                             Foreground="{DynamicResource NmTextPrimaryBrush}"
+                             Style="{StaticResource NmInputStyle}"
+                             Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
 
                     <!-- Type -->
                     <TextBlock Grid.Row="4" Grid.Column="0" Text="TIPO:" Style="{StaticResource NmLabelText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
@@ -196,9 +198,11 @@
 
                     <!-- Tags -->
                     <TextBlock Grid.Row="6" Grid.Column="0" Text="ETIQUETAS:" Style="{StaticResource NmLabelText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
-                    <TextBox x:Name="TagsTextBox" Grid.Row="6" Grid.Column="1" Height="38" Style="{StaticResource NmInputStyle}"
-                              ToolTip="Separar con comas"
-                              Text="{Binding Tags, UpdateSourceTrigger=PropertyChanged}"/>
+                    <TextBox x:Name="TagsTextBox" Grid.Row="6" Grid.Column="1" Height="42"
+                             Foreground="{DynamicResource NmTextPrimaryBrush}"
+                             Style="{StaticResource NmInputStyle}"
+                             ToolTip="Separar con comas"
+                             Text="{Binding Tags, UpdateSourceTrigger=PropertyChanged}"/>
 
                     <!-- Description -->
                     <TextBlock Grid.Row="8" Grid.Column="0" Text="DESCRIPCIÓN:" Style="{StaticResource NmLabelText}" FontWeight="SemiBold" VerticalAlignment="Top" Margin="0,8,0,0"/>
@@ -206,7 +210,7 @@
                     <Grid Grid.Row="8" Grid.Column="1">
                         <Border CornerRadius="6" Background="{DynamicResource NmBgBaseBrush}" BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="1.5,1.5,0,0"/>
                         <Border CornerRadius="6" Background="Transparent" BorderBrush="{DynamicResource NmShadowLightBrush}" BorderThickness="0,0,1.5,1.5"/>
-                        <TextBox x:Name="DescriptionTextBox" Background="Transparent" Foreground="{DynamicResource NmTextPrimaryBrush}" BorderThickness="0" Padding="12,10" FontSize="13" FontFamily="Segoe UI"
+                        <TextBox x:Name="DescriptionTextBox" Background="Transparent" Foreground="{DynamicResource NmTextPrimaryBrush}" BorderThickness="0" Padding="12,10" FontSize="13" FontFamily="{DynamicResource InterfaceFont}"
                                  TextWrapping="Wrap" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
                                  Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"/>
                     </Grid>
