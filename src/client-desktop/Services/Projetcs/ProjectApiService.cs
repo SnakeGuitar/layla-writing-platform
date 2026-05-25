@@ -216,6 +216,11 @@ public class ProjectApiService : IProjectApiService
                         clientHandler.ServerCertificateCustomValidationCallback =
                             (message, cert, chain, errors) => true;
                     }
+                    else if (handler is SocketsHttpHandler socketsHandler)
+                    {
+                        socketsHandler.SslOptions.RemoteCertificateValidationCallback =
+                            (sender, cert, chain, errors) => true;
+                    }
                     return handler;
                 };
             })

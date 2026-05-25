@@ -8,11 +8,13 @@ using Layla.Desktop.ViewModels.Manuscripts;
 using Layla.Desktop.ViewModels.Projects;
 using Layla.Desktop.ViewModels.User;
 using Layla.Desktop.ViewModels.Wikis;
+using Layla.Desktop.Views.User;
 using Layla.Client.Shared.Hub;
 using Layla.Client.Shared.Services;
 using MaterialDesignThemes.Wpf;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
+using System.Net.Http;
 using System.Windows;
 using System.Windows.Input;
 
@@ -43,7 +45,6 @@ public partial class App : Application
         }
 
         SessionManager.LoadSession();
-        base.OnStartup(e);
 
         ServiceCollection? services = new();
         ConfigurationService.Load();
@@ -58,7 +59,6 @@ public partial class App : Application
             if (File.Exists(this.ConfigPath))
             {
                 string saved = File.ReadAllText(this.ConfigPath).Trim();
-                // Migrate old SpaceTheme and CyberMinimalismTheme to NeumorphismTheme
                 if (saved == "SpaceTheme" || saved == "CyberMinimalismTheme") saved = "NeumorphismTheme";
                 theme = saved;
             }
@@ -66,13 +66,13 @@ public partial class App : Application
         catch { }
         ChangeTheme(theme);
 
-        this.Dispatcher.InvokeAsync(() =>
-        {
-            if (this.MainWindow != null)
-            {
-                this.MainWindow.KeyDown += MainWindow_KeyDown;
-            }
-        });
+        base.OnStartup(e);
+
+        var mainWindow = new MainWindow();
+        this.MainWindow = mainWindow;
+        mainWindow.KeyDown += MainWindow_KeyDown;
+        mainWindow.Show();
+        mainWindow.Navigate(new LoginView());
     }
 
     private bool _isFullscreen = false;
@@ -162,7 +162,13 @@ public partial class App : Application
         services.AddSingleton<ManuscriptHubClient>();
         services.AddSingleton<ICollaborationApiService>(sp =>
         {
-            var httpClient = ConfigurationService.CreateHttpClient(ConfigurationService.WORLDBUILDING_API_URL);
+            var handler = new AuthMessageHandler();
+            var httpClient = new HttpClient(handler)
+            {
+                BaseAddress = new Uri(ConfigurationService.WORLDBUILDING_API_URL)
+            };
+            httpClient.DefaultRequestHeaders.Accept.Clear();
+            httpClient.DefaultRequestHeaders.Accept.Add(new("application/json"));
             return new CollaborationApiService(httpClient);
         });
 

@@ -53,7 +53,7 @@ public class ManuscriptApiService : IManuscriptApiService
             HttpResponseMessage? response = await _httpClient.GetAsync(
                 $"/api/manuscripts/{projectId}");
             if (response.IsSuccessStatusCode)
-                return await response.Content.ReadFromJsonAsync<List<Manuscript>>();
+                return await response.Content.ReadFromJsonAsync<List<Manuscript>>(JsonOpts);
         }
         catch (Exception ex)
         {
@@ -71,7 +71,7 @@ public class ManuscriptApiService : IManuscriptApiService
             HttpResponseMessage? response = await _httpClient.GetAsync(
                 $"/api/manuscripts/{projectId}/{manuscriptId}");
             if (response.IsSuccessStatusCode)
-                return await response.Content.ReadFromJsonAsync<Manuscript>();
+                return await response.Content.ReadFromJsonAsync<Manuscript>(JsonOpts);
         }
         catch (Exception ex)
         {
@@ -90,7 +90,7 @@ public class ManuscriptApiService : IManuscriptApiService
             HttpResponseMessage response = await _httpClient.PostAsJsonAsync(
                 $"/api/manuscripts/{projectId}", payload, JsonOpts);
             if (response.IsSuccessStatusCode)
-                return await response.Content.ReadFromJsonAsync<Manuscript>();
+                return await response.Content.ReadFromJsonAsync<Manuscript>(JsonOpts);
         }
         catch (Exception ex)
         {
@@ -109,7 +109,7 @@ public class ManuscriptApiService : IManuscriptApiService
             HttpResponseMessage response = await _httpClient.PutAsJsonAsync(
                 $"/api/manuscripts/{projectId}/{manuscriptId}", payload, JsonOpts);
             if (response.IsSuccessStatusCode)
-                return await response.Content.ReadFromJsonAsync<Manuscript>();
+                return await response.Content.ReadFromJsonAsync<Manuscript>(JsonOpts);
         }
         catch (Exception ex)
         {
@@ -144,7 +144,7 @@ public class ManuscriptApiService : IManuscriptApiService
             HttpResponseMessage response = await _httpClient.GetAsync(
                 $"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}");
             if (response.IsSuccessStatusCode)
-                return await response.Content.ReadFromJsonAsync<Chapter>();
+                return await response.Content.ReadFromJsonAsync<Chapter>(JsonOpts);
         }
         catch (Exception ex)
         {
@@ -163,7 +163,7 @@ public class ManuscriptApiService : IManuscriptApiService
             HttpResponseMessage response = await _httpClient.PostAsJsonAsync(
                 $"/api/manuscripts/{projectId}/{manuscriptId}/chapters", payload, JsonOpts);
             if (response.IsSuccessStatusCode)
-                return await response.Content.ReadFromJsonAsync<Chapter>();
+                return await response.Content.ReadFromJsonAsync<Chapter>(JsonOpts);
         }
         catch (Exception ex)
         {
@@ -188,7 +188,7 @@ public class ManuscriptApiService : IManuscriptApiService
             HttpResponseMessage response = await _httpClient.PutAsJsonAsync(
                 $"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}", payload, JsonOpts);
             if (response.IsSuccessStatusCode)
-                return await response.Content.ReadFromJsonAsync<Chapter>();
+                return await response.Content.ReadFromJsonAsync<Chapter>(JsonOpts);
         }
         catch (Exception ex)
         {
@@ -226,10 +226,8 @@ public class ManuscriptApiService : IManuscriptApiService
                 mentions = Array.Empty<object>(),
                 isMilestone = true
             };
-            string json = JsonSerializer.Serialize(payload);
-            using var httpContent = new StringContent(json, Encoding.UTF8, "application/json");
-            HttpResponseMessage response = await _httpClient.PutAsync(
-                $"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/autosave", httpContent);
+            HttpResponseMessage response = await _httpClient.PutAsJsonAsync(
+                $"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/autosave", payload, JsonOpts);
             return response.IsSuccessStatusCode;
         }
         catch (Exception ex)
@@ -248,7 +246,7 @@ public class ManuscriptApiService : IManuscriptApiService
             HttpResponseMessage response = await _httpClient.GetAsync(
                 $"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/versions");
             if (response.IsSuccessStatusCode)
-                return await response.Content.ReadFromJsonAsync<List<ChapterVersion>>();
+                return await response.Content.ReadFromJsonAsync<List<ChapterVersion>>(JsonOpts);
         }
         catch (Exception ex)
         {

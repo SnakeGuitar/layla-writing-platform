@@ -63,7 +63,7 @@ public class CollaborationApiService : ICollaborationApiService
         try
         {
             return await _httpClient.GetFromJsonAsync<List<DetectableEntity>>(
-                $"/api/wiki/{projectId}/detectable", ct);
+                $"/api/wiki/{projectId}/detectable", JsonOpts, ct);
         }
         catch (Exception ex)
         {
@@ -81,7 +81,7 @@ public class CollaborationApiService : ICollaborationApiService
         try
         {
             return await _httpClient.GetFromJsonAsync<List<ChapterVersionMeta>>(
-                $"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/versions", ct);
+                $"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/versions", JsonOpts, ct);
         }
         catch (Exception ex)
         {
@@ -97,7 +97,7 @@ public class CollaborationApiService : ICollaborationApiService
         try
         {
             return await _httpClient.GetFromJsonAsync<ChapterVersionFull>(
-                $"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/versions/{versionId}", ct);
+                $"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/versions/{versionId}", JsonOpts, ct);
         }
         catch (Exception ex)
         {
