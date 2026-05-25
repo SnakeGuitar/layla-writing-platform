@@ -17,7 +17,20 @@ public class PresenceTracker : IPresenceTracker
     private readonly ConcurrentDictionary<string, List<string>> _userConnections = new();
     private readonly object _lock = new();
 
-    private record InternalParticipant(string UserId, string DisplayName, string Role, int ConnectionCount, string? AvatarUrl);
+    /// <summary>
+    /// Heartbeat TTL: a participant is considered stale if no heartbeat has been
+    /// received within this window (3 × the 30-second client heartbeat interval).
+    /// Stale entries are filtered out from <see cref="GetActiveParticipants"/>.
+    /// </summary>
+    private static readonly TimeSpan StalenessThreshold = TimeSpan.FromSeconds(90);
+
+    private record InternalParticipant(
+        string UserId,
+        string DisplayName,
+        string Role,
+        int ConnectionCount,
+        string? AvatarUrl,
+        DateTimeOffset LastSeen);
 
     public bool MarkActive(Guid projectId, string userId, string connectionId, string displayName, string role, string? avatarUrl = null)
     {
@@ -32,14 +45,16 @@ public class PresenceTracker : IPresenceTracker
 
             bool wasActive = IsProjectActiveUnlocked(projectId);
 
+            var now = DateTimeOffset.UtcNow;
             participants.AddOrUpdate(userId,
-                _ => new InternalParticipant(userId, displayName, role, 1, avatarUrl),
+                _ => new InternalParticipant(userId, displayName, role, 1, avatarUrl, now),
                 (_, existing) => existing with
                 {
                     ConnectionCount = existing.ConnectionCount + 1,
                     Role = UpgradeRoleIfNeeded(existing.Role, role),
-                    // Refresh avatar if a non-null value is provided
-                    AvatarUrl = avatarUrl ?? existing.AvatarUrl
+                    AvatarUrl = avatarUrl ?? existing.AvatarUrl,
+                    // Refresh the heartbeat timestamp on every MarkActive call.
+                    LastSeen = now
                 });
 
             bool isNowActive = IsProjectActiveUnlocked(projectId);
@@ -144,7 +159,11 @@ public class PresenceTracker : IPresenceTracker
             if (!_projectParticipants.TryGetValue(projectId, out var participants))
                 return Enumerable.Empty<ParticipantPresenceDto>();
 
-            return participants.Values.Select(p => new ParticipantPresenceDto(p.UserId, p.DisplayName, p.Role, p.AvatarUrl)).ToList();
+            var threshold = DateTimeOffset.UtcNow - StalenessThreshold;
+            return participants.Values
+                .Where(p => p.LastSeen >= threshold)
+                .Select(p => new ParticipantPresenceDto(p.UserId, p.DisplayName, p.Role, p.AvatarUrl))
+                .ToList();
         }
     }
 
