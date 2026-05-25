@@ -22,6 +22,14 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private string _connectionSaveStatus = string.Empty;
 
+    public string AppVersion => "1.0.0";
+    public string MilestoneVersion => "1.0.0";
+    public string MilestoneLabel => "v1.0 — MVP Entrega Final";
+    public string VersionStatus => AppVersion == MilestoneVersion
+        ? "✔ Al día con el milestone"
+        : $"⚠ Pendiente — objetivo: {MilestoneVersion}";
+    public bool IsVersionOnTarget => AppVersion == MilestoneVersion;
+
     public SettingsViewModel()
     {
         if (Application.Current is App app)

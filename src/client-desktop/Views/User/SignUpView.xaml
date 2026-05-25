@@ -11,137 +11,189 @@
     </Page.Resources>
 
     <Grid>
-        <!-- Neumorphic Double Shadow Card Panel -->
-        <Grid Width="400" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20">
-            <!-- Light shadow border (top-left) -->
-            <Border CornerRadius="12" Background="Transparent">
-                <Border.Effect>
-                    <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="4" Direction="135" BlurRadius="8" Opacity="0.9"/>
-                </Border.Effect>
-            </Border>
-            <!-- Dark shadow border (bottom-right) -->
-            <Border CornerRadius="12" Background="Transparent">
-                <Border.Effect>
-                    <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="4" Direction="315" BlurRadius="8" Opacity="0.5"/>
-                </Border.Effect>
-            </Border>
-            <!-- Content card surface -->
-            <Border CornerRadius="12" Background="{DynamicResource NmSurfaceBrush}" Padding="35">
-                <StackPanel>
-                    <!-- Header -->
-                    <TextBlock Text="Layla" Style="{StaticResource NmDisplayText}" FontSize="32" FontWeight="SemiBold"
-                               HorizontalAlignment="Center" Foreground="{DynamicResource NmAccentBrush}" Margin="0,0,0,6"/>
-                    <TextBlock Text="Crea tu perfil de escritor" Style="{StaticResource NmBodyText}" 
-                               HorizontalAlignment="Center" Foreground="{DynamicResource NmTextSecondaryBrush}" Margin="0,0,0,25"/>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="0.42*"/>
+            <ColumnDefinition Width="0.58*"/>
+        </Grid.ColumnDefinitions>
 
-                    <!-- Circular 2-Step Stepper -->
-                    <Grid HorizontalAlignment="Center" Margin="0,0,0,25">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="50"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-                        
-                        <!-- Step 1 Circle (Active by default, or subtle if step 2 is active) -->
-                        <Border x:Name="Step1Circle" Grid.Column="0" Width="30" Height="30" CornerRadius="15" Background="{DynamicResource NmBgBaseBrush}" BorderThickness="2" VerticalAlignment="Center">
-                            <Border.Style>
-                                <Style TargetType="Border">
-                                    <Setter Property="BorderBrush" Value="{DynamicResource NmAccentBrush}"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsVerificationStep}" Value="True">
-                                            <Setter Property="BorderBrush" Value="{DynamicResource NmShadowDarkBrush}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Border.Style>
-                            <TextBlock Text="1" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="12">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="{DynamicResource NmAccentBrush}"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsVerificationStep}" Value="True">
-                                                <Setter Property="Foreground" Value="{DynamicResource NmTextSecondaryBrush}"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </Border>
-                        
-                        <!-- Stepper Line Connector -->
-                        <Border Grid.Column="1" Height="2" Background="{DynamicResource NmShadowDarkBrush}" VerticalAlignment="Center"/>
-                        
-                        <!-- Step 2 Circle (Active when on verification step) -->
-                        <Border x:Name="Step2Circle" Grid.Column="2" Width="30" Height="30" CornerRadius="15" Background="{DynamicResource NmBgBaseBrush}" BorderThickness="2" VerticalAlignment="Center">
-                            <Border.Style>
-                                <Style TargetType="Border">
-                                    <Setter Property="BorderBrush" Value="{DynamicResource NmShadowDarkBrush}"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding IsVerificationStep}" Value="True">
-                                            <Setter Property="BorderBrush" Value="{DynamicResource NmAccentBrush}"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Border.Style>
-                            <TextBlock Text="2" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="12">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="{DynamicResource NmTextSecondaryBrush}"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsVerificationStep}" Value="True">
-                                                <Setter Property="Foreground" Value="{DynamicResource NmAccentBrush}"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                        </Border>
-                    </Grid>
+        <!-- ─── Left branding panel ─── -->
+        <Border Grid.Column="0" Background="{DynamicResource NmAccentBrush}">
+            <Grid>
+                <Ellipse Width="260" Height="260" HorizontalAlignment="Left" VerticalAlignment="Top"
+                         Margin="-80,-80,0,0" Fill="#18FFFFFF"/>
+                <Ellipse Width="180" Height="180" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                         Margin="0,0,-60,-60" Fill="#12FFFFFF"/>
 
-                    <!-- Step 1 Form fields -->
-                    <StackPanel Visibility="{Binding IsSignUpStep, Converter={StaticResource BoolToVis}}">
-                        <TextBlock Text="DIRECCIÓN DE CORREO" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
-                        <TextBox x:Name="EmailTextBox" Style="{StaticResource NmInputStyle}" Margin="0,0,0,15"
-                                 Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"/>
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left" Margin="52,0,40,0">
+                    <TextBlock Text="Layla"
+                               FontFamily="{DynamicResource InterfaceFont}"
+                               FontSize="48" FontWeight="Bold"
+                               Foreground="White" Margin="0,0,0,14"/>
+                    <TextBlock Text="Únete a la comunidad de escritores colaborativos"
+                               FontFamily="{DynamicResource InterfaceFont}"
+                               FontSize="15" Foreground="#DDFFFFFF"
+                               TextWrapping="Wrap" Margin="0,0,0,36" LineHeight="22"/>
 
-                        <TextBlock Text="NOMBRE PÚBLICO" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
-                        <TextBox x:Name="DisplayNameTextBox" Style="{StaticResource NmInputStyle}" Margin="0,0,0,15"
-                                 Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}"/>
-
-                        <TextBlock Text="CONTRASEÑA" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
-                        <PasswordBox x:Name="PasswordBox" Style="{StaticResource NmPasswordStyle}" Margin="0,0,0,25"
-                                     PasswordChanged="PasswordBox_PasswordChanged"/>
-                    </StackPanel>
-
-                    <!-- Step 2 Form fields -->
-                    <StackPanel Visibility="{Binding IsVerificationStep, Converter={StaticResource BoolToVis}}">
-                        <TextBlock Text="CÓDIGO PIN DE VERIFICACIÓN" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
-                        <TextBox x:Name="PinTextBox" Style="{StaticResource NmInputStyle}" MaxLength="6" Margin="0,0,0,25"
-                                 Text="{Binding VerificationPin, UpdateSourceTrigger=PropertyChanged}" HorizontalContentAlignment="Center" FontSize="16"/>
-                    </StackPanel>
-
-                    <!-- Feedback message -->
-                    <TextBlock x:Name="StatusText" TextWrapping="Wrap" HorizontalAlignment="Center" Margin="0,0,0,15" TextAlignment="Center"
-                               Foreground="{DynamicResource NmErrorBrush}" Style="{StaticResource NmLabelText}"
-                               Text="{Binding StatusMessage}"/>
-
-                    <!-- Action buttons -->
-                    <Button x:Name="SignUpButton" Content="{Binding SignUpButtonContent}" Height="42" Cursor="Hand"
-                            Command="{Binding SignUpCommand}" Visibility="{Binding IsSignUpStep, Converter={StaticResource BoolToVis}}"
-                            Style="{StaticResource NmButtonPrimary}"/>
-
-                    <Button x:Name="VerifyButton" Content="{Binding VerifyButtonContent}" Height="42" Cursor="Hand"
-                            Command="{Binding VerifyCommand}" Visibility="{Binding IsVerificationStep, Converter={StaticResource BoolToVis}}"
-                            Style="{StaticResource NmButtonPrimary}"/>
-
-                    <!-- Navigation to Sign In -->
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,25,0,0">
-                        <TextBlock Text="¿Ya tienes un perfil? " Style="{StaticResource NmBodyText}"/>
-                        <TextBlock Text="Iniciar sesión" Style="{StaticResource NmBodyText}" Foreground="{DynamicResource NmAccentBrush}" FontWeight="SemiBold"
-                                   Cursor="Hand" MouseLeftButtonDown="NavigateToLogin_Click"/>
+                    <StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Border Width="6" Height="6" CornerRadius="3" Background="#AAFFFFFF" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="Crea proyectos y recluta co-autores"
+                                       FontFamily="{DynamicResource InterfaceFont}"
+                                       FontSize="13" Foreground="#CCFFFFFF" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Border Width="6" Height="6" CornerRadius="3" Background="#AAFFFFFF" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="Gestiona roles: propietario, editor, lector"
+                                       FontFamily="{DynamicResource InterfaceFont}"
+                                       FontSize="13" Foreground="#CCFFFFFF" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="6" Height="6" CornerRadius="3" Background="#AAFFFFFF" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="Publica tu historia al mundo"
+                                       FontFamily="{DynamicResource InterfaceFont}"
+                                       FontSize="13" Foreground="#CCFFFFFF" TextWrapping="Wrap"/>
+                        </StackPanel>
                     </StackPanel>
                 </StackPanel>
-            </Border>
+            </Grid>
+        </Border>
+
+        <!-- ─── Right form panel ─── -->
+        <Grid Grid.Column="1" Background="{DynamicResource NmBgBaseBrush}">
+            <Grid Width="400" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24">
+                <!-- Neumorphic Double Shadow Card -->
+                <Border CornerRadius="22" Background="Transparent">
+                    <Border.Effect>
+                        <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="6" Direction="135" BlurRadius="18" Opacity="0.95"/>
+                    </Border.Effect>
+                </Border>
+                <Border CornerRadius="22" Background="Transparent">
+                    <Border.Effect>
+                        <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="6" Direction="315" BlurRadius="18" Opacity="0.7"/>
+                    </Border.Effect>
+                </Border>
+                <Border CornerRadius="22" Background="{DynamicResource NmSurfaceBrush}" Padding="35,36,35,32">
+                    <StackPanel>
+                        <TextBlock Text="Crear cuenta"
+                                   Style="{StaticResource NmTitleText}" FontSize="22" FontWeight="SemiBold"
+                                   HorizontalAlignment="Left" Margin="0,0,0,4"/>
+                        <TextBlock Text="Completa tu perfil de escritor"
+                                   Style="{StaticResource NmBodyText}"
+                                   HorizontalAlignment="Left" Margin="0,0,0,24"/>
+
+                        <!-- Circular 2-Step Stepper -->
+                        <Grid HorizontalAlignment="Left" Margin="0,0,0,24">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="50"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <Border x:Name="Step1Circle" Grid.Column="0" Width="28" Height="28" CornerRadius="14"
+                                    Background="{DynamicResource NmBgBaseBrush}" BorderThickness="2" VerticalAlignment="Center">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource NmAccentBrush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsVerificationStep}" Value="True">
+                                                <Setter Property="BorderBrush" Value="{DynamicResource NmShadowDarkBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="1" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="11">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource NmAccentBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsVerificationStep}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource NmTextSecondaryBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+
+                            <Border Grid.Column="1" Height="2" Background="{DynamicResource NmShadowDarkBrush}" VerticalAlignment="Center"/>
+
+                            <Border x:Name="Step2Circle" Grid.Column="2" Width="28" Height="28" CornerRadius="14"
+                                    Background="{DynamicResource NmBgBaseBrush}" BorderThickness="2" VerticalAlignment="Center">
+                                <Border.Style>
+                                    <Style TargetType="Border">
+                                        <Setter Property="BorderBrush" Value="{DynamicResource NmShadowDarkBrush}"/>
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding IsVerificationStep}" Value="True">
+                                                <Setter Property="BorderBrush" Value="{DynamicResource NmAccentBrush}"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </Border.Style>
+                                <TextBlock Text="2" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="11">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{DynamicResource NmTextSecondaryBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsVerificationStep}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource NmAccentBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Border>
+                        </Grid>
+
+                        <!-- Step 1 Fields -->
+                        <StackPanel Visibility="{Binding IsSignUpStep, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="DIRECCIÓN DE CORREO" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                            <TextBox x:Name="EmailTextBox" Style="{StaticResource NmInputStyle}" Margin="0,0,0,14"
+                                     Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <TextBlock Text="NOMBRE PÚBLICO" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                            <TextBox x:Name="DisplayNameTextBox" Style="{StaticResource NmInputStyle}" Margin="0,0,0,14"
+                                     Text="{Binding DisplayName, UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <TextBlock Text="CONTRASEÑA" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                            <PasswordBox x:Name="PasswordBox" Style="{StaticResource NmPasswordStyle}" Margin="0,0,0,22"
+                                         PasswordChanged="PasswordBox_PasswordChanged"/>
+                        </StackPanel>
+
+                        <!-- Step 2 Fields -->
+                        <StackPanel Visibility="{Binding IsVerificationStep, Converter={StaticResource BoolToVis}}">
+                            <TextBlock Text="CÓDIGO DE VERIFICACIÓN" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                            <TextBlock Text="Revisa tu correo electrónico" Style="{StaticResource NmBodyText}" Margin="0,0,0,12" FontSize="12"/>
+                            <TextBox x:Name="PinTextBox" Style="{StaticResource NmInputStyle}" MaxLength="6" Margin="0,0,0,22"
+                                     Text="{Binding VerificationPin, UpdateSourceTrigger=PropertyChanged}"
+                                     HorizontalContentAlignment="Center" FontSize="20" FontWeight="SemiBold"/>
+                        </StackPanel>
+
+                        <!-- Feedback -->
+                        <TextBlock x:Name="StatusText" TextWrapping="Wrap" HorizontalAlignment="Left" Margin="0,0,0,14"
+                                   Foreground="{DynamicResource NmErrorBrush}" Style="{StaticResource NmLabelText}"
+                                   Text="{Binding StatusMessage}"/>
+
+                        <!-- Action buttons -->
+                        <Button x:Name="SignUpButton" Content="{Binding SignUpButtonContent}" Height="42" Cursor="Hand"
+                                Command="{Binding SignUpCommand}"
+                                Visibility="{Binding IsSignUpStep, Converter={StaticResource BoolToVis}}"
+                                Style="{StaticResource NmButtonPrimary}"/>
+
+                        <Button x:Name="VerifyButton" Content="{Binding VerifyButtonContent}" Height="42" Cursor="Hand"
+                                Command="{Binding VerifyCommand}"
+                                Visibility="{Binding IsVerificationStep, Converter={StaticResource BoolToVis}}"
+                                Style="{StaticResource NmButtonPrimary}"/>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,22,0,0">
+                            <TextBlock Text="¿Ya tienes un perfil? " Style="{StaticResource NmBodyText}"/>
+                            <TextBlock Text="Iniciar sesión" Style="{StaticResource NmBodyText}"
+                                       Foreground="{DynamicResource NmAccentBrush}" FontWeight="SemiBold"
+                                       Cursor="Hand" MouseLeftButtonDown="NavigateToLogin_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
         </Grid>
     </Grid>
 </Page>

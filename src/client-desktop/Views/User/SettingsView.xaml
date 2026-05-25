@@ -34,24 +34,23 @@
         <!-- Settings Cards Layout -->
         <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
             <StackPanel Orientation="Vertical" Width="550" HorizontalAlignment="Left">
-                
-                <!-- CARD 1: APARIENCIA -->
-                <Grid Margin="0,0,0,24">
+                                <!-- CARD 1: APARIENCIA -->
+                <Grid Margin="0,0,0,32">
                     <!-- Light shadow border -->
-                    <Border CornerRadius="12" Background="Transparent">
+                    <Border CornerRadius="22" Background="Transparent">
                         <Border.Effect>
-                            <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="4" Direction="135" BlurRadius="8" Opacity="0.9"/>
+                            <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="6" Direction="135" BlurRadius="18" Opacity="0.95"/>
                         </Border.Effect>
                     </Border>
                     <!-- Dark shadow border -->
-                    <Border CornerRadius="12" Background="Transparent">
+                    <Border CornerRadius="22" Background="Transparent">
                         <Border.Effect>
-                            <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="4" Direction="315" BlurRadius="8" Opacity="0.5"/>
+                            <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="6" Direction="315" BlurRadius="18" Opacity="0.7"/>
                         </Border.Effect>
                     </Border>
                     
                     <!-- Content area -->
-                    <Border CornerRadius="12" Background="{DynamicResource NmSurfaceBrush}" Padding="20">
+                    <Border CornerRadius="22" Background="{DynamicResource NmSurfaceBrush}" Padding="28">
                         <StackPanel>
                             <TextBlock Text="Apariencia" Style="{StaticResource NmTitleText}" Margin="0,0,0,18" Foreground="{DynamicResource NmAccentBrush}"/>
                             
@@ -63,7 +62,7 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="Tema de la aplicación:" Style="{StaticResource NmLabelText}" VerticalAlignment="Center"/>
                                 <ComboBox x:Name="ThemeComboBox" Grid.Column="1" Width="200" HorizontalAlignment="Left"
-                                          SelectedValue="{Binding CurrentTheme}" SelectedValuePath="Tag">
+                                           SelectedValue="{Binding CurrentTheme}" SelectedValuePath="Tag">
                                     <ComboBoxItem Content="Claro Neumórfico" Tag="LightTheme"/>
                                     <ComboBoxItem Content="Oscuro Neumórfico" Tag="NeumorphismTheme"/>
                                 </ComboBox>
@@ -76,29 +75,86 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Grid.Column="0" Text="Modo pantalla completa:" Style="{StaticResource NmLabelText}" VerticalAlignment="Center"/>
-                                <CheckBox x:Name="FullscreenCheckBox" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding IsFullscreen}" Content="Habilitar" Style="{StaticResource CheckBox}"/>
+                                <CheckBox x:Name="FullscreenCheckBox" Grid.Column="1" VerticalAlignment="Center" IsChecked="{Binding IsFullscreen}" Content="Habilitar"/>
                             </Grid>
                         </StackPanel>
                     </Border>
                 </Grid>
 
-                <!-- CARD 2: CONEXIÓN -->
-                <Grid Margin="0,0,0,24">
-                    <!-- Light shadow border -->
-                    <Border CornerRadius="12" Background="Transparent">
+                <!-- CARD 2: VERSIÓN -->
+                <Grid Margin="0,0,0,32">
+                    <Border CornerRadius="22" Background="Transparent">
                         <Border.Effect>
-                            <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="4" Direction="135" BlurRadius="8" Opacity="0.9"/>
+                            <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="6" Direction="135" BlurRadius="18" Opacity="0.95"/>
+                        </Border.Effect>
+                    </Border>
+                    <Border CornerRadius="22" Background="Transparent">
+                        <Border.Effect>
+                            <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="6" Direction="315" BlurRadius="18" Opacity="0.7"/>
+                        </Border.Effect>
+                    </Border>
+                    <Border CornerRadius="22" Background="{DynamicResource NmSurfaceBrush}" Padding="28">
+                        <StackPanel>
+                            <TextBlock Text="Versión" Style="{StaticResource NmTitleText}" Margin="0,0,0,18" Foreground="{DynamicResource NmAccentBrush}"/>
+
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Versión actual:" Style="{StaticResource NmLabelText}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="{Binding AppVersion}" Style="{StaticResource NmBodyText}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Objetivo del milestone:" Style="{StaticResource NmLabelText}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="{Binding MilestoneLabel}" Style="{StaticResource NmBodyText}" VerticalAlignment="Center"/>
+                            </Grid>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Estado:" Style="{StaticResource NmLabelText}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1" Text="{Binding VersionStatus}" FontWeight="SemiBold" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock" BasedOn="{StaticResource NmLabelText}">
+                                            <Setter Property="Foreground" Value="{DynamicResource NmSuccessBrush}"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsVersionOnTarget}" Value="False">
+                                                    <Setter Property="Foreground" Value="{DynamicResource NmErrorBrush}"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- CARD 3: CONEXIÓN -->
+                <Grid Margin="0,0,0,32">
+                    <!-- Light shadow border -->
+                    <Border CornerRadius="22" Background="Transparent">
+                        <Border.Effect>
+                            <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="6" Direction="135" BlurRadius="18" Opacity="0.95"/>
                         </Border.Effect>
                     </Border>
                     <!-- Dark shadow border -->
-                    <Border CornerRadius="12" Background="Transparent">
+                    <Border CornerRadius="22" Background="Transparent">
                         <Border.Effect>
-                            <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="4" Direction="315" BlurRadius="8" Opacity="0.5"/>
+                            <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="6" Direction="315" BlurRadius="18" Opacity="0.7"/>
                         </Border.Effect>
                     </Border>
                     
                     <!-- Content area -->
-                    <Border CornerRadius="12" Background="{DynamicResource NmSurfaceBrush}" Padding="20">
+                    <Border CornerRadius="22" Background="{DynamicResource NmSurfaceBrush}" Padding="28">
                         <StackPanel>
                             <TextBlock Text="Conexión" Style="{StaticResource NmTitleText}" Margin="0,0,0,18" Foreground="{DynamicResource NmAccentBrush}"/>
                             

@@ -11,53 +11,107 @@
     </Page.Resources>
 
     <Grid>
-        <!-- Neumorphic Double Shadow Card Panel -->
-        <Grid Width="400" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="20">
-            <!-- Light shadow border (top-left) -->
-            <Border CornerRadius="12" Background="Transparent">
-                <Border.Effect>
-                    <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="4" Direction="135" BlurRadius="8" Opacity="0.9"/>
-                </Border.Effect>
-            </Border>
-            <!-- Dark shadow border (bottom-right) -->
-            <Border CornerRadius="12" Background="Transparent">
-                <Border.Effect>
-                    <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="4" Direction="315" BlurRadius="8" Opacity="0.5"/>
-                </Border.Effect>
-            </Border>
-            <!-- Content card surface -->
-            <Border CornerRadius="12" Background="{DynamicResource NmSurfaceBrush}" Padding="30,35,30,30">
-                <StackPanel>
-                    <!-- Header -->
-                    <TextBlock Text="Layla" Style="{StaticResource NmDisplayText}" FontSize="32" FontWeight="SemiBold"
-                               HorizontalAlignment="Left" Foreground="{DynamicResource NmAccentBrush}" Margin="0,0,0,6"/>
-                    <TextBlock Text="Tu espacio de escritura colaborativa" Style="{StaticResource NmBodyText}" 
-                               HorizontalAlignment="Left" Foreground="{DynamicResource NmTextSecondaryBrush}" Margin="0,0,0,25"/>
+        <Grid.ColumnDefinitions>
+            <!-- Left branding panel -->
+            <ColumnDefinition Width="0.42*"/>
+            <!-- Right form panel -->
+            <ColumnDefinition Width="0.58*"/>
+        </Grid.ColumnDefinitions>
 
-                    <TextBlock Text="CORREO ELECTRÓNICO" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
-                    <TextBox x:Name="EmailTextBox" Style="{StaticResource NmInputStyle}" Margin="0,0,0,18"
-                             Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"/>
+        <!-- ─── Left branding panel ─── -->
+        <Border Grid.Column="0" Background="{DynamicResource NmAccentBrush}">
+            <Grid>
+                <!-- Decorative circles (neumorphic ambient) -->
+                <Ellipse Width="260" Height="260" HorizontalAlignment="Left" VerticalAlignment="Top"
+                         Margin="-80,-80,0,0" Fill="#18FFFFFF"/>
+                <Ellipse Width="180" Height="180" HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                         Margin="0,0,-60,-60" Fill="#12FFFFFF"/>
 
-                    <TextBlock Text="CONTRASEÑA" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
-                    <PasswordBox x:Name="PasswordBox" Style="{StaticResource NmPasswordStyle}" Margin="0,0,0,25"
-                                 PasswordChanged="PasswordBox_PasswordChanged"/>
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Left" Margin="52,0,40,0">
+                    <TextBlock Text="Layla"
+                               FontFamily="{DynamicResource InterfaceFont}"
+                               FontSize="48" FontWeight="Bold"
+                               Foreground="White" Margin="0,0,0,14"/>
+                    <TextBlock Text="Tu espacio de escritura colaborativa"
+                               FontFamily="{DynamicResource InterfaceFont}"
+                               FontSize="15" Foreground="#DDFFFFFF"
+                               TextWrapping="Wrap" Margin="0,0,0,36" LineHeight="22"/>
 
-                    <TextBlock x:Name="ErrorText" Foreground="{DynamicResource NmErrorBrush}" Style="{StaticResource NmLabelText}"
-                               Visibility="{Binding ErrorMessage, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}" 
-                               HorizontalAlignment="Left" Margin="0,0,0,15"
-                               Text="{Binding ErrorMessage}"/>
-
-                    <Button x:Name="LoginButton" Content="INICIAR SESIÓN" Height="42"
-                            Cursor="Hand" Command="{Binding SignInCommand}"
-                            Style="{StaticResource NmButtonPrimary}"/>
-
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,25,0,0">
-                        <TextBlock Text="¿No tienes una cuenta? " Style="{StaticResource NmBodyText}"/>
-                        <TextBlock Text="Crear un perfil" Style="{StaticResource NmBodyText}" Foreground="{DynamicResource NmAccentBrush}" FontWeight="SemiBold"
-                                   Cursor="Hand" MouseLeftButtonDown="NavigateToSignUp_Click"/>
+                    <!-- Feature bullets -->
+                    <StackPanel Margin="0,0,0,12">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Border Width="6" Height="6" CornerRadius="3" Background="#AAFFFFFF" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="Editor de manuscritos en tiempo real"
+                                       FontFamily="{DynamicResource InterfaceFont}"
+                                       FontSize="13" Foreground="#CCFFFFFF" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                            <Border Width="6" Height="6" CornerRadius="3" Background="#AAFFFFFF" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="Wiki de worldbuilding y grafo narrativo"
+                                       FontFamily="{DynamicResource InterfaceFont}"
+                                       FontSize="13" Foreground="#CCFFFFFF" TextWrapping="Wrap"/>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal">
+                            <Border Width="6" Height="6" CornerRadius="3" Background="#AAFFFFFF" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="Sesiones de voz para co-escritura"
+                                       FontFamily="{DynamicResource InterfaceFont}"
+                                       FontSize="13" Foreground="#CCFFFFFF" TextWrapping="Wrap"/>
+                        </StackPanel>
                     </StackPanel>
                 </StackPanel>
-            </Border>
+            </Grid>
+        </Border>
+
+        <!-- ─── Right form panel ─── -->
+        <Grid Grid.Column="1" Background="{DynamicResource NmBgBaseBrush}">
+            <Grid Width="380" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="24">
+                <!-- Neumorphic Double Shadow Card -->
+                <Border CornerRadius="22" Background="Transparent">
+                    <Border.Effect>
+                        <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="6" Direction="135" BlurRadius="18" Opacity="0.95"/>
+                    </Border.Effect>
+                </Border>
+                <Border CornerRadius="22" Background="Transparent">
+                    <Border.Effect>
+                        <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="6" Direction="315" BlurRadius="18" Opacity="0.7"/>
+                    </Border.Effect>
+                </Border>
+                <Border CornerRadius="22" Background="{DynamicResource NmSurfaceBrush}" Padding="35,38,35,32">
+                    <StackPanel>
+                        <TextBlock Text="Bienvenido de vuelta"
+                                   Style="{StaticResource NmTitleText}" FontSize="22" FontWeight="SemiBold"
+                                   HorizontalAlignment="Left" Margin="0,0,0,4"/>
+                        <TextBlock Text="Inicia sesión para continuar escribiendo"
+                                   Style="{StaticResource NmBodyText}"
+                                   HorizontalAlignment="Left" Margin="0,0,0,28"/>
+
+                        <TextBlock Text="CORREO ELECTRÓNICO" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                        <TextBox x:Name="EmailTextBox" Style="{StaticResource NmInputStyle}" Margin="0,0,0,18"
+                                 Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}"/>
+
+                        <TextBlock Text="CONTRASEÑA" Style="{StaticResource NmLabelText}" Margin="0,0,0,6" FontWeight="SemiBold"/>
+                        <PasswordBox x:Name="PasswordBox" Style="{StaticResource NmPasswordStyle}" Margin="0,0,0,24"
+                                     PasswordChanged="PasswordBox_PasswordChanged"/>
+
+                        <TextBlock x:Name="ErrorText" Foreground="{DynamicResource NmErrorBrush}"
+                                   Style="{StaticResource NmLabelText}"
+                                   Visibility="{Binding ErrorMessage, Converter={StaticResource BoolToVis}, FallbackValue=Collapsed}"
+                                   HorizontalAlignment="Left" Margin="0,0,0,14"
+                                   Text="{Binding ErrorMessage}"/>
+
+                        <Button x:Name="LoginButton" Content="INICIAR SESIÓN" Height="42"
+                                Cursor="Hand" Command="{Binding SignInCommand}"
+                                Style="{StaticResource NmButtonPrimary}"/>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,24,0,0">
+                            <TextBlock Text="¿No tienes una cuenta? " Style="{StaticResource NmBodyText}"/>
+                            <TextBlock Text="Crear un perfil" Style="{StaticResource NmBodyText}"
+                                       Foreground="{DynamicResource NmAccentBrush}" FontWeight="SemiBold"
+                                       Cursor="Hand" MouseLeftButtonDown="NavigateToSignUp_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+            </Grid>
         </Grid>
     </Grid>
 </Page>
