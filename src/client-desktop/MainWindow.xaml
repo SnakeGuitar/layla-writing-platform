@@ -1,0 +1,149 @@
+<Window x:Class="Layla.Desktop.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Layla"
+        Width="1280" Height="760"
+        MinWidth="920" MinHeight="580"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        ResizeMode="CanResize"
+        WindowStartupLocation="CenterScreen"
+        StateChanged="Window_StateChanged">
+
+    <Grid x:Name="OuterGrid" Margin="12">
+
+        <!-- Drop shadow layer (behind clipped content) -->
+        <Border x:Name="ShadowBorder" CornerRadius="16" Background="{DynamicResource NmBgBaseBrush}">
+            <Border.Effect>
+                <DropShadowEffect Color="#000000" Opacity="0.32" BlurRadius="26" ShadowDepth="0"/>
+            </Border.Effect>
+        </Border>
+
+        <!-- Clipped content border — all UI lives here -->
+        <Border x:Name="ContentBorder" CornerRadius="16" ClipToBounds="True"
+                Background="{DynamicResource NmBgBaseBrush}"
+                SizeChanged="ContentBorder_SizeChanged">
+            <Grid>
+
+                <!-- Custom Title Bar -->
+                <Grid x:Name="TitleBarGrid"
+                      Height="38" VerticalAlignment="Top"
+                      Background="{DynamicResource NmBgBaseBrush}"
+                      Panel.ZIndex="10"
+                      MouseLeftButtonDown="TitleBar_MouseLeftButtonDown">
+                    <Grid.ColumnDefinitions>
+                        <!-- Mac buttons on the left -->
+                        <ColumnDefinition Width="Auto"/>
+                        <!-- Centered app name -->
+                        <ColumnDefinition Width="*"/>
+                        <!-- Right spacer to balance the left buttons -->
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- Mac traffic-light buttons (left) -->
+                    <StackPanel Grid.Column="0"
+                                Orientation="Horizontal"
+                                VerticalAlignment="Center"
+                                Margin="14,0,0,0">
+
+                        <!-- Close – red -->
+                        <Button x:Name="CloseButton"
+                                Width="13" Height="13"
+                                Margin="0,0,7,0"
+                                Click="CloseButton_Click"
+                                ToolTip="Cerrar">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Grid>
+                                        <Ellipse x:Name="Dot" Width="13" Height="13" Fill="#FF5F57"/>
+                                        <TextBlock x:Name="Icon" Text="✕"
+                                                   FontSize="7" FontWeight="Bold"
+                                                   Foreground="#7A0000"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   Visibility="Hidden"/>
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Icon" Property="Visibility" Value="Visible"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                        <!-- Minimize – yellow -->
+                        <Button x:Name="MinimizeButton"
+                                Width="13" Height="13"
+                                Margin="0,0,7,0"
+                                Click="MinimizeButton_Click"
+                                ToolTip="Minimizar">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Grid>
+                                        <Ellipse x:Name="Dot" Width="13" Height="13" Fill="#FEBC2E"/>
+                                        <TextBlock x:Name="Icon" Text="—"
+                                                   FontSize="7" FontWeight="Bold"
+                                                   Foreground="#7A5000"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   Visibility="Hidden"/>
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Icon" Property="Visibility" Value="Visible"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+
+                        <!-- Maximize – green -->
+                        <Button x:Name="MaxRestoreButton"
+                                Width="13" Height="13"
+                                Click="MaxRestoreButton_Click"
+                                ToolTip="Maximizar">
+                            <Button.Template>
+                                <ControlTemplate TargetType="Button">
+                                    <Grid>
+                                        <Ellipse x:Name="Dot" Width="13" Height="13" Fill="#28C840"/>
+                                        <TextBlock x:Name="Icon" Text="↗"
+                                                   FontSize="7" FontWeight="Bold"
+                                                   Foreground="#004A00"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   Visibility="Hidden"/>
+                                    </Grid>
+                                    <ControlTemplate.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter TargetName="Icon" Property="Visibility" Value="Visible"/>
+                                        </Trigger>
+                                    </ControlTemplate.Triggers>
+                                </ControlTemplate>
+                            </Button.Template>
+                        </Button>
+                    </StackPanel>
+
+                    <!-- App name centered -->
+                    <TextBlock Grid.Column="1"
+                               Text="Layla"
+                               FontFamily="{DynamicResource InterfaceFont}"
+                               FontWeight="SemiBold" FontSize="13"
+                               Foreground="{DynamicResource NmAccentBrush}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"/>
+
+                    <!-- Right spacer mirrors the left group width so the text stays centered -->
+                    <StackPanel Grid.Column="2" Width="74" Opacity="0"/>
+                </Grid>
+
+                <!-- Content Frame -->
+                <Frame x:Name="MainFrame"
+                       NavigationUIVisibility="Hidden"
+                       Margin="0,38,0,0"
+                       Background="Transparent"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
