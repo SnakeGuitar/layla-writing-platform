@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Secrets
 .env
 .env.*
@@ -34,3 +35,9 @@ node_modules/
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
+=======
+./node_modules/
+node_modules/
+/.env
+./.env
+>>>>>>> 82f7fa1 (Adding express-ts backend)
