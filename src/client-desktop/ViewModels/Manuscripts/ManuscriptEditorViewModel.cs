@@ -199,7 +199,7 @@ namespace Layla.Desktop.ViewModels.Manuscripts
             await RebuildTokenizerAsync();
             WikiTokenizerUpdated?.Invoke();
 
-            // Connect to SignalR collaboration hub
+            // Connect to SignalR collaboration hub (best-effort; editor works offline)
             try
             {
                 await _hubClient.ConnectAsync(
@@ -209,7 +209,6 @@ namespace Layla.Desktop.ViewModels.Manuscripts
             }
             catch (Exception ex)
             {
-                StatusMessage = "SignalR collaboration hub unreachable.";
                 System.Diagnostics.Debug.WriteLine($"Failed to connect to SignalR hub: {ex.Message}");
             }
         }
@@ -696,7 +695,12 @@ namespace Layla.Desktop.ViewModels.Manuscripts
         public async Task LoadHistoryAsync()
         {
             if (CurrentChapter == null || SelectedManuscript == null) return;
-            IsLoadingHistory = true;
+            
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                IsLoadingHistory = true;
+            });
+
             try
             {
                 var versions = await _collaborationApiService.GetChapterVersionsAsync(
@@ -704,14 +708,18 @@ namespace Layla.Desktop.ViewModels.Manuscripts
                     SelectedManuscript.ManuscriptId,
                     CurrentChapter.ChapterId.ToString()
                 );
-                ChapterVersions.Clear();
-                if (versions != null)
+                
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    foreach (var v in versions.OrderByDescending(v => v.CreatedAt))
+                    ChapterVersions.Clear();
+                    if (versions != null)
                     {
-                        ChapterVersions.Add(v);
+                        foreach (var v in versions.OrderByDescending(v => v.CreatedAt))
+                        {
+                            ChapterVersions.Add(v);
+                        }
                     }
-                }
+                });
             }
             catch (Exception ex)
             {
@@ -719,7 +727,10 @@ namespace Layla.Desktop.ViewModels.Manuscripts
             }
             finally
             {
-                IsLoadingHistory = false;
+                System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                {
+                    IsLoadingHistory = false;
+                });
             }
         }
 

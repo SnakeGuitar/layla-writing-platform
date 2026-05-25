@@ -422,12 +422,17 @@ public partial class ManuscriptEditorView : Page
                 TextRange textRange = new(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
                 using MemoryStream ms = new(Encoding.UTF8.GetBytes(_viewModel.CurrentChapter.Content));
                 textRange.Load(ms, DataFormats.Rtf);
+                SanitizeDocumentColors(EditorRichTextBox.Document);
             }
             else
             {
                 EditorRichTextBox.Document.Blocks.Clear();
                 EditorRichTextBox.Document.Blocks.Add(new Paragraph(new Run("Start writing your amazing story here...")));
             }
+
+            // Always position caret and scroll at the beginning of the chapter.
+            EditorRichTextBox.CaretPosition = EditorRichTextBox.Document.ContentStart;
+            EditorRichTextBox.ScrollToHome();
         }
         catch (Exception ex)
         {
@@ -438,6 +443,42 @@ public partial class ManuscriptEditorView : Page
         finally
         {
             _suppressToolbarSync = false;
+        }
+    }
+
+    /// <summary>
+    /// Traverses the FlowDocument and clears explicit black/white text foregrounds
+    /// so that they automatically inherit the theme-controlled dynamic primary foreground color.
+    /// </summary>
+    private void SanitizeDocumentColors(FlowDocument doc)
+    {
+        foreach (var block in doc.Blocks)
+        {
+            SanitizeElementColors(block);
+        }
+    }
+
+    private void SanitizeElementColors(DependencyObject obj)
+    {
+        if (obj is TextElement element)
+        {
+            if (element.Foreground is SolidColorBrush brush)
+            {
+                var color = brush.Color;
+                if ((color.R == 0 && color.G == 0 && color.B == 0) || 
+                    (color.R == 255 && color.G == 255 && color.B == 255))
+                {
+                    element.ClearValue(TextElement.ForegroundProperty);
+                }
+            }
+        }
+
+        foreach (var child in LogicalTreeHelper.GetChildren(obj))
+        {
+            if (child is DependencyObject childObj)
+            {
+                SanitizeElementColors(childObj);
+            }
         }
     }
 
@@ -589,8 +630,11 @@ public partial class ManuscriptEditorView : Page
         {
             if (ChapterListBox.SelectedItem is Chapter selected)
             {
+                // Stop the debounce timer so it cannot fire after CurrentChapter
+                // switches and accidentally write old content to the new chapter.
+                _debounceTimer?.Change(Timeout.Infinite, Timeout.Infinite);
+
                 await _viewModel.SelectChapterItemCommand.ExecuteAsync(selected);
-                // Reload version history for the newly selected chapter
                 await _viewModel.LoadHistoryCommand.ExecuteAsync(null);
             }
         }
@@ -623,23 +667,21 @@ public partial class ManuscriptEditorView : Page
         }
     }
 
-    /// <summary>
-    /// Extracts the current <see cref="FlowDocument"/> as RTF and delegates the
-    /// persistence to <see cref="ManuscriptEditorViewModel.SaveContentCommand"/>.
-    /// </summary>
     private async Task SaveContentInternalAsync()
     {
         string rtfContent = string.Empty;
+        string plainText = string.Empty;
 
         await Application.Current.Dispatcher.InvokeAsync(() =>
         {
             TextRange textRange = new(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
+            plainText = textRange.Text;
             using MemoryStream ms = new();
             textRange.Save(ms, DataFormats.Rtf);
             rtfContent = Encoding.UTF8.GetString(ms.ToArray());
         });
 
-        await _viewModel.SaveContentCommand.ExecuteAsync(rtfContent);
+        await _viewModel.SaveContentCommand.ExecuteAsync(new SaveContentArgs { RtfContent = rtfContent, PlainText = plainText });
     }
 
     private void EditorRichTextBox_SelectionChanged(object sender, RoutedEventArgs e)
