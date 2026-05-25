@@ -33,6 +33,8 @@ public partial class ManuscriptEditorView : Page
     public bool IsEditablePage => !_isReadOnly;
     private bool _suppressToolbarSync = false;
     private Timer? _debounceTimer;
+    private Timer? _cursorBroadcastTimer;
+    private volatile int _pendingCursorOffset;
 
     private AdornerLayer? _adornerLayer;
     private ImageResizerAdorner? _currentAdorner;
@@ -284,6 +286,8 @@ public partial class ManuscriptEditorView : Page
 
         _debounceTimer?.Dispose();
         _debounceTimer = null;
+        _cursorBroadcastTimer?.Dispose();
+        _cursorBroadcastTimer = null;
         _viewModel.ContentReloadRequested -= OnContentReloadRequested;
         _viewModel.EvictedFromProject -= OnEvictedFromProject;
         _viewModel.WikiTokenizerUpdated -= OnWikiTokenizerUpdated;
@@ -689,6 +693,28 @@ public partial class ManuscriptEditorView : Page
     {
         if (_suppressToolbarSync) return;
         SyncToolbarToSelection();
+
+        // Broadcast cursor position to collaborators — debounced at 200 ms so
+        // rapid keystrokes don't flood the SignalR hub.
+        if (!_isReadOnly && _isLoaded && _viewModel.CurrentChapter != null)
+        {
+            // Calculate the character offset of the caret from the document start
+            // and store it so the debounced callback always reads the latest value.
+            TextPointer caretPos = EditorRichTextBox.CaretPosition;
+            TextPointer docStart = EditorRichTextBox.Document.ContentStart;
+            _pendingCursorOffset = docStart.GetOffsetToPosition(caretPos);
+
+            if (_cursorBroadcastTimer == null)
+            {
+                _cursorBroadcastTimer = new Timer(
+                    async _ => await _viewModel.BroadcastCursorPositionAsync(_pendingCursorOffset),
+                    null, 200, Timeout.Infinite);
+            }
+            else
+            {
+                _cursorBroadcastTimer.Change(200, Timeout.Infinite);
+            }
+        }
     }
 
     /// <summary>
