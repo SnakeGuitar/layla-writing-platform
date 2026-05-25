@@ -104,7 +104,12 @@ public static class Builder
             {
                 // Detect abrupt client disconnects in ~10 s instead of the default 30 s.
                 // The client sends a keep-alive ping every 5 s; if two consecutive pings
-                // are missed the server fires OnDisconnectedAsync and removes the cursor.
+                // are missed the server fires OnDisconnectedAsync.
+                opts.ClientTimeoutInterval = TimeSpan.FromSeconds(10);
+                opts.KeepAliveInterval    = TimeSpan.FromSeconds(5);
+            })
+            .AddHubOptions<PresenceHub>(opts =>
+            {
                 opts.ClientTimeoutInterval = TimeSpan.FromSeconds(10);
                 opts.KeepAliveInterval    = TimeSpan.FromSeconds(5);
             });
