@@ -152,13 +152,17 @@ export const requireProjectAccess = () => {
       await session.close();
     }
 
-    if (neo4jFound && neo4jRole) {
+    // Trust Neo4j immediately for OWNER and EDITOR.
+    // For READER we fall through to the server-core verification: the role may
+    // have been upgraded to EDITOR in SQL Server while Neo4j still holds the
+    // old value (event dropped during cold-start or container restart race).
+    if (neo4jFound && neo4jRole && neo4jRole !== "READER") {
       req.projectRole = neo4jRole;
       next();
       return;
     }
 
-    // ── Fallback: Neo4j has no record — query server-core for the real role ──
+    // ── Fallback: Neo4j has no record OR shows READER — verify with server-core ──
     const authHeader = req.headers.authorization ?? "";
     const bearerToken = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : "";
 
