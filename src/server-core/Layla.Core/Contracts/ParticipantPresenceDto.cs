@@ -1,3 +1,3 @@
 namespace Layla.Core.Contracts;
 
-public record ParticipantPresenceDto(string UserId, string DisplayName, string Role);
+public record ParticipantPresenceDto(string UserId, string DisplayName, string Role, string? AvatarUrl);

@@ -18,4 +18,5 @@ public interface IProjectService
     Task<Result<CollaboratorResponseDto>> InviteCollaboratorAsync(Guid projectId, InviteCollaboratorRequestDto request, string userId, CancellationToken cancellationToken = default);
     Task<Result<IEnumerable<CollaboratorResponseDto>>> GetCollaboratorsAsync(Guid projectId, string userId, CancellationToken cancellationToken = default);
     Task<Result<bool>> RemoveCollaboratorAsync(Guid projectId, string collaboratorUserId, string userId, CancellationToken cancellationToken = default);
+    Task<Result<CollaboratorResponseDto>> UpdateCollaboratorRoleAsync(Guid projectId, string collaboratorUserId, string newRole, string requestingUserId, CancellationToken cancellationToken = default);
 }

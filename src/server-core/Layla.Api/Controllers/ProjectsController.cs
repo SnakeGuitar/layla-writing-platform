@@ -268,6 +268,32 @@ public class ProjectsController : ApiControllerBase
     }
 
     /// <summary>
+    /// Change the role of an existing collaborator (OWNER only).
+    /// </summary>
+    /// <param name="id">Project ID.</param>
+    /// <param name="collaboratorUserId">ID of the collaborator whose role to change.</param>
+    /// <param name="request">New role payload.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Role updated. Returns updated collaborator.</response>
+    /// <response code="400">Invalid role or cannot change the owner's role.</response>
+    /// <response code="401">Missing or invalid JWT.</response>
+    /// <response code="403">Caller is not the project OWNER.</response>
+    [HttpPatch("{id:guid}/collaborators/{collaboratorUserId}/role")]
+    [ProducesResponseType(typeof(CollaboratorResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> ChangeCollaboratorRole(Guid id, string collaboratorUserId, [FromBody] ChangeCollaboratorRoleRequestDto request, CancellationToken cancellationToken)
+    {
+        var result = await _projectService.UpdateCollaboratorRoleAsync(id, collaboratorUserId, request.Role, CurrentUserId, cancellationToken);
+
+        if (!result.IsSuccess)
+            return RespondWithError(result.ErrorCode);
+
+        return Ok(result.Data);
+    }
+
+    /// <summary>
     /// Remove a collaborator from a project (OWNER only).
     /// </summary>
     /// <remarks>The project OWNER cannot be removed via this endpoint.</remarks>

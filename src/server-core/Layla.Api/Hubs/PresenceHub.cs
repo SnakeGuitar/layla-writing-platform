@@ -13,13 +13,31 @@ public class PresenceHub : Hub
 {
     private readonly IPresenceTracker _presenceTracker;
     private readonly IProjectRepository _projectRepository;
+    private readonly IAppUserRepository _appUserRepository;
     private readonly ILogger<PresenceHub> _logger;
 
-    public PresenceHub(IPresenceTracker presenceTracker, IProjectRepository projectRepository, ILogger<PresenceHub> logger)
+    public PresenceHub(
+        IPresenceTracker presenceTracker,
+        IProjectRepository projectRepository,
+        IAppUserRepository appUserRepository,
+        ILogger<PresenceHub> logger)
     {
         _presenceTracker = presenceTracker;
         _projectRepository = projectRepository;
+        _appUserRepository = appUserRepository;
         _logger = logger;
+    }
+
+    /// <summary>Fetches the avatar URL for the given user ID (best-effort; returns null on failure).</summary>
+    private async Task<string?> GetAvatarUrlAsync(string userId)
+    {
+        if (!Guid.TryParse(userId, out var userGuid)) return null;
+        try
+        {
+            var result = await _appUserRepository.GetAppUserByIdAsync(userGuid);
+            return result.IsSuccess ? result.Data?.AvatarUrl : null;
+        }
+        catch { return null; }
     }
 
     [Authorize]
@@ -50,7 +68,8 @@ public class PresenceHub : Hub
                 _logger.LogWarning("User {UserId} logged in from a new instance. Old connection {OldConn} notified.", userId, existingConnectionId);
             }
 
-            _presenceTracker.MarkActive(projectId, userId, Context.ConnectionId, displayName, PresenceEvents.RoleWatcher);
+            var avatarUrl = await GetAvatarUrlAsync(userId);
+            _presenceTracker.MarkActive(projectId, userId, Context.ConnectionId, displayName, PresenceEvents.RoleWatcher, avatarUrl);
             await BroadcastParticipants(projectId);
         }
 
@@ -86,8 +105,9 @@ public class PresenceHub : Hub
             ?? throw new HubException("Invalid user identity.");
 
         var displayName = Context.User?.GetDisplayName() ?? "Unknown";
+        var avatarUrl = await GetAvatarUrlAsync(userId);
 
-        var isFirstAuthor = _presenceTracker.MarkActive(projectId, userId, Context.ConnectionId, displayName, role);
+        var isFirstAuthor = _presenceTracker.MarkActive(projectId, userId, Context.ConnectionId, displayName, role, avatarUrl);
 
         await BroadcastParticipants(projectId);
 

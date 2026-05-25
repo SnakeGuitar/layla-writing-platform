@@ -328,6 +328,35 @@ public class ProjectService : BaseService<ProjectService>, IProjectService
             return Result<bool>.Success(true);
         }, "Failed to remove collaborator from project {ProjectId}", projectId);
 
+    public Task<Result<CollaboratorResponseDto>> UpdateCollaboratorRoleAsync(Guid projectId, string collaboratorUserId, string newRole, string requestingUserId, CancellationToken cancellationToken = default) =>
+        ExecuteAsync(async () =>
+        {
+            var isOwner = await _projectRepository.UserHasRoleInProjectAsync(projectId, requestingUserId, ProjectRoles.Owner, cancellationToken);
+            if (!isOwner)
+                return Result<CollaboratorResponseDto>.Failure(ErrorCode.Forbidden);
+
+            var normalizedRole = ProjectRoles.Normalize(newRole);
+            if (normalizedRole == null || normalizedRole == ProjectRoles.Owner)
+                return Result<CollaboratorResponseDto>.Failure(ErrorCode.InvalidRole);
+
+            var role = await _projectRepository.GetProjectRoleAsync(projectId, collaboratorUserId, cancellationToken);
+            if (role == null)
+                return Result<CollaboratorResponseDto>.Failure(ErrorCode.CollaboratorNotFound);
+
+            if (role.Role == ProjectRoles.Owner)
+                return Result<CollaboratorResponseDto>.Failure(ErrorCode.InvalidInput, "Cannot change the owner's role.");
+
+            role.Role = normalizedRole;
+            await _projectRepository.SaveChangesAsync(cancellationToken);
+
+            var userResult = await _appUserRepository.GetAppUserByIdAsync(Guid.Parse(collaboratorUserId), cancellationToken);
+            if (!userResult.IsSuccess || userResult.Data == null)
+                return Result<CollaboratorResponseDto>.Failure(ErrorCode.UserNotFound);
+
+            return Result<CollaboratorResponseDto>.Success(
+                MapToCollaboratorDto(userResult.Data, normalizedRole, role.AssignedAt));
+        }, "Failed to update collaborator role in project {ProjectId}", projectId);
+
     // ── Private helpers ───────────────────────────────────────────────────────
 
     private async Task PublishProjectCreatedEventsAsync(Project project, string userId, CancellationToken cancellationToken)

@@ -17,9 +17,9 @@ public class PresenceTracker : IPresenceTracker
     private readonly ConcurrentDictionary<string, List<string>> _userConnections = new();
     private readonly object _lock = new();
 
-    private record InternalParticipant(string UserId, string DisplayName, string Role, int ConnectionCount);
+    private record InternalParticipant(string UserId, string DisplayName, string Role, int ConnectionCount, string? AvatarUrl);
 
-    public bool MarkActive(Guid projectId, string userId, string connectionId, string displayName, string role)
+    public bool MarkActive(Guid projectId, string userId, string connectionId, string displayName, string role, string? avatarUrl = null)
     {
         lock (_lock)
         {
@@ -33,8 +33,14 @@ public class PresenceTracker : IPresenceTracker
             bool wasActive = IsProjectActiveUnlocked(projectId);
 
             participants.AddOrUpdate(userId,
-                _ => new InternalParticipant(userId, displayName, role, 1),
-                (_, existing) => existing with { ConnectionCount = existing.ConnectionCount + 1, Role = UpgradeRoleIfNeeded(existing.Role, role) });
+                _ => new InternalParticipant(userId, displayName, role, 1, avatarUrl),
+                (_, existing) => existing with
+                {
+                    ConnectionCount = existing.ConnectionCount + 1,
+                    Role = UpgradeRoleIfNeeded(existing.Role, role),
+                    // Refresh avatar if a non-null value is provided
+                    AvatarUrl = avatarUrl ?? existing.AvatarUrl
+                });
 
             bool isNowActive = IsProjectActiveUnlocked(projectId);
             return !wasActive && isNowActive;
@@ -138,7 +144,7 @@ public class PresenceTracker : IPresenceTracker
             if (!_projectParticipants.TryGetValue(projectId, out var participants))
                 return Enumerable.Empty<ParticipantPresenceDto>();
 
-            return participants.Values.Select(p => new ParticipantPresenceDto(p.UserId, p.DisplayName, p.Role)).ToList();
+            return participants.Values.Select(p => new ParticipantPresenceDto(p.UserId, p.DisplayName, p.Role, p.AvatarUrl)).ToList();
         }
     }
 
