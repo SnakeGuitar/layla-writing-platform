@@ -32,23 +32,8 @@ namespace Layla.Desktop.Services
                 SessionManager.ClearSession();
                 await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
                 {
-                    var mainWindow = System.Windows.Application.Current.MainWindow;
-                    if (mainWindow is System.Windows.Navigation.NavigationWindow navWindow)
-                    {
-                        navWindow.Navigate(new System.Uri("Views/LoginView.xaml", System.UriKind.Relative));
-                    }
-                    else
-                    {
-                        // Fallback: scan open windows for the NavigationWindow
-                        foreach (System.Windows.Window window in System.Windows.Application.Current.Windows)
-                        {
-                            if (window is System.Windows.Navigation.NavigationWindow nw)
-                            {
-                                nw.Navigate(new System.Uri("Views/LoginView.xaml", System.UriKind.Relative));
-                                break;
-                            }
-                        }
-                    }
+                    if (System.Windows.Application.Current.MainWindow is MainWindow mainWindow)
+                        mainWindow.Navigate(new Layla.Desktop.Views.User.LoginView());
                 });
             }
 
