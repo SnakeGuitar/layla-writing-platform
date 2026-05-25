@@ -185,7 +185,8 @@
                         <ComboBox x:Name="FontFamilyComboBox" Width="140" FontSize="12"
                                   SelectionChanged="FontFamilyComboBox_SelectionChanged" ToolTip="Familia de fuente"/>
                         <ComboBox x:Name="FontSizeComboBox" Width="55" FontSize="12" IsEditable="True" Margin="6,0,0,0"
-                                  SelectionChanged="FontSizeComboBox_SelectionChanged" KeyDown="FontSizeComboBox_KeyDown" ToolTip="Tamaño de fuente"/>
+                                  SelectionChanged="FontSizeComboBox_SelectionChanged" KeyDown="FontSizeComboBox_KeyDown"
+                                  LostFocus="FontSizeComboBox_LostFocus" ToolTip="Tamaño de fuente"/>
                         <Separator Margin="8,0"/>
                         <Button x:Name="FontColorButton" ToolTip="Color de fuente" Click="FontColorButton_Click"
                                 Style="{StaticResource NmButtonGhost}" Padding="4,2" Width="30" Height="28">

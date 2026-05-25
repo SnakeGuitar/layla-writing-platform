@@ -867,7 +867,14 @@ public partial class ManuscriptEditorView : Page
 
             object fontSize = selection.GetPropertyValue(TextElement.FontSizeProperty);
             if (fontSize is double fs)
-                FontSizeComboBox.Text = fs.ToString();
+            {
+                // Sync SelectedItem to the nearest preset so the dropdown reflects
+                // the current size. If no exact match exists, clear SelectedItem and
+                // write the raw value into Text so the editable field still shows it.
+                double? exactMatch = FontSizes.FirstOrDefault(s => Math.Abs(s - fs) < 0.01);
+                FontSizeComboBox.SelectedItem = exactMatch.HasValue ? exactMatch.Value : (object?)null;
+                FontSizeComboBox.Text = fs.ToString("G");
+            }
         }
         finally
         {
@@ -888,9 +895,21 @@ public partial class ManuscriptEditorView : Page
         }
     }
 
+    /// <summary>
+    /// Fired when the user picks an item from the font-size dropdown.
+    /// Reads <see cref="ComboBox.SelectedItem"/> directly — it is guaranteed
+    /// to be set before <c>SelectionChanged</c> fires, whereas
+    /// <see cref="ComboBox.Text"/> can still hold the previous value at that
+    /// point in an editable ComboBox.
+    /// </summary>
     private void FontSizeComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        ApplyFontSizeFromComboBox();
+        if (_suppressToolbarSync || !_isLoaded) return;
+        if (FontSizeComboBox.SelectedItem is double size && size >= 1 && size <= 200)
+        {
+            EditorRichTextBox.Selection.ApplyPropertyValue(TextElement.FontSizeProperty, size);
+            EditorRichTextBox.Focus();
+        }
     }
 
     private void FontSizeComboBox_KeyDown(object sender, KeyEventArgs e)
@@ -903,15 +922,30 @@ public partial class ManuscriptEditorView : Page
     }
 
     /// <summary>
+    /// Applies a custom-typed font size when the user moves focus away from the
+    /// ComboBox without pressing Enter (e.g., clicks directly into the editor).
+    /// </summary>
+    private void FontSizeComboBox_LostFocus(object sender, RoutedEventArgs e)
+    {
+        // Only handle manually typed values — dropdown selections are already
+        // handled by SelectionChanged → SelectedItem, which is more reliable.
+        if (FontSizeComboBox.SelectedItem == null)
+            ApplyFontSizeFromComboBox();
+    }
+
+    /// <summary>
     /// Parses the text in the font-size ComboBox and applies it to the current
-    /// selection. Accepts values in the range 1–200.
+    /// selection. Used for custom-typed values (Enter key or lost focus).
+    /// Accepts values in the range 1–200.
     /// </summary>
     private void ApplyFontSizeFromComboBox()
     {
         if (_suppressToolbarSync || !_isLoaded) return;
 
         if (double.TryParse(FontSizeComboBox.Text, out double size) && size >= 1 && size <= 200)
+        {
             EditorRichTextBox.Selection.ApplyPropertyValue(TextElement.FontSizeProperty, size);
+        }
     }
 
     /// <summary>
