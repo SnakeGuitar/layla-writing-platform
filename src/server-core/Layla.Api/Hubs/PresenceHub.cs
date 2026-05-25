@@ -107,6 +107,11 @@ public class PresenceHub : Hub
         var displayName = Context.User?.GetDisplayName() ?? "Unknown";
         var avatarUrl = await GetAvatarUrlAsync(userId);
 
+        // Ensure the caller is in the presence group so they receive real-time
+        // participant broadcasts. WatchProject already does this for watchers;
+        // heartbeat-only connections (authors/editors) need it too.
+        await Groups.AddToGroupAsync(Context.ConnectionId, HubConstants.GroupNames.PresenceGroup(projectId), Context.ConnectionAborted);
+
         var isFirstAuthor = _presenceTracker.MarkActive(projectId, userId, Context.ConnectionId, displayName, role, avatarUrl);
 
         await BroadcastParticipants(projectId);
