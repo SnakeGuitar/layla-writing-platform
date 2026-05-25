@@ -32,13 +32,21 @@ namespace Layla.Desktop.Views
             IsHitTestVisible = false;
         }
 
-        public void UpdateCursor(string userId, int offset)
+        public void UpdateCursor(string userId, int offset, string? displayName = null)
         {
             if (!_cursors.TryGetValue(userId, out var info))
             {
                 var color = _colors[_cursors.Count % _colors.Length];
-                info = new CursorInfo { Color = color, Name = userId.Substring(0, Math.Min(userId.Length, 5)) };
+                // Use the provided display name; fall back to first 5 chars of userId
+                var label = !string.IsNullOrEmpty(displayName)
+                    ? displayName
+                    : userId.Substring(0, Math.Min(userId.Length, 5));
+                info = new CursorInfo { Color = color, Name = label };
                 _cursors[userId] = info;
+            }
+            else if (!string.IsNullOrEmpty(displayName))
+            {
+                info.Name = displayName;
             }
             info.Offset = offset;
             info.LastMoved = DateTime.UtcNow;
