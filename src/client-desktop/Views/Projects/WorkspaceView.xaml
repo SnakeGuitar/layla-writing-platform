@@ -150,10 +150,10 @@
                 </StackPanel>
 
                 <!-- Spacer -->
-                <Grid Grid.Row="2"/>
+                <Grid Grid.Row="3"/>
 
                 <!-- Desconectar Sesión -->
-                <Border Grid.Row="3" Padding="8,0,8,20">
+                <Border Grid.Row="4" Padding="8,0,8,20">
                     <Button x:Name="LogoutBtn"
                             Style="{StaticResource NmButtonGhost}"
                             Foreground="{DynamicResource NmErrorBrush}"
