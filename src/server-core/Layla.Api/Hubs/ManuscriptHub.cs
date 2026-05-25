@@ -47,6 +47,17 @@ public class ManuscriptHub : Hub
         await Clients.OthersInGroup(groupName).SendAsync("OnCursorMoved", userId, positionOffset);
     }
 
+    /// <summary>
+    /// Notifies all other collaborators in the same chapter that the chapter
+    /// content has been saved. Receivers reload the chapter from the API so
+    /// their view stays in sync without polling.
+    /// </summary>
+    public async Task NotifyChapterSaved(Guid projectId, string chapterId)
+    {
+        var groupName = GetChapterGroupName(projectId, chapterId);
+        await Clients.OthersInGroup(groupName).SendAsync("OnChapterSaved", projectId, chapterId);
+    }
+
     public async Task LeaveChapterGroup(Guid projectId, string chapterId)
     {
         var groupName = GetChapterGroupName(projectId, chapterId);

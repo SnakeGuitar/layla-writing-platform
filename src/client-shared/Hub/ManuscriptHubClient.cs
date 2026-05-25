@@ -29,6 +29,12 @@ public sealed class ManuscriptHubClient : IAsyncDisposable
     /// <summary>Raised when wiki entities change and the tokenizer should rebuild.</summary>
     public event Action? WikiEntitiesChanged;
 
+    /// <summary>
+    /// Raised when another collaborator has saved the active chapter.
+    /// Receivers should reload chapter content from the API.
+    /// </summary>
+    public event Action<Guid, string>? ChapterSaved;
+
     /// <summary>Raised when the underlying connection state changes.</summary>
     public event Action<HubConnectionState>? ConnectionStateChanged;
 
@@ -87,6 +93,11 @@ public sealed class ManuscriptHubClient : IAsyncDisposable
             WikiEntitiesChanged?.Invoke();
         });
 
+        _connection.On<Guid, string>("OnChapterSaved", (projectId, chapterId) =>
+        {
+            ChapterSaved?.Invoke(projectId, chapterId);
+        });
+
         _connection.Reconnecting += error =>
         {
             _logger?.LogWarning(error, "ManuscriptHub reconnecting...");
@@ -134,6 +145,16 @@ public sealed class ManuscriptHubClient : IAsyncDisposable
     {
         EnsureConnected();
         await _connection!.InvokeAsync("SendCursorMoved", projectId, chapterId, positionOffset, ct);
+    }
+
+    /// <summary>
+    /// Notifies other collaborators in the same chapter that the content has
+    /// been saved, so their clients can reload the latest version.
+    /// </summary>
+    public async Task NotifyChapterSavedAsync(Guid projectId, string chapterId, CancellationToken ct = default)
+    {
+        if (_connection?.State != HubConnectionState.Connected) return; // best-effort
+        await _connection!.InvokeAsync("NotifyChapterSaved", projectId, chapterId, ct);
     }
 
     // ── Lifecycle ───────────────────────────────────────────────────────

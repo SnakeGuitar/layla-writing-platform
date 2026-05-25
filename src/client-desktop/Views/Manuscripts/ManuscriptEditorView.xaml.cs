@@ -78,6 +78,7 @@ public partial class ManuscriptEditorView : Page
         _viewModel.WikiTokenizerUpdated += OnWikiTokenizerUpdated;
         _viewModel.RequestShowDiff += OnRequestShowDiff;
         _viewModel.CollaboratorCursorMoved += OnCollaboratorCursorMoved;
+        _viewModel.RemoteChapterSaved += OnRemoteChapterSaved;
         _viewModel.RequestFlushAction = async () => await FlushPendingSavesAsync();
         this.Loaded += OnLoaded;
         this.Unloaded += OnUnloaded;
@@ -293,6 +294,7 @@ public partial class ManuscriptEditorView : Page
         _viewModel.WikiTokenizerUpdated -= OnWikiTokenizerUpdated;
         _viewModel.RequestShowDiff -= OnRequestShowDiff;
         _viewModel.CollaboratorCursorMoved -= OnCollaboratorCursorMoved;
+        _viewModel.RemoteChapterSaved -= OnRemoteChapterSaved;
         _viewModel.RequestFlushAction = null;
 
         if (_cursorAdorner != null)
@@ -407,6 +409,24 @@ public partial class ManuscriptEditorView : Page
         Application.Current.Dispatcher.InvokeAsync(() =>
         {
             _cursorAdorner?.UpdateCursor(userId, offset);
+        });
+    }
+
+    private void OnRemoteChapterSaved()
+    {
+        Application.Current.Dispatcher.InvokeAsync(async () =>
+        {
+            try
+            {
+                // Refresh the chapter content from the server so the view
+                // reflects what the other collaborator just saved.
+                await _viewModel.RefreshCurrentChapterAsync();
+                LoadCurrentChapterContent();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"OnRemoteChapterSaved: reload failed: {ex.Message}");
+            }
         });
     }
 
