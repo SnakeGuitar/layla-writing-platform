@@ -66,6 +66,14 @@ export const relationshipTypeSchema = z.enum([
   "ENEMY_OF",
   "MEMBER_OF",
   "LOCATED_IN",
+  "BELONGS_TO",
+  "KNOWS",
+  "LOVES",
+  "HATES",
+  "PART_OF",
+  "CAUSES",
+  "PRECEDES",
+  "FOLLOWS",
 ]);
 
 export const CreateRelationshipSchema = z.object({

@@ -22,6 +22,14 @@ const ALLOWED_RELATIONSHIP_TYPES: ReadonlySet<string> = new Set([
   "ENEMY_OF",
   "MEMBER_OF",
   "LOCATED_IN",
+  "BELONGS_TO",
+  "KNOWS",
+  "LOVES",
+  "HATES",
+  "PART_OF",
+  "CAUSES",
+  "PRECEDES",
+  "FOLLOWS",
 ]);
 
 /**
