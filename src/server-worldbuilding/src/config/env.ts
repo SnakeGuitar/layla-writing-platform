@@ -96,11 +96,11 @@ export const config = {
 
 	/**
 	 * Base URL for the server-core API used by the access-control fallback.
-	 * In Docker this should be the API gateway URL (http://layla-api-gateway:5000).
-	 * In local dev it defaults to the gateway on localhost.
+	 * In Docker set CORE_API_URL to the container name (e.g. http://layla-api-gateway:5000).
+	 * In local dev this defaults to server-core's HTTP port so no API gateway is needed.
 	 * Set to empty string to disable the fallback entirely.
 	 */
-	coreApiUrl: process.env["CORE_API_URL"] ?? "http://localhost:5000",
+	coreApiUrl: process.env["CORE_API_URL"] ?? "http://localhost:5287",
 
 	jwt: {
 		secret: process.env["JWT_SECRET"]!,
