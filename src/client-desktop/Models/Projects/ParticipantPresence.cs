@@ -1,3 +1,3 @@
 namespace Layla.Desktop.Models.Projects;
 
-public record ParticipantPresence(string UserId, string DisplayName, string Role);
+public record ParticipantPresence(string UserId, string DisplayName, string Role, string? AvatarUrl);

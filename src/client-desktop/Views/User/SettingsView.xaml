@@ -4,6 +4,7 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:local="clr-namespace:Layla.Desktop.Views.User"
+      xmlns:conv="clr-namespace:Layla.Desktop.Converters"
       mc:Ignorable="d"
       d:DesignHeight="900" d:DesignWidth="1080"
       ShowsNavigationUI="False"
@@ -13,7 +14,7 @@
 
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
-        <local:AvatarUrlConverter x:Key="AvatarUrlConverter"/>
+        <conv:AvatarUrlConverter x:Key="AvatarUrlConverter"/>
     </Page.Resources>
 
     <Grid Margin="40">

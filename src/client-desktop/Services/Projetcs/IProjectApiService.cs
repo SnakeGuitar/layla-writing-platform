@@ -15,6 +15,7 @@ public interface IProjectApiService
     Task<Collaborator?> InviteCollaboratorAsync(Guid projectId, InviteCollaboratorRequest request);
     Task<IEnumerable<Collaborator>?> GetCollaboratorsAsync(Guid projectId);
     Task<bool> RemoveCollaboratorAsync(Guid projectId, string collaboratorUserId);
+    Task<Collaborator?> UpdateCollaboratorRoleAsync(Guid projectId, string collaboratorUserId, string newRole);
 
     event Action<Guid, bool>? AuthorStatusChanged;
     event Action<Guid, IEnumerable<ParticipantPresence>>? ParticipantsUpdated;

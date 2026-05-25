@@ -200,6 +200,24 @@ public class ProjectApiService : IProjectApiService
         return false;
     }
 
+    public async Task<Collaborator?> UpdateCollaboratorRoleAsync(Guid projectId, string collaboratorUserId, string newRole)
+    {
+        AddAuthorizationHeader();
+        try
+        {
+            var payload = new { Role = newRole };
+            HttpResponseMessage response = await _httpClient.PatchAsJsonAsync(
+                $"/api/projects/{projectId}/collaborators/{collaboratorUserId}/role", payload);
+            if (response.IsSuccessStatusCode)
+                return await response.Content.ReadFromJsonAsync<Collaborator>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogCritical("UpdateCollaboratorRoleAsync() - Method exception: {exception}", ex.ToString());
+        }
+        return null;
+    }
+
     public async Task ConnectPresenceHubAsync()
     {
         if (_presenceHub != null) return;

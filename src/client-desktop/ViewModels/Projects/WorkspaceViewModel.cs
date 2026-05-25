@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Layla.Desktop.Models.Projects;
 using Layla.Desktop.Services;
+using System.Collections.Generic;
 using Layla.Desktop.Services.Logger;
 using Layla.Desktop.Services.Projetcs;
 using Microsoft.Extensions.Logging;
@@ -35,6 +36,9 @@ public partial class WorkspaceViewModel : ObservableObject
     [ObservableProperty]
     private bool _isInviting;
 
+    /// <summary>Live list of users currently connected to this project (updated via SignalR).</summary>
+    public ObservableCollection<ParticipantPresence> ConnectedUsers { get; } = new();
+
     public event EventHandler? OnLogout;
     public event EventHandler? OnBackToProjects;
     public event EventHandler? OnSettings;
@@ -43,7 +47,19 @@ public partial class WorkspaceViewModel : ObservableObject
     {
         _projectApiService = projectApiService;
         _projectApiService.SessionDisplaced += OnSessionDisplaced;
+        _projectApiService.ParticipantsUpdated += OnParticipantsUpdated;
         _logger = Log.For<WorkspaceViewModel>();
+    }
+
+    private void OnParticipantsUpdated(Guid projectId, IEnumerable<ParticipantPresence> participants)
+    {
+        if (CurrentProject == null || projectId != CurrentProject.Id) return;
+        App.Current.Dispatcher.Invoke(() =>
+        {
+            ConnectedUsers.Clear();
+            foreach (var p in participants)
+                ConnectedUsers.Add(p);
+        });
     }
 
     private void OnSessionDisplaced()
@@ -109,10 +125,31 @@ public partial class WorkspaceViewModel : ObservableObject
     // The IProjectApiService is a Singleton and we subscribe to its
     // SessionDisplaced event in the ctor — without explicit Dispose the
     // Singleton retains every WorkspaceViewModel (Transient) forever.
+    [RelayCommand]
+    private async Task ChangeCollaboratorRoleAsync(Collaborator collaborator)
+    {
+        if (CurrentProject == null) return;
+
+        // Toggle between READER ↔ EDITOR
+        string newRole = collaborator.Role == "READER" ? "EDITOR" : "READER";
+
+        var updated = await _projectApiService.UpdateCollaboratorRoleAsync(CurrentProject.Id, collaborator.UserId, newRole);
+        if (updated != null)
+        {
+            await LoadCollaboratorsAsync();
+            _logger.LogTrace("ChangeCollaboratorRoleAsync() - Role changed to {Role}.", newRole);
+        }
+        else
+        {
+            _logger.LogWarning("ChangeCollaboratorRoleAsync() - Failed to change role.");
+        }
+    }
+
     public void Dispose()
     {
         StopHeartbeat();
         _projectApiService.SessionDisplaced -= OnSessionDisplaced;
+        _projectApiService.ParticipantsUpdated -= OnParticipantsUpdated;
         GC.SuppressFinalize(this);
         _logger.LogTrace("Dispose() - WorkspaceViewModel disposed for project {ProjectId}", CurrentProject?.Id);
     }

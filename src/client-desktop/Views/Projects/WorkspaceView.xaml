@@ -4,7 +4,8 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
       xmlns:local="clr-namespace:Layla.Desktop.Views"
-      mc:Ignorable="d" 
+      xmlns:conv="clr-namespace:Layla.Desktop.Converters"
+      mc:Ignorable="d"
       d:DesignHeight="720" d:DesignWidth="1080"
       ShowsNavigationUI="False"
       Title="Workspace"
@@ -13,6 +14,7 @@
 
     <Page.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <conv:AvatarUrlConverter x:Key="AvatarUrlConverter"/>
     </Page.Resources>
 
     <Grid>
@@ -116,6 +118,51 @@
                     </StackPanel>
                     
                     <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Connected users avatar strip -->
+                        <ItemsControl ItemsSource="{Binding ConnectedUsers}" VerticalAlignment="Center" Margin="0,0,12,0">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <!-- Avatar bubble: photo if available, initials otherwise -->
+                                    <Border Width="30" Height="30" CornerRadius="15"
+                                            Margin="-6,0,0,0"
+                                            BorderBrush="{DynamicResource NmBgBaseBrush}" BorderThickness="2"
+                                            ToolTip="{Binding DisplayName}"
+                                            Background="{DynamicResource NmSurfaceBrush}">
+                                        <Grid>
+                                            <!-- Initials fallback -->
+                                            <TextBlock Text="{Binding DisplayName}"
+                                                       FontSize="10" FontWeight="Bold"
+                                                       Foreground="{DynamicResource NmAccentBrush}"
+                                                       HorizontalAlignment="Center"
+                                                       VerticalAlignment="Center">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Setter Property="Text" Value="?"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding DisplayName}" Value="{x:Null}">
+                                                                <Setter Property="Text" Value="?"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                            <!-- Avatar image (overlaps initials when loaded) -->
+                                            <Border CornerRadius="15" ClipToBounds="True">
+                                                <Image Source="{Binding AvatarUrl, Converter={StaticResource AvatarUrlConverter}}"
+                                                       Stretch="UniformToFill"
+                                                       Width="30" Height="30"/>
+                                            </Border>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+
                         <TextBlock Text="SISTEMA ACTIVO" Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmSuccessBrush}" FontWeight="SemiBold" VerticalAlignment="Center"/>
                         <Ellipse Width="6" Height="6" Fill="{DynamicResource NmSuccessBrush}" Margin="8,0,0,0" VerticalAlignment="Center"/>
                     </StackPanel>
@@ -208,9 +255,40 @@
                                                 <TextBlock Text="{Binding Email}" Style="{StaticResource NmBodyText}" FontSize="11"
                                                            Foreground="{DynamicResource NmTextSecondaryBrush}"/>
                                             </StackPanel>
-                                            <Border Grid.Column="1" CornerRadius="12" Padding="8,3" Background="#26A29BFE" VerticalAlignment="Center" Margin="10,0">
-                                                <TextBlock Text="{Binding Role}" Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmAccentBrush}" FontSize="9" FontWeight="Bold"/>
-                                            </Border>
+                                            <!-- Role selector: ComboBox for non-owners, badge for OWNER -->
+                                            <Grid Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
+                                                <!-- OWNER badge (read-only) -->
+                                                <Border CornerRadius="12" Padding="8,3" Background="#2655EFC4">
+                                                    <Border.Style>
+                                                        <Style TargetType="Border">
+                                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Role}" Value="OWNER">
+                                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </Border.Style>
+                                                    <TextBlock Text="OWNER" Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmSuccessBrush}" FontSize="9" FontWeight="Bold"/>
+                                                </Border>
+                                                <!-- Role ComboBox (EDITOR / READER, visible for non-owners) -->
+                                                <ComboBox SelectedItem="{Binding Role, Mode=OneWay}" FontSize="10" MinWidth="72"
+                                                          Tag="{Binding}"
+                                                          SelectionChanged="CollaboratorRoleComboBox_SelectionChanged">
+                                                    <ComboBox.Style>
+                                                        <Style TargetType="ComboBox">
+                                                            <Setter Property="Visibility" Value="Visible"/>
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding Role}" Value="OWNER">
+                                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </ComboBox.Style>
+                                                    <ComboBoxItem Content="READER"/>
+                                                    <ComboBoxItem Content="EDITOR"/>
+                                                </ComboBox>
+                                            </Grid>
                                             <Button Grid.Column="2" Content="Eliminar" Style="{StaticResource NmButtonGhost}" Foreground="{DynamicResource NmErrorBrush}" Padding="8,4" Cursor="Hand"
                                                     VerticalAlignment="Center"
                                                     Command="{Binding DataContext.RemoveCollaboratorCommand, RelativeSource={RelativeSource AncestorType=ListView}}"

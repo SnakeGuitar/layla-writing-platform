@@ -7,6 +7,7 @@ using Layla.Desktop.Views.User;
 using Layla.Desktop.Views.Wikis;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 
 namespace Layla.Desktop.Views.Projects;
 
@@ -110,6 +111,33 @@ public partial class WorkspaceView : Page
     private TabControl? FindTabControl()
     {
         return FindChild<TabControl>(this);
+    }
+
+    /// <summary>
+    /// When the role ComboBox changes, fire the ChangeCollaboratorRole command.
+    /// Uses the ComboBox Tag to identify which collaborator to update.
+    /// A flag prevents re-entrancy when the ComboBox is being programmatically synced.
+    /// </summary>
+    private bool _suppressRoleChange = false;
+    private async void CollaboratorRoleComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_suppressRoleChange) return;
+        if (sender is not ComboBox cb) return;
+        if (cb.Tag is not Collaborator collaborator) return;
+        if (cb.SelectedItem is not ComboBoxItem item) return;
+
+        string? selectedRole = item.Content?.ToString();
+        if (selectedRole == null || selectedRole == collaborator.Role) return;
+
+        _suppressRoleChange = true;
+        try
+        {
+            await _viewModel.ChangeCollaboratorRoleCommand.ExecuteAsync(collaborator);
+        }
+        finally
+        {
+            _suppressRoleChange = false;
+        }
     }
 
     private static T? FindChild<T>(DependencyObject parent) where T : DependencyObject
