@@ -88,6 +88,7 @@ public class AppUserService : BaseService<AppUserService>, IAppUserService
         Email = user.Email,
         DisplayName = user.DisplayName,
         Bio = user.Bio,
+        AvatarUrl = user.AvatarUrl,
         CreatedAt = user.CreatedAt,
         LockoutEnd = user.LockoutEnd
     };
