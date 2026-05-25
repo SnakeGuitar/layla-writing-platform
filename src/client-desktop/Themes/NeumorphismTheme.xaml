@@ -11,7 +11,8 @@
     <Color x:Key="NmShadowDarkColor">#141420</Color>
     <Color x:Key="NmTextPrimaryColor">#E8E8F0</Color>
     <Color x:Key="NmTextSecondaryColor">#9090A8</Color>
-    <Color x:Key="NmAccentColor">#A29BFE</Color>
+    <Color x:Key="NmAccentColor">#1A47C8</Color>
+    <Color x:Key="NmAccentHoverColor">#2E5CE6</Color>
     <Color x:Key="NmErrorColor">#FF7675</Color>
     <Color x:Key="NmSuccessColor">#55EFC4</Color>
 
@@ -23,6 +24,7 @@
     <SolidColorBrush x:Key="NmTextPrimaryBrush" Color="{StaticResource NmTextPrimaryColor}" />
     <SolidColorBrush x:Key="NmTextSecondaryBrush" Color="{StaticResource NmTextSecondaryColor}" />
     <SolidColorBrush x:Key="NmAccentBrush" Color="{StaticResource NmAccentColor}" />
+    <SolidColorBrush x:Key="NmAccentHoverBrush" Color="{StaticResource NmAccentHoverColor}" />
     <SolidColorBrush x:Key="NmErrorBrush" Color="{StaticResource NmErrorColor}" />
     <SolidColorBrush x:Key="NmSuccessBrush" Color="{StaticResource NmSuccessColor}" />
 
@@ -41,8 +43,8 @@
     <!-- ================================================================= -->
     <!-- TYPOGRAPHY                                                        -->
     <!-- ================================================================= -->
-    <FontFamily x:Key="InterfaceFont">Segoe UI, sans-serif</FontFamily>
-    <FontFamily x:Key="TechnicalFont">Segoe UI, sans-serif</FontFamily>
+    <FontFamily x:Key="InterfaceFont">./Fonts/#Inter</FontFamily>
+    <FontFamily x:Key="TechnicalFont">./Fonts/#Inter</FontFamily>
 
     <!-- ================================================================= -->
     <!-- TEXT STYLES                                                       -->
@@ -84,12 +86,12 @@
     <!-- BORDERS & CARDS                                                   -->
     <!-- ================================================================= -->
     <Style x:Key="NmCardBorder" TargetType="Border">
-        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="CornerRadius" Value="22"/>
         <Setter Property="Background" Value="{StaticResource NmSurfaceBrush}"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Effect">
             <Setter.Value>
-                <DropShadowEffect Color="{StaticResource NmShadowDarkColor}" ShadowDepth="4" Direction="315" BlurRadius="8" Opacity="0.6"/>
+                <DropShadowEffect Color="{StaticResource NmShadowDarkColor}" ShadowDepth="8" Direction="315" BlurRadius="18" Opacity="0.85"/>
             </Setter.Value>
         </Setter>
     </Style>
@@ -99,16 +101,16 @@
 
     <!-- Default Border style -->
     <Style TargetType="Border">
-        <Setter Property="CornerRadius" Value="12"/>
+        <Setter Property="CornerRadius" Value="22"/>
     </Style>
 
     <!-- ================================================================= -->
     <!-- INPUT FIELD STYLES (INSET NEUMORPHIC)                             -->
     <!-- ================================================================= -->
     <Style x:Key="NmInputStyle" TargetType="TextBox">
-        <Setter Property="Background" Value="{StaticResource NmBgBaseBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource NmTextPrimaryBrush}"/>
-        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="Background" Value="{DynamicResource NmBgBaseBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource NmTextPrimaryBrush}"/>
+        <Setter Property="Padding" Value="12,8"/>
         <Setter Property="FontFamily" Value="{StaticResource InterfaceFont}"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="CaretBrush" Value="{StaticResource NmAccentBrush}"/>
@@ -118,12 +120,12 @@
                 <ControlTemplate TargetType="TextBox">
                     <Grid>
                         <!-- Top-left dark inset border shadow highlight -->
-                        <Border CornerRadius="6" Background="{DynamicResource NmBgBaseBrush}" BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="1.5,1.5,0,0"/>
+                        <Border CornerRadius="14" Background="{DynamicResource NmBgBaseBrush}" BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="1.5,1.5,0,0" IsHitTestVisible="False"/>
                         <!-- Bottom-right light inset border shadow highlight -->
-                        <Border CornerRadius="6" Background="Transparent" BorderBrush="{DynamicResource NmShadowLightBrush}" BorderThickness="0,0,1.5,1.5"/>
+                        <Border CornerRadius="14" Background="Transparent" BorderBrush="{DynamicResource NmShadowLightBrush}" BorderThickness="0,0,1.5,1.5" IsHitTestVisible="False"/>
                         <!-- Visual focus outline (extremely subtle accent line) -->
-                        <Border x:Name="FocusBorder" CornerRadius="6" Background="Transparent" BorderBrush="{DynamicResource NmAccentBrush}" BorderThickness="1" Visibility="Collapsed"/>
-                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="Center"/>
+                        <Border x:Name="FocusBorder" CornerRadius="14" Background="Transparent" BorderBrush="{DynamicResource NmAccentBrush}" BorderThickness="1" Visibility="Collapsed" IsHitTestVisible="False"/>
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="Stretch"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsFocused" Value="True">
@@ -143,9 +145,9 @@
 
     <!-- PasswordBox style mirroring NmInputStyle -->
     <Style x:Key="NmPasswordStyle" TargetType="PasswordBox">
-        <Setter Property="Background" Value="{StaticResource NmBgBaseBrush}"/>
-        <Setter Property="Foreground" Value="{StaticResource NmTextPrimaryBrush}"/>
-        <Setter Property="Padding" Value="12,10"/>
+        <Setter Property="Background" Value="{DynamicResource NmBgBaseBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource NmTextPrimaryBrush}"/>
+        <Setter Property="Padding" Value="12,8"/>
         <Setter Property="FontFamily" Value="{StaticResource InterfaceFont}"/>
         <Setter Property="FontSize" Value="13"/>
         <Setter Property="CaretBrush" Value="{StaticResource NmAccentBrush}"/>
@@ -154,10 +156,13 @@
             <Setter.Value>
                 <ControlTemplate TargetType="PasswordBox">
                     <Grid>
-                        <Border CornerRadius="6" Background="{DynamicResource NmBgBaseBrush}" BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="1.5,1.5,0,0"/>
-                        <Border CornerRadius="6" Background="Transparent" BorderBrush="{DynamicResource NmShadowLightBrush}" BorderThickness="0,0,1.5,1.5"/>
-                        <Border x:Name="FocusBorder" CornerRadius="6" Background="Transparent" BorderBrush="{DynamicResource NmAccentBrush}" BorderThickness="1" Visibility="Collapsed"/>
-                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="Center"/>
+                        <!-- Top-left dark inset border shadow highlight -->
+                        <Border CornerRadius="14" Background="{DynamicResource NmBgBaseBrush}" BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="1.5,1.5,0,0" IsHitTestVisible="False"/>
+                        <!-- Bottom-right light inset border shadow highlight -->
+                        <Border CornerRadius="14" Background="Transparent" BorderBrush="{DynamicResource NmShadowLightBrush}" BorderThickness="0,0,1.5,1.5" IsHitTestVisible="False"/>
+                        <!-- Visual focus outline (extremely subtle accent line) -->
+                        <Border x:Name="FocusBorder" CornerRadius="14" Background="Transparent" BorderBrush="{DynamicResource NmAccentBrush}" BorderThickness="1" Visibility="Collapsed" IsHitTestVisible="False"/>
+                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" VerticalAlignment="Stretch"/>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsFocused" Value="True">
@@ -185,8 +190,8 @@
 
     <!-- Primary Button (Raised Neumorphic -> Pressed Sunken) -->
     <Style x:Key="NmButtonPrimary" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource NmSurfaceBrush}" />
-        <Setter Property="Foreground" Value="{StaticResource NmTextPrimaryBrush}" />
+        <Setter Property="Background" Value="{StaticResource NmAccentBrush}" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
         <Setter Property="FontFamily" Value="{StaticResource InterfaceFont}" />
         <Setter Property="FontSize" Value="12.5" />
         <Setter Property="FontWeight" Value="SemiBold" />
@@ -199,31 +204,38 @@
                 <ControlTemplate TargetType="Button">
                     <Grid x:Name="BtnGrid">
                         <!-- Raised Shadows (Normal state) -->
-                        <Border x:Name="ShadowLight" CornerRadius="8" Background="Transparent">
+                        <Border x:Name="ShadowLight" CornerRadius="16" Background="Transparent">
                             <Border.Effect>
-                                <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="3" Direction="135" BlurRadius="6" Opacity="0.9"/>
+                                <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="7" Direction="135" BlurRadius="14" Opacity="1.0"/>
                             </Border.Effect>
                         </Border>
-                        <Border x:Name="ShadowDark" CornerRadius="8" Background="Transparent">
+                        <Border x:Name="ShadowDark" CornerRadius="16" Background="Transparent">
                             <Border.Effect>
-                                <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="3" Direction="315" BlurRadius="6" Opacity="0.5"/>
+                                <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="7" Direction="315" BlurRadius="14" Opacity="0.8"/>
                             </Border.Effect>
                         </Border>
 
                         <!-- Sunken Inset Shadows (Pressed state) -->
-                        <Border x:Name="SunkenDark" CornerRadius="8" Background="{DynamicResource NmBgBaseBrush}" BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="1.5,1.5,0,0" Visibility="Collapsed"/>
-                        <Border x:Name="SunkenLight" CornerRadius="8" Background="Transparent" BorderBrush="{DynamicResource NmShadowLightBrush}" BorderThickness="0,0,1.5,1.5" Visibility="Collapsed"/>
+                        <Border x:Name="SunkenDark" CornerRadius="16" Background="{DynamicResource NmBgBaseBrush}" BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="1.5,1.5,0,0" Visibility="Collapsed"/>
+                        <Border x:Name="SunkenLight" CornerRadius="16" Background="Transparent" BorderBrush="{DynamicResource NmShadowLightBrush}" BorderThickness="0,0,1.5,1.5" Visibility="Collapsed"/>
 
                         <!-- Actual Main Surface Button -->
-                        <Border x:Name="MainBorder" CornerRadius="8" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter x:Name="Presenter" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        <Border x:Name="MainBorder" CornerRadius="16" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter x:Name="Presenter" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="FontFamily" Value="{DynamicResource InterfaceFont}"/>
+                                    </Style>
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
                         </Border>
                     </Grid>
                     <ControlTemplate.Triggers>
                         <!-- Hover: Solid soft accent color -->
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="MainBorder" Property="Background" Value="{DynamicResource NmAccentBrush}" />
-                            <Setter Property="Foreground" Value="#1E1E2E" /> <!-- Dark text contrast on violet accent -->
+                            <Setter TargetName="MainBorder" Property="Background" Value="{DynamicResource NmAccentHoverBrush}" />
+                            <Setter Property="Foreground" Value="#FFFFFF" />
                         </Trigger>
                         <!-- Pressed: sunken state -->
                         <Trigger Property="IsPressed" Value="True">
@@ -245,32 +257,41 @@
 
     <!-- Danger Button (Raised Neumorphic -> Hover Red -> Pressed Sunken) -->
     <Style x:Key="NmButtonDanger" TargetType="Button" BasedOn="{StaticResource NmButtonPrimary}">
+        <Setter Property="Background" Value="{StaticResource NmErrorBrush}" />
+        <Setter Property="Foreground" Value="#FFFFFF" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Grid x:Name="BtnGrid">
-                        <Border x:Name="ShadowLight" CornerRadius="8" Background="Transparent">
+                        <Border x:Name="ShadowLight" CornerRadius="16" Background="Transparent">
                             <Border.Effect>
-                                <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="3" Direction="135" BlurRadius="6" Opacity="0.9"/>
+                                <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="7" Direction="135" BlurRadius="14" Opacity="1.0"/>
                             </Border.Effect>
                         </Border>
-                        <Border x:Name="ShadowDark" CornerRadius="8" Background="Transparent">
+                        <Border x:Name="ShadowDark" CornerRadius="16" Background="Transparent">
                             <Border.Effect>
-                                <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="3" Direction="315" BlurRadius="6" Opacity="0.5"/>
+                                <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="7" Direction="315" BlurRadius="14" Opacity="0.8"/>
                             </Border.Effect>
                         </Border>
 
-                        <Border x:Name="SunkenDark" CornerRadius="8" Background="{DynamicResource NmBgBaseBrush}" BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="1.5,1.5,0,0" Visibility="Collapsed"/>
-                        <Border x:Name="SunkenLight" CornerRadius="8" Background="Transparent" BorderBrush="{DynamicResource NmShadowLightBrush}" BorderThickness="0,0,1.5,1.5" Visibility="Collapsed"/>
+                        <Border x:Name="SunkenDark" CornerRadius="16" Background="{DynamicResource NmBgBaseBrush}" BorderBrush="{DynamicResource NmShadowDarkBrush}" BorderThickness="1.5,1.5,0,0" Visibility="Collapsed"/>
+                        <Border x:Name="SunkenLight" CornerRadius="16" Background="Transparent" BorderBrush="{DynamicResource NmShadowLightBrush}" BorderThickness="0,0,1.5,1.5" Visibility="Collapsed"/>
 
-                        <Border x:Name="MainBorder" CornerRadius="8" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
-                            <ContentPresenter x:Name="Presenter" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                        <Border x:Name="MainBorder" CornerRadius="16" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter x:Name="Presenter" HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Foreground" Value="White"/>
+                                        <Setter Property="FontFamily" Value="{DynamicResource InterfaceFont}"/>
+                                    </Style>
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
                         </Border>
                     </Grid>
                     <ControlTemplate.Triggers>
-                        <!-- Hover: solid Error brush red -->
+                        <!-- Hover: solid soft red -->
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="MainBorder" Property="Background" Value="{DynamicResource NmErrorBrush}" />
+                            <Setter TargetName="MainBorder" Property="Background" Value="#FF7675" />
                             <Setter Property="Foreground" Value="#FFFFFF" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
@@ -304,7 +325,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Border" CornerRadius="6" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
+                    <Border x:Name="Border" CornerRadius="10" Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -393,17 +414,17 @@
                             <ColumnDefinition Width="30" />
                         </Grid.ColumnDefinitions>
                         <!-- Raised Neumorphic Border -->
-                        <Border x:Name="ShadowLight" Grid.ColumnSpan="2" CornerRadius="6" Background="Transparent">
+                        <Border x:Name="ShadowLight" Grid.ColumnSpan="2" CornerRadius="10" Background="Transparent">
                             <Border.Effect>
                                 <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="2" Direction="135" BlurRadius="4" Opacity="0.9"/>
                             </Border.Effect>
                         </Border>
-                        <Border x:Name="ShadowDark" Grid.ColumnSpan="2" CornerRadius="6" Background="Transparent">
+                        <Border x:Name="ShadowDark" Grid.ColumnSpan="2" CornerRadius="10" Background="Transparent">
                             <Border.Effect>
                                 <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="2" Direction="315" BlurRadius="4" Opacity="0.5"/>
                             </Border.Effect>
                         </Border>
-                        <Border x:Name="Border" Grid.ColumnSpan="2" Background="{TemplateBinding Background}" CornerRadius="6" BorderThickness="0" />
+                        <Border x:Name="Border" Grid.ColumnSpan="2" Background="{TemplateBinding Background}" CornerRadius="10" BorderThickness="0" />
                         
                         <ContentPresenter x:Name="ContentSite" IsHitTestVisible="False" Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}" ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}" Margin="{TemplateBinding Padding}" VerticalAlignment="Center" HorizontalAlignment="Left" />
                         
