@@ -70,7 +70,7 @@ public partial class WorkspaceViewModel : ObservableObject
             MessageBox.Show(
                 "Sesión terminada: Se ha iniciado sesión en otro dispositivo con esta cuenta.",
                 "Seguridad", MessageBoxButton.OK, MessageBoxImage.Warning);
-            _ = LogoutAsync();
+            Logout();
         });
     }
 
@@ -119,7 +119,10 @@ public partial class WorkspaceViewModel : ObservableObject
             _heartbeatTimer = null;
             _logger.LogTrace("StopHeartbeat() - Heartbeat stopped for project {ProjectId}", CurrentProject?.Id);
         }
-        _logger.LogTrace("StopHeartbeat() - No heartbeat to stop for project {ProjectId}", CurrentProject?.Id);
+        else
+        {
+            _logger.LogTrace("StopHeartbeat() - No heartbeat to stop for project {ProjectId}", CurrentProject?.Id);
+        }
     }
 
     // The IProjectApiService is a Singleton and we subscribe to its
@@ -157,21 +160,19 @@ public partial class WorkspaceViewModel : ObservableObject
 
 
     [RelayCommand]
-    private async Task LogoutAsync()
+    private void Logout()
     {
         SessionManager.ClearSession();
         StopHeartbeat();
-        try { await _projectApiService.DisconnectPresenceHubAsync(); } catch { }
         OnLogout?.Invoke(this, EventArgs.Empty);
 
         _logger.LogInformation("Logout() - User logged out and session cleared.");
     }
 
     [RelayCommand]
-    private async Task BackToProjectsAsync()
+    private void BackToProjects()
     {
         StopHeartbeat();
-        try { await _projectApiService.DisconnectPresenceHubAsync(); } catch { }
         OnBackToProjects?.Invoke(this, EventArgs.Empty);
 
         _logger.LogTrace("BackToProjects() - Navigating back to projects list from project {ProjectId}", CurrentProject?.Id);
