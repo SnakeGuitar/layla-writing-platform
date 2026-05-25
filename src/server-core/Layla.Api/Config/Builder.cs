@@ -1,3 +1,4 @@
+using Layla.Api.Hubs;
 using Layla.Infrastructure.Extensions;
 using Microsoft.OpenApi.Models;
 using System.Reflection;
@@ -98,7 +99,15 @@ public static class Builder
         });
 
         builder.Services.AddInfrastructureServices(builder.Configuration);
-        builder.Services.AddSignalR();
+        builder.Services.AddSignalR()
+            .AddHubOptions<ManuscriptHub>(opts =>
+            {
+                // Detect abrupt client disconnects in ~10 s instead of the default 30 s.
+                // The client sends a keep-alive ping every 5 s; if two consecutive pings
+                // are missed the server fires OnDisconnectedAsync and removes the cursor.
+                opts.ClientTimeoutInterval = TimeSpan.FromSeconds(10);
+                opts.KeepAliveInterval    = TimeSpan.FromSeconds(5);
+            });
         int.TryParse(builder.Configuration["Ports:HTTPS"] ?? "5288", out int httpsPortConf);
         int.TryParse(builder.Configuration["Ports:HTTP"] ?? "5287", out int httpPortConf);
         string bindHost = builder.Environment.IsProduction() ? "+" : "localhost";

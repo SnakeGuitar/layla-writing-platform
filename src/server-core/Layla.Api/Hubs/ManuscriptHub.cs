@@ -68,6 +68,19 @@ public class ManuscriptHub : Hub
     }
 
     /// <summary>
+    /// Broadcasts the caller's current RTF document content to every other
+    /// member of the same chapter group in real time. The receiver applies
+    /// the content directly without an API round-trip, so collaborators see
+    /// keystrokes with ~350 ms latency instead of the full save-reload cycle.
+    /// </summary>
+    public async Task BroadcastTextChanged(Guid projectId, string chapterId, string rtfContent)
+    {
+        var userId    = Context.User?.GetUserId();
+        var groupName = GetChapterGroupName(projectId, chapterId);
+        await Clients.OthersInGroup(groupName).SendAsync("OnTextChanged", userId, rtfContent);
+    }
+
+    /// <summary>
     /// Notifies all other collaborators in the same chapter that the chapter
     /// content has been saved. Receivers reload the chapter from the API so
     /// their view stays in sync without polling.
