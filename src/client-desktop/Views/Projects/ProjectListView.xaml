@@ -21,29 +21,44 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            
-            <!-- Clean display header (no tech monitors or lines) -->
-            <Grid Grid.Row="0" Margin="0,0,0,30">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-                
-                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock Text="Mis proyectos" Style="{StaticResource NmDisplayText}" FontSize="32" FontWeight="SemiBold" Foreground="{DynamicResource NmAccentBrush}"/>
-                    <TextBlock Text="Gestiona y colabora en tus manuscritos" Style="{StaticResource NmBodyText}" Margin="0,4,0,0"/>
-                </StackPanel>
-                
-                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Content="Explorar públicos" Style="{StaticResource NmButtonGhost}"
-                            Padding="14,8" Cursor="Hand" Click="BrowsePublicButton_Click" Margin="0,0,6,0"/>
-                    <Button Content="Crear proyecto" Style="{StaticResource NmButtonPrimary}"
-                            Padding="16,8" Cursor="Hand" Command="{Binding OpenCreateModalCommand}" Margin="0,0,6,0"/>
-                    <Button Content="Configuración" Style="{StaticResource NmButtonGhost}"
-                            Padding="14,8" Cursor="Hand" Click="SettingsButton_Click" Margin="0,0,6,0"/>
-                    <Button Content="Cerrar sesión" Style="{StaticResource NmButtonGhost}" Foreground="{DynamicResource NmErrorBrush}"
-                            Padding="14,8" Cursor="Hand" Click="LogoutButton_Click"/>
-                </StackPanel>
+
+            <!-- Header panel card -->
+            <Grid Grid.Row="0" Margin="0,0,0,24">
+                <!-- Neumorphic shadows -->
+                <Border CornerRadius="18" Background="Transparent">
+                    <Border.Effect>
+                        <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="4" Direction="135" BlurRadius="12" Opacity="0.9"/>
+                    </Border.Effect>
+                </Border>
+                <Border CornerRadius="18" Background="Transparent">
+                    <Border.Effect>
+                        <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="4" Direction="315" BlurRadius="12" Opacity="0.5"/>
+                    </Border.Effect>
+                </Border>
+                <Border CornerRadius="18" Background="{DynamicResource NmSurfaceBrush}" Padding="26,20">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                            <TextBlock Text="Mis proyectos" Style="{StaticResource NmDisplayText}" FontSize="28" FontWeight="SemiBold" Foreground="{DynamicResource NmAccentBrush}"/>
+                            <TextBlock Text="Gestiona y colabora en tus manuscritos" Style="{StaticResource NmBodyText}" Margin="0,4,0,0"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button Content="Explorar públicos" Style="{StaticResource NmButtonGhost}"
+                                    Padding="14,8" Cursor="Hand" Click="BrowsePublicButton_Click" Margin="0,0,6,0"/>
+                            <Button Content="Crear proyecto" Style="{StaticResource NmButtonPrimary}"
+                                    Padding="16,8" Cursor="Hand" Command="{Binding OpenCreateModalCommand}" Margin="0,0,6,0"/>
+                            <Button Content="Configuración" Style="{StaticResource NmButtonGhost}"
+                                    Padding="14,8" Cursor="Hand" Click="SettingsButton_Click" Margin="0,0,6,0"/>
+                            <Button Content="Cerrar sesión" Style="{StaticResource NmButtonGhost}" Foreground="{DynamicResource NmErrorBrush}"
+                                    Padding="14,8" Cursor="Hand" Click="LogoutButton_Click"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
             </Grid>
             
             <!-- Neumorphic Project Cards List -->
@@ -66,92 +81,91 @@
                             </Border>
                             
                             <!-- Content card surface -->
-                            <Border CornerRadius="12" Background="{DynamicResource NmSurfaceBrush}" Padding="20">
+                            <Border CornerRadius="12" Background="{DynamicResource NmSurfaceBrush}" Padding="20,16">
                                 <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    
-                                    <StackPanel Grid.Column="0">
-                                        <!-- Top Info Bar: Status / Roles -->
-                                        <Grid Margin="0,0,0,12">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            
-                                            <!-- Genre -->
-                                            <TextBlock Grid.Column="0" Text="{Binding LiteraryGenre}" Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmAccentBrush}" FontWeight="SemiBold"/>
-                                            
-                                            <!-- Soft Round Role Pills -->
-                                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                                                <!-- Public Badge -->
-                                                <Border CornerRadius="12" Padding="10,4" Margin="8,0,0,0" Background="#20A29BFE">
-                                                    <TextBlock Text="PÚBLICO" Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmAccentBrush}" FontSize="9" FontWeight="Bold"/>
-                                                </Border>
-                                                
-                                                <!-- User Role Badge -->
-                                                <Border CornerRadius="12" Padding="10,4" Margin="8,0,0,0" VerticalAlignment="Center">
-                                                    <Border.Style>
-                                                        <Style TargetType="Border">
-                                                            <Setter Property="Background" Value="Transparent"/>
-                                                            <Setter Property="Visibility" Value="Visible"/>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="8"/>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="6"/>
+                                        <RowDefinition Height="Auto"/>
+                                    </Grid.RowDefinitions>
+
+                                    <!-- Row 0: Genre + Role/Public badges -->
+                                    <Grid Grid.Row="0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding LiteraryGenre}" Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmAccentBrush}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                            <Border CornerRadius="12" Padding="10,4" Margin="8,0,0,0" Background="#20A29BFE">
+                                                <TextBlock Text="PÚBLICO" Style="{StaticResource NmLabelText}" Foreground="{DynamicResource NmAccentBrush}" FontSize="9" FontWeight="Bold"/>
+                                            </Border>
+                                            <Border CornerRadius="12" Padding="10,4" Margin="8,0,0,0" VerticalAlignment="Center">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="Transparent"/>
+                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding UserRole}" Value="">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding UserRole}" Value="{x:Null}">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding UserRole}" Value="OWNER">
+                                                                <Setter Property="Background" Value="#2655EFC4"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding UserRole}" Value="EDITOR">
+                                                                <Setter Property="Background" Value="#26A29BFE"/>
+                                                            </DataTrigger>
+                                                            <DataTrigger Binding="{Binding UserRole}" Value="READER">
+                                                                <Setter Property="Background" Value="#269090A8"/>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock Text="{Binding UserRole}" FontSize="9" FontWeight="Bold">
+                                                    <TextBlock.Style>
+                                                        <Style TargetType="TextBlock" BasedOn="{StaticResource NmLabelText}">
+                                                            <Setter Property="Foreground" Value="{DynamicResource NmTextSecondaryBrush}"/>
                                                             <Style.Triggers>
-                                                                <DataTrigger Binding="{Binding UserRole}" Value="">
-                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                </DataTrigger>
-                                                                <DataTrigger Binding="{Binding UserRole}" Value="{x:Null}">
-                                                                    <Setter Property="Visibility" Value="Collapsed"/>
-                                                                </DataTrigger>
                                                                 <DataTrigger Binding="{Binding UserRole}" Value="OWNER">
-                                                                    <Setter Property="Background" Value="#2655EFC4"/> <!-- 15% Success green -->
+                                                                    <Setter Property="Foreground" Value="{DynamicResource NmSuccessBrush}"/>
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding UserRole}" Value="EDITOR">
-                                                                    <Setter Property="Background" Value="#26A29BFE"/> <!-- 15% Accent violet -->
+                                                                    <Setter Property="Foreground" Value="{DynamicResource NmAccentBrush}"/>
                                                                 </DataTrigger>
                                                                 <DataTrigger Binding="{Binding UserRole}" Value="READER">
-                                                                    <Setter Property="Background" Value="#269090A8"/> <!-- 15% Secondary text gray -->
+                                                                    <Setter Property="Foreground" Value="{DynamicResource NmTextSecondaryBrush}"/>
                                                                 </DataTrigger>
                                                             </Style.Triggers>
                                                         </Style>
-                                                    </Border.Style>
-                                                    <TextBlock Text="{Binding UserRole}" FontSize="9" FontWeight="Bold">
-                                                        <TextBlock.Style>
-                                                            <Style TargetType="TextBlock" BasedOn="{StaticResource NmLabelText}">
-                                                                <Setter Property="Foreground" Value="{DynamicResource NmTextSecondaryBrush}"/>
-                                                                <Style.Triggers>
-                                                                    <DataTrigger Binding="{Binding UserRole}" Value="OWNER">
-                                                                        <Setter Property="Foreground" Value="{DynamicResource NmSuccessBrush}"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding UserRole}" Value="EDITOR">
-                                                                        <Setter Property="Foreground" Value="{DynamicResource NmAccentBrush}"/>
-                                                                    </DataTrigger>
-                                                                    <DataTrigger Binding="{Binding UserRole}" Value="READER">
-                                                                        <Setter Property="Foreground" Value="{DynamicResource NmTextSecondaryBrush}"/>
-                                                                    </DataTrigger>
-                                                                </Style.Triggers>
-                                                            </Style>
-                                                        </TextBlock.Style>
-                                                    </TextBlock>
-                                                </Border>
-                                            </StackPanel>
-                                        </Grid>
-                                        
-                                        <!-- Main Title -->
-                                        <TextBlock Text="{Binding Title}" Style="{StaticResource NmTitleText}" FontSize="20" Margin="0,0,0,8" Foreground="{DynamicResource NmTextPrimaryBrush}"/>
-                                        
-                                        <!-- Synopsis -->
-                                        <TextBlock Text="{Binding Synopsis}" Style="{StaticResource NmBodyText}" TextWrapping="Wrap" MaxWidth="700" Margin="0,0,0,4" LineHeight="18"/>
-                                    </StackPanel>
-        
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Bottom" Margin="20,0,0,0">
-                                        <Button Content="Abrir" Style="{StaticResource NmButtonPrimary}" Padding="16,8" Cursor="Hand" Click="OpenButton_Click" />
-                                        <Button Content="Editar" Style="{StaticResource NmButtonGhost}" Padding="14,8" Cursor="Hand" Margin="6,0,0,0"
-                                                Command="{Binding DataContext.OpenEditModalCommand, RelativeSource={RelativeSource AncestorType=ListView}}" CommandParameter="{Binding}"/>
-                                        <Button Content="Eliminar" Style="{StaticResource NmButtonGhost}" Foreground="{DynamicResource NmErrorBrush}" Padding="14,8" Cursor="Hand" 
-                                                Command="{Binding DataContext.DeleteProjectCommand, RelativeSource={RelativeSource AncestorType=ListView}}" CommandParameter="{Binding}" Margin="6,0,0,0"/>
-                                    </StackPanel>
+                                                    </TextBlock.Style>
+                                                </TextBlock>
+                                            </Border>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Row 2: Title (left) + Action buttons (right, same baseline) -->
+                                    <Grid Grid.Row="2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding Title}" Style="{StaticResource NmTitleText}" FontSize="20" Foreground="{DynamicResource NmTextPrimaryBrush}" VerticalAlignment="Center"/>
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center" Margin="20,0,0,0">
+                                            <Button Content="Abrir" Style="{StaticResource NmButtonPrimary}" Padding="16,8" Cursor="Hand" Click="OpenButton_Click"/>
+                                            <Button Content="Editar" Style="{StaticResource NmButtonGhost}" Padding="14,8" Cursor="Hand" Margin="6,0,0,0"
+                                                    Command="{Binding DataContext.OpenEditModalCommand, RelativeSource={RelativeSource AncestorType=ListView}}" CommandParameter="{Binding}"/>
+                                            <Button Content="Eliminar" Style="{StaticResource NmButtonGhost}" Foreground="{DynamicResource NmErrorBrush}" Padding="14,8" Cursor="Hand"
+                                                    Command="{Binding DataContext.DeleteProjectCommand, RelativeSource={RelativeSource AncestorType=ListView}}" CommandParameter="{Binding}" Margin="6,0,0,0"/>
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <!-- Row 4: Synopsis -->
+                                    <TextBlock Grid.Row="4" Text="{Binding Synopsis}" Style="{StaticResource NmBodyText}" TextWrapping="Wrap" LineHeight="18"/>
                                 </Grid>
                             </Border>
                         </Grid>
