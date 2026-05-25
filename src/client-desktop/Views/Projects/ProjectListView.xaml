@@ -67,22 +67,36 @@
                     <DataTemplate>
                         <!-- Grid holding the double-shadow neumorphic card -->
                         <Grid Margin="10,10,10,20">
-                            <!-- Light shadow border -->
-                            <Border CornerRadius="12" Background="Transparent">
+                            <!-- Outer glow / light reflection (top-left) -->
+                            <Border CornerRadius="14" Background="Transparent">
                                 <Border.Effect>
-                                    <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="4" Direction="135" BlurRadius="8" Opacity="0.9"/>
+                                    <DropShadowEffect Color="{DynamicResource NmShadowLightColor}" ShadowDepth="8" Direction="135" BlurRadius="18" Opacity="1.0"/>
                                 </Border.Effect>
                             </Border>
-                            <!-- Dark shadow border -->
-                            <Border CornerRadius="12" Background="Transparent">
+                            <!-- Outer shadow (bottom-right) -->
+                            <Border CornerRadius="14" Background="Transparent">
                                 <Border.Effect>
-                                    <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="4" Direction="315" BlurRadius="8" Opacity="0.5"/>
+                                    <DropShadowEffect Color="{DynamicResource NmShadowDarkColor}" ShadowDepth="8" Direction="315" BlurRadius="18" Opacity="0.75"/>
                                 </Border.Effect>
                             </Border>
-                            
+
                             <!-- Content card surface -->
-                            <Border CornerRadius="12" Background="{DynamicResource NmSurfaceBrush}" Padding="20,16">
+                            <Border CornerRadius="14" Background="{DynamicResource NmSurfaceBrush}"
+                                    BorderBrush="{DynamicResource NmShadowLightBrush}" BorderThickness="1,1,0,0"
+                                    Padding="0,16,20,16">
                                 <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <!-- Accent bar -->
+                                        <ColumnDefinition Width="4"/>
+                                        <ColumnDefinition Width="16"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <!-- Left accent bar -->
+                                    <Border Grid.Column="0" CornerRadius="14,0,0,14" Background="{DynamicResource NmAccentBrush}" Opacity="0.55" Margin="-1,0,0,0"/>
+
+                                    <!-- Card content -->
+                                    <Grid Grid.Column="2">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="8"/>
@@ -166,7 +180,8 @@
 
                                     <!-- Row 4: Synopsis -->
                                     <TextBlock Grid.Row="4" Text="{Binding Synopsis}" Style="{StaticResource NmBodyText}" TextWrapping="Wrap" LineHeight="18"/>
-                                </Grid>
+                                    </Grid><!-- end card content Grid -->
+                                </Grid><!-- end outer column Grid -->
                             </Border>
                         </Grid>
                     </DataTemplate>
