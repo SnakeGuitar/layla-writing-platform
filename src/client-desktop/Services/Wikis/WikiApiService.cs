@@ -36,11 +36,13 @@ public class WikiApiService : IWikiApiService
             if (!string.IsNullOrEmpty(entityType))
                 url += $"?type={Uri.EscapeDataString(entityType)}";
 
-            return await _httpClient.GetFromJsonAsync<List<WikiEntry>>(url);
+            var response = await _httpClient.GetAsync(url);
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<List<WikiEntry>>();
         }
         catch (Exception ex)
         {
-            _logger.LogCritical("GetEntriesAsync() - Method exception: {exception}", ex.ToString());
+            _logger.LogWarning("GetEntriesAsync() failed (server unreachable?): {message}", ex.Message);
             return null;
         }
     }
@@ -51,11 +53,13 @@ public class WikiApiService : IWikiApiService
         try
         {
             AddAuthorizationHeader();
-            return await _httpClient.GetFromJsonAsync<WikiEntry>($"/api/wiki/{projectId}/entries/{entityId}");
+            var response = await _httpClient.GetAsync($"/api/wiki/{projectId}/entries/{entityId}");
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<WikiEntry>();
         }
         catch (Exception ex)
         {
-            _logger.LogCritical("GetEntryAsync() - Method exception: {exception}", ex.ToString());
+            _logger.LogWarning("GetEntryAsync() failed (server unreachable?): {message}", ex.Message);
             return null;
         }
     }
@@ -73,7 +77,7 @@ public class WikiApiService : IWikiApiService
         }
         catch (Exception ex)
         {
-            _logger.LogCritical("CreateEntryAsync() - Method exception: {exception}", ex.ToString());
+            _logger.LogWarning("CreateEntryAsync() failed: {message}", ex.Message);
             return null;
         }
     }
@@ -96,7 +100,7 @@ public class WikiApiService : IWikiApiService
         }
         catch (Exception ex)
         {
-            _logger.LogCritical("UpdateEntryAsync() - Method exception: {exception}", ex.ToString());
+            _logger.LogWarning("UpdateEntryAsync() failed: {message}", ex.Message);
             return null;
         }
     }
@@ -112,7 +116,7 @@ public class WikiApiService : IWikiApiService
         }
         catch (Exception ex)
         {
-            _logger.LogCritical("DeleteEntryAsync() - Method exception: {exception}" + ex.ToString());
+            _logger.LogWarning("DeleteEntryAsync() failed: {message}", ex.Message);
             return false;
         }
     }
@@ -123,12 +127,13 @@ public class WikiApiService : IWikiApiService
         try
         {
             AddAuthorizationHeader();
-            return await _httpClient.GetFromJsonAsync<List<AppearanceRecord>>(
-                $"/api/wiki/{projectId}/entries/{entityId}/appearances");
+            var response = await _httpClient.GetAsync($"/api/wiki/{projectId}/entries/{entityId}/appearances");
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<List<AppearanceRecord>>();
         }
         catch (Exception ex)
         {
-            _logger.LogCritical("GetEntityAppearancesAsync() - Method exception: {exception}", ex.ToString());
+            _logger.LogWarning("GetEntityAppearancesAsync() failed: {message}", ex.Message);
             return null;
         }
     }
