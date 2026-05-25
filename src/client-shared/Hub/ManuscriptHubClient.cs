@@ -65,6 +65,23 @@ public sealed class ManuscriptHubClient : IAsyncDisposable
             .WithUrl(hubUrl, options =>
             {
                 options.AccessTokenProvider = accessTokenProvider;
+                // Bypass TLS certificate validation for development environments
+                // that use a self-signed certificate on the server-core HTTPS endpoint.
+                // This mirrors the same pattern used in ProjectApiService for the presence hub.
+                options.HttpMessageHandlerFactory = handler =>
+                {
+                    if (handler is System.Net.Http.HttpClientHandler clientHandler)
+                    {
+                        clientHandler.ServerCertificateCustomValidationCallback =
+                            (message, cert, chain, errors) => true;
+                    }
+                    else if (handler is System.Net.Http.SocketsHttpHandler socketsHandler)
+                    {
+                        socketsHandler.SslOptions.RemoteCertificateValidationCallback =
+                            (sender, cert, chain, errors) => true;
+                    }
+                    return handler;
+                };
             })
             .WithAutomaticReconnect(new[]
             {
