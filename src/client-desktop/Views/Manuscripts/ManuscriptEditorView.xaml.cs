@@ -34,6 +34,7 @@ public partial class ManuscriptEditorView : Page
     private bool _suppressToolbarSync = false;
     private Timer? _debounceTimer;
     private Timer? _cursorBroadcastTimer;
+    private Timer? _textBroadcastTimer;
     private volatile int _pendingCursorOffset;
 
     private AdornerLayer? _adornerLayer;
@@ -79,6 +80,7 @@ public partial class ManuscriptEditorView : Page
         _viewModel.RequestShowDiff += OnRequestShowDiff;
         _viewModel.CollaboratorCursorMoved += OnCollaboratorCursorMoved;
         _viewModel.CollaboratorCursorRemoved += OnCollaboratorCursorRemoved;
+        _viewModel.CollaboratorTextChanged += OnCollaboratorTextChanged;
         _viewModel.RemoteChapterSaved += OnRemoteChapterSaved;
         _viewModel.RequestFlushAction = async () => await FlushPendingSavesAsync();
         this.Loaded += OnLoaded;
@@ -290,12 +292,15 @@ public partial class ManuscriptEditorView : Page
         _debounceTimer = null;
         _cursorBroadcastTimer?.Dispose();
         _cursorBroadcastTimer = null;
+        _textBroadcastTimer?.Dispose();
+        _textBroadcastTimer = null;
         _viewModel.ContentReloadRequested -= OnContentReloadRequested;
         _viewModel.EvictedFromProject -= OnEvictedFromProject;
         _viewModel.WikiTokenizerUpdated -= OnWikiTokenizerUpdated;
         _viewModel.RequestShowDiff -= OnRequestShowDiff;
         _viewModel.CollaboratorCursorMoved -= OnCollaboratorCursorMoved;
         _viewModel.CollaboratorCursorRemoved -= OnCollaboratorCursorRemoved;
+        _viewModel.CollaboratorTextChanged -= OnCollaboratorTextChanged;
         _viewModel.RemoteChapterSaved -= OnRemoteChapterSaved;
         _viewModel.RequestFlushAction = null;
 
@@ -419,6 +424,62 @@ public partial class ManuscriptEditorView : Page
         Application.Current.Dispatcher.InvokeAsync(() =>
         {
             _cursorAdorner?.RemoveCursor(userId);
+        });
+    }
+
+    /// <summary>
+    /// Applies another collaborator's RTF content directly to the editor without
+    /// an API round-trip, producing ~350 ms perceived latency on keystrokes.
+    /// <para>
+    /// Uses <see cref="_suppressToolbarSync"/> to prevent the resulting
+    /// <see cref="EditorRichTextBox_TextChanged"/> from re-broadcasting the
+    /// change back or triggering the auto-save debounce.
+    /// </para>
+    /// </summary>
+    private void OnCollaboratorTextChanged(string userId, string rtfContent)
+    {
+        Application.Current.Dispatcher.InvokeAsync(() =>
+        {
+            if (!_isLoaded || _viewModel.CurrentChapter == null) return;
+
+            // Save caret position so we can try to restore it after replacing content.
+            int caretOffset = 0;
+            try
+            {
+                caretOffset = EditorRichTextBox.Document.ContentStart
+                    .GetOffsetToPosition(EditorRichTextBox.CaretPosition);
+            }
+            catch { }
+
+            _suppressToolbarSync = true;
+            try
+            {
+                EditorRichTextBox.Document.Blocks.Clear();
+                TextRange textRange = new(
+                    EditorRichTextBox.Document.ContentStart,
+                    EditorRichTextBox.Document.ContentEnd);
+                using MemoryStream ms = new(Encoding.UTF8.GetBytes(rtfContent));
+                textRange.Load(ms, DataFormats.Rtf);
+                SanitizeDocumentColors(EditorRichTextBox.Document);
+
+                // Restore caret — best-effort; offset may no longer be valid.
+                try
+                {
+                    var restored = EditorRichTextBox.Document.ContentStart
+                        .GetPositionAtOffset(caretOffset);
+                    if (restored != null)
+                        EditorRichTextBox.CaretPosition = restored;
+                }
+                catch { }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"OnCollaboratorTextChanged: apply failed: {ex.Message}");
+            }
+            finally
+            {
+                _suppressToolbarSync = false;
+            }
         });
     }
 
@@ -699,6 +760,46 @@ public partial class ManuscriptEditorView : Page
         {
             _debounceTimer = new Timer(
                 async _ => await SaveContentInternalAsync(), null, 1000, Timeout.Infinite);
+        }
+
+        // Real-time broadcast to collaborators — 350 ms debounce so rapid
+        // keystrokes are coalesced before hitting the SignalR hub.
+        // Read-only editors never send broadcasts.
+        if (!_isReadOnly)
+        {
+            if (_textBroadcastTimer != null)
+            {
+                _textBroadcastTimer.Change(350, Timeout.Infinite);
+            }
+            else
+            {
+                _textBroadcastTimer = new Timer(
+                    async _ => await BroadcastCurrentTextAsync(), null, 350, Timeout.Infinite);
+            }
+        }
+    }
+
+    private async Task BroadcastCurrentTextAsync()
+    {
+        string rtfContent = string.Empty;
+        try
+        {
+            await Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                TextRange textRange = new(
+                    EditorRichTextBox.Document.ContentStart,
+                    EditorRichTextBox.Document.ContentEnd);
+                using MemoryStream ms = new();
+                textRange.Save(ms, DataFormats.Rtf);
+                rtfContent = Encoding.UTF8.GetString(ms.ToArray());
+            });
+
+            if (!string.IsNullOrEmpty(rtfContent))
+                await _viewModel.BroadcastTextChangedAsync(rtfContent);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"BroadcastCurrentTextAsync failed: {ex.Message}");
         }
     }
 

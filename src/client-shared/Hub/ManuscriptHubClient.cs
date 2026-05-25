@@ -26,6 +26,12 @@ public sealed class ManuscriptHubClient : IAsyncDisposable
     /// <summary>Raised when a collaborator disconnects and their cursor should be removed. Arg: userId.</summary>
     public event Action<string>? CursorRemoved;
 
+    /// <summary>
+    /// Raised when another collaborator broadcasts a keystroke in real time.
+    /// Args: userId, rtfContent. Applied directly to the editor — no API round-trip.
+    /// </summary>
+    public event Action<string, string>? TextChanged;
+
     /// <summary>Raised when the current user has been evicted from a project.</summary>
     public event Action<Guid>? ClientEvicted;
 
@@ -123,6 +129,11 @@ public sealed class ManuscriptHubClient : IAsyncDisposable
             ChapterSaved?.Invoke(projectId, chapterId);
         });
 
+        _connection.On<string, string>("OnTextChanged", (userId, rtfContent) =>
+        {
+            TextChanged?.Invoke(userId, rtfContent);
+        });
+
         _connection.Reconnecting += error =>
         {
             _logger?.LogWarning(error, "ManuscriptHub reconnecting...");
@@ -170,6 +181,16 @@ public sealed class ManuscriptHubClient : IAsyncDisposable
     {
         EnsureConnected();
         await _connection!.InvokeAsync("SendCursorMoved", projectId, chapterId, positionOffset, ct);
+    }
+
+    /// <summary>
+    /// Broadcasts the current RTF content to collaborators in real time (~350 ms debounce).
+    /// Receivers apply the content directly without an API round-trip.
+    /// </summary>
+    public async Task SendTextChangedAsync(Guid projectId, string chapterId, string rtfContent, CancellationToken ct = default)
+    {
+        if (_connection?.State != HubConnectionState.Connected) return; // best-effort
+        await _connection!.InvokeAsync("BroadcastTextChanged", projectId, chapterId, rtfContent, ct);
     }
 
     /// <summary>

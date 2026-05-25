@@ -49,6 +49,12 @@ namespace Layla.Desktop.ViewModels.Manuscripts
         /// <summary>Fired when a collaborator disconnects and their cursor marker should be removed. Arg: userId.</summary>
         public event Action<string>? CollaboratorCursorRemoved;
 
+        /// <summary>
+        /// Fired when another collaborator broadcasts a real-time keystroke.
+        /// Args: userId, rtfContent. The view applies this directly to the editor.
+        /// </summary>
+        public event Action<string, string>? CollaboratorTextChanged;
+
         // Serialises saves so two in-flight calls cannot interleave on the
         // same chapter — but still allows a forced flush to wait for the
         // current save instead of being silently dropped (the old `IsSaving`
@@ -168,14 +174,21 @@ namespace Layla.Desktop.ViewModels.Manuscripts
                 CollaboratorCursorRemoved?.Invoke(userId);
             };
 
+            _hubClient.TextChanged += (userId, rtfContent) =>
+            {
+                CollaboratorTextChanged?.Invoke(userId, rtfContent);
+            };
+
             _hubClient.ChapterSaved += (projectId, chapterId) =>
             {
-                // Only reload if this matches the currently active chapter and
-                // the local client has no unsaved changes (to avoid overwriting work).
+                // Reload when a collaborator saves the active chapter.
+                // We skip only when a local save is actively in flight to avoid
+                // clobbering the in-progress write; HasUnsavedOfflineChanges is
+                // NOT checked here so that editors whose previous saves failed
+                // (e.g. temporary network hiccup) still see remote updates.
                 if (projectId == _projectId
                     && _activeChapterId.HasValue
                     && chapterId == _activeChapterId.Value.ToString()
-                    && !HasUnsavedOfflineChanges
                     && !IsSaving)
                 {
                     RemoteChapterSaved?.Invoke();
@@ -218,6 +231,24 @@ namespace Layla.Desktop.ViewModels.Manuscripts
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Failed to build tokenizer: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Broadcasts the current RTF content to collaborators in real time (debounced by the view).
+        /// </summary>
+        public async Task BroadcastTextChangedAsync(string rtfContent)
+        {
+            if (_activeChapterId.HasValue)
+            {
+                try
+                {
+                    await _hubClient.SendTextChangedAsync(_projectId, _activeChapterId.Value.ToString(), rtfContent);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Failed to broadcast text change: {ex.Message}");
+                }
             }
         }
 
