@@ -121,6 +121,12 @@ namespace Layla.Desktop.ViewModels.Manuscripts
         /// <summary>Raised when the view should open the Diff Comparison window.</summary>
         public event Action<ChapterVersionFull>? RequestShowDiff;
 
+        /// <summary>
+        /// Raised when a remote collaborator saved the current chapter and the
+        /// view should reload the RTF content (only when no local edits are pending).
+        /// </summary>
+        public event Action? RemoteChapterSaved;
+
         /// <summary>Delegate to request the View to flush current rich text to the active chapter.</summary>
         public Func<Task>? RequestFlushAction { get; set; }
 
@@ -152,6 +158,39 @@ namespace Layla.Desktop.ViewModels.Manuscripts
             _hubClient.CursorMoved += (userId, offset) =>
             {
                 CollaboratorCursorMoved?.Invoke(userId, offset);
+            };
+
+            _hubClient.ChapterSaved += (projectId, chapterId) =>
+            {
+                // Only reload if this matches the currently active chapter and
+                // the local client has no unsaved changes (to avoid overwriting work).
+                if (projectId == _projectId
+                    && _activeChapterId.HasValue
+                    && chapterId == _activeChapterId.Value.ToString()
+                    && !HasUnsavedOfflineChanges
+                    && !IsSaving)
+                {
+                    RemoteChapterSaved?.Invoke();
+                }
+            };
+
+            // When the hub reconnects (e.g. after a transient network blip or a
+            // cold start where Initialize() hasn't finished yet), re-join the
+            // chapter group so cursor broadcasts and eviction events are received.
+            _hubClient.ConnectionStateChanged += async state =>
+            {
+                if (state == Microsoft.AspNetCore.SignalR.Client.HubConnectionState.Connected
+                    && _activeChapterId.HasValue)
+                {
+                    try
+                    {
+                        await _hubClient.JoinChapterGroupAsync(_projectId, _activeChapterId.Value.ToString());
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Reconnect: failed to rejoin chapter group: {ex.Message}");
+                    }
+                }
             };
         }
 
@@ -380,6 +419,25 @@ namespace Layla.Desktop.ViewModels.Manuscripts
             }
 
             ContentReloadRequested?.Invoke();
+        }
+
+        /// <summary>
+        /// Refreshes <see cref="CurrentChapter"/> content from the API in-place.
+        /// Called when a remote collaborator signals they saved the chapter.
+        /// </summary>
+        public async Task RefreshCurrentChapterAsync()
+        {
+            if (SelectedManuscript == null || CurrentChapter == null) return;
+            try
+            {
+                var fresh = await _apiService.GetChapterAsync(_projectId, SelectedManuscript.ManuscriptId, CurrentChapter.ChapterId);
+                if (fresh != null)
+                    CurrentChapter = fresh;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"RefreshCurrentChapterAsync failed: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -654,6 +712,13 @@ namespace Layla.Desktop.ViewModels.Manuscripts
                 CurrentChapter.Mentions = modelMentions;
                 _cache.ClearChapter(manuscriptId, chapterId);
                 HasUnsavedOfflineChanges = false;
+
+                // Notify other collaborators so their views reload the new content.
+                try
+                {
+                    await _hubClient.NotifyChapterSavedAsync(_projectId, chapterId);
+                }
+                catch { /* best-effort */ }
                 
                 if (isMilestone)
                 {
