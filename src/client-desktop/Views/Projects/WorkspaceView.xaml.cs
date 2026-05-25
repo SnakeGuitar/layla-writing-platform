@@ -25,9 +25,9 @@ public partial class WorkspaceView : Page
         DataContext = _viewModel;
         _viewModel.Initialize(currentProject);
 
-        _viewModel.OnLogout += (s, e) => NavigationService.Navigate(new LoginView());
-        _viewModel.OnBackToProjects += (s, e) => NavigationService.Navigate(new ProjectListView());
-        _viewModel.OnSettings += (s, e) => NavigationService.Navigate(new SettingsView());
+        _viewModel.OnLogout += (s, e) => ((MainWindow)Application.Current.MainWindow).Navigate(new LoginView());
+        _viewModel.OnBackToProjects += (s, e) => ((MainWindow)Application.Current.MainWindow).Navigate(new ProjectListView());
+        _viewModel.OnSettings += (s, e) => ((MainWindow)Application.Current.MainWindow).Navigate(new SettingsView());
 
         this.Loaded += WorkspaceView_Loaded;
         this.Unloaded += WorkspaceView_Unloaded;
