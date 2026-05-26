@@ -1,8 +1,8 @@
-# Layla — Despliegue automatizado (Vagrant + Puppet)
+# Layla — Automated Deployment (Vagrant + Puppet)
 
-Este directorio contiene la infraestructura como código para desplegar Layla en **3 máquinas virtuales** usando Vagrant (orquestación) y Puppet (provisión).
+This directory contains the infrastructure-as-code to deploy Layla across **3 virtual machines** using Vagrant (orchestration) and Puppet (provisioning).
 
-## Topología
+## Topology
 
 ```
 ┌──────────────────────┐    ┌──────────────────────┐    ┌──────────────────────┐
@@ -12,43 +12,43 @@ Este directorio contiene la infraestructura como código para desplegar Layla en
 │  · SQL Server 2022   │    │  · server-core       │    │  · api-gateway       │
 │  · MongoDB 7         │    │  · server-worldbldg  │    │    (YARP, :5000)     │
 │  · Neo4j 5           │    │  · layla-web         │    │                      │
-│  · RabbitMQ 3        │    │                      │    │  [único expuesto al  │
-│                      │    │                      │    │   host vía :5000]    │
+│  · RabbitMQ 3        │    │                      │    │  [only one exposed   │
+│                      │    │                      │    │   to host via :5000] │
 └──────────────────────┘    └──────────────────────┘    └──────────────────────┘
 ```
 
-Acceso desde Windows host: `http://localhost:5000` → forwarded a `layla-edge:5000`.
+Access from Windows host: `http://localhost:5000` → forwarded to `layla-edge:5000`.
 
-## Requisitos
+## Prerequisites
 
 - VirtualBox 7.0+
 - Vagrant 2.4+
-- Box `bento/ubuntu-22.04` (se baja con `vagrant box add bento/ubuntu-22.04 --provider virtualbox`)
+- Box `bento/ubuntu-22.04` (download with `vagrant box add bento/ubuntu-22.04 --provider virtualbox`)
 
-## Uso
+## Usage
 
-**Primera vez** — copiar la plantilla de variables y rellenar valores reales:
+**First time** — copy the variables template and fill in real values:
 
 ```powershell
 cd deploy/files/env
 cp .env.shared.example .env.shared
-# Editar .env.shared con un editor y reemplazar todos los CHANGE_ME
+# Edit .env.shared and replace all CHANGE_ME placeholders
 ```
 
-`.env.shared` esta gitignorado: las credenciales nunca llegan al repositorio.
+`.env.shared` is gitignored: credentials never reach the repository.
 
-**Despliegue completo**:
+**Full deployment**:
 
 ```powershell
 cd deploy
-vagrant up              # crea las 3 VMs y provisiona todo
-vagrant status          # ver estado de las 3
-vagrant ssh data        # entrar a una VM
-vagrant halt            # apagar las 3
-vagrant destroy -f      # destruir todo (limpio)
+vagrant up              # creates all 3 VMs and provisions everything
+vagrant status          # check status of all 3
+vagrant ssh data        # SSH into a VM
+vagrant halt            # shut down all 3
+vagrant destroy -f      # destroy everything (clean slate)
 ```
 
-Para levantar **una sola VM**:
+To bring up **a single VM**:
 
 ```powershell
 vagrant up data
@@ -56,41 +56,41 @@ vagrant up apps
 vagrant up edge
 ```
 
-> **Orden recomendado**: `data` → `apps` → `edge` (las apps esperan a las DBs; el gateway espera a las apps).
+> **Recommended order**: `data` → `apps` → `edge` (apps wait for databases; the gateway waits for apps).
 
-## Estructura
+## Directory Structure
 
 ```
 deploy/
-├── Vagrantfile                      Define las 3 VMs (CPU/RAM/red)
-├── README.md                        Este archivo
+├── Vagrantfile                      Defines the 3 VMs (CPU/RAM/networking)
+├── README.md                        This file
 ├── puppet/
-│   ├── bootstrap.sh                 Instala Puppet agent en cada VM
+│   ├── bootstrap.sh                 Installs Puppet agent on each VM
 │   └── manifests/
-│       ├── common.pp                Clase 'docker_install' + define 'layla_stack'
-│       ├── data.pp                  Compose de bases de datos
-│       ├── apps.pp                  Compose de servicios de aplicación
-│       └── edge.pp                  Compose del API gateway
+│       ├── common.pp                'docker_install' class + 'layla_stack' define
+│       ├── data.pp                  Compose for database services
+│       ├── apps.pp                  Compose for application services
+│       └── edge.pp                  Compose for the API gateway
 └── files/
     ├── compose/
-    │   ├── compose.data.yml         Solo imágenes oficiales (no build)
-    │   ├── compose.apps.yml         Build desde /vagrant/src
-    │   └── compose.edge.yml         Build del gateway
+    │   ├── compose.data.yml         Official images only (no build)
+    │   ├── compose.apps.yml         Build from /vagrant/src
+    │   └── compose.edge.yml         Build the gateway
     └── env/
-        └── .env.shared              Variables comunes a las 3 VMs
+        └── .env.shared              Common variables for all 3 VMs
 ```
 
-## Cómo funciona
+## How It Works
 
-1. `vagrant up` lee el `Vagrantfile` → crea cada VM desde la box `bento/ubuntu-22.04`.
-2. Vagrant monta el repo entero (carpeta padre del `Vagrantfile`) en `/vagrant` dentro de cada VM.
-3. Ejecuta `bootstrap.sh` → instala Puppet agent.
-4. Ejecuta `puppet apply <manifest>.pp` → instala Docker + copia compose + `docker compose up -d`.
-5. Las imágenes `apps` y `edge` se construyen desde `/vagrant/src/...` (código fuente vivo del repo).
+1. `vagrant up` reads the `Vagrantfile` → creates each VM from the `bento/ubuntu-22.04` box.
+2. Vagrant mounts the entire repo (parent directory of the `Vagrantfile`) at `/vagrant` inside each VM.
+3. Runs `bootstrap.sh` → installs Puppet agent.
+4. Runs `puppet apply <manifest>.pp` → installs Docker + copies compose files + `docker compose up -d`.
+5. The `apps` and `edge` images are built from `/vagrant/src/...` (live source code from the repo).
 
-## Despliegue alternativo — manera manual (modo 1)
+## Alternative Deployment — Manual Setup (Mode 1)
 
-Sin Vagrant ni Docker, instalando todo a mano en VMs Ubuntu 22.04 preexistentes:
+Without Vagrant or Docker, installing everything manually on pre-existing Ubuntu 22.04 VMs:
 
 ### VM1 — layla-data
 ```bash
@@ -118,7 +118,7 @@ sudo rabbitmq-plugins enable rabbitmq_management
 sudo systemctl enable --now rabbitmq-server
 ```
 
-Configurar cada servicio para escuchar en `0.0.0.0` (no solo localhost) y crear usuarios/passwords coherentes con `.env.shared`.
+Configure each service to listen on `0.0.0.0` (not just localhost) and create users/passwords consistent with `.env.shared`.
 
 ### VM2 — layla-apps
 ```bash
@@ -132,51 +132,51 @@ curl -fsSL https://deb.nodesource.com/setup_22.x | sudo bash -
 sudo apt install -y nodejs
 sudo npm install -g pnpm
 
-# Publicar y crear systemd units para server-core, server-worldbuilding, layla-web
+# Publish and create systemd units for server-core, server-worldbuilding, layla-web
 dotnet publish src/server-core/Layla.Api -c Release -o /opt/layla/core
 pnpm --dir src/server-worldbuilding install && pnpm --dir src/server-worldbuilding build
 dotnet publish src/client-web -c Release -o /opt/layla/web
-# Crear /etc/systemd/system/layla-core.service, layla-wbldg.service, layla-web.service
-# con EnvironmentFile=/etc/layla/core.env apuntando a 192.168.56.10
+# Create /etc/systemd/system/layla-core.service, layla-wbldg.service, layla-web.service
+# with EnvironmentFile=/etc/layla/core.env pointing to 192.168.56.10
 ```
 
 ### VM3 — layla-edge
 ```bash
 sudo apt install -y dotnet-sdk-10.0
 dotnet publish src/infraestructure-api_gateway -c Release -o /opt/layla/gateway
-# systemd unit layla-gateway.service con appsettings sobreescrito por env vars
+# systemd unit layla-gateway.service with appsettings overridden by env vars
 ```
 
-## Despliegue alternativo — Docker en VMs (modo 2)
+## Alternative Deployment — Docker on VMs (Mode 2)
 
-Mismo resultado que Vagrant+Puppet pero asumiendo VMs preexistentes:
+Same result as Vagrant + Puppet but assuming pre-existing VMs:
 
 ```bash
-# En cada VM, una vez:
+# On each VM, once:
 curl -fsSL https://get.docker.com | sudo sh
 sudo usermod -aG docker $USER
 
-# Copiar compose.<vm>.yml y .env.shared a la VM (por SCP/Bitvise)
-# Después:
-docker compose -f compose.data.yml --env-file .env.shared up -d   # en layla-data
-docker compose -f compose.apps.yml --env-file .env.shared up -d   # en layla-apps
-docker compose -f compose.edge.yml --env-file .env.shared up -d   # en layla-edge
+# Copy compose.<vm>.yml and .env.shared to the VM (via SCP/Bitvise)
+# Then:
+docker compose -f compose.data.yml --env-file .env.shared up -d   # on layla-data
+docker compose -f compose.apps.yml --env-file .env.shared up -d   # on layla-apps
+docker compose -f compose.edge.yml --env-file .env.shared up -d   # on layla-edge
 ```
 
-## Comparativa de los 3 modos
+## Comparison of the 3 Modes
 
-| Aspecto | Manual | Docker en VMs | Vagrant + Puppet |
-|---------|--------|---------------|-------------------|
-| Crear VMs | Manual (clic-clic en VirtualBox) | Manual | **Automático** |
-| Instalar runtimes | apt-get por servicio | `apt install docker` | **Automático** |
-| Levantar servicios | systemd units a mano | `docker compose up` | **Automático** |
-| Reproducible | ❌ No | ⚠ Parcial | ✅ Sí |
-| Tiempo total | ~6 h | ~30 min | ~10 min |
-| Comandos | ~60+ | ~5 | **1 (`vagrant up`)** |
+| Aspect | Manual | Docker on VMs | Vagrant + Puppet |
+|---|---|---|---|
+| Create VMs | Manual (click-click in VirtualBox) | Manual | **Automatic** |
+| Install runtimes | apt-get per service | `apt install docker` | **Automatic** |
+| Start services | systemd units by hand | `docker compose up` | **Automatic** |
+| Reproducible | ❌ No | ⚠ Partial | ✅ Yes |
+| Total time | ~6 h | ~30 min | ~10 min |
+| Commands | ~60+ | ~5 | **1 (`vagrant up`)** |
 
 ## Troubleshooting
 
-- **`vagrant up` se queda colgado en "Waiting for SSH"**: la box tiene problemas con guest additions. `vagrant reload` suele resolverlo.
-- **Imágenes Docker no se rebuilds**: forzar con `vagrant ssh apps -c "cd /srv/layla && sudo docker compose build --no-cache && sudo docker compose up -d"`.
-- **server-core no conecta a SQL Server**: verificar que `layla-data` levantó completo con `vagrant ssh data -c "sudo docker compose ps"`. SQL Server tarda ~30 seg en estar listo.
-- **Apagar todo rápido**: `vagrant halt`. **Borrar todo**: `vagrant destroy -f`.
+- **`vagrant up` hangs on "Waiting for SSH"**: the box has guest additions issues. `vagrant reload` usually resolves it.
+- **Docker images not rebuilding**: force with `vagrant ssh apps -c "cd /srv/layla && sudo docker compose build --no-cache && sudo docker compose up -d"`.
+- **server-core cannot connect to SQL Server**: verify that `layla-data` fully started with `vagrant ssh data -c "sudo docker compose ps"`. SQL Server takes ~30 seconds to become ready.
+- **Shut down everything quickly**: `vagrant halt`. **Delete everything**: `vagrant destroy -f`.

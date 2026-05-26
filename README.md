@@ -137,7 +137,7 @@ graph TD
 ## Services
 | Service                | Tech                | Ports (Internal / External) | Databases      | Purpose |
 |------------------------|---------------------|------------------------|----------------|---------|
-| `layla-api-gateway`    | .NET 9 + YARP Reverse Proxy | `5000` (HTTP)          | —              | Unified entry point, request routing, WebSockets & gRPC |
+| `layla-api-gateway`    | .NET 10 + YARP Reverse Proxy | `5000` (HTTP)          | —              | Unified entry point, request routing, WebSockets & gRPC |
 | `server-core`          | ASP.NET Core 10     | `5287` (HTTP) / `5288` (HTTPS) | SQL Server     | Auth, users, projects, roles, SignalR hubs |
 | `server-worldbuilding` | Node.js + Express   | `3000` (HTTP) / `3001` (HTTPS) | MongoDB, Neo4j | Manuscripts, chapters, wiki, narrative graph |
 
@@ -177,33 +177,61 @@ All endpoints and hubs are unified through the **API Gateway** running on port `
 #### Authentication & Users
 * `POST /api/tokens` — Login (returns JWT valid for 24h)
 * `POST /api/users` — Register new user
+* `POST /api/users/verify-email` — Verify email with PIN code
+* `GET /api/users` — List all users (Admin only)
 * `GET /api/users/{id}` — Get user by ID
+* `PUT /api/users/{id}` — Update profile (Self / Admin)
+* `DELETE /api/users/{id}` — Delete account (Self / Admin)
 * `POST /api/users/{id}/ban` — Ban user (Admin only)
 
 #### Project Management
 * `POST /api/projects` — Create project (caller becomes OWNER)
 * `GET /api/projects` — List caller's projects
 * `GET /api/projects/public` — List public catalog
-* `POST /api/projects/{id}/collaborators` — Invite collaborator
+* `GET /api/projects/all` — List every project (Admin only)
+* `GET /api/projects/{id}` — Get project by ID
+* `PUT /api/projects/{id}` — Update project metadata (OWNER only)
+* `DELETE /api/projects/{id}` — Delete project (OWNER only)
+* `POST /api/projects/{id}/join` — Join a public project as READER
+* `POST /api/projects/{id}/collaborators` — Invite collaborator (OWNER only)
+* `GET /api/projects/{id}/collaborators` — List collaborators
+* `PATCH /api/projects/{id}/collaborators/{userId}/role` — Change collaborator role (OWNER only)
+* `DELETE /api/projects/{id}/collaborators/{userId}` — Remove collaborator (OWNER only)
 
 #### Real-time Hubs (SignalR via Gateway WebSockets)
 * `/hubs/voice` — Push-to-talk voice streaming
 * `/hubs/presence` — Active user presence tracking
-* `/hubs/manuscript` — Chapter collaboration and version synchronization
+* `/hubs/manuscript` — Real-time cursor sync, text broadcasting, chapter save notifications
 
 ### 2. Worldbuilding (`server-worldbuilding` endpoints)
 #### Manuscripts & Chapters
 * `GET /api/manuscripts/{projectId}` — List manuscripts
 * `POST /api/manuscripts/{projectId}` — Create manuscript
+* `GET /api/manuscripts/{projectId}/{manuscriptId}` — Get manuscript with chapter index
+* `PUT /api/manuscripts/{projectId}/{manuscriptId}` — Rename or reorder manuscript
+* `DELETE /api/manuscripts/{projectId}/{manuscriptId}` — Delete manuscript and all chapters
 * `POST /api/manuscripts/{projectId}/{manuscriptId}/chapters` — Create chapter
 * `GET /api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}` — Get chapter content
 * `PUT /api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}` — Update chapter (LWW)
+* `DELETE /api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}` — Delete chapter
+* `GET /api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/mentions` — Get wiki mentions
+* `PUT /api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/autosave` — Autosave with mentions
+* `GET /api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/versions` — Version history
+* `PUT /api/manuscripts/.../chapters/{chapterId}/versions/{versionId}/restore` — Restore version
 
-#### Wiki & Narrative Graph
-* `GET /api/wiki/{projectId}` — List wiki entries
-* `POST /api/wiki/{projectId}` — Create entry
-* `GET /api/graph/{projectId}` — Get narrative graph (nodes + edges)
-* `POST /api/graph/{projectId}/relationships` — Connect wiki entities
+#### Wiki
+* `GET /api/wiki/{projectId}/entries` — List wiki entries (optional `?type=` filter)
+* `GET /api/wiki/{projectId}/detectable` — Get entities for client-side detection
+* `POST /api/wiki/{projectId}/entries` — Create entry
+* `GET /api/wiki/{projectId}/entries/{entityId}` — Get entry
+* `PUT /api/wiki/{projectId}/entries/{entityId}` — Update entry
+* `DELETE /api/wiki/{projectId}/entries/{entityId}` — Delete entry
+* `GET /api/wiki/{projectId}/entries/{entityId}/appearances` — Get chapters where entity appears
+
+#### Narrative Graph
+* `GET /api/graph/{projectId}` — Get narrative graph — nodes + edges (optional `?type=` filter)
+* `POST /api/graph/{projectId}/relationships` — Create relationship between entities
+* `DELETE /api/graph/{projectId}/relationships` — Delete relationships (body-based)
 
 ---
 
@@ -225,8 +253,8 @@ All services use the typed `ErrorCode` enum (`Layla.Core/Common/ErrorCode.cs`) i
 
 ## Prerequisites
 - **Docker Desktop** (highly recommended)
-- **.NET 9 / 10 SDKs**
-- **Node.js 22 / 24 + pnpm 10**
+- **.NET 10 SDK**
+- **Node.js 22+ + pnpm 10**
 
 ---
 
@@ -235,8 +263,8 @@ All services use the typed `ErrorCode` enum (`Layla.Core/Common/ErrorCode.cs`) i
 ### 1. Docker Environment (Recommended)
 This compiles all images, configures healthchecks, and mounts the unified networks:
 ```bash
-# 1. Copy the environment variables template
-cp src/.env.example src/.env
+# 1. Copy the environment variables template and fill in secrets
+cp src/.env.Development src/.env
 
 # 2. Start the environment
 cd src/
@@ -249,41 +277,37 @@ Once healthy, services expose:
 * Neo4j browser: `http://localhost:7474`
 * RabbitMQ dashboard: `http://localhost:15672`
 
-### 2. Local Development (Consoles with Live Reload)
-We provide two unified dev runners in the root directory that start the API servers and clients in parallel without Docker requirements:
+### 2. Local Development (Manual)
+Start each service in a separate terminal. Databases (SQL Server, MongoDB, Neo4j, RabbitMQ) must be running either via Docker or locally.
 
-#### Windows (PowerShell)
-```powershell
-# Run backend APIs only
-.\dev.ps1
-
-# Run backend APIs + Blazor Web Client
-.\dev.ps1 -Client web
-
-# Run backend APIs + WPF Desktop Client
-.\dev.ps1 -Client desktop
-```
-
-#### Linux / macOS (Bash)
+#### server-core
 ```bash
-chmod +x dev.sh
-
-# Run backend APIs only
-./dev.sh
-
-# Run backend APIs + Blazor Web Client
-./dev.sh --client web
-
-# Run backend APIs + WPF Desktop Client
-./dev.sh -c desktop
+cd src/server-core
+dotnet run --project Layla.Api
 ```
+
+#### server-worldbuilding
+```bash
+cd src/server-worldbuilding
+pnpm install
+pnpm run dev          # tsx watch with hot reload
+```
+
+#### Web client (Blazor)
+```bash
+cd src/client-web
+dotnet run
+```
+
+#### Desktop client (WPF)
+Open `src/client-desktop/Layla.Desktop.sln` in Visual Studio and run.
 
 ---
 
 ## Environment Variables Configuration
 
-Copy `src/.env.example` to `src/.env` and adjust the variables. The microservices rely on the following variables:
+Copy `src/.env.Development` to `src/.env` and adjust the variables. The microservices rely on the following variables:
 * `WORLDBUILDING_ALLOWED_ORIGINS`: Comma-separated CORS origins containing localhost URLs (including `https://localhost:7126` and `http://localhost:5233` for the Blazor app, and `http://localhost:5000` for the Gateway).
-* `JWT_SECRET` / `JWT_SECRET_REFRESH`: Cifrado HS512 (mínimo 32 caracteres).
-* `SQL_PASSWORD` / `MONGO_INITDB_ROOT_PASSWORD` / `NEO4J_PASSWORD`: Passwords de bases de datos.
-* `RABBIT_USER` / `RABBIT_PASSWORD`: Credenciales de mensajería asíncrona.
+* `JWT_SECRET` / `JWT_SECRET_REFRESH`: HS512 signing keys (minimum 32 characters).
+* `SQL_PASSWORD` / `MONGO_INITDB_ROOT_PASSWORD` / `NEO4J_PASSWORD`: Database passwords.
+* `RABBIT_USER` / `RABBIT_PASSWORD`: Message broker credentials.

@@ -56,8 +56,12 @@ src/client-web/
     │   └── RedirectToLogin.razor    Used by Routes.razor's NotAuthorized
     └── Pages/
         ├── Home.razor               "/" + "/home" — public catalog
+        ├── About.razor              "/about" — about page
+        ├── Nothing.razor            Placeholder route
         ├── Auth/Login.razor, Register.razor
-        ├── Projects/MyProjects.razor (uses [Authorize])
+        ├── Projects/MyProjects.razor, ExploreProjects.razor, ProjectWorkspace.razor
+        ├── Admin/Dashboard.razor, ManageUser.razor
+        ├── Voice/ (voice session pages)
         └── Errors/Error.razor
 ```
 
@@ -119,6 +123,7 @@ services.AddCascadingAuthenticationState();
 // Domain
 services.AddScoped<PresenceService>();
 services.AddScoped<IProjectService, ProjectService>();
+// + Admin, Manuscripts, Wikis, Graph services (Scoped)
 
 // Voice (single SignalR client process-wide)
 services.AddSingleton<ISignalRClient, SignalRClient>();
@@ -405,6 +410,10 @@ Every link in that chain is replaceable in isolation: swap `ApiClient` for a fak
 | `AuthenticationStateProvider` | (built-in slot) | Scoped | `LaylaAuthenticationStateProvider` decodes the JWT into a `ClaimsPrincipal` |
 | `IProjectService` | `Application/Services/Projects` | Scoped | Project CRUD against server-core |
 | `PresenceService` | `Application/Services/ActiveStatusAuthor` | Scoped | SignalR presence hub client |
+| Admin services | `Application/Services/Admin` | Scoped | User management (list, ban) |
+| Manuscript services | `Application/Services/Manuscripts` | Scoped | Manuscript and chapter CRUD against server-worldbuilding |
+| Wiki services | `Application/Services/Wikis` | Scoped | Wiki entry CRUD against server-worldbuilding |
+| Graph services | `Application/Services/Graph` | Scoped | Narrative graph queries against server-worldbuilding |
 | `IVoiceService` | `Application/Services/Voice` | Singleton | SignalR voice hub client (process-wide) |
 | `ISignalRClient` | `Application/Config/SignalR` | Singleton | Low-level SignalR plumbing shared by Voice + Presence |
 
