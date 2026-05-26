@@ -1,9 +1,8 @@
-<<<<<<< HEAD
 # Layla — Worldbuilding Service
 
 Node.js + Express 5 backend for manuscripts, wiki entries, and the narrative graph.
 
-- **Manuscripts** — stored in MongoDB (multiple per project, each with chapters)
+- **Manuscripts** — stored in MongoDB (multiple per project, each with ordered chapters)
 - **Wiki entries** — stored in MongoDB (characters, locations, events, objects, concepts)
 - **Narrative graph** — stored in Neo4j (nodes and relationships between wiki entities)
 
@@ -11,12 +10,14 @@ Authentication is delegated to **server-core**; this service validates the same 
 
 ---
 
-## Running
+## Quick Start
 
 ```bash
+cd src/server-worldbuilding
 pnpm install
-pnpm run dev        # ts-node-dev with hot reload
+pnpm run dev        # tsx watch src/index.ts (hot reload)
 pnpm run build      # compile to dist/
+pnpm run start      # run compiled dist/index.js
 ```
 
 The server starts on `http://localhost:3000`.
@@ -34,6 +35,13 @@ The raw OpenAPI JSON spec is at `http://localhost:3000/api-docs.json`.
 
 All endpoints require a valid `Authorization: Bearer <token>` header and that the caller
 holds any role in the target project (validated via `requireProjectAccess` middleware).
+Write operations additionally require OWNER or EDITOR role (via `requireWriteAccess`).
+
+### Health
+
+| Method | Path | Description |
+|---|---|---|
+| `GET` | `/health` | Service health check — returns `OK` |
 
 ### Manuscripts
 
@@ -53,6 +61,11 @@ holds any role in the target project (validated via `requireProjectAccess` middl
 | `GET` | `/api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId` | Get chapter with full RTF content |
 | `PUT` | `/api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId` | Update chapter (Last-Write-Wins) |
 | `DELETE` | `/api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId` | Delete chapter |
+| `GET` | `/api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId/mentions` | Get wiki entity mentions detected in the chapter |
+| `PUT` | `/api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId/autosave` | Autosave with mentions and optional milestone flag |
+| `GET` | `/api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId/versions` | List version history |
+| `GET` | `/api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId/versions/:versionId` | Get a specific version |
+| `PUT` | `/api/manuscripts/:projectId/:manuscriptId/chapters/:chapterId/versions/:versionId/restore` | Restore chapter to a specific version |
 
 #### Last-Write-Wins (LWW) conflict detection
 
@@ -64,23 +77,23 @@ timestamp precedes the server's stored `updatedAt`, the request is rejected with
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/api/wiki/:projectId` | List all wiki entries for a project |
-| `POST` | `/api/wiki/:projectId` | Create a wiki entry |
-| `GET` | `/api/wiki/:projectId/:entryId` | Get a wiki entry |
-| `PUT` | `/api/wiki/:projectId/:entryId` | Update a wiki entry |
-| `DELETE` | `/api/wiki/:projectId/:entryId` | Delete a wiki entry |
+| `GET` | `/api/wiki/:projectId/entries` | List all wiki entries (optional `?type=` filter) |
+| `GET` | `/api/wiki/:projectId/detectable` | Get entities optimized for Aho-Corasick tokenizer |
+| `POST` | `/api/wiki/:projectId/entries` | Create a wiki entry |
+| `GET` | `/api/wiki/:projectId/entries/:entityId` | Get a wiki entry |
+| `PUT` | `/api/wiki/:projectId/entries/:entityId` | Update a wiki entry |
+| `DELETE` | `/api/wiki/:projectId/entries/:entityId` | Delete a wiki entry |
+| `GET` | `/api/wiki/:projectId/entries/:entityId/appearances` | Get chapters where this entity appears |
 
-Wiki entry types: `CHARACTER` · `LOCATION` · `EVENT` · `OBJECT` · `CONCEPT`
+Wiki entry types: `Character` · `Location` · `Event` · `Object` · `Concept`
 
 ### Graph
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/api/graph/:projectId` | Get full narrative graph (nodes + edges) |
-| `POST` | `/api/graph/:projectId/nodes` | Create a graph node |
-| `POST` | `/api/graph/:projectId/edges` | Create a relationship between nodes |
-| `DELETE` | `/api/graph/:projectId/nodes/:nodeId` | Delete a node |
-| `DELETE` | `/api/graph/:projectId/edges/:edgeId` | Delete an edge |
+| `GET` | `/api/graph/:projectId` | Get full narrative graph — nodes + edges (optional `?type=` filter) |
+| `POST` | `/api/graph/:projectId/relationships` | Create a directed relationship between entities |
+| `DELETE` | `/api/graph/:projectId/relationships` | Delete relationships between entities (body-based) |
 
 ---
 
@@ -88,18 +101,19 @@ Wiki entry types: `CHARACTER` · `LOCATION` · `EVENT` · `OBJECT` · `CONCEPT`
 
 ```
 src/
-├── config/         Environment variable config
-├── consumers/      RabbitMQ event consumers
+├── config/         Environment variable loading and validation
+├── consumers/      RabbitMQ event consumers (projectCreated, collaborator)
 ├── controllers/    Route handlers
 ├── db/             MongoDB and Neo4j connection setup
 ├── docs/           OpenAPI specification (swagger.ts)
 ├── interfaces/     TypeScript interfaces (models + repositories)
-├── middlewares/    JWT authentication, project access guard
+├── middlewares/    JWT authentication, project access guard, rate limiter
 ├── models/         Mongoose schemas
 ├── repositories/   Data access layer
 ├── routes/         Express routers
 ├── services/       Business logic
 ├── utils/          Shared utilities (asyncHandler)
+├── validation/     Zod schemas for request body validation
 └── workers/        Background workers (Neo4j sync)
 ```
 
@@ -110,14 +124,29 @@ src/
 | Variable | Description |
 |---|---|
 | `PORT` | HTTP port (default `3000`) |
-| `MONGO_URI` | MongoDB connection string |
+| `MONGODB_URI` | MongoDB connection string (auto-constructed from parts if not set) |
 | `NEO4J_URI` | Bolt URI (e.g. `bolt://localhost:7687`) |
-| `NEO4J_USER` | Neo4j username |
+| `NEO4J_USERNAME` | Neo4j username |
 | `NEO4J_PASSWORD` | Neo4j password |
-| `RABBITMQ_URL` | AMQP connection string |
-| `JWT_SECRET` | Must match server-core's signing key |
-| `JWT_ISSUER` | Must match server-core's issuer claim |
-| `JWT_AUDIENCE` | Must match server-core's audience claim |
+| `RABBITMQ_URL` | AMQP connection string (auto-constructed from parts if not set) |
+| `JWT_SECRET` | Must match server-core's signing key (min 32 chars) |
+| `JWT_SECRET_REFRESH` | Must match server-core's refresh signing key (min 32 chars) |
+| `JWT_ACCESS_TOKEN_EXPIRY` | Access token expiry (e.g. `1440` minutes) |
+| `JWT_REFRESH_TOKEN_EXPIRY` | Refresh token expiry (e.g. `10080` minutes) |
+| `ALLOWED_ORIGINS` | Comma-separated CORS origins |
+| `CORE_API_URL` | server-core URL for access-control fallback (default `http://localhost:5287`) |
+| `RABBITMQ_EXCHANGE` | RabbitMQ exchange name (default `worldbuilding.events`) |
+| `RABBITMQ_QUEUE` | RabbitMQ queue name (default `worldbuilding.node.queue`) |
+
+For local development, create a `.env.development` file (see `.env.development` for the template).
+
+---
+
+## TypeScript Path Aliases
+
+The project uses `@/` path aliases mapped to `src/` via `tsconfig.json`. All imports use `@/config/env`, `@/db/mongoose`, etc.
+
+The service implements graceful shutdown — `SIGTERM` and `SIGINT` handlers close HTTP, RabbitMQ, and Neo4j connections in order.
 
 ---
 
@@ -126,41 +155,8 @@ src/
 | ID | Name | Status |
 |---|---|---|
 | CU-08 | Edit manuscript (Rich Text) | ✅ |
-| CU-09 | Manage wiki (Nodes) | 🔧 |
-| CU-10 | Visualize narrative graph | 🔧 |
+| CU-09 | Manage wiki (Nodes) | ✅ |
+| CU-10 | Visualize narrative graph | ✅ |
 | CU-13 | Read full story | ❌ |
 
 ✅ Implemented · 🔧 Partial · ❌ Not started
-=======
-Para ejecución del backend
-npx ts-node-dev src/index.ts
-
-#Express - Typescript
---------------------------------------------------------------------------------------------------
-| CU-## | Nombre del caso de uso            | Actor principal   | Módulo                | Estado |
-|-------|-----------------------------------|------------------ | --------------------- | ------ |
-| CU-06	| Gestionar Colaboradores           | Escritor          | Gestión               |   ❌  |
-| CU-07	| Configurar Privacidad	            | Escritor          | Gestión               |   ❌  |
-| CU-08	| Editar Manuscrito (Texto Rico)    | Editor / Escritor | Escritura (MongoDB)   |   ❌  |
-| CU-09	| Gestionar Wiki (Nodos)            | Editor / Escritor	| Worldbuilding (Neo4j) |   ❌  |
-| CU-10	| Visualizar Relaciones (Grafo)	    | Lector / Editor   | Worldbuilding (Neo4j) |   ❌  |
-| CU-15 | Gestionar Usuarios (Ban/Roles)    | Administrador     | Admin                 |   ❌  |
-
-## CU-06 Gestionar Colaboradores
-### Descripción
-El Escritor invita a otros usuarios a participar en la obra, asignándoles roles específicos (Editor) para permitir la co-autoría o corrección.
-### Precondiciones
-El usuario debe ser el Propietario del proyecto (Role Owner).
-### Postcondiciones
-POS-1: El usuario invitado ahora puede ver y editar el proyecto en su propio Dashboard.
-### Flujo normal
-1.	El Sistema muestra la lista actual de colaboradores.
-2.	El Escritor ingresa el correo electrónico del usuario a invitar.
-3.	El Sistema busca al usuario en la base de datos de identidad (SQL Server).
-4.	El Sistema valida que el usuario exista (FA-01).
-5.	El Escritor selecciona el rol a asignar (ej. "Editor").
-6.	El Sistema registra el permiso en la tabla de Roles del proyecto.
-7.	El Sistema envía una notificación al usuario invitado.
-8.	Termina CU.
-
->>>>>>> 82f7fa1 (Adding express-ts backend)

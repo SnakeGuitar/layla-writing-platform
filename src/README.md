@@ -78,13 +78,14 @@ Collaborative creative-writing and worldbuilding platform. Multiple authors can 
 |---|---|---|---|
 | `POST` | `/api/tokens` | — | Login — returns a JWT valid for 24 h |
 | `POST` | `/api/users` | — | Register a new account |
+| `POST` | `/api/users/verify-email` | — | Verify email with PIN code |
 
 #### Users
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
 | `GET` | `/api/users` | Admin | List all users |
-| `GET` | `/api/users/{id}` | User | Get user by ID |
+| `GET` | `/api/users/{id}` | Self / Admin | Get user by ID |
 | `PUT` | `/api/users/{id}` | Self / Admin | Update profile |
 | `DELETE` | `/api/users/{id}` | Self / Admin | Delete account |
 | `POST` | `/api/users/{id}/ban` | Admin | Ban user (locks account, invalidates sessions) |
@@ -103,6 +104,7 @@ Collaborative creative-writing and worldbuilding platform. Multiple authors can 
 | `POST` | `/api/projects/{id}/join` | User | Join a public project as READER |
 | `POST` | `/api/projects/{id}/collaborators` | OWNER | Invite collaborator by email |
 | `GET` | `/api/projects/{id}/collaborators` | Member | List collaborators |
+| `PATCH` | `/api/projects/{id}/collaborators/{userId}/role` | OWNER | Change collaborator role |
 | `DELETE` | `/api/projects/{id}/collaborators/{userId}` | OWNER | Remove collaborator |
 
 #### Real-time Hubs (SignalR)
@@ -111,6 +113,7 @@ Collaborative creative-writing and worldbuilding platform. Multiple authors can 
 |---|---|---|
 | Voice | `/hubs/voice` | Push-to-talk audio streaming |
 | Presence | `/hubs/presence` | Online/offline presence tracking |
+| Manuscript | `/hubs/manuscript` | Real-time cursor sync, text broadcasting, chapter save notifications |
 
 ---
 
@@ -140,26 +143,33 @@ Collaborative creative-writing and worldbuilding platform. Multiple authors can 
 | `GET` | `/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}` | Get chapter with full RTF content |
 | `PUT` | `/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}` | Update chapter (Last-Write-Wins) |
 | `DELETE` | `/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}` | Delete chapter |
+| `GET` | `/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/mentions` | Get wiki entity mentions |
+| `PUT` | `/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/autosave` | Autosave with mentions and milestone flag |
+| `GET` | `/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/versions` | List version history |
+| `GET` | `/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/versions/{versionId}` | Get specific version |
+| `PUT` | `/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/versions/{versionId}/restore` | Restore chapter to version |
 
 #### Wiki
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/api/wiki/{projectId}` | List wiki entries |
-| `POST` | `/api/wiki/{projectId}` | Create wiki entry |
-| `GET` | `/api/wiki/{projectId}/{entryId}` | Get wiki entry |
-| `PUT` | `/api/wiki/{projectId}/{entryId}` | Update wiki entry |
-| `DELETE` | `/api/wiki/{projectId}/{entryId}` | Delete wiki entry |
+| `GET` | `/api/wiki/{projectId}/entries` | List wiki entries (optional `?type=` filter) |
+| `GET` | `/api/wiki/{projectId}/detectable` | Get entities optimized for Aho-Corasick tokenizer |
+| `POST` | `/api/wiki/{projectId}/entries` | Create wiki entry |
+| `GET` | `/api/wiki/{projectId}/entries/{entityId}` | Get wiki entry |
+| `PUT` | `/api/wiki/{projectId}/entries/{entityId}` | Update wiki entry |
+| `DELETE` | `/api/wiki/{projectId}/entries/{entityId}` | Delete wiki entry |
+| `GET` | `/api/wiki/{projectId}/entries/{entityId}/appearances` | Get chapters where entity appears |
+
+Wiki entry types: `Character` · `Location` · `Event` · `Object` · `Concept`
 
 #### Graph
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/api/graph/{projectId}` | Get narrative graph (nodes + edges) |
-| `POST` | `/api/graph/{projectId}/nodes` | Create graph node |
-| `POST` | `/api/graph/{projectId}/edges` | Create relationship between nodes |
-| `DELETE` | `/api/graph/{projectId}/nodes/{nodeId}` | Delete node |
-| `DELETE` | `/api/graph/{projectId}/edges/{edgeId}` | Delete edge |
+| `GET` | `/api/graph/{projectId}` | Get full narrative graph — nodes + edges (optional `?type=` filter) |
+| `POST` | `/api/graph/{projectId}/relationships` | Create a directed relationship between entities |
+| `DELETE` | `/api/graph/{projectId}/relationships` | Delete relationships between entities (body-based) |
 
 ---
 
@@ -202,7 +212,7 @@ All services and controllers use the typed `ErrorCode` enum (`Layla.Core/Common/
 ### Docker (recommended)
 
 ```bash
-cp .env.Development .env   # fill in secrets
+cp .env.Development .env   # copy template, fill in secrets
 docker compose up -d
 ```
 
@@ -227,7 +237,7 @@ dotnet run --project Layla.Api
 ```bash
 cd src/server-worldbuilding
 pnpm install
-pnpm run dev
+pnpm run dev        # tsx watch with hot reload
 ```
 
 #### Web client
