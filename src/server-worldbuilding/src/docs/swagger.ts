@@ -223,6 +223,102 @@ const definition: swaggerJsdoc.OAS3Definition = {
           currentVersion: { $ref: "#/components/schemas/Chapter" },
         },
       },
+      AutosaveChapterBody: {
+        type: "object",
+        description:
+          "Payload for the debounced autosave endpoint. Includes content, " +
+          "locally-detected wiki mentions, and an optional milestone flag.",
+        properties: {
+          content: {
+            type: "string",
+            description: "Full RTF content to persist.",
+          },
+          mentions: {
+            type: "array",
+            description: "Wiki entity mentions detected client-side.",
+            items: { $ref: "#/components/schemas/Mention" },
+          },
+          isMilestone: {
+            type: "boolean",
+            description:
+              "When true, this save is treated as a named version milestone.",
+          },
+        },
+      },
+      ChapterVersion: {
+        type: "object",
+        description: "Metadata for a chapter version snapshot.",
+        properties: {
+          versionId: { type: "string", format: "uuid" },
+          chapterId: { type: "string", format: "uuid" },
+          projectId: { type: "string", format: "uuid" },
+          savedBy: {
+            type: "string",
+            description: "User ID who saved this version.",
+          },
+          isMilestone: { type: "boolean" },
+          content: {
+            type: "string",
+            description: "Full RTF content. Only present when fetching a single version.",
+          },
+          createdAt: { type: "string", format: "date-time" },
+        },
+      },
+      DetectableEntity: {
+        type: "object",
+        description:
+          "Lightweight entity representation optimized for client-side Aho-Corasick tokenizer.",
+        properties: {
+          id: { type: "string", format: "uuid" },
+          mainToken: {
+            type: "string",
+            description: "Primary name used for detection.",
+          },
+          aliases: {
+            type: "array",
+            items: { type: "string" },
+            description: "Alternative names that also trigger detection.",
+          },
+          type: {
+            type: "string",
+            enum: ["Character", "Location", "Event", "Object", "Concept"],
+          },
+        },
+      },
+      CreateRelationshipBody: {
+        type: "object",
+        required: ["sourceEntityId", "targetEntityId", "type"],
+        properties: {
+          sourceEntityId: { type: "string", format: "uuid" },
+          targetEntityId: { type: "string", format: "uuid" },
+          type: {
+            type: "string",
+            description: "Relationship type label (e.g. 'KNOWS', 'LOCATED_IN').",
+          },
+        },
+      },
+      DeleteRelationshipBody: {
+        type: "object",
+        required: ["sourceEntityId", "targetEntityId"],
+        properties: {
+          sourceEntityId: { type: "string", format: "uuid" },
+          targetEntityId: { type: "string", format: "uuid" },
+        },
+      },
+      CreateWikiEntryBody: {
+        type: "object",
+        required: ["name", "entityType"],
+        properties: {
+          name: { type: "string", maxLength: 200 },
+          entityType: {
+            type: "string",
+            enum: ["Character", "Location", "Event", "Object", "Concept"],
+          },
+          description: { type: "string" },
+          tags: { type: "array", items: { type: "string" } },
+          aliases: { type: "array", items: { type: "string" } },
+        },
+      },
     },
   },
   security: [{ BearerAuth: [] }],
@@ -615,16 +711,208 @@ const definition: swaggerJsdoc.OAS3Definition = {
           },
         },
       },
+    "/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/autosave":
+      {
+        put: {
+          tags: ["Chapters"],
+          summary: "Autosave chapter content with mentions",
+          description:
+            "Handles client debounced autosaves. Persists content and locally-detected " +
+            "wiki entity mentions. When `isMilestone` is true, a named version snapshot is created.",
+          parameters: [
+            {
+              name: "projectId",
+              in: "path",
+              required: true,
+              schema: { type: "string", format: "uuid" },
+            },
+            {
+              name: "manuscriptId",
+              in: "path",
+              required: true,
+              schema: { type: "string", format: "uuid" },
+            },
+            {
+              name: "chapterId",
+              in: "path",
+              required: true,
+              schema: { type: "string", format: "uuid" },
+            },
+          ],
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: { $ref: "#/components/schemas/AutosaveChapterBody" },
+              },
+            },
+          },
+          responses: {
+            "200": { description: "Autosave persisted." },
+            "401": { description: "Missing or invalid JWT." },
+            "403": { description: "Caller does not have write access." },
+            "404": { description: "Chapter not found." },
+          },
+        },
+      },
+    "/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/versions":
+      {
+        get: {
+          tags: ["Chapters"],
+          summary: "List chapter version history",
+          description:
+            "Returns version history metadata for a chapter, ordered by creation date descending.",
+          parameters: [
+            {
+              name: "projectId",
+              in: "path",
+              required: true,
+              schema: { type: "string", format: "uuid" },
+            },
+            {
+              name: "manuscriptId",
+              in: "path",
+              required: true,
+              schema: { type: "string", format: "uuid" },
+            },
+            {
+              name: "chapterId",
+              in: "path",
+              required: true,
+              schema: { type: "string", format: "uuid" },
+            },
+          ],
+          responses: {
+            "200": {
+              description: "Array of version metadata.",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "array",
+                    items: { $ref: "#/components/schemas/ChapterVersion" },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    "/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/versions/{versionId}":
+      {
+        get: {
+          tags: ["Chapters"],
+          summary: "Get a specific chapter version",
+          description: "Returns a single version snapshot including full content.",
+          parameters: [
+            {
+              name: "projectId",
+              in: "path",
+              required: true,
+              schema: { type: "string", format: "uuid" },
+            },
+            {
+              name: "manuscriptId",
+              in: "path",
+              required: true,
+              schema: { type: "string", format: "uuid" },
+            },
+            {
+              name: "chapterId",
+              in: "path",
+              required: true,
+              schema: { type: "string", format: "uuid" },
+            },
+            {
+              name: "versionId",
+              in: "path",
+              required: true,
+              schema: { type: "string", format: "uuid" },
+            },
+          ],
+          responses: {
+            "200": {
+              description: "Version with full content.",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/ChapterVersion" },
+                },
+              },
+            },
+            "404": { description: "Version not found." },
+          },
+        },
+      },
+    "/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/versions/{versionId}/restore":
+      {
+        put: {
+          tags: ["Chapters"],
+          summary: "Restore chapter to a specific version",
+          description:
+            "Replaces the current chapter content with the content from the specified version. " +
+            "Creates a new version snapshot before restoring.",
+          parameters: [
+            {
+              name: "projectId",
+              in: "path",
+              required: true,
+              schema: { type: "string", format: "uuid" },
+            },
+            {
+              name: "manuscriptId",
+              in: "path",
+              required: true,
+              schema: { type: "string", format: "uuid" },
+            },
+            {
+              name: "chapterId",
+              in: "path",
+              required: true,
+              schema: { type: "string", format: "uuid" },
+            },
+            {
+              name: "versionId",
+              in: "path",
+              required: true,
+              schema: { type: "string", format: "uuid" },
+            },
+          ],
+          responses: {
+            "200": {
+              description: "Restored chapter.",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/Chapter" },
+                },
+              },
+            },
+            "401": { description: "Missing or invalid JWT." },
+            "403": { description: "Caller does not have write access." },
+            "404": { description: "Version or chapter not found." },
+          },
+        },
+      },
     "/api/wiki/{projectId}/entries": {
       get: {
         tags: ["Wiki"],
         summary: "List all wiki entries for a project",
+        description:
+          "Returns all wiki entries. Accepts an optional `?type=` query parameter to filter by entity type.",
         parameters: [
           {
             name: "projectId",
             in: "path",
             required: true,
             schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "type",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string",
+              enum: ["Character", "Location", "Event", "Object", "Concept"],
+            },
+            description: "Filter entries by entity type.",
           },
         ],
         responses: {
@@ -789,6 +1077,135 @@ const definition: swaggerJsdoc.OAS3Definition = {
               },
             },
           },
+        },
+      },
+    },
+    "/api/wiki/{projectId}/detectable": {
+      get: {
+        tags: ["Wiki"],
+        summary: "Get detectable entities for client-side tokenizer",
+        description:
+          "Returns all wiki entities in a format optimized for the client-side " +
+          "Aho-Corasick tokenizer. Each entry includes the main name and aliases.",
+        parameters: [
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Array of detectable entities.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: { $ref: "#/components/schemas/DetectableEntity" },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "/api/graph/{projectId}": {
+      get: {
+        tags: ["Graph"],
+        summary: "Get full narrative graph",
+        description:
+          "Returns the full entity graph for a project: nodes and directed edges. " +
+          "Accepts an optional `?type=` query parameter to filter nodes by entity type.",
+        parameters: [
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+          {
+            name: "type",
+            in: "query",
+            required: false,
+            schema: {
+              type: "string",
+              enum: ["Character", "Location", "Event", "Object", "Concept"],
+            },
+            description: "Filter graph nodes by entity type.",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Graph with nodes and edges.",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    nodes: { type: "array", items: { $ref: "#/components/schemas/WikiEntry" } },
+                    edges: { type: "array", items: { type: "object" } },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Invalid entity type filter." },
+        },
+      },
+    },
+    "/api/graph/{projectId}/relationships": {
+      post: {
+        tags: ["Graph"],
+        summary: "Create a relationship between entities",
+        description:
+          "Creates a directed relationship between two wiki entities in the narrative graph.",
+        parameters: [
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/CreateRelationshipBody" },
+            },
+          },
+        },
+        responses: {
+          "201": { description: "Relationship created." },
+          "400": { description: "Validation error." },
+          "404": { description: "One or both entities do not exist in this project." },
+        },
+      },
+      delete: {
+        tags: ["Graph"],
+        summary: "Delete relationships between entities",
+        description:
+          "Deletes all directed relationships between two wiki entities.",
+        parameters: [
+          {
+            name: "projectId",
+            in: "path",
+            required: true,
+            schema: { type: "string", format: "uuid" },
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { $ref: "#/components/schemas/DeleteRelationshipBody" },
+            },
+          },
+        },
+        responses: {
+          "204": { description: "Relationships deleted." },
+          "400": { description: "Validation error." },
         },
       },
     },
