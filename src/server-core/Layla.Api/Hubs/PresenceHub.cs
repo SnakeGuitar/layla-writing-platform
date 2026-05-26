@@ -9,6 +9,11 @@ using PresenceEvents = Layla.Core.Constants.HubConstants.Presence;
 
 namespace Layla.Api.Hubs;
 
+/// <summary>
+/// SignalR hub for tracking active user presence within projects.
+/// Manages watcher registration, author heartbeats, and broadcasts
+/// participant lists and activity status changes in real time.
+/// </summary>
 public class PresenceHub : Hub
 {
     private readonly IPresenceTracker _presenceTracker;
@@ -40,6 +45,12 @@ public class PresenceHub : Hub
         catch { return null; }
     }
 
+    /// <summary>
+    /// Subscribe to presence updates for a project. Adds the caller to the
+    /// project's presence group and broadcasts the current participant list.
+    /// Detects and notifies duplicate sessions for the same user.
+    /// </summary>
+    /// <param name="projectId">Project ID to watch.</param>
     [Authorize]
     public async Task WatchProject(Guid projectId)
     {
@@ -80,6 +91,11 @@ public class PresenceHub : Hub
         await Clients.Caller.SendAsync(PresenceEvents.ParticipantsUpdated, projectId, participants);
     }
 
+    /// <summary>
+    /// Unsubscribe from presence updates for a project and remove the caller
+    /// from the active participant list.
+    /// </summary>
+    /// <param name="projectId">Project ID to stop watching.</param>
     [Authorize]
     public async Task UnwatchProject(Guid projectId)
     {
@@ -98,6 +114,13 @@ public class PresenceHub : Hub
         }
     }
 
+    /// <summary>
+    /// Send a heartbeat signal indicating the caller is actively working on
+    /// a project. Keeps the participant visible in the presence list and triggers
+    /// author-status broadcasts when the first author joins.
+    /// </summary>
+    /// <param name="projectId">Project ID the author is working on.</param>
+    /// <param name="role">Presence role (default: "author").</param>
     [Authorize]
     public async Task AuthorHeartbeat(Guid projectId, string role = PresenceEvents.RoleAuthor)
     {

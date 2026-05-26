@@ -10,6 +10,11 @@ using VoiceEvents = Layla.Core.Constants.HubConstants.Voice;
 
 namespace Layla.Api.Hubs;
 
+/// <summary>
+/// SignalR hub for push-to-talk voice communication within project rooms.
+/// Manages room membership, speaking state, and audio data relay.
+/// Requires JWT authorization.
+/// </summary>
 [Authorize]
 public class VoiceHub : Hub
 {
@@ -27,6 +32,11 @@ public class VoiceHub : Hub
         _logger = logger;
     }
 
+    /// <summary>
+    /// Join the voice room for a project. Validates project membership and assigns
+    /// a participant role based on the caller's project role.
+    /// </summary>
+    /// <param name="projectId">Project ID whose voice room to join.</param>
     public async Task JoinRoom(Guid projectId)
     {
         var ct = Context.ConnectionAborted;
@@ -77,6 +87,10 @@ public class VoiceHub : Hub
         projectRole == null || projectRole == ProjectRoles.Reader ? ProjectRoles.Reader : projectRole;
 
 
+    /// <summary>
+    /// Leave the voice room for a project and notify remaining participants.
+    /// </summary>
+    /// <param name="projectId">Project ID whose voice room to leave.</param>
     public async Task LeaveRoom(Guid projectId)
     {
         var userId = ExtractUserId();
@@ -92,6 +106,11 @@ public class VoiceHub : Hub
         _logger.LogInformation("User {UserId} left voice room for project {ProjectId}", userId, projectId);
     }
 
+    /// <summary>
+    /// Begin speaking in a voice room. Only users with EDITOR or OWNER roles
+    /// are allowed to speak; READERs are listen-only.
+    /// </summary>
+    /// <param name="projectId">Project ID of the voice room.</param>
     public async Task StartSpeaking(Guid projectId)
     {
         var userId = ExtractUserId();
@@ -110,6 +129,10 @@ public class VoiceHub : Hub
         await Clients.OthersInGroup(groupName).SendAsync(VoiceEvents.UserStartedSpeaking, userId, participant.DisplayName);
     }
 
+    /// <summary>
+    /// Stop speaking in a voice room and notify other participants.
+    /// </summary>
+    /// <param name="projectId">Project ID of the voice room.</param>
     public async Task StopSpeaking(Guid projectId)
     {
         var userId = ExtractUserId();
@@ -124,6 +147,12 @@ public class VoiceHub : Hub
 
     private const int MaxAudioPayloadBytes = 64 * 1024; // 64 KB
 
+    /// <summary>
+    /// Stream audio data to all other participants in the voice room.
+    /// Payload is limited to 64 KB per frame. READERs cannot send audio.
+    /// </summary>
+    /// <param name="projectId">Project ID of the voice room.</param>
+    /// <param name="audioData">Raw audio bytes (max 64 KB).</param>
     public async Task SendAudio(Guid projectId, byte[] audioData)
     {
         if (audioData.Length > MaxAudioPayloadBytes)

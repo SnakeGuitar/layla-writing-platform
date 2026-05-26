@@ -6,6 +6,11 @@ using System.Collections.Concurrent;
 
 namespace Layla.Api.Hubs;
 
+/// <summary>
+/// SignalR hub for real-time manuscript collaboration. Supports cursor position
+/// broadcasting, live text synchronization, chapter save notifications, and
+/// milestone creation notifications between co-editors. Requires JWT authorization.
+/// </summary>
 [Authorize]
 public class ManuscriptHub : Hub
 {

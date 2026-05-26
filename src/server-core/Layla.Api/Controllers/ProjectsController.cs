@@ -208,6 +208,7 @@ public class ProjectsController : ApiControllerBase
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> JoinPublicProject(Guid id, CancellationToken cancellationToken)
     {
         var result = await _projectService.JoinPublicProjectAsync(id, CurrentUserId, cancellationToken);
