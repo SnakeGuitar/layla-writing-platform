@@ -55,7 +55,16 @@ using (var scope = app.Services.CreateScope())
         {
             if (!await roleManager.RoleExistsAsync(role))
             {
-                await roleManager.CreateAsync(new IdentityRole(role));
+                try
+                {
+                    await roleManager.CreateAsync(new IdentityRole(role));
+                }
+                catch (DbUpdateException ex)
+                    when (ex.InnerException is Microsoft.Data.SqlClient.SqlException sqlEx
+                          && (sqlEx.Number == 2601 || sqlEx.Number == 2627))
+                {
+                    // Another replica inserted the role concurrently — safe to ignore
+                }
             }
         }
     }
