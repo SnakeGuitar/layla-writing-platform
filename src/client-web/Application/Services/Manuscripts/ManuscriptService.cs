@@ -177,6 +177,49 @@ public class ManuscriptService : IManuscriptService
         }
     }
 
+    public async Task<bool> AutosaveChapterAsync(Guid projectId, string manuscriptId, Guid chapterId, string content, List<Mention> mentions, bool isMilestone = false)
+    {
+        try
+        {
+            await _client.SendAsync<object>(new APIRequest
+            {
+                Endpoint = $"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/autosave",
+                Method = HttpMethod.Put,
+                Token = Token,
+                Body = new
+                {
+                    content,
+                    mentions,
+                    isMilestone
+                }
+            });
+            return true;
+        }
+        catch (APIException ex)
+        {
+            _logger.LogWarning(ex, "Failed to autosave chapter {ChapterId}", chapterId);
+            return false;
+        }
+    }
+
+    public async Task<List<Mention>?> GetChapterMentionsAsync(Guid projectId, string manuscriptId, Guid chapterId)
+    {
+        try
+        {
+            return await _client.SendAsync<List<Mention>>(new APIRequest
+            {
+                Endpoint = $"/api/manuscripts/{projectId}/{manuscriptId}/chapters/{chapterId}/mentions",
+                Method = HttpMethod.Get,
+                Token = Token
+            });
+        }
+        catch (APIException ex)
+        {
+            _logger.LogWarning(ex, "Failed to get mentions for chapter {ChapterId}", chapterId);
+            return null;
+        }
+    }
+
     public async Task<bool> DeleteChapterAsync(Guid projectId, string manuscriptId, Guid chapterId)
     {
         try

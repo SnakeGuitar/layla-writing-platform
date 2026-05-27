@@ -1,42 +1,52 @@
 @using System.Threading
 @using client_web.Application.Services.Manuscripts
+@using client_web.Application.Services.Session
+@using client_web.Application.Services.Wikis
 @using client_web.Models.Worldbuilding
+@using Layla.Client.Shared.Hub
+@using Layla.Client.Shared.Models
+@using Layla.Client.Shared.Tokenizer
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.SignalR.Client
+@implements IAsyncDisposable
 
 @inject IManuscriptService ManuscriptService
+@inject IWikiService WikiService
+@inject ISessionManager Session
+@inject ManuscriptHubClient HubClient
+@inject IConfiguration Configuration
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[700px]">
-    <!-- Left Panel: Tree View -->
-    <div class="lg:col-span-1 p-4 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex flex-col h-full overflow-hidden">
+<div class="grid grid-cols-1 xl:grid-cols-[300px_minmax(0,1fr)_260px] gap-4 h-[700px]">
+    <div class="p-4 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex flex-col h-full overflow-hidden">
         <div class="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2 mb-3 shrink-0">
-            <h3 class="text-cyber-tech-mono text-xs text-[var(--text-secondary)] uppercase">Manuscripts</h3>
-            <button @onclick="ToggleAddManuscriptForm" 
-                    class="cyber-button text-[10px] py-0.5 px-2">
-                [ + NEW MS ]
-            </button>
+            <h3 class="text-cyber-tech-mono text-xs text-[var(--text-secondary)] uppercase">Manuscritos</h3>
+            @if (!IsReadOnly)
+            {
+                <button @onclick="ToggleAddManuscriptForm" class="cyber-button text-[10px] py-0.5 px-2">
+                    Nuevo
+                </button>
+            }
         </div>
 
-        @if (_showAddMsForm)
+        @if (_showAddMsForm && !IsReadOnly)
         {
             <div class="p-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] mb-3 shrink-0 space-y-2">
-                <input @bind="_newMsTitle" placeholder="Manuscript Title" 
-                       class="cyber-input text-xs w-full" />
+                <input @bind="_newMsTitle" placeholder="Título del manuscrito" class="cyber-input text-xs w-full" />
                 <div class="flex justify-end gap-2 text-xs">
-                    <button @onclick="ToggleAddManuscriptForm" class="text-cyber-caption hover:text-[var(--accent-primary)] text-[10px]">[ CANCEL ]</button>
-                    <button @onclick="CreateManuscriptAsync" class="cyber-button text-[10px] py-0.5 px-2">[ CREATE ]</button>
+                    <button @onclick="ToggleAddManuscriptForm" class="text-cyber-caption hover:text-[var(--accent-primary)] text-[10px]">Cancelar</button>
+                    <button @onclick="CreateManuscriptAsync" class="cyber-button text-[10px] py-0.5 px-2">Crear</button>
                 </div>
             </div>
         }
 
-        <!-- Manuscripts Tree Container -->
         <div class="flex-1 overflow-y-auto pr-1 space-y-2 text-sm text-[var(--text-secondary)]">
             @if (_loading)
             {
-                <p class="text-cyber-tech-mono text-xs text-[var(--text-disabled)] animate-pulse">LOADING MANUSCRIPTS...</p>
+                <p class="text-cyber-tech-mono text-xs text-[var(--text-disabled)] animate-pulse">Cargando manuscritos...</p>
             }
             else if (_manuscripts == null || _manuscripts.Count == 0)
             {
-                <p class="text-cyber-tech-mono text-xs text-[var(--text-disabled)] py-4 text-center">NO REGISTERED MANUSCRIPTS.</p>
+                <p class="text-cyber-tech-mono text-xs text-[var(--text-disabled)] py-4 text-center">No hay manuscritos.</p>
             }
             else
             {
@@ -44,61 +54,48 @@
                 {
                     var isExpanded = _expandedMs.Contains(ms.ManuscriptId);
                     <div class="border border-[var(--border-subtle)] bg-[var(--bg-primary)] p-2 space-y-1">
-                        <!-- Manuscript Title Block -->
                         <div class="flex items-center justify-between group">
                             <div class="flex items-center gap-2 cursor-pointer flex-1" @onclick="() => ToggleMsExpansion(ms.ManuscriptId)">
-                                <span class="text-[var(--text-disabled)] text-xs select-none">
-                                    @(isExpanded ? "▼" : "▶")
-                                </span>
+                                <span class="text-[var(--text-disabled)] text-xs select-none">@(isExpanded ? "▼" : "▶")</span>
                                 <span class="font-mono text-xs uppercase text-[var(--text-primary)] truncate">@ms.Title</span>
                             </div>
-                            <div class="opacity-0 group-hover:opacity-100 flex gap-2 transition-all duration-100">
-                                <button @onclick="() => ShowAddChapterForm(ms.ManuscriptId)" title="Add Chapter" class="text-[10px] text-[var(--accent-primary)] hover:underline">
-                                    [ + CHAP ]
-                                </button>
-                                <button @onclick="() => DeleteManuscriptAsync(ms.ManuscriptId)" title="Delete Manuscript" class="text-[10px] text-[var(--accent-warning)] hover:underline">
-                                    [ DEL ]
-                                </button>
-                            </div>
+                            @if (!IsReadOnly)
+                            {
+                                <div class="opacity-0 group-hover:opacity-100 flex gap-2 transition-all duration-100">
+                                    <button @onclick="() => ShowAddChapterForm(ms.ManuscriptId)" title="Añadir capítulo" class="text-[10px] text-[var(--accent-primary)] hover:underline">Capítulo</button>
+                                    <button @onclick="() => DeleteManuscriptAsync(ms.ManuscriptId)" title="Eliminar manuscrito" class="text-[10px] text-[var(--accent-warning)] hover:underline">Eliminar</button>
+                                </div>
+                            }
                         </div>
 
-                        <!-- Chapters under this manuscript -->
                         @if (isExpanded)
                         {
                             <div class="pl-3 border-l border-[var(--border-subtle)] mt-1 space-y-1">
-                                @if (_addingChapterMsId == ms.ManuscriptId)
+                                @if (_addingChapterMsId == ms.ManuscriptId && !IsReadOnly)
                                 {
                                     <div class="p-2 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-2 mt-1">
-                                        <input @bind="_newChapTitle" placeholder="Chapter Title"
-                                               class="cyber-input text-xs w-full" />
+                                        <input @bind="_newChapTitle" placeholder="Título del capítulo" class="cyber-input text-xs w-full" />
                                         <div class="flex justify-end gap-1.5 text-[10px]">
-                                            <button @onclick="CancelAddChapter" class="text-cyber-caption hover:text-[var(--accent-primary)] text-[10px]">[ CANCEL ]</button>
-                                            <button @onclick="() => CreateChapterAsync(ms.ManuscriptId)" class="cyber-button text-[10px] py-0.5 px-2">[ CREATE ]</button>
+                                            <button @onclick="CancelAddChapter" class="text-cyber-caption hover:text-[var(--accent-primary)] text-[10px]">Cancelar</button>
+                                            <button @onclick="() => CreateChapterAsync(ms.ManuscriptId)" class="cyber-button text-[10px] py-0.5 px-2">Crear</button>
                                         </div>
                                     </div>
                                 }
 
-                                @if (ms.Chapters == null || ms.Chapters.Count == 0)
+                                @foreach (var chap in ms.Chapters ?? new List<Chapter>())
                                 {
-                                    <p class="text-cyber-tech-mono text-[10px] text-[var(--text-disabled)] italic py-1">NO_CHAPTERS</p>
-                                }
-                                else
-                                {
-                                    @foreach (var chap in ms.Chapters)
-                                    {
-                                        var isSelected = _selectedChapter?.ChapterId == chap.ChapterId;
-                                        <div class="flex items-center justify-between group/chap p-1 hover:bg-[var(--bg-secondary)] cursor-pointer
-                                                    @(isSelected ? "bg-[var(--accent-glow)] border-l-2 border-[var(--accent-primary)] pl-1.5" : "")"
-                                             @onclick="() => SelectChapter(chap, ms.ManuscriptId)">
-                                            <span class="truncate flex-1 text-xs @(isSelected ? "text-[var(--accent-primary)] font-mono" : "text-[var(--text-secondary)]")">
-                                                @chap.Title
-                                            </span>
+                                    var isSelected = _selectedChapter?.ChapterId == chap.ChapterId;
+                                    <div class="flex items-center justify-between group/chap p-1 hover:bg-[var(--bg-secondary)] cursor-pointer @(isSelected ? "bg-[var(--accent-glow)] border-l-2 border-[var(--accent-primary)] pl-1.5" : "")"
+                                         @onclick="() => SelectChapterAsync(chap, ms.ManuscriptId)">
+                                        <span class="truncate flex-1 text-xs @(isSelected ? "text-[var(--accent-primary)] font-mono" : "text-[var(--text-secondary)]")">@chap.Title</span>
+                                        @if (!IsReadOnly)
+                                        {
                                             <button @onclick="() => DeleteChapterAsync(ms.ManuscriptId, chap.ChapterId)" @onclick:stopPropagation="true"
                                                     class="opacity-0 group-hover/chap:opacity-100 text-[10px] text-[var(--accent-warning)] hover:underline">
-                                                [ X ]
+                                                X
                                             </button>
-                                        </div>
-                                    }
+                                        }
+                                    </div>
                                 }
                             </div>
                         }
@@ -108,66 +105,71 @@
         </div>
     </div>
 
-    <!-- Right Panel: Chapter Content Editor -->
-    <div class="lg:col-span-2 p-4 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex flex-col h-full">
+    <div class="p-4 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex flex-col h-full min-w-0">
         @if (_selectedChapter == null)
         {
             <div class="flex-1 flex flex-col items-center justify-center text-center">
-                <span class="text-cyber-tech-mono text-xs text-[var(--text-disabled)] mb-2">[ NO_SELECTION ]</span>
-                <h3 class="text-cyber-title text-[var(--text-disabled)] uppercase mb-2">No Chapter Selected</h3>
-                <p class="text-cyber-body text-xs max-w-sm">
-                    Select a chapter node from the operational registry or initialize a new manuscript stream.
-                </p>
+                <span class="text-cyber-tech-mono text-xs text-[var(--text-disabled)] mb-2">Sin selección</span>
+                <h3 class="text-cyber-title text-[var(--text-disabled)] uppercase mb-2">Elige un capítulo</h3>
+                <p class="text-cyber-body text-xs max-w-sm">Selecciona un capítulo o crea uno nuevo para empezar a escribir.</p>
             </div>
         }
         else
         {
-            <!-- Editor Title & Meta -->
-            <div class="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3 mb-3 shrink-0">
-                <div class="flex-1 max-w-lg pr-4">
-                    <input @bind="_selectedChapter.Title" @oninput="TriggerAutoSave"
-                           class="w-full bg-[var(--bg-primary)] text-cyber-title uppercase border border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:outline-none px-3 py-1.5"
-                           placeholder="Untitled Chapter" />
+            <div class="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3 mb-3 shrink-0 gap-3">
+                <div class="flex-1 max-w-lg">
+                    <input @bind="_selectedChapter.Title" @oninput="TriggerAutoSave" disabled="@IsReadOnly"
+                           class="w-full bg-[var(--bg-primary)] text-cyber-title uppercase border border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:outline-none px-3 py-1.5 disabled:opacity-70"
+                           placeholder="Capítulo sin título" />
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                    <!-- Auto-save state message -->
-                    <span class="text-[10px] font-mono uppercase tracking-wider transition-colors
-                                 @(_saveStatus == "Saving..." ? "text-[var(--accent-warning)] animate-pulse" : _saveStatus == "Saved" ? "text-[var(--accent-primary)]" : "text-[var(--text-disabled)]")">
-                        @_saveStatus
-                    </span>
-                    <!-- Version history button -->
-                    <button @onclick="OpenVersionHistory" 
-                            class="cyber-button text-xs py-1 px-3">
-                        [ HISTORY ]
-                    </button>
-                    <!-- View toggle -->
-                    <button @onclick="TogglePreview" 
-                            class="cyber-button text-xs py-1 px-3">
-                        @(_previewMode ? "[ EDIT ]" : "[ PREVIEW ]")
-                    </button>
+                    <span class="text-[10px] font-mono uppercase @SaveStatusClass">@_saveStatus</span>
+                    @if (!IsReadOnly)
+                    {
+                        <button @onclick="SaveNowAsync" class="cyber-button text-xs py-1 px-3">Guardar</button>
+                        <button @onclick="CreateMilestoneAsync" class="cyber-button text-xs py-1 px-3">Crear hito</button>
+                    }
+                    <button @onclick="OpenVersionHistory" class="cyber-button text-xs py-1 px-3">Historial</button>
                 </div>
             </div>
 
-            <!-- Content Area -->
-            <div class="flex-1 overflow-hidden relative">
-                @if (_previewMode)
-                {
-                    <div class="w-full h-full p-4 overflow-y-auto bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-cyber-body select-text">
-                        <h1 class="text-cyber-title text-[var(--accent-primary)] uppercase border-b border-[var(--border-subtle)] pb-1 mb-3">@_selectedChapter.Title</h1>
-                        <div class="leading-relaxed whitespace-pre-wrap font-sans text-[var(--text-secondary)] text-sm">
-                            @RenderSimpleMarkdown(_selectedChapter.Content)
-                        </div>
-                    </div>
-                }
-                else
-                {
-                    <textarea @bind="_selectedChapter.Content" @oninput="TriggerAutoSave"
-                              class="w-full h-full p-4 bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-cyber-body focus:outline-none focus:border-[var(--accent-primary)] resize-none font-mono text-sm leading-relaxed"
-                              placeholder="Type contents here... Supports plain text raw input."></textarea>
-                }
+            <div class="flex-1 overflow-hidden relative min-h-0">
+                <RichTextEditor @ref="_editor"
+                                @bind-Value="_selectedChapter.Content"
+                                ReadOnly="IsReadOnly"
+                                PlainTextChanged="OnPlainTextChanged"
+                                CursorChanged="BroadcastCursorAsync" />
+            </div>
+
+            <div class="pt-2 flex items-center justify-between text-[10px] font-mono text-[var(--text-disabled)] uppercase">
+                <span>@_wordCount palabras</span>
+                <span>@(_hubState == HubConnectionState.Connected ? "Colaboración activa" : "Colaboración desconectada")</span>
             </div>
         }
     </div>
+
+    <aside class="p-4 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex flex-col h-full overflow-hidden">
+        <div class="border-b border-[var(--border-subtle)] pb-2 mb-3">
+            <h3 class="text-cyber-tech-mono text-xs text-[var(--text-secondary)] uppercase">Entidades del capítulo</h3>
+        </div>
+
+        @if (_currentMentions.Count == 0)
+        {
+            <p class="text-cyber-body text-xs text-[var(--text-disabled)]">Aún no se detectan entidades de la wiki en este capítulo.</p>
+        }
+        else
+        {
+            <div class="space-y-2 overflow-y-auto">
+                @foreach (var mention in _currentMentions)
+                {
+                    <div class="p-2 bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
+                        <div class="text-xs text-[var(--text-primary)] font-mono uppercase truncate">@mention.Name</div>
+                        <div class="text-[10px] text-[var(--accent-primary)] uppercase">@mention.EntityType</div>
+                    </div>
+                }
+            </div>
+        }
+    </aside>
 </div>
 
 @if (_selectedChapter != null)
@@ -176,37 +178,105 @@
                          ManuscriptId="@_activeManuscriptId"
                          ChapterId="@_selectedChapter.ChapterId"
                          CurrentContent="@_selectedChapter.Content"
+                         IsReadOnly="IsReadOnly"
                          @bind-IsOpen="_versionHistoryOpen"
                          OnVersionRestored="HandleVersionRestored" />
 }
 
 @code {
-    [Parameter]
-    public Guid ProjectId { get; set; }
+    [Parameter] public Guid ProjectId { get; set; }
+    [Parameter] public bool IsReadOnly { get; set; }
 
     private List<Manuscript>? _manuscripts;
     private bool _loading = true;
-
-    // Sidebar tree states
     private readonly HashSet<string> _expandedMs = new();
-    private bool _showAddMsForm = false;
+    private bool _showAddMsForm;
     private string _newMsTitle = string.Empty;
     private string _addingChapterMsId = string.Empty;
     private string _newChapTitle = string.Empty;
-
-    // Selected state
     private Chapter? _selectedChapter;
     private string _activeManuscriptId = string.Empty;
+    private string _saveStatus = "Guardado";
+    private CancellationTokenSource? _saveCts;
+    private bool _versionHistoryOpen;
+    private RichTextEditor? _editor;
+    private readonly WikiTokenizer _tokenizer = new();
+    private readonly List<Mention> _currentMentions = new();
+    private bool _suppressEditorBroadcast;
+    private bool _hubConnected;
+    private HubConnectionState _hubState = HubConnectionState.Disconnected;
+    private int _wordCount;
 
-    // Editor states
-    private bool _previewMode = false;
-    private string _saveStatus = "All changes saved";
-    private CancellationTokenSource? _cts;
-    private bool _versionHistoryOpen = false;
+    private string SaveStatusClass => _saveStatus switch
+    {
+        "Guardando..." => "text-[var(--accent-warning)] animate-pulse",
+        "Error al guardar" => "text-[var(--accent-warning)]",
+        _ => "text-[var(--accent-primary)]"
+    };
 
     protected override async Task OnInitializedAsync()
     {
+        WireHubEvents();
         await LoadManuscriptsAsync();
+        await RebuildTokenizerAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        await Session.InitializeAsync();
+        await ConnectHubAsync();
+    }
+
+    private void WireHubEvents()
+    {
+        HubClient.TextChanged += async (_, content) =>
+        {
+            if (_selectedChapter == null || _editor == null) return;
+            _suppressEditorBroadcast = true;
+            _selectedChapter.Content = content;
+            await InvokeAsync(async () =>
+            {
+                await _editor.SetContentAsync(content);
+                StateHasChanged();
+            });
+            _suppressEditorBroadcast = false;
+        };
+        HubClient.CursorMoved += async (userId, displayName, offset) =>
+        {
+            if (_editor != null)
+                await InvokeAsync(() => _editor.ShowRemoteCursorAsync(userId, displayName, offset));
+        };
+        HubClient.CursorRemoved += async userId =>
+        {
+            if (_editor != null)
+                await InvokeAsync(() => _editor.RemoveRemoteCursorAsync(userId));
+        };
+        HubClient.WikiEntitiesChanged += async () => await RebuildTokenizerAsync();
+        HubClient.MilestoneCreated += async (projectId, chapterId) =>
+        {
+            if (projectId == ProjectId && _selectedChapter?.ChapterId.ToString() == chapterId)
+                await InvokeAsync(StateHasChanged);
+        };
+        HubClient.ConnectionStateChanged += async state =>
+        {
+            _hubState = state;
+            if (state == HubConnectionState.Connected && _selectedChapter != null)
+                await JoinCurrentChapterAsync();
+            await InvokeAsync(StateHasChanged);
+        };
+    }
+
+    private async Task ConnectHubAsync()
+    {
+        if (_hubConnected || !Session.IsAuthenticated) return;
+
+        var baseUrl = Configuration["ApiUrls:BackendURL"]?.TrimEnd('/') ?? "http://localhost:5000";
+        await HubClient.ConnectAsync($"{baseUrl}/hubs/manuscript", () => Task.FromResult<string?>(Session.CurrentToken));
+        _hubConnected = true;
+        _hubState = HubClient.State;
+        await JoinCurrentChapterAsync();
     }
 
     private async Task LoadManuscriptsAsync()
@@ -216,6 +286,13 @@
         {
             var list = await ManuscriptService.GetManuscriptsByProjectAsync(ProjectId);
             _manuscripts = list ?? new List<Manuscript>();
+            if (_manuscripts.Count > 0)
+            {
+                _expandedMs.Add(_manuscripts[0].ManuscriptId);
+                var firstChapter = _manuscripts[0].Chapters?.OrderBy(c => c.Order).FirstOrDefault();
+                if (firstChapter != null)
+                    await SelectChapterAsync(firstChapter, _manuscripts[0].ManuscriptId);
+            }
         }
         finally
         {
@@ -223,12 +300,17 @@
         }
     }
 
+    private async Task RebuildTokenizerAsync()
+    {
+        var entities = await WikiService.GetDetectableEntitiesAsync(ProjectId);
+        if (entities is { Count: > 0 })
+            _tokenizer.Build(entities);
+    }
+
     private void ToggleMsExpansion(string msId)
     {
-        if (_expandedMs.Contains(msId))
+        if (!_expandedMs.Add(msId))
             _expandedMs.Remove(msId);
-        else
-            _expandedMs.Add(msId);
     }
 
     private void ToggleAddManuscriptForm()
@@ -239,8 +321,8 @@
 
     private async Task CreateManuscriptAsync()
     {
-        if (string.IsNullOrWhiteSpace(_newMsTitle)) return;
-        var order = (_manuscripts?.Count ?? 0) + 1;
+        if (IsReadOnly || string.IsNullOrWhiteSpace(_newMsTitle)) return;
+        var order = _manuscripts?.Count ?? 0;
         var created = await ManuscriptService.CreateManuscriptAsync(ProjectId, _newMsTitle, order);
         if (created != null)
         {
@@ -252,18 +334,13 @@
 
     private async Task DeleteManuscriptAsync(string msId)
     {
-        var confirmed = await Task.FromResult(true); // Simplified confirmation
-        if (confirmed)
+        if (IsReadOnly) return;
+        var success = await ManuscriptService.DeleteManuscriptAsync(ProjectId, msId);
+        if (success)
         {
-            var success = await ManuscriptService.DeleteManuscriptAsync(ProjectId, msId);
-            if (success)
-            {
-                if (_activeManuscriptId == msId)
-                {
-                    _selectedChapter = null;
-                }
-                await LoadManuscriptsAsync();
-            }
+            if (_activeManuscriptId == msId)
+                _selectedChapter = null;
+            await LoadManuscriptsAsync();
         }
     }
 
@@ -282,50 +359,151 @@
 
     private async Task CreateChapterAsync(string msId)
     {
-        if (string.IsNullOrWhiteSpace(_newChapTitle)) return;
+        if (IsReadOnly || string.IsNullOrWhiteSpace(_newChapTitle)) return;
         var targetMs = _manuscripts?.Find(m => m.ManuscriptId == msId);
-        var order = (targetMs?.Chapters?.Count ?? 0) + 1;
-
-        var created = await ManuscriptService.CreateChapterAsync(ProjectId, msId, _newChapTitle, "Start writing...", order);
+        var order = targetMs?.Chapters?.Count ?? 0;
+        var created = await ManuscriptService.CreateChapterAsync(ProjectId, msId, _newChapTitle, "<p>Empieza a escribir...</p>", order);
         if (created != null)
         {
             await LoadManuscriptsAsync();
             CancelAddChapter();
-            _selectedChapter = created;
-            _activeManuscriptId = msId;
-            _previewMode = false;
-            _saveStatus = "Saved";
+            await SelectChapterAsync(created, msId);
         }
     }
 
     private async Task DeleteChapterAsync(string msId, Guid chapterId)
     {
+        if (IsReadOnly) return;
         var success = await ManuscriptService.DeleteChapterAsync(ProjectId, msId, chapterId);
         if (success)
         {
             if (_selectedChapter?.ChapterId == chapterId)
-            {
                 _selectedChapter = null;
-            }
             await LoadManuscriptsAsync();
         }
     }
 
-    private void SelectChapter(Chapter chap, string msId)
+    private async Task SelectChapterAsync(Chapter chap, string msId)
     {
-        // Cancel any pending auto-saves first
-        _cts?.Cancel();
-        _cts = null;
+        await SaveNowAsync();
+        await LeaveCurrentChapterAsync();
 
-        _selectedChapter = chap;
+        var full = await ManuscriptService.GetChapterAsync(ProjectId, msId, chap.ChapterId);
+        _selectedChapter = full ?? chap;
         _activeManuscriptId = msId;
-        _previewMode = false;
-        _saveStatus = "All changes saved";
+        _saveStatus = "Guardado";
+        _currentMentions.Clear();
+        _currentMentions.AddRange(_selectedChapter.Mentions ?? new List<Mention>());
+        CountWords(await GetPlainTextSafeAsync());
+
+        await JoinCurrentChapterAsync();
+        if (_editor != null)
+            await _editor.SetContentAsync(_selectedChapter.Content);
     }
 
-    private void TogglePreview()
+    private async Task JoinCurrentChapterAsync()
     {
-        _previewMode = !_previewMode;
+        if (_hubState != HubConnectionState.Connected || _selectedChapter == null) return;
+        try { await HubClient.JoinChapterGroupAsync(ProjectId, _selectedChapter.ChapterId.ToString()); }
+        catch { }
+    }
+
+    private async Task LeaveCurrentChapterAsync()
+    {
+        if (_hubState != HubConnectionState.Connected || _selectedChapter == null) return;
+        try { await HubClient.LeaveChapterGroupAsync(ProjectId, _selectedChapter.ChapterId.ToString()); }
+        catch { }
+    }
+
+    private async Task OnPlainTextChanged(string plainText)
+    {
+        CountWords(plainText);
+        UpdateMentions(plainText);
+        if (!_suppressEditorBroadcast)
+        {
+            await BroadcastCurrentTextAsync();
+            TriggerAutoSave();
+        }
+    }
+
+    private void CountWords(string plainText)
+    {
+        _wordCount = string.IsNullOrWhiteSpace(plainText)
+            ? 0
+            : plainText.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
+    }
+
+    private void UpdateMentions(string plainText)
+    {
+        var matches = _tokenizer.FindMentions(plainText);
+        _currentMentions.Clear();
+        _currentMentions.AddRange(matches.Select(m => new Mention
+        {
+            EntityId = m.EntityId,
+            EntityType = m.EntityType,
+            Name = m.MatchedText
+        }));
+    }
+
+    private async Task BroadcastCurrentTextAsync()
+    {
+        if (IsReadOnly || _selectedChapter == null || _editor == null || _hubState != HubConnectionState.Connected) return;
+        var html = await _editor.GetHtmlAsync();
+        await HubClient.SendTextChangedAsync(ProjectId, _selectedChapter.ChapterId.ToString(), html);
+    }
+
+    private async Task BroadcastCursorAsync(int offset)
+    {
+        if (IsReadOnly || _selectedChapter == null || _hubState != HubConnectionState.Connected) return;
+        await HubClient.SendCursorMovedAsync(ProjectId, _selectedChapter.ChapterId.ToString(), offset);
+    }
+
+    private void TriggerAutoSave(ChangeEventArgs? args = null)
+    {
+        if (IsReadOnly || _selectedChapter == null) return;
+        _saveStatus = "Guardando...";
+        _saveCts?.Cancel();
+        _saveCts = new CancellationTokenSource();
+        var token = _saveCts.Token;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(900, token);
+                if (!token.IsCancellationRequested)
+                    await InvokeAsync(() => SaveNowAsync(false));
+            }
+            catch (TaskCanceledException) { }
+        }, token);
+    }
+
+    private async Task SaveNowAsync() => await SaveNowAsync(true);
+
+    private async Task SaveNowAsync(bool force)
+    {
+        if (IsReadOnly || _selectedChapter == null || string.IsNullOrEmpty(_activeManuscriptId)) return;
+        if (!force && _saveStatus != "Guardando...") return;
+
+        _saveCts?.Cancel();
+        var html = _editor == null ? _selectedChapter.Content : await _editor.GetHtmlAsync();
+        var ok = await ManuscriptService.AutosaveChapterAsync(ProjectId, _activeManuscriptId, _selectedChapter.ChapterId, html, _currentMentions);
+        _selectedChapter.Content = html;
+        _selectedChapter.Mentions = _currentMentions.ToList();
+        _saveStatus = ok ? "Guardado" : "Error al guardar";
+        if (ok && _hubState == HubConnectionState.Connected)
+            await HubClient.NotifyChapterSavedAsync(ProjectId, _selectedChapter.ChapterId.ToString());
+        StateHasChanged();
+    }
+
+    private async Task CreateMilestoneAsync()
+    {
+        if (IsReadOnly || _selectedChapter == null || _editor == null) return;
+        var html = await _editor.GetHtmlAsync();
+        var ok = await ManuscriptService.AutosaveChapterAsync(ProjectId, _activeManuscriptId, _selectedChapter.ChapterId, html, _currentMentions, isMilestone: true);
+        _saveStatus = ok ? "Hito creado" : "Error al crear hito";
+        if (ok && _hubState == HubConnectionState.Connected)
+            await HubClient.NotifyMilestoneCreatedAsync(ProjectId, _selectedChapter.ChapterId.ToString());
     }
 
     private void OpenVersionHistory()
@@ -333,75 +511,25 @@
         _versionHistoryOpen = true;
     }
 
-    private void HandleVersionRestored(string restoredContent)
+    private async Task HandleVersionRestored(string restoredContent)
     {
-        if (_selectedChapter != null)
-        {
-            _selectedChapter.Content = restoredContent;
-            TriggerAutoSave();
-        }
+        if (_selectedChapter == null) return;
+        _selectedChapter.Content = restoredContent;
+        if (_editor != null)
+            await _editor.SetContentAsync(restoredContent);
+        TriggerAutoSave();
     }
 
-    private void TriggerAutoSave(ChangeEventArgs? e = null)
+    private async Task<string> GetPlainTextSafeAsync()
     {
-        _saveStatus = "Saving...";
-        _cts?.Cancel();
-        _cts = new CancellationTokenSource();
-        var token = _cts.Token;
-
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                await Task.Delay(1500, token);
-                if (token.IsCancellationRequested) return;
-
-                if (_selectedChapter != null)
-                {
-                    var updated = await ManuscriptService.UpdateChapterAsync(
-                        ProjectId,
-                        _activeManuscriptId,
-                        _selectedChapter.ChapterId,
-                        _selectedChapter.Title,
-                        _selectedChapter.Content,
-                        _selectedChapter.Order,
-                        DateTime.UtcNow
-                    );
-
-                    if (updated != null && !token.IsCancellationRequested)
-                    {
-                        _saveStatus = "Saved";
-                        await InvokeAsync(StateHasChanged);
-                    }
-                }
-            }
-            catch (Exception)
-            {
-                if (!token.IsCancellationRequested)
-                {
-                    _saveStatus = "All changes saved";
-                    await InvokeAsync(StateHasChanged);
-                }
-            }
-        }, token);
+        return _editor == null ? string.Empty : await _editor.GetPlainTextAsync();
     }
 
-    private MarkupString RenderSimpleMarkdown(string markdown)
+    public async ValueTask DisposeAsync()
     {
-        if (string.IsNullOrEmpty(markdown)) return new MarkupString("<i>Empty chapter.</i>");
-        
-        // Simple secure local conversion to avoid heavy packages and keep runtime lightweight
-        var safeHtml = markdown
-            .Replace("&", "&amp;")
-            .Replace("<", "&lt;")
-            .Replace(">", "&gt;");
-
-        // Convert common markdown elements
-        safeHtml = System.Text.RegularExpressions.Regex.Replace(safeHtml, @"^# (.*)$", "<h3>$1</h3>", System.Text.RegularExpressions.RegexOptions.Multiline);
-        safeHtml = System.Text.RegularExpressions.Regex.Replace(safeHtml, @"^## (.*)$", "<h4>$1</h4>", System.Text.RegularExpressions.RegexOptions.Multiline);
-        safeHtml = System.Text.RegularExpressions.Regex.Replace(safeHtml, @"\*\*(.*?)\*\*", "<strong>$1</strong>");
-        safeHtml = System.Text.RegularExpressions.Regex.Replace(safeHtml, @"\*(.*?)\*", "<em>$1</em>");
-        
-        return new MarkupString(safeHtml);
+        _saveCts?.Cancel();
+        await SaveNowAsync();
+        await LeaveCurrentChapterAsync();
+        await HubClient.DisconnectAsync();
     }
 }

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using client_web.Application.Config.Http;
 using client_web.Application.Services.Session;
 using client_web.Models.Worldbuilding;
+using Layla.Client.Shared.Models;
 using Microsoft.Extensions.Logging;
 
 namespace client_web.Application.Services.Wikis;
@@ -149,6 +150,24 @@ public class WikiService : IWikiService
         catch (APIException ex)
         {
             _logger.LogWarning(ex, "Failed to get appearances for entity {EntityId} in project {ProjectId}", entityId, projectId);
+            return null;
+        }
+    }
+
+    public async Task<List<DetectableEntity>?> GetDetectableEntitiesAsync(Guid projectId)
+    {
+        try
+        {
+            return await _client.SendAsync<List<DetectableEntity>>(new APIRequest
+            {
+                Endpoint = $"/api/wiki/{projectId}/detectable",
+                Method = HttpMethod.Get,
+                Token = Token
+            });
+        }
+        catch (APIException ex)
+        {
+            _logger.LogWarning(ex, "Failed to get detectable wiki entries for project {ProjectId}", projectId);
             return null;
         }
     }

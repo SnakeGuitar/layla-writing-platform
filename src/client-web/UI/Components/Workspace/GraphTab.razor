@@ -148,10 +148,12 @@
                     </div>
                     <h4 class="text-cyber-tech-mono font-bold text-sm">@_selectedNode.Name</h4>
                     <p class="text-cyber-metadata text-[10px] leading-relaxed">Type: <strong class="text-cyber-tech-mono">@_selectedNode.EntityType</strong></p>
-                    <button @onclick="() => StartRelationshipFrom(_selectedNode)" 
-                            class="cyber-button w-full mt-2 py-1 text-[10px]">
-                        Link from here
-                    </button>
+                    @if (!IsReadOnly)
+                    {
+                        <button @onclick="() => StartRelationshipFrom(_selectedNode)" class="cyber-button w-full mt-2 py-1 text-[10px]">
+                            Vincular desde aquí
+                        </button>
+                    }
                 </div>
             }
             else if (_selectedEdge != null)
@@ -166,15 +168,18 @@
                         <span>Target: <strong class="text-cyber-tech-mono">@_selectedEdge.Target?.Name</strong></span>
                         <span>Type: <strong class="text-[var(--accent-warning)] uppercase font-mono text-[10px]">@_selectedEdge.Label</strong></span>
                     </div>
-                    <button @onclick="DeleteRelationshipAsync" 
-                            class="cyber-button w-full mt-2 py-1 text-[10px] border-base-gray-5 hover:bg-base-orange-1/10 hover:text-base-orange-1 hover:border-base-orange-1">
-                        Remove Relationship
-                    </button>
+                    @if (!IsReadOnly)
+                    {
+                        <button @onclick="DeleteRelationshipAsync" 
+                                class="cyber-button w-full mt-2 py-1 text-[10px] border-base-gray-5 hover:bg-base-orange-1/10 hover:text-base-orange-1 hover:border-base-orange-1">
+                            Quitar relación
+                        </button>
+                    }
                 </div>
             }
 
             <!-- Relationship Creator Panel -->
-            <div class="space-y-3 pt-2">
+            <div class="space-y-3 pt-2" hidden="@IsReadOnly">
                 <h4 class="text-cyber-title text-xs font-semibold uppercase tracking-wider">// CREATE_RELATION</h4>
                 
                 <div class="cyber-input-wrapper">
@@ -213,7 +218,7 @@
         </div>
 
         <!-- Submit Creator Button -->
-        <div class="pt-4 border-t border-base-gray-4 shrink-0">
+        <div class="pt-4 border-t border-base-gray-4 shrink-0" hidden="@IsReadOnly">
             <button @onclick="CreateRelationshipAsync" class="cyber-button w-full text-xs">
                 Connect Entities
             </button>
@@ -224,6 +229,8 @@
 @code {
     [Parameter]
     public Guid ProjectId { get; set; }
+    [Parameter]
+    public bool IsReadOnly { get; set; }
 
     private GraphResult? _graphResult;
     private bool _loading = true;
@@ -361,6 +368,7 @@
 
     private async Task CreateRelationshipAsync()
     {
+        if (IsReadOnly) return;
         if (string.IsNullOrEmpty(_creatorSourceId) || string.IsNullOrEmpty(_creatorTargetId) || string.IsNullOrEmpty(_creatorType))
             return;
 
@@ -386,6 +394,7 @@
 
     private async Task DeleteRelationshipAsync()
     {
+        if (IsReadOnly) return;
         if (_selectedEdge == null) return;
 
         var success = await GraphService.DeleteRelationshipAsync(

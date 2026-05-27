@@ -52,10 +52,17 @@
                     </p>
                 </div>
                 <div class="shrink-0 flex gap-2 items-center">
+                    @if (_project.UserRole == "OWNER")
+                    {
+                        <button @onclick="ToggleCollaboratorsModal"
+                                class="cyber-button text-xs py-1 px-3">
+                            Colaboradores
+                        </button>
+                    }
                     <button @onclick="ToggleVoiceDrawer"
                             id="voice-toggle-btn"
                             class="cyber-button text-xs py-1 px-3">
-                        [ VOICE_LINK ]
+                        Voz
                     </button>
                     <a href="/projects/my-projects" class="cyber-button text-xs py-1 px-3">
                         [ BACK ]
@@ -87,19 +94,20 @@
         <div class="transition-opacity duration-100">
             @if (_activeTab == "manuscript")
             {
-                <ManuscriptTab ProjectId="ProjectId" />
+                <ManuscriptTab ProjectId="ProjectId" IsReadOnly="IsReadOnly" />
             }
             else if (_activeTab == "wiki")
             {
-                <WikiTab ProjectId="ProjectId" />
+                <WikiTab ProjectId="ProjectId" IsReadOnly="IsReadOnly" />
             }
             else if (_activeTab == "graph")
             {
-                <GraphTab ProjectId="ProjectId" />
+                <GraphTab ProjectId="ProjectId" IsReadOnly="IsReadOnly" />
             }
         </div>
 
-        <VoiceDrawer ProjectId="ProjectId" @bind-IsOpen="_voiceDrawerOpen" />
+        <VoiceDrawer ProjectId="ProjectId" IsReadOnly="IsReadOnly" @bind-IsOpen="_voiceDrawerOpen" />
+        <CollaboratorsModal ProjectId="ProjectId" @bind-IsOpen="_collaboratorsModalOpen" />
     }
 </div>
 
@@ -111,10 +119,18 @@
     private bool _loading = true;
     private string _activeTab = "manuscript";
     private bool _voiceDrawerOpen = false;
+    private bool _collaboratorsModalOpen = false;
+
+    private bool IsReadOnly => string.Equals(_project?.UserRole, "READER", StringComparison.OrdinalIgnoreCase);
 
     private void ToggleVoiceDrawer()
     {
         _voiceDrawerOpen = !_voiceDrawerOpen;
+    }
+
+    private void ToggleCollaboratorsModal()
+    {
+        _collaboratorsModalOpen = !_collaboratorsModalOpen;
     }
 
     private readonly List<(string Id, string Label)> _tabs = new()

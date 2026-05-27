@@ -1,0 +1,153 @@
+@using Microsoft.JSInterop
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div class="rich-editor-shell @(ReadOnly ? "rich-editor-readonly" : "")">
+    <div class="rich-editor-toolbar" hidden="@ReadOnly">
+        <button type="button" title="Deshacer" @onclick='() => ExecAsync("undo")'>↶</button>
+        <button type="button" title="Rehacer" @onclick='() => ExecAsync("redo")'>↷</button>
+        <span></span>
+        <button type="button" title="Negrita" @onclick='() => ExecAsync("bold")'><strong>B</strong></button>
+        <button type="button" title="Cursiva" @onclick='() => ExecAsync("italic")'><em>I</em></button>
+        <button type="button" title="Subrayado" @onclick='() => ExecAsync("underline")'><u>U</u></button>
+        <button type="button" title="Tachado" @onclick='() => ExecAsync("strikeThrough")'><s>S</s></button>
+        <span></span>
+        <button type="button" title="Lista con viñetas" @onclick='() => ExecAsync("insertUnorderedList")'>•</button>
+        <button type="button" title="Lista numerada" @onclick='() => ExecAsync("insertOrderedList")'>1.</button>
+        <button type="button" title="Cita" @onclick='() => ExecAsync("formatBlock", "blockquote")'>❝</button>
+        <span></span>
+        <button type="button" title="Alinear a la izquierda" @onclick='() => ExecAsync("justifyLeft")'>⇤</button>
+        <button type="button" title="Centrar" @onclick='() => ExecAsync("justifyCenter")'>☰</button>
+        <button type="button" title="Alinear a la derecha" @onclick='() => ExecAsync("justifyRight")'>⇥</button>
+        <span></span>
+        <button type="button" title="Insertar imagen con ajuste libre" @onclick="InsertImageAsync">Imagen</button>
+        <select title="Bloque" @onchange="FormatBlockAsync">
+            <option value="p">Párrafo</option>
+            <option value="h2">Título</option>
+            <option value="h3">Subtítulo</option>
+            <option value="blockquote">Cita</option>
+        </select>
+    </div>
+
+    <div class="rich-editor-stage">
+        <div id="@_editorId"
+             class="rich-editor-surface"
+             contenteditable="@(!ReadOnly)"
+             spellcheck="true"
+             aria-label="Editor de capítulo"></div>
+        <div id="@_cursorLayerId" class="rich-editor-cursors"></div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> ValueChanged { get; set; }
+    [Parameter] public EventCallback<string> PlainTextChanged { get; set; }
+    [Parameter] public EventCallback<int> CursorChanged { get; set; }
+    [Parameter] public bool ReadOnly { get; set; }
+
+    private readonly string _editorId = $"rich-editor-{Guid.NewGuid():N}";
+    private readonly string _cursorLayerId = $"rich-cursors-{Guid.NewGuid():N}";
+    private DotNetObjectReference<RichTextEditor>? _dotNetRef;
+    private IJSObjectReference? _module;
+    private string _lastRenderedValue = string.Empty;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        _module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/richTextEditor.js");
+        _dotNetRef = DotNetObjectReference.Create(this);
+        await _module.InvokeVoidAsync("init", _editorId, _cursorLayerId, _dotNetRef, Value ?? string.Empty, ReadOnly);
+        _lastRenderedValue = Value ?? string.Empty;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_module is null) return;
+
+        var incoming = Value ?? string.Empty;
+        if (incoming != _lastRenderedValue)
+        {
+            await _module.InvokeVoidAsync("setHtml", _editorId, incoming);
+            _lastRenderedValue = incoming;
+        }
+
+        await _module.InvokeVoidAsync("setReadOnly", _editorId, ReadOnly);
+    }
+
+    [JSInvokable]
+    public async Task OnEditorChanged(string html, string plainText)
+    {
+        _lastRenderedValue = html;
+        await ValueChanged.InvokeAsync(html);
+        await PlainTextChanged.InvokeAsync(plainText);
+    }
+
+    [JSInvokable]
+    public async Task OnCursorChanged(int offset)
+    {
+        await CursorChanged.InvokeAsync(offset);
+    }
+
+    public async Task SetContentAsync(string html)
+    {
+        _lastRenderedValue = html ?? string.Empty;
+        if (_module is not null)
+            await _module.InvokeVoidAsync("setHtml", _editorId, _lastRenderedValue);
+    }
+
+    public async Task<string> GetHtmlAsync()
+    {
+        return _module is null
+            ? Value
+            : await _module.InvokeAsync<string>("getHtml", _editorId);
+    }
+
+    public async Task<string> GetPlainTextAsync()
+    {
+        return _module is null
+            ? string.Empty
+            : await _module.InvokeAsync<string>("getPlainText", _editorId);
+    }
+
+    public async Task ShowRemoteCursorAsync(string userId, string displayName, int offset)
+    {
+        if (_module is not null)
+            await _module.InvokeVoidAsync("showRemoteCursor", _editorId, _cursorLayerId, userId, displayName, offset);
+    }
+
+    public async Task RemoveRemoteCursorAsync(string userId)
+    {
+        if (_module is not null)
+            await _module.InvokeVoidAsync("removeRemoteCursor", _cursorLayerId, userId);
+    }
+
+    private async Task ExecAsync(string command, string? value = null)
+    {
+        if (_module is not null)
+            await _module.InvokeVoidAsync("exec", _editorId, command, value);
+    }
+
+    private async Task FormatBlockAsync(ChangeEventArgs e)
+    {
+        await ExecAsync("formatBlock", e.Value?.ToString() ?? "p");
+    }
+
+    private async Task InsertImageAsync()
+    {
+        if (_module is not null)
+            await _module.InvokeVoidAsync("insertImage", _editorId);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_module is not null)
+        {
+            await _module.InvokeVoidAsync("dispose", _editorId, _cursorLayerId);
+            await _module.DisposeAsync();
+        }
+
+        _dotNetRef?.Dispose();
+    }
+}

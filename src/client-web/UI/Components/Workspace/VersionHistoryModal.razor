@@ -128,9 +128,12 @@
                                 </div>
                             </div>
 
-                            <button @onclick="RestoreVersionAsync" disabled="@_restoring" class="cyber-button text-xs py-2 px-5">
-                                @(_restoring ? "Restaurando..." : "Restaurar esta Versión")
-                            </button>
+                            @if (!IsReadOnly)
+                            {
+                                <button @onclick="RestoreVersionAsync" disabled="@_restoring" class="cyber-button text-xs py-2 px-5">
+                                    @(_restoring ? "Restaurando..." : "Restaurar esta Versión")
+                                </button>
+                            }
                         </div>
                     }
                 </div>
@@ -144,6 +147,7 @@
     [Parameter] public string ManuscriptId { get; set; } = string.Empty;
     [Parameter] public Guid ChapterId { get; set; }
     [Parameter] public string CurrentContent { get; set; } = string.Empty;
+    [Parameter] public bool IsReadOnly { get; set; }
     
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }

@@ -9,10 +9,12 @@
         <div class="shrink-0 space-y-2 mb-4">
             <div class="flex items-center justify-between">
                 <h3 class="text-cyber-tech-mono text-xs text-[var(--text-secondary)] uppercase">Wiki Entries</h3>
-                <button @onclick="ShowCreateForm" 
-                        class="cyber-button text-[10px] py-0.5 px-2">
-                    [ + NEW ENTRY ]
-                </button>
+                @if (!IsReadOnly)
+                {
+                    <button @onclick="ShowCreateForm" class="cyber-button text-[10px] py-0.5 px-2">
+                        Nueva entrada
+                    </button>
+                }
             </div>
             
             <input @bind="_searchText" @bind:event="oninput" placeholder="SEARCH ENTRIES..."
@@ -33,7 +35,7 @@
         </div>
 
         <!-- Create Entry Inline Form -->
-        @if (_showCreateForm)
+        @if (_showCreateForm && !IsReadOnly)
         {
             <div class="p-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] mb-4 shrink-0 space-y-2 text-xs">
                 <h4 class="text-cyber-title text-xs uppercase mb-1">Create Lore Entry</h4>
@@ -46,6 +48,7 @@
                     <option value="Location">Location</option>
                     <option value="Event">Event</option>
                     <option value="Object">Object</option>
+                    <option value="Concept">Concept</option>
                 </select>
 
                 <textarea @bind="_newEntryDescription" placeholder="Description..." rows="2"
@@ -134,51 +137,57 @@
                         <span class="text-cyber-metadata">SYS_LORE_DETAIL</span>
                         <h2 class="text-cyber-title uppercase mt-1">@_selectedEntry.Name</h2>
                     </div>
-                    <button @onclick="DeleteEntryAsync" 
-                            class="cyber-button text-xs py-1 px-3 border-[var(--accent-warning)] text-[var(--accent-warning)] hover:bg-[var(--accent-warning)] hover:text-[var(--bg-primary)]">
-                        [ DELETE LORE ]
-                    </button>
+                    @if (!IsReadOnly)
+                    {
+                        <button @onclick="DeleteEntryAsync" 
+                                class="cyber-button text-xs py-1 px-3 border-[var(--accent-warning)] text-[var(--accent-warning)] hover:bg-[var(--accent-warning)] hover:text-[var(--bg-primary)]">
+                            Eliminar
+                        </button>
+                    }
                 </div>
  
                 <!-- Fields Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="space-y-1">
                         <label class="text-cyber-metadata text-[10px] block">Name / Key</label>
-                        <input @bind="_selectedEntry.Name" 
+                        <input @bind="_selectedEntry.Name" disabled="@IsReadOnly"
                                class="cyber-input text-xs w-full bg-[var(--bg-primary)]" />
                     </div>
                     <div class="space-y-1">
                         <label class="text-cyber-metadata text-[10px] block">Entity Classification</label>
-                        <select @bind="_selectedEntry.EntityType" 
+                        <select @bind="_selectedEntry.EntityType" disabled="@IsReadOnly"
                                 class="cyber-input text-xs w-full bg-[var(--bg-primary)]">
                             <option value="Character">Character</option>
                             <option value="Location">Location</option>
                             <option value="Event">Event</option>
                             <option value="Object">Object</option>
+                            <option value="Concept">Concept</option>
                         </select>
                     </div>
                 </div>
 
                 <div class="space-y-1">
                     <label class="text-cyber-metadata text-[10px] block">Tags (Comma separated)</label>
-                    <input @bind="_tagsCsv" 
+                    <input @bind="_tagsCsv" disabled="@IsReadOnly"
                            class="cyber-input text-xs w-full bg-[var(--bg-primary)]" />
                 </div>
 
                 <div class="space-y-1">
                     <label class="text-cyber-metadata text-[10px] block">Lore Description</label>
-                    <textarea @bind="_selectedEntry.Description" rows="6"
+                    <textarea @bind="_selectedEntry.Description" rows="6" disabled="@IsReadOnly"
                               class="cyber-input text-xs w-full bg-[var(--bg-primary)] font-mono resize-none"
                               placeholder="Write lore documentation..."></textarea>
                 </div>
 
                 <!-- Update Button -->
-                <div class="flex justify-end pt-2">
-                    <button @onclick="UpdateEntryAsync" 
-                            class="cyber-button text-xs py-1.5 px-4">
-                        [ SAVE LORE CHANGES ]
-                    </button>
-                </div>
+                @if (!IsReadOnly)
+                {
+                    <div class="flex justify-end pt-2">
+                        <button @onclick="UpdateEntryAsync" class="cyber-button text-xs py-1.5 px-4">
+                            Guardar cambios
+                        </button>
+                    </div>
+                }
 
                 <!-- Appearances section (Neo4j linkage) -->
                 <div class="border-t border-[var(--border-subtle)] pt-3">
@@ -212,6 +221,8 @@
 @code {
     [Parameter]
     public Guid ProjectId { get; set; }
+    [Parameter]
+    public bool IsReadOnly { get; set; }
 
     private List<WikiEntry>? _entries;
     private bool _loading = true;
@@ -219,7 +230,7 @@
     // Filters and search
     private string _searchText = string.Empty;
     private string _filterType = "All";
-    private readonly List<string> _entityTypes = new() { "All", "Character", "Location", "Event", "Object" };
+    private readonly List<string> _entityTypes = new() { "All", "Character", "Location", "Event", "Object", "Concept" };
 
     // Detail state
     private WikiEntry? _selectedEntry;
@@ -289,6 +300,7 @@
 
     private async Task CreateEntryAsync()
     {
+        if (IsReadOnly) return;
         if (string.IsNullOrWhiteSpace(_newEntryName)) return;
 
         var tagsList = _newEntryTags
@@ -335,6 +347,7 @@
 
     private async Task UpdateEntryAsync()
     {
+        if (IsReadOnly) return;
         if (_selectedEntry == null) return;
 
         var tagsList = _tagsCsv
@@ -362,6 +375,7 @@
 
     private async Task DeleteEntryAsync()
     {
+        if (IsReadOnly) return;
         if (_selectedEntry == null) return;
 
         var success = await WikiService.DeleteEntryAsync(ProjectId, _selectedEntry.EntityId);

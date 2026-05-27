@@ -17,6 +17,10 @@ public interface IProjectService
     Task<Project?> UpdateProjectAsync(Guid id, UpdateProjectRequest request);
     Task<bool> DeleteProjectAsync(Guid id);
     Task<bool> JoinPublicProjectAsync(Guid projectId);
+    Task<IEnumerable<Collaborator>> GetCollaboratorsAsync(Guid projectId);
+    Task<Collaborator?> InviteCollaboratorAsync(Guid projectId, string email, string role);
+    Task<Collaborator?> UpdateCollaboratorRoleAsync(Guid projectId, string collaboratorUserId, string role);
+    Task<bool> RemoveCollaboratorAsync(Guid projectId, string collaboratorUserId);
 }
 
 /// <summary>

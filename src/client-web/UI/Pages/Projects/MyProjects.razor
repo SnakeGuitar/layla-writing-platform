@@ -11,7 +11,10 @@
 
 <header class="max-w-5xl mx-auto mb-8 border-b border-[var(--border-subtle)] pb-4">
     <span class="text-cyber-metadata">SYS_REGISTRY // OPERATOR_UNITS</span>
-    <h1 class="text-cyber-display mt-1 uppercase">My Projects</h1>
+    <div class="flex items-center justify-between gap-4">
+        <h1 class="text-cyber-display mt-1 uppercase">Mis proyectos</h1>
+        <button @onclick="OpenCreateModal" class="cyber-button text-xs">Crear proyecto</button>
+    </div>
 </header>
 
 <AuthorizeView>
@@ -38,6 +41,13 @@
                                       UpdatedAt="@project.UpdatedAt"
                                       UserRole="@project.UserRole"
                                       OnCardClick="HandleCardClick" />
+                        <div class="flex justify-end gap-2 mt-2">
+                            @if (project.UserRole == "OWNER")
+                            {
+                                <button @onclick="() => OpenEditModal(project)" class="cyber-button text-[10px] py-1 px-2">Editar</button>
+                                <button @onclick="() => DeleteProjectAsync(project)" class="cyber-button text-[10px] py-1 px-2 border-[var(--accent-warning)] text-[var(--accent-warning)]">Eliminar</button>
+                            }
+                        </div>
                     </div>
                 }
             </div>
@@ -51,9 +61,58 @@
     </NotAuthorized>
 </AuthorizeView>
 
+@if (_projectModalOpen)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/70" @onclick="CloseProjectModal"></div>
+        <div class="cyber-panel relative z-10 w-full max-w-xl bg-base-gray-1">
+            <div class="cyber-panel-header">
+                <h3 class="text-cyber-title text-sm uppercase">@(_editingProjectId.HasValue ? "Editar proyecto" : "Crear proyecto")</h3>
+                <button @onclick="CloseProjectModal" class="text-cyber-metadata hover:text-cyber-tech-mono">Cerrar</button>
+            </div>
+            <div class="space-y-4">
+                <div class="cyber-input-wrapper">
+                    <label class="cyber-label">Título</label>
+                    <input @bind="_formTitle" class="cyber-input w-full" />
+                </div>
+                <div class="cyber-input-wrapper">
+                    <label class="cyber-label">Género</label>
+                    <input @bind="_formGenre" class="cyber-input w-full" />
+                </div>
+                <div class="cyber-input-wrapper">
+                    <label class="cyber-label">Sinopsis</label>
+                    <textarea @bind="_formSynopsis" class="cyber-input w-full min-h-28"></textarea>
+                </div>
+                <label class="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                    <input type="checkbox" @bind="_formIsPublic" />
+                    Proyecto público
+                </label>
+                @if (!string.IsNullOrWhiteSpace(_formError))
+                {
+                    <p class="text-xs font-mono text-[var(--accent-warning)]">@_formError</p>
+                }
+                <div class="flex justify-end gap-2">
+                    <button @onclick="CloseProjectModal" class="cyber-button text-xs">Cancelar</button>
+                    <button @onclick="SaveProjectAsync" class="cyber-button text-xs" disabled="@_savingProject">
+                        @(_savingProject ? "Guardando..." : "Guardar")
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 @code {
     private List<Project>? _projects;
     private bool _loading = true;
+    private bool _projectModalOpen;
+    private bool _savingProject;
+    private Guid? _editingProjectId;
+    private string _formTitle = string.Empty;
+    private string _formGenre = string.Empty;
+    private string _formSynopsis = string.Empty;
+    private bool _formIsPublic;
+    private string _formError = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -95,5 +154,91 @@
     private void HandleCardClick(Guid projectId)
     {
         Navigation.NavigateTo($"/projects/{projectId}", forceLoad: true);
+    }
+
+    private void OpenCreateModal()
+    {
+        _editingProjectId = null;
+        _formTitle = string.Empty;
+        _formGenre = string.Empty;
+        _formSynopsis = string.Empty;
+        _formIsPublic = false;
+        _formError = string.Empty;
+        _projectModalOpen = true;
+    }
+
+    private void OpenEditModal(Project project)
+    {
+        _editingProjectId = project.Id;
+        _formTitle = project.Title;
+        _formGenre = project.LiteraryGenre;
+        _formSynopsis = project.Synopsis;
+        _formIsPublic = project.IsPublic;
+        _formError = string.Empty;
+        _projectModalOpen = true;
+    }
+
+    private void CloseProjectModal()
+    {
+        _projectModalOpen = false;
+    }
+
+    private async Task SaveProjectAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_formTitle) || string.IsNullOrWhiteSpace(_formGenre) || string.IsNullOrWhiteSpace(_formSynopsis))
+        {
+            _formError = "Completa título, género y sinopsis.";
+            return;
+        }
+
+        _savingProject = true;
+        try
+        {
+            if (_editingProjectId.HasValue)
+            {
+                var updated = await ProjectService.UpdateProjectAsync(_editingProjectId.Value, new UpdateProjectRequest
+                {
+                    Title = _formTitle.Trim(),
+                    LiteraryGenre = _formGenre.Trim(),
+                    Synopsis = _formSynopsis.Trim(),
+                    IsPublic = _formIsPublic
+                });
+                if (updated == null)
+                {
+                    _formError = "No se pudo actualizar el proyecto.";
+                    return;
+                }
+            }
+            else
+            {
+                var created = await ProjectService.CreateProjectAsync(new CreateProjectRequest
+                {
+                    Title = _formTitle.Trim(),
+                    LiteraryGenre = _formGenre.Trim(),
+                    Synopsis = _formSynopsis.Trim(),
+                    IsPublic = _formIsPublic
+                });
+                if (created == null)
+                {
+                    _formError = "No se pudo crear el proyecto.";
+                    return;
+                }
+            }
+
+            _projectModalOpen = false;
+            await LoadProjectsAsync();
+        }
+        finally
+        {
+            _savingProject = false;
+        }
+    }
+
+    private async Task DeleteProjectAsync(Project project)
+    {
+        if (project.UserRole != "OWNER") return;
+        var ok = await ProjectService.DeleteProjectAsync(project.Id);
+        if (ok)
+            await LoadProjectsAsync();
     }
 }

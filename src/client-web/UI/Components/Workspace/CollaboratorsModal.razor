@@ -1,0 +1,143 @@
+@using client_web.Application.Services.Projects
+@using client_web.Models
+@inject IProjectService ProjectService
+
+@if (IsOpen)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/70" @onclick="CloseAsync"></div>
+        <div class="cyber-panel relative z-10 w-full max-w-2xl max-h-[82vh] overflow-hidden flex flex-col bg-base-gray-1">
+            <div class="cyber-panel-header">
+                <div>
+                    <h3 class="text-cyber-title text-sm uppercase">Colaboradores</h3>
+                    <p class="text-cyber-metadata text-[10px]">Invita autoras, cambia roles y retira accesos.</p>
+                </div>
+                <button @onclick="CloseAsync" class="text-cyber-metadata hover:text-cyber-tech-mono">Cerrar</button>
+            </div>
+
+            <div class="p-4 border-b border-[var(--border-subtle)]">
+                <label class="cyber-label">Correo electrónico</label>
+                <div class="flex gap-2">
+                    <input @bind="_inviteEmail" class="cyber-input flex-1" placeholder="autora@correo.com" />
+                    <select @bind="_inviteRole" class="cyber-input w-32">
+                        <option value="READER">Lectora</option>
+                        <option value="EDITOR">Editora</option>
+                    </select>
+                    <button @onclick="InviteAsync" disabled="@_busy" class="cyber-button">Invitar</button>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(_status))
+                {
+                    <p class="mt-2 text-xs font-mono text-[var(--accent-warning)]">@_status</p>
+                }
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-2">
+                @if (_loading)
+                {
+                    <p class="text-cyber-tech-mono text-xs text-[var(--text-disabled)]">Cargando colaboradores...</p>
+                }
+                else if (_collaborators.Count == 0)
+                {
+                    <p class="text-cyber-body text-xs text-[var(--text-disabled)]">No hay colaboradores todavía.</p>
+                }
+                else
+                {
+                    @foreach (var collaborator in _collaborators)
+                    {
+                        <div class="p-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center gap-3">
+                            <div class="flex-1 min-w-0">
+                                <div class="text-sm text-[var(--text-primary)] truncate">@DisplayName(collaborator)</div>
+                                <div class="text-[10px] text-[var(--text-disabled)] truncate">@collaborator.Email</div>
+                            </div>
+                            @if (collaborator.Role == "OWNER")
+                            {
+                                <span class="text-[10px] text-[var(--accent-primary)] font-mono">PROPIETARIA</span>
+                            }
+                            else
+                            {
+                                <select value="@collaborator.Role" @onchange="e => ChangeRoleAsync(collaborator, e.Value?.ToString() ?? collaborator.Role)" class="cyber-input w-32 text-xs">
+                                    <option value="READER">Lectora</option>
+                                    <option value="EDITOR">Editora</option>
+                                </select>
+                                <button @onclick="() => RemoveAsync(collaborator)" class="text-xs text-[var(--accent-warning)] hover:underline">Retirar</button>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid ProjectId { get; set; }
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+
+    private readonly List<Collaborator> _collaborators = new();
+    private bool _loading;
+    private bool _busy;
+    private string _inviteEmail = string.Empty;
+    private string _inviteRole = "READER";
+    private string _status = string.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsOpen && _collaborators.Count == 0 && !_loading)
+            await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _status = string.Empty;
+        try
+        {
+            _collaborators.Clear();
+            _collaborators.AddRange(await ProjectService.GetCollaboratorsAsync(ProjectId));
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task InviteAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_inviteEmail)) return;
+        _busy = true;
+        var created = await ProjectService.InviteCollaboratorAsync(ProjectId, _inviteEmail.Trim(), _inviteRole);
+        _status = created == null ? "No se pudo invitar a esa persona." : "Invitación aplicada.";
+        _inviteEmail = string.Empty;
+        await LoadAsync();
+        _busy = false;
+    }
+
+    private async Task ChangeRoleAsync(Collaborator collaborator, string role)
+    {
+        if (collaborator.Role == role) return;
+        _busy = true;
+        var updated = await ProjectService.UpdateCollaboratorRoleAsync(ProjectId, collaborator.UserId, role);
+        _status = updated == null ? "No se pudo cambiar el rol." : "Rol actualizado.";
+        await LoadAsync();
+        _busy = false;
+    }
+
+    private async Task RemoveAsync(Collaborator collaborator)
+    {
+        _busy = true;
+        var ok = await ProjectService.RemoveCollaboratorAsync(ProjectId, collaborator.UserId);
+        _status = ok ? "Colaborador retirado." : "No se pudo retirar el acceso.";
+        await LoadAsync();
+        _busy = false;
+    }
+
+    private async Task CloseAsync()
+    {
+        IsOpen = false;
+        await IsOpenChanged.InvokeAsync(false);
+    }
+
+    private static string DisplayName(Collaborator collaborator) =>
+        string.IsNullOrWhiteSpace(collaborator.DisplayName) ? collaborator.Email ?? collaborator.UserId : collaborator.DisplayName;
+}

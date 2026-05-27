@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using client_web.Models.Worldbuilding;
+using Layla.Client.Shared.Models;
 
 namespace client_web.Application.Services.Wikis;
 
@@ -13,4 +14,5 @@ public interface IWikiService
     Task<WikiEntry?> UpdateEntryAsync(Guid projectId, string entityId, string? name = null, string? entityType = null, string? description = null, List<string>? tags = null);
     Task<bool> DeleteEntryAsync(Guid projectId, string entityId);
     Task<List<AppearanceRecord>?> GetEntityAppearancesAsync(Guid projectId, string entityId);
+    Task<List<DetectableEntity>?> GetDetectableEntitiesAsync(Guid projectId);
 }

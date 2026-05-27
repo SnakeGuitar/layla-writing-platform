@@ -16,6 +16,8 @@ public interface IManuscriptService
     Task<Chapter?> GetChapterAsync(Guid projectId, string manuscriptId, Guid chapterId);
     Task<Chapter?> CreateChapterAsync(Guid projectId, string manuscriptId, string title, string content, int order);
     Task<Chapter?> UpdateChapterAsync(Guid projectId, string manuscriptId, Guid chapterId, string title, string content, int order, DateTime? clientTimestamp = null);
+    Task<bool> AutosaveChapterAsync(Guid projectId, string manuscriptId, Guid chapterId, string content, List<Mention> mentions, bool isMilestone = false);
+    Task<List<Mention>?> GetChapterMentionsAsync(Guid projectId, string manuscriptId, Guid chapterId);
     Task<bool> DeleteChapterAsync(Guid projectId, string manuscriptId, Guid chapterId);
     
     Task<List<Layla.Client.Shared.Models.ChapterVersionMeta>?> GetChapterVersionsAsync(Guid projectId, string manuscriptId, Guid chapterId);

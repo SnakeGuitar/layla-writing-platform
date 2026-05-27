@@ -179,4 +179,80 @@ public class ProjectService : IProjectService
             return false;
         }
     }
+
+    public async Task<IEnumerable<Collaborator>> GetCollaboratorsAsync(Guid projectId)
+    {
+        try
+        {
+            var data = await _client.SendAsync<IEnumerable<Collaborator>>(new APIRequest
+            {
+                Endpoint = $"/api/projects/{projectId}/collaborators",
+                Method = HttpMethod.Get,
+                Token = Token,
+            });
+            return data ?? Array.Empty<Collaborator>();
+        }
+        catch (APIException ex)
+        {
+            _logger.LogWarning(ex, "GetCollaboratorsAsync({Id}) failed (HTTP {Status}).", projectId, ex.Status);
+            return Array.Empty<Collaborator>();
+        }
+    }
+
+    public async Task<Collaborator?> InviteCollaboratorAsync(Guid projectId, string email, string role)
+    {
+        try
+        {
+            return await _client.SendAsync<Collaborator>(new APIRequest
+            {
+                Endpoint = $"/api/projects/{projectId}/collaborators",
+                Method = HttpMethod.Post,
+                Token = Token,
+                Body = new { email, role },
+            });
+        }
+        catch (APIException ex)
+        {
+            _logger.LogWarning(ex, "InviteCollaboratorAsync({Id}) failed (HTTP {Status}).", projectId, ex.Status);
+            return null;
+        }
+    }
+
+    public async Task<Collaborator?> UpdateCollaboratorRoleAsync(Guid projectId, string collaboratorUserId, string role)
+    {
+        try
+        {
+            return await _client.SendAsync<Collaborator>(new APIRequest
+            {
+                Endpoint = $"/api/projects/{projectId}/collaborators/{collaboratorUserId}/role",
+                Method = HttpMethod.Patch,
+                Token = Token,
+                Body = new { role },
+            });
+        }
+        catch (APIException ex)
+        {
+            _logger.LogWarning(ex, "UpdateCollaboratorRoleAsync({Id}, {UserId}) failed (HTTP {Status}).", projectId, collaboratorUserId, ex.Status);
+            return null;
+        }
+    }
+
+    public async Task<bool> RemoveCollaboratorAsync(Guid projectId, string collaboratorUserId)
+    {
+        try
+        {
+            await _client.SendAsync<object>(new APIRequest
+            {
+                Endpoint = $"/api/projects/{projectId}/collaborators/{collaboratorUserId}",
+                Method = HttpMethod.Delete,
+                Token = Token,
+            });
+            return true;
+        }
+        catch (APIException ex)
+        {
+            _logger.LogWarning(ex, "RemoveCollaboratorAsync({Id}, {UserId}) failed (HTTP {Status}).", projectId, collaboratorUserId, ex.Status);
+            return false;
+        }
+    }
 }

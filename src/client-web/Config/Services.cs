@@ -6,6 +6,7 @@ using client_web.Application.Services.Auth;
 using client_web.Application.Services.Projects;
 using client_web.Application.Services.Session;
 using client_web.Application.Services.Voice;
+using Layla.Client.Shared.Hub;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
@@ -50,6 +51,7 @@ public static class Services
         services.AddScoped<client_web.Application.Services.Manuscripts.IManuscriptService, client_web.Application.Services.Manuscripts.ManuscriptService>();
         services.AddScoped<client_web.Application.Services.Wikis.IWikiService, client_web.Application.Services.Wikis.WikiService>();
         services.AddScoped<client_web.Application.Services.Graph.IGraphService, client_web.Application.Services.Graph.GraphService>();
+        services.AddScoped<ManuscriptHubClient>();
 
         // ── Voice (transient SignalR-based stack) ────────────────────────────
         services.AddSingleton<ISignalRClient, SignalRClient>();
