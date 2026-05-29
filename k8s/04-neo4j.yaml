@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: neo4j
+  namespace: layla
+spec:
+  serviceName: neo4j
+  replicas: 1
+  selector:
+    matchLabels:
+      app: neo4j
+  template:
+    metadata:
+      labels:
+        app: neo4j
+    spec:
+      # enableServiceLinks: false evita que k8s inyecte vars como NEO4J_PORT_7687_TCP_PORT
+      # en el pod. Neo4j interpreta cualquier var NEO4J_* como configuración propia,
+      # y esas vars de servicio no son settings válidos → crash al arrancar.
+      enableServiceLinks: false
+      containers:
+        - name: neo4j
+          image: neo4j:5
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 7474  # HTTP browser
+            - containerPort: 7687  # Bolt (protocolo de consultas)
+          env:
+            - name: NEO4J_AUTH
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: neo4j-auth
+            - name: NEO4J_PLUGINS
+              value: '["apoc"]'
+          volumeMounts:
+            - name: neo4j-data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 7474
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 7474
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 3
+  volumeClaimTemplates:
+    - metadata:
+        name: neo4j-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: neo4j
+  namespace: layla
+spec:
+  selector:
+    app: neo4j
+  ports:
+    - name: http
+      port: 7474
+      targetPort: 7474
+    - name: bolt
+      port: 7687
+      targetPort: 7687
+  type: ClusterIP

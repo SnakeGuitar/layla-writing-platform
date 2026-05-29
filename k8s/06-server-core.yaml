@@ -1,0 +1,149 @@
+# Deployment: sin estado, puede tener múltiples réplicas idénticas.
+# replicas: 2 cumple el requisito de la práctica.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: server-core
+  namespace: layla
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: server-core
+  template:
+    metadata:
+      labels:
+        app: server-core
+    spec:
+      containers:
+        - name: server-core
+          # Construye la imagen con: (desde src/server-core)
+          #   docker build -t layla-server-core:latest -f Layla.Api/Dockerfile .
+          image: layla-server-core:latest
+          # Never: usa la imagen local; no intenta descargarla de un registry
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5287
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            # Production → Kestrel se vincula a "+" (todas las interfaces)
+            - name: ASPNETCORE_URLS
+              value: "http://+:5287"
+            - name: DOTNET_RUNNING_IN_CONTAINER
+              value: "true"
+            - name: Ports__HTTP
+              value: "5287"
+            - name: Ports__HTTPS
+              value: "5288"
+            # Base de datos SQL
+            - name: DatabaseConfigs__SQL__ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: sql-connection-string
+            - name: DatabaseConfigs__SQL__CommandTimeoutSeconds
+              value: "30"
+            - name: DatabaseConfigs__SQL__MaxRetryCount
+              value: "5"
+            - name: DatabaseConfigs__SQL__MaxRetryDelay
+              value: "00:00:10"
+            # JWT
+            - name: JwtSettings__Secret
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: jwt-secret
+            - name: JwtSettings__Issuer
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: jwt-issuer
+            - name: JwtSettings__Audience
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: jwt-audience
+            - name: JwtSettings__ExpirationInMinutes
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: jwt-expiry-minutes
+            # RabbitMQ — "rabbitmq" resuelve al Service de k8s en el mismo namespace
+            - name: RabbitMQ__HostName
+              value: "rabbitmq"
+            - name: RabbitMQ__Port
+              value: "5672"
+            - name: RabbitMQ__UserName
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: rabbit-user
+            - name: RabbitMQ__Password
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: rabbit-password
+            - name: RabbitMQ__VirtualHost
+              value: "/"
+            - name: RabbitMQ__Exchange
+              value: "worldbuilding.events"
+            # Email
+            - name: EmailConfigs__Host
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: email-host
+            - name: EmailConfigs__Port
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: email-port
+            - name: EmailConfigs__Username
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: email-username
+            - name: EmailConfigs__Password
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: email-password
+            - name: EmailConfigs__FromName
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: email-from-name
+            - name: EmailConfigs__FromEmail
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: email-from-email
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5287
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5287
+            initialDelaySeconds: 40
+            periodSeconds: 20
+            failureThreshold: 3
+---
+# El nombre "server-core" coincide exactamente con la URL del YARP: http://server-core:5287
+apiVersion: v1
+kind: Service
+metadata:
+  name: server-core
+  namespace: layla
+spec:
+  selector:
+    app: server-core
+  ports:
+    - port: 5287
+      targetPort: 5287
+  type: ClusterIP

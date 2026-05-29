@@ -1,0 +1,77 @@
+# StatefulSet: conserva identidad de red y almacenamiento estable entre reinicios.
+# Se usa para bases de datos porque cada pod tiene su propio PVC.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sqlserver
+  namespace: layla
+spec:
+  serviceName: sqlserver
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sqlserver
+  template:
+    metadata:
+      labels:
+        app: sqlserver
+    spec:
+      containers:
+        - name: sqlserver
+          image: mcr.microsoft.com/mssql/server:2022-latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 1433
+          env:
+            - name: ACCEPT_EULA
+              value: "Y"
+            - name: MSSQL_SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: sql-sa-password
+            - name: MSSQL_MEM_LIMIT
+              value: "2048"
+          volumeMounts:
+            - name: sql-data
+              mountPath: /var/opt/mssql
+          readinessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -Q "SELECT 1" -C
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 10
+          livenessProbe:
+            exec:
+              command:
+                - /bin/bash
+                - -c
+                - /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$MSSQL_SA_PASSWORD" -Q "SELECT 1" -C
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 5
+  volumeClaimTemplates:
+    - metadata:
+        name: sql-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
+---
+# ClusterIP: solo accesible dentro del cluster (los pods se comunican entre sí por nombre DNS).
+apiVersion: v1
+kind: Service
+metadata:
+  name: sqlserver
+  namespace: layla
+spec:
+  selector:
+    app: sqlserver
+  ports:
+    - port: 1433
+      targetPort: 1433
+  type: ClusterIP

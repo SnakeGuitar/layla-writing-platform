@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: layla-api-gateway
+  namespace: layla
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: layla-api-gateway
+  template:
+    metadata:
+      labels:
+        app: layla-api-gateway
+    spec:
+      containers:
+        - name: layla-api-gateway
+          # Construye la imagen con: (desde src/infraestructure-api_gateway)
+          #   docker build -t layla-api-gateway:latest .
+          image: layla-api-gateway:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            - name: ASPNETCORE_URLS
+              value: "http://+:5000"
+            - name: Ports__HTTP
+              value: "5000"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 20
+            periodSeconds: 20
+            failureThreshold: 3
+---
+# NodePort: expone el gateway en un puerto del nodo host (accesible desde fuera del cluster).
+# El YARP ya tiene rutas a server-core y layla-worldbuilding en appsettings.json.
+apiVersion: v1
+kind: Service
+metadata:
+  name: layla-api-gateway
+  namespace: layla
+spec:
+  selector:
+    app: layla-api-gateway
+  ports:
+    - port: 5000
+      targetPort: 5000
+      nodePort: 30500
+  type: NodePort

@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: layla-worldbuilding
+  namespace: layla
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: layla-worldbuilding
+  template:
+    metadata:
+      labels:
+        app: layla-worldbuilding
+    spec:
+      containers:
+        - name: layla-worldbuilding
+          # Construye la imagen con: (desde src/server-worldbuilding)
+          #   docker build -t layla-worldbuilding:latest .
+          image: layla-worldbuilding:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+            # MongoDB
+            - name: MONGODB_URI
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: mongo-connection-string
+            # Neo4j
+            - name: NEO4J_URI
+              value: "bolt://neo4j:7687"
+            - name: NEO4J_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: neo4j-username
+            - name: NEO4J_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: neo4j-password
+            # RabbitMQ
+            - name: RABBITMQ_URL
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: rabbitmq-url
+            - name: RABBITMQ_EXCHANGE
+              value: "worldbuilding.events"
+            - name: RABBITMQ_QUEUE
+              value: "worldbuilding.queue"
+            # JWT (mismo secret que server-core para validar tokens)
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: jwt-secret
+            - name: JWT_SECRET_REFRESH
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: jwt-refresh-secret
+            - name: JWT_ACCESS_TOKEN_EXPIRY
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: jwt-expiry-minutes
+            - name: JWT_REFRESH_TOKEN_EXPIRY
+              valueFrom:
+                secretKeyRef:
+                  name: layla-secrets
+                  key: jwt-refresh-expiry
+            # URL del gateway para verificar roles de proyecto
+            - name: CORE_API_URL
+              value: "http://layla-api-gateway:5000"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 3
+---
+# El nombre "layla-worldbuilding" coincide con la URL del YARP: http://layla-worldbuilding:3000
+apiVersion: v1
+kind: Service
+metadata:
+  name: layla-worldbuilding
+  namespace: layla
+spec:
+  selector:
+    app: layla-worldbuilding
+  ports:
+    - port: 3000
+      targetPort: 3000
+  type: ClusterIP

@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: layla-web
+  namespace: layla
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: layla-web
+  template:
+    metadata:
+      labels:
+        app: layla-web
+    spec:
+      containers:
+        - name: layla-web
+          # Construye la imagen con: (desde src/, no desde src/client-web)
+          #   docker build -t layla-client-web:latest -f client-web/Dockerfile .
+          image: layla-client-web:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: "Production"
+            # Puerto HTTP interno del pod
+            - name: ASPNETCORE_URLS
+              value: "http://+:8080"
+            - name: Ports__HTTP
+              value: "8080"
+            - name: Ports__HTTPS
+              value: "8443"
+            - name: DOTNET_RUNNING_IN_CONTAINER
+              value: "true"
+            # URL del gateway (todos los pods apuntan al Service de k8s, que balancea a las 5 réplicas)
+            - name: ApiUrls__BackendURL
+              value: "http://layla-api-gateway:5000"
+            - name: ApiUrls__WorldbuildingURL
+              value: "http://layla-worldbuilding:3000"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            failureThreshold: 3
+---
+# sessionAffinity: ClientIP — necesario para Blazor Server.
+# Cada navegador mantiene un WebSocket persistente (circuito SignalR) con el pod que lo atendió.
+# Sin afinidad, las reconexiones llegan a pods distintos y el circuito se pierde.
+apiVersion: v1
+kind: Service
+metadata:
+  name: layla-web
+  namespace: layla
+spec:
+  selector:
+    app: layla-web
+  ports:
+    - port: 80
+      targetPort: 8080
+      nodePort: 30080
+  type: NodePort
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800  # 3 horas
