@@ -1,13 +1,12 @@
 # Layla — Vagrantfile
 # Provisiona 3 VMs (data, apps, edge) con Docker + Compose vía Puppet.
-# Uso desde Windows: cd deploy && vagrant up
+# Uso desde Windows: cd deploy/vagrant && vagrant up
 Vagrant.configure("2") do |config|
   config.vm.box = "bento/ubuntu-22.04"
   config.vm.box_check_update = false
 
   # El repo completo queda accesible en /vagrant dentro de cada VM
-  # (Vagrant lo monta automáticamente desde el folder padre del Vagrantfile)
-  config.vm.synced_folder "..", "/vagrant", type: "virtualbox"
+  config.vm.synced_folder "../..", "/vagrant", type: "virtualbox"
 
   config.vm.provider "virtualbox" do |vb|
     vb.linked_clone = true
