@@ -15,12 +15,19 @@ src/
 ├── infraestructure-api_gateway/     YARP reverse proxy (single entry on :5000)
 ├── client-desktop/                  WPF .NET 9 — main writing workspace
 ├── client-web/                      Blazor Server .NET 9 — public reader + admin
-├── client-android/                  Kotlin + Compose — mobile companion
-└── docker-compose.yml               All 8 services orchestrated together
-deploy/                              Vagrant + Puppet for 3-VM deployment (see deploy/README.md)
+└── client-android/                  Kotlin + Compose — mobile companion
+deploy/
+├── docker/                          Docker Compose for local dev (all 8 services)
+├── k8s/                             Kubernetes manifests
+└── vagrant/                         Vagrant + Puppet for 3-VM automated deployment
+docs/
+├── architecture/                    Architecture docs and diagrams
+├── guides/                          Developer guides (Blazor client wiring, etc.)
+├── project/                         Formal project documents (.docx/.pdf)
+└── presentation/                    Deployment presentation slides
 ```
 
-Solution file is `src/server-core/Layla.Core.slnx` (only contains the server-core projects). `client-desktop` and `client-web` have their own independent `.sln` files. `src/README.md` is the long-form architecture doc; treat it as authoritative. `WEB_CLIENT_GUIDE.md` is the authoritative reference for the Blazor client's DI/auth/HTTP wiring.
+Solution file is `src/server-core/Layla.Core.slnx` (only contains the server-core projects). `client-desktop` and `client-web` have their own independent `.sln` files. `src/README.md` is the long-form architecture doc; treat it as authoritative. `docs/guides/web-client.md` is the authoritative reference for the Blazor client's DI/auth/HTTP wiring.
 
 ## Common commands
 
@@ -41,15 +48,15 @@ cd src/infraestructure-api_gateway && dotnet run
 
 ### Run everything via Docker
 ```bash
-cd src
-cp .env.Development .env    # then fill in real values
+cd deploy/docker
+cp ../../src/.env.Development .env    # then fill in real values
 docker compose up -d
 docker compose logs -f server-core
 ```
 
 ### Run everything via Vagrant (3 VMs)
 ```bash
-cd deploy
+cd deploy/vagrant
 vagrant up                  # creates 3 VMs (data, apps, edge), provisions with Puppet
 vagrant ssh apps -c "sudo docker ps"
 vagrant destroy -f          # tear down
@@ -87,7 +94,7 @@ When deploying behind the YARP gateway (or in any containerized production setup
 - **`server-core/Layla.Api/Program.cs`** does **not** call `UseHttpsRedirection()` in production by design — the gateway is the TLS terminator. If you re-enable it, YARP will receive 307s and fail to proxy.
 - **`server-worldbuilding`** reads `process.env["PORT"]` (singular), not `PORT_HTTP`/`PORT_HTTPS`. The docker-compose env block must set `PORT`.
 - **`Secrets.cs` requires 6 `EmailConfigs:*` keys** even though SMTP isn't used in most demos — provide dummy values or remove the requirement.
-- **MongoDB 7+ needs AVX**, which VirtualBox doesn't expose by default — `deploy/files/compose/compose.data.yml` pins `mongo:4.4` to avoid SIGILL crashes on CPU-restricted VMs.
+- **MongoDB 7+ needs AVX**, which VirtualBox doesn't expose by default — `deploy/vagrant/files/compose/compose.data.yml` pins `mongo:4.4` to avoid SIGILL crashes on CPU-restricted VMs.
 
 ## Reference URLs
 

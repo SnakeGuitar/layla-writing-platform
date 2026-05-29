@@ -64,7 +64,7 @@ services:
   # --- 4. Worldbuilding API (Node.js) ---
   layla-worldbuilding:
     build:
-      context: ./server-worldbuilding
+      context: ../../src/server-worldbuilding
       dockerfile: Dockerfile
     container_name: layla-worldbuilding
     ports:
@@ -103,7 +103,7 @@ services:
   # --- 5. Core API (.NET) ---
   server-core:
     build:
-      context: ./server-core
+      context: ../../src/server-core
       dockerfile: Layla.Api/Dockerfile
     container_name: server-core
     ports:
@@ -151,13 +151,13 @@ services:
         condition: service_healthy
     restart: unless-stopped
     volumes:
-      - ./server-core/Layla.Api/Certs:/app/certs:ro
+      - ../../src/server-core/Layla.Api/Certs:/app/certs:ro
 
 
   # --- 6. Web app - (.NET) ---
   layla-web:
     build:
-      context: .
+      context: ../../src
       dockerfile: client-web/Dockerfile
     container_name: layla-web
     ports:
@@ -188,7 +188,7 @@ services:
   # --- 7. API Gateway (YARP) ---
   layla-api-gateway:
     build:
-      context: ./infraestructure-api_gateway
+      context: ../../src/infraestructure-api_gateway
       dockerfile: Dockerfile
     container_name: layla-api-gateway
     ports:
