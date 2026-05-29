@@ -110,4 +110,4 @@ When deploying behind the YARP gateway (or in any containerized production setup
 ## Things NOT in this repo
 
 - `Layla.Api/appsettings.json` is gitignored. Only `appsettings.Development.json` is committed. Real secrets go via env vars (compose `.env`) or User Secrets in dev.
-- Docs in `docs/` are `.docx`/`.pdf` only — they cannot be read directly. Export to text if you need their content.
+- Formal docs in `docs/project/` are `.docx`/`.pdf` — they cannot be read directly. Export to text if you need their content.
