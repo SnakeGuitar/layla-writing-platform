@@ -10,18 +10,18 @@
 <PageTitle>@(_project?.Title ?? "Workspace") // System Core</PageTitle>
 
 <div class="max-w-7xl mx-auto space-y-4">
-    @if (_loading)
+    @if (!_sessionReady || _loading)
     {
         <div class="flex items-center justify-center py-16">
-            <p class="text-cyber-tech-mono text-sm text-[var(--text-disabled)] animate-pulse">ESTABLISHING WORKSPACE STREAMS...</p>
+            <p class="nm-text-label text-sm text-[var(--nm-text-secondary)] animate-pulse">ESTABLISHING WORKSPACE STREAMS...</p>
         </div>
     }
     else if (_project == null)
     {
-        <div class="cyber-panel p-6 max-w-lg mx-auto text-center mt-12 border-[var(--accent-warning)] bg-[var(--bg-primary)]">
-            <h3 class="text-cyber-title text-[var(--accent-warning)] mb-2 uppercase">Access Refused</h3>
-            <p class="text-cyber-body text-xs mb-4">The requested project stream does not exist or your identity unit lacks read authorization.</p>
-            <a href="/projects/my-projects" class="cyber-button text-xs inline-flex">
+        <div class="nm-card p-6 max-w-lg mx-auto text-center mt-12 border-[var(--nm-error)] bg-[var(--nm-bg-base)]">
+            <h3 class="nm-text-title text-[var(--nm-error)] mb-2 uppercase">Access Refused</h3>
+            <p class="nm-text-body text-xs mb-4">@(_error ?? "El proyecto solicitado no existe o tu rol no permite leerlo.")</p>
+            <a href="/projects/my-projects" class="nm-button text-xs inline-flex">
                 [ Return to List ]
             </a>
         </div>
@@ -29,25 +29,25 @@
     else
     {
         <!-- Header -->
-        <header class="cyber-panel p-4 bg-[var(--bg-secondary)]">
+        <header class="nm-card p-4 bg-[var(--nm-surface)]">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div class="space-y-1">
                     <div class="flex items-center gap-2">
-                        <span class="text-cyber-metadata">SYS_WORKSPACE</span>
-                        <span class="px-2 py-0.5 bg-[var(--bg-primary)] border border-[var(--border-subtle)] text-cyber-metadata text-[10px]">
+                        <span class="nm-text-label">SYS_WORKSPACE</span>
+                        <span class="px-2 py-0.5 bg-[var(--nm-bg-base)] border border-[var(--nm-shadow-dark)] nm-text-label text-[10px]">
                             @_project.LiteraryGenre
                         </span>
                         @if (!string.IsNullOrEmpty(_project.UserRole))
                         {
-                            <span class="px-2 py-0.5 bg-[var(--bg-primary)] border border-[var(--accent-primary)] text-[var(--accent-primary)] text-cyber-metadata text-[10px]">
+                            <span class="px-2 py-0.5 bg-[var(--nm-bg-base)] border border-[var(--nm-accent)] text-[var(--nm-accent)] nm-text-label text-[10px]">
                                 @_project.UserRole.ToUpper()
                             </span>
                         }
                     </div>
-                    <h1 class="text-cyber-display uppercase mt-1">
+                    <h1 class="nm-text-display uppercase mt-1">
                         @_project.Title
                     </h1>
-                    <p class="text-cyber-body text-xs max-w-3xl">
+                    <p class="nm-text-body text-xs max-w-3xl">
                         @_project.Synopsis
                     </p>
                 </div>
@@ -55,16 +55,16 @@
                     @if (_project.UserRole == "OWNER")
                     {
                         <button @onclick="ToggleCollaboratorsModal"
-                                class="cyber-button text-xs py-1 px-3">
+                                class="nm-button text-xs py-1 px-3">
                             Colaboradores
                         </button>
                     }
                     <button @onclick="ToggleVoiceDrawer"
                             id="voice-toggle-btn"
-                            class="cyber-button text-xs py-1 px-3">
+                            class="nm-button text-xs py-1 px-3">
                         Voz
                     </button>
-                    <a href="/projects/my-projects" class="cyber-button text-xs py-1 px-3">
+                    <a href="/projects/my-projects" class="nm-button text-xs py-1 px-3">
                         [ BACK ]
                     </a>
                 </div>
@@ -72,18 +72,18 @@
         </header>
 
         <!-- Navigation Tabs -->
-        <div class="border-b border-[var(--border-subtle)] pb-px">
+        <div class="border-b border-[var(--nm-shadow-dark)] pb-px">
             <nav class="flex gap-4" aria-label="Tabs">
                 @foreach (var tab in _tabs)
                 {
                     var isSelected = _activeTab == tab.Id;
                     <button @onclick="() => SetActiveTab(tab.Id)"
                             class="pb-2 text-xs font-mono uppercase tracking-wider relative transition-all duration-100 outline-none
-                                   @(isSelected ? "text-[var(--accent-primary)]" : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]")">
+                                   @(isSelected ? "text-[var(--nm-accent)]" : "text-[var(--nm-text-secondary)] hover:text-[var(--nm-text-primary)]")">
                         @tab.Label
                         @if (isSelected)
                         {
-                            <div class="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--accent-primary)]"></div>
+                            <div class="absolute bottom-0 left-0 right-0 h-[2px] bg-[var(--nm-accent)]"></div>
                         }
                     </button>
                 }
@@ -117,6 +117,8 @@
 
     private Project? _project;
     private bool _loading = true;
+    private bool _sessionReady;
+    private string? _error;
     private string _activeTab = "manuscript";
     private bool _voiceDrawerOpen = false;
     private bool _collaboratorsModalOpen = false;
@@ -140,22 +142,21 @@
         ("graph", "Relational Graph")
     };
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadProjectAsync();
-    }
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
 
-        var hadToken = Session.IsAuthenticated;
-        var restored = await Session.InitializeAsync();
-        if (restored && !hadToken)
+        await EnsureSessionAsync();
+        _sessionReady = true;
+        if (!Session.IsAuthenticated)
         {
-            await LoadProjectAsync();
+            Navigation.NavigateTo($"/auth/login?returnUrl={Uri.EscapeDataString($"/projects/{ProjectId}")}");
             StateHasChanged();
+            return;
         }
+
+        await LoadProjectAsync();
+        StateHasChanged();
     }
 
     private async Task LoadProjectAsync()
@@ -169,10 +170,14 @@
                 return;
             }
             _project = await ProjectService.GetProjectByIdAsync(ProjectId);
+            _error = _project is null
+                ? "No encontramos este proyecto o tu rol no permite acceder."
+                : null;
         }
         catch (Exception)
         {
             _project = null;
+            _error = "No se pudo abrir el workspace. Revisa la conexión con el servidor.";
         }
         finally
         {
@@ -183,5 +188,15 @@
     private void SetActiveTab(string tabId)
     {
         _activeTab = tabId;
+    }
+
+    private async Task EnsureSessionAsync()
+    {
+        for (var attempt = 0; attempt < 3 && !Session.IsAuthenticated; attempt++)
+        {
+            await Session.InitializeAsync();
+            if (!Session.IsAuthenticated)
+                await Task.Delay(100);
+        }
     }
 }

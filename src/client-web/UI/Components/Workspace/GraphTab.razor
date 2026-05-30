@@ -5,14 +5,14 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 h-[700px]">
     <!-- Left Column: SVG Interactive Narrative Canvas (3/4 Width) -->
-    <div class="lg:col-span-3 cyber-panel flex flex-col h-full overflow-hidden relative">
-        <div class="cyber-panel-header shrink-0 pb-3 mb-3">
+    <div class="lg:col-span-3 nm-card flex flex-col h-full overflow-hidden relative">
+        <div class="nm-card-header shrink-0 pb-3 mb-3">
             <div class="flex items-center gap-2">
-                <h3 class="text-cyber-title text-sm font-semibold tracking-wider uppercase">Narrative Map</h3>
-                <span class="text-cyber-metadata px-2 py-0.5 border border-base-gray-4 font-mono text-[10px]">Neo4j Database Network</span>
+                <h3 class="nm-text-title text-sm font-semibold tracking-wider uppercase">Narrative Map</h3>
+                <span class="nm-text-label px-2 py-0.5 border border-base-gray-4 font-mono text-[10px]">Neo4j Database Network</span>
             </div>
             <div class="flex gap-2">
-                <button @onclick="RecalculateLayout" class="cyber-button text-xs py-1 px-2">
+                <button @onclick="RecalculateLayout" class="nm-button text-xs py-1 px-2">
                     Reset Coordinates
                 </button>
             </div>
@@ -26,14 +26,14 @@
             @if (_loading)
             {
                 <div class="absolute inset-0 flex items-center justify-center bg-base-gray-1/80 z-10">
-                    <p class="text-cyber-tech-mono animate-pulse text-xs">Loading narrative graph...</p>
+                    <p class="nm-text-label animate-pulse text-xs">Loading narrative graph...</p>
                 </div>
             }
             else if (_graphResult == null || _graphResult.Nodes.Count == 0)
             {
                 <div class="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
-                    <p class="text-cyber-tech-mono text-sm mb-2 uppercase font-bold text-[var(--accent-warning)]">// GRAPH_EMPTY</p>
-                    <p class="text-cyber-body text-xs max-w-xs leading-relaxed">
+                    <p class="nm-text-label text-sm mb-2 uppercase font-bold text-[var(--nm-error)]">// GRAPH_EMPTY</p>
+                    <p class="nm-text-body text-xs max-w-xs leading-relaxed">
                         Create wiki entries in the Lorebook tab first, then return here to design interactive networks!
                     </p>
                 </div>
@@ -64,7 +64,7 @@
                                 <!-- Main visual line -->
                                 <line x1="@edge.Source.X" y1="@edge.Source.Y" 
                                       x2="@edge.Target.X" y2="@edge.Target.Y" 
-                                      stroke="@(isSelected ? "#00E5FF" : "rgba(255,255,255,0.1)")" 
+                                      stroke="@(isSelected ? "#1A47C8" : "rgba(255,255,255,0.1)")"
                                       stroke-width="@(isSelected ? "2" : "1.5")"
                                       stroke-dasharray="@(isSelected ? "4,4" : "none")"
                                       marker-end="url(#arrow)" />
@@ -76,9 +76,9 @@
                                 }
                                 <g transform="translate(@midX, @midY)">
                                     <rect x="-35" y="-7" width="70" height="14" rx="0" 
-                                          fill="var(--bg-primary)" stroke="@(isSelected ? "#00E5FF" : "var(--border-subtle)")" stroke-width="1" />
-                                    <text y="3" fill="@(isSelected ? "#00E5FF" : "var(--text-secondary)")" font-size="8" 
-                                          font-weight="bold" text-anchor="middle" font-family="var(--font-technical)">
+                                          fill="var(--nm-bg-base)" stroke="@(isSelected ? "#1A47C8" : "var(--nm-shadow-dark)")" stroke-width="1" />
+                                    <text y="3" fill="@(isSelected ? "#1A47C8" : "var(--nm-text-secondary)")" font-size="8"
+                                          font-weight="bold" text-anchor="middle" font-family="var(--nm-font)">
                                         @edge.Label
                                     </text>
                                 </g>
@@ -90,7 +90,7 @@
                     @foreach (var node in _graphResult.Nodes)
                     {
                         var isSelected = _selectedNode?.EntityId == node.EntityId;
-                        var nodeColor = isSelected ? "#00E5FF" : "#A1A1AA";
+                        var nodeColor = isSelected ? "#1A47C8" : "#9090A8";
 
                         <g class="cursor-pointer" transform="translate(0, 0)"
                            @onmousedown="(e) => HandleMouseDown(node, e)"
@@ -100,24 +100,24 @@
                             @if (isSelected)
                             {
                                 <circle cx="@node.X" cy="@node.Y" r="@(node.Radius + 4)" 
-                                        fill="none" stroke="#00E5FF" stroke-width="1.5" />
+                                        fill="none" stroke="#1A47C8" stroke-width="1.5" />
                             }
                             
                             <!-- Base circle -->
                             <circle cx="@node.X" cy="@node.Y" r="@node.Radius" 
-                                    fill="var(--bg-secondary)" stroke="@nodeColor" stroke-width="1" />
+                                    fill="var(--nm-surface)" stroke="@nodeColor" stroke-width="1" />
 
                             <!-- Node Text Label inside or below circle -->
-                            <text x="@node.X" y="@(node.Y + 3)" fill="var(--text-primary)" font-size="9" 
-                                  font-weight="600" text-anchor="middle" font-family="var(--font-technical)">
+                            <text x="@node.X" y="@(node.Y + 3)" fill="var(--nm-text-primary)" font-size="9"
+                                  font-weight="600" text-anchor="middle" font-family="var(--nm-font)">
                                 @TruncateName(node.Name)
                             </text>
 
                             <!-- Mini Entity Type Badge at the top -->
                             <rect x="@(node.X - 18)" y="@(node.Y - node.Radius - 4)" width="36" height="8" rx="0" 
-                                  fill="var(--bg-primary)" stroke="@nodeColor" stroke-width="0.5" />
+                                  fill="var(--nm-bg-base)" stroke="@nodeColor" stroke-width="0.5" />
                             <text x="@node.X" y="@(node.Y - node.Radius + 2)" fill="@nodeColor" font-size="6" 
-                                  font-weight="bold" text-anchor="middle" font-family="var(--font-technical)" class="uppercase">
+                                  font-weight="bold" text-anchor="middle" font-family="var(--nm-font)" class="uppercase">
                                 @node.EntityType
                             </text>
                         </g>
@@ -128,12 +128,12 @@
     </div>
 
     <!-- Right Column: Relationship Creator & Inspector (1/4 Width) -->
-    <div class="lg:col-span-1 cyber-panel flex flex-col h-full overflow-hidden justify-between">
+    <div class="lg:col-span-1 nm-card flex flex-col h-full overflow-hidden justify-between">
         <div class="space-y-6 overflow-y-auto pr-1">
             <!-- Selector Section -->
             <div class="border-b border-base-gray-4 pb-3">
-                <h3 class="text-cyber-title text-sm tracking-wider uppercase mb-1">Graph Inspector</h3>
-                <p class="text-cyber-metadata text-[10px] leading-relaxed">
+                <h3 class="nm-text-title text-sm tracking-wider uppercase mb-1">Graph Inspector</h3>
+                <p class="nm-text-label text-[10px] leading-relaxed">
                     Click nodes or connection lines on the canvas to inspect, delete, or build relationships. Drag nodes to customize layouts.
                 </p>
             </div>
@@ -143,14 +143,14 @@
             {
                 <div class="p-3 bg-base-gray-1 border border-base-gray-4 space-y-2 text-xs">
                     <div class="flex items-center justify-between">
-                        <span class="text-[var(--accent-primary)] text-[9px] uppercase font-mono font-bold">// Selected Node</span>
-                        <button @onclick="ClearSelections" class="text-cyber-metadata hover:text-cyber-tech-mono">✕</button>
+                        <span class="text-[var(--nm-accent)] text-[9px] uppercase font-mono font-bold">// Selected Node</span>
+                        <button @onclick="ClearSelections" class="nm-text-label hover:nm-text-label">✕</button>
                     </div>
-                    <h4 class="text-cyber-tech-mono font-bold text-sm">@_selectedNode.Name</h4>
-                    <p class="text-cyber-metadata text-[10px] leading-relaxed">Type: <strong class="text-cyber-tech-mono">@_selectedNode.EntityType</strong></p>
+                    <h4 class="nm-text-label font-bold text-sm">@_selectedNode.Name</h4>
+                    <p class="nm-text-label text-[10px] leading-relaxed">Type: <strong class="nm-text-label">@_selectedNode.EntityType</strong></p>
                     @if (!IsReadOnly)
                     {
-                        <button @onclick="() => StartRelationshipFrom(_selectedNode)" class="cyber-button w-full mt-2 py-1 text-[10px]">
+                        <button @onclick="() => StartRelationshipFrom(_selectedNode)" class="nm-button w-full mt-2 py-1 text-[10px]">
                             Vincular desde aquí
                         </button>
                     }
@@ -160,18 +160,18 @@
             {
                 <div class="p-3 bg-base-gray-1 border border-base-gray-4 space-y-2 text-xs">
                     <div class="flex items-center justify-between">
-                        <span class="text-[var(--accent-warning)] text-[9px] uppercase font-mono font-bold">// Selected Link</span>
-                        <button @onclick="ClearSelections" class="text-cyber-metadata hover:text-cyber-tech-mono">✕</button>
+                        <span class="text-[var(--nm-error)] text-[9px] uppercase font-mono font-bold">// Selected Link</span>
+                        <button @onclick="ClearSelections" class="nm-text-label hover:nm-text-label">✕</button>
                     </div>
-                    <div class="flex flex-col gap-1 text-cyber-caption">
-                        <span>Source: <strong class="text-cyber-tech-mono">@_selectedEdge.Source?.Name</strong></span>
-                        <span>Target: <strong class="text-cyber-tech-mono">@_selectedEdge.Target?.Name</strong></span>
-                        <span>Type: <strong class="text-[var(--accent-warning)] uppercase font-mono text-[10px]">@_selectedEdge.Label</strong></span>
+                    <div class="flex flex-col gap-1 nm-text-label">
+                        <span>Source: <strong class="nm-text-label">@_selectedEdge.Source?.Name</strong></span>
+                        <span>Target: <strong class="nm-text-label">@_selectedEdge.Target?.Name</strong></span>
+                        <span>Type: <strong class="text-[var(--nm-error)] uppercase font-mono text-[10px]">@_selectedEdge.Label</strong></span>
                     </div>
                     @if (!IsReadOnly)
                     {
                         <button @onclick="DeleteRelationshipAsync" 
-                                class="cyber-button w-full mt-2 py-1 text-[10px] border-base-gray-5 hover:bg-base-orange-1/10 hover:text-base-orange-1 hover:border-base-orange-1">
+                                class="nm-button-danger w-full mt-2 py-1 text-[10px]">
                             Quitar relación
                         </button>
                     }
@@ -180,11 +180,11 @@
 
             <!-- Relationship Creator Panel -->
             <div class="space-y-3 pt-2" hidden="@IsReadOnly">
-                <h4 class="text-cyber-title text-xs font-semibold uppercase tracking-wider">// CREATE_RELATION</h4>
+                <h4 class="nm-text-title text-xs font-semibold uppercase tracking-wider">// CREATE_RELATION</h4>
                 
-                <div class="cyber-input-wrapper">
-                    <label class="cyber-label">Source Entity</label>
-                    <select @bind="_creatorSourceId" class="cyber-input py-1 text-xs">
+                <div class="nm-input-wrapper">
+                    <label class="nm-text-label">Source Entity</label>
+                    <select @bind="_creatorSourceId" class="nm-input py-1 text-xs">
                         <option value="">-- Select Source --</option>
                         @if (_graphResult != null)
                         {
@@ -196,9 +196,9 @@
                     </select>
                 </div>
 
-                <div class="cyber-input-wrapper">
-                    <label class="cyber-label">Target Entity</label>
-                    <select @bind="_creatorTargetId" class="cyber-input py-1 text-xs">
+                <div class="nm-input-wrapper">
+                    <label class="nm-text-label">Target Entity</label>
+                    <select @bind="_creatorTargetId" class="nm-input py-1 text-xs">
                         <option value="">-- Select Target --</option>
                         @if (_graphResult != null)
                         {
@@ -210,16 +210,16 @@
                     </select>
                 </div>
 
-                <div class="cyber-input-wrapper">
-                    <label class="cyber-label">Relationship Type</label>
-                    <input @bind="_creatorType" placeholder="e.g. LOCATED_IN, FRIEND_OF" class="cyber-input py-1 text-xs" />
+                <div class="nm-input-wrapper">
+                    <label class="nm-text-label">Relationship Type</label>
+                    <input @bind="_creatorType" placeholder="e.g. LOCATED_IN, FRIEND_OF" class="nm-input py-1 text-xs" />
                 </div>
             </div>
         </div>
 
         <!-- Submit Creator Button -->
         <div class="pt-4 border-t border-base-gray-4 shrink-0" hidden="@IsReadOnly">
-            <button @onclick="CreateRelationshipAsync" class="cyber-button w-full text-xs">
+            <button @onclick="CreateRelationshipAsync" class="nm-button w-full text-xs">
                 Connect Entities
             </button>
         </div>

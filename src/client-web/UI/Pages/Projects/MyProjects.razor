@@ -6,94 +6,99 @@
 @inject IProjectService ProjectService
 @inject ISessionManager Session
 @inject NavigationManager Navigation
+@inject IJSRuntime JS
 
 <PageTitle>My Projects // Secure Registry</PageTitle>
 
-<header class="max-w-5xl mx-auto mb-8 border-b border-[var(--border-subtle)] pb-4">
-    <span class="text-cyber-metadata">SYS_REGISTRY // OPERATOR_UNITS</span>
+<header class="max-w-5xl mx-auto mb-8 border-b border-[var(--nm-shadow-dark)] pb-4">
+    <span class="nm-text-label">SYS_REGISTRY // OPERATOR_UNITS</span>
     <div class="flex items-center justify-between gap-4">
-        <h1 class="text-cyber-display mt-1 uppercase">Mis proyectos</h1>
-        <button @onclick="OpenCreateModal" class="cyber-button text-xs">Crear proyecto</button>
+        <h1 class="nm-text-display mt-1 uppercase">Mis proyectos</h1>
+        @if (_sessionReady && Session.IsAuthenticated)
+        {
+            <button @onclick="OpenCreateModal" class="nm-button text-xs">Crear proyecto</button>
+        }
     </div>
 </header>
 
-<AuthorizeView>
-    <Authorized>
-        @if (_loading)
+@if (!_sessionReady || _loading)
+{
+    <p class="nm-text-label text-sm text-[var(--nm-text-secondary)]">Cargando proyectos...</p>
+}
+else if (!Session.IsAuthenticated)
+{
+    <p class="nm-text-body">
+        Es necesario iniciar sesión para acceder a tus proyectos.
+        <a href="/auth/login" class="text-[var(--nm-accent)] hover:underline">[ Iniciar sesión ]</a>
+    </p>
+}
+else if (_error is not null)
+{
+    <p class="text-xs font-mono text-[var(--nm-error)]">@_error</p>
+}
+else if (_projects is null || _projects.Count == 0)
+{
+    <p class="nm-text-label text-sm text-[var(--nm-text-secondary)]">Aún no tienes proyectos registrados.</p>
+}
+else
+{
+    <div class="grid md:grid-cols-2 sm:grid-cols-1 gap-4 bg-transparent">
+        @foreach (var project in _projects)
         {
-            <p class="text-cyber-tech-mono text-sm text-[var(--text-disabled)]">LOADING MY PROJECTS...</p>
-        }
-        else if (_projects is null || _projects.Count == 0)
-        {
-            <p class="text-cyber-tech-mono text-sm text-[var(--text-disabled)]">NO REGISTERED PROJECTS DETECTED.</p>
-        }
-        else
-        {
-            <div class="grid md:grid-cols-2 sm:grid-cols-1 gap-4 bg-transparent">
-                @foreach (var project in _projects)
-                {
-                    <div>
-                        <ProjectCard2 Id="@project.Id"
-                                      Title="@project.Title"
-                                      Synopsis="@project.Synopsis"
-                                      LiteraryGenre="@project.LiteraryGenre"
-                                      CoverImageUrl="@project.CoverImageUrl"
-                                      UpdatedAt="@project.UpdatedAt"
-                                      UserRole="@project.UserRole"
-                                      OnCardClick="HandleCardClick" />
-                        <div class="flex justify-end gap-2 mt-2">
-                            @if (project.UserRole == "OWNER")
-                            {
-                                <button @onclick="() => OpenEditModal(project)" class="cyber-button text-[10px] py-1 px-2">Editar</button>
-                                <button @onclick="() => DeleteProjectAsync(project)" class="cyber-button text-[10px] py-1 px-2 border-[var(--accent-warning)] text-[var(--accent-warning)]">Eliminar</button>
-                            }
-                        </div>
-                    </div>
-                }
+            <div>
+                <ProjectCard2 Id="@project.Id"
+                              Title="@project.Title"
+                              Synopsis="@project.Synopsis"
+                              LiteraryGenre="@project.LiteraryGenre"
+                              CoverImageUrl="@project.CoverImageUrl"
+                              UpdatedAt="@project.UpdatedAt"
+                              UserRole="@project.UserRole"
+                              OnCardClick="HandleCardClick" />
+                <div class="flex justify-end gap-2 mt-2">
+                    @if (project.UserRole == "OWNER")
+                    {
+                        <button @onclick="() => OpenEditModal(project)" class="nm-button text-[10px] py-1 px-2">Editar</button>
+                        <button @onclick="() => DeleteProjectAsync(project)" class="nm-button-danger text-[10px] py-1 px-2">Eliminar</button>
+                    }
+                </div>
             </div>
         }
-    </Authorized>
-    <NotAuthorized>
-        <p class="text-cyber-body">
-            Security key missing. Please <a href="/auth/login" class="text-[var(--accent-primary)] hover:underline">[ SIGN IN ]</a>
-            to access personal project streams.
-        </p>
-    </NotAuthorized>
-</AuthorizeView>
+    </div>
+}
 
 @if (_projectModalOpen)
 {
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/70" @onclick="CloseProjectModal"></div>
-        <div class="cyber-panel relative z-10 w-full max-w-xl bg-base-gray-1">
-            <div class="cyber-panel-header">
-                <h3 class="text-cyber-title text-sm uppercase">@(_editingProjectId.HasValue ? "Editar proyecto" : "Crear proyecto")</h3>
-                <button @onclick="CloseProjectModal" class="text-cyber-metadata hover:text-cyber-tech-mono">Cerrar</button>
+        <div class="nm-card relative z-10 w-full max-w-xl bg-base-gray-1">
+            <div class="nm-card-header">
+                <h3 class="nm-text-title text-sm uppercase">@(_editingProjectId.HasValue ? "Editar proyecto" : "Crear proyecto")</h3>
+                <button @onclick="CloseProjectModal" class="nm-text-label hover:nm-text-label">Cerrar</button>
             </div>
             <div class="space-y-4">
-                <div class="cyber-input-wrapper">
-                    <label class="cyber-label">Título</label>
-                    <input @bind="_formTitle" class="cyber-input w-full" />
+                <div class="nm-input-wrapper">
+                    <label class="nm-text-label">Título</label>
+                    <input @bind="_formTitle" class="nm-input w-full" />
                 </div>
-                <div class="cyber-input-wrapper">
-                    <label class="cyber-label">Género</label>
-                    <input @bind="_formGenre" class="cyber-input w-full" />
+                <div class="nm-input-wrapper">
+                    <label class="nm-text-label">Género</label>
+                    <input @bind="_formGenre" class="nm-input w-full" />
                 </div>
-                <div class="cyber-input-wrapper">
-                    <label class="cyber-label">Sinopsis</label>
-                    <textarea @bind="_formSynopsis" class="cyber-input w-full min-h-28"></textarea>
+                <div class="nm-input-wrapper">
+                    <label class="nm-text-label">Sinopsis</label>
+                    <textarea @bind="_formSynopsis" class="nm-input w-full min-h-28"></textarea>
                 </div>
-                <label class="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                <label class="flex items-center gap-2 text-xs text-[var(--nm-text-secondary)]">
                     <input type="checkbox" @bind="_formIsPublic" />
                     Proyecto público
                 </label>
                 @if (!string.IsNullOrWhiteSpace(_formError))
                 {
-                    <p class="text-xs font-mono text-[var(--accent-warning)]">@_formError</p>
+                    <p class="text-xs font-mono text-[var(--nm-error)]">@_formError</p>
                 }
                 <div class="flex justify-end gap-2">
-                    <button @onclick="CloseProjectModal" class="cyber-button text-xs">Cancelar</button>
-                    <button @onclick="SaveProjectAsync" class="cyber-button text-xs" disabled="@_savingProject">
+                    <button @onclick="CloseProjectModal" class="nm-button-ghost text-xs">Cancelar</button>
+                    <button @onclick="SaveProjectAsync" class="nm-button text-xs" disabled="@_savingProject">
                         @(_savingProject ? "Guardando..." : "Guardar")
                     </button>
                 </div>
@@ -105,6 +110,7 @@
 @code {
     private List<Project>? _projects;
     private bool _loading = true;
+    private bool _sessionReady;
     private bool _projectModalOpen;
     private bool _savingProject;
     private Guid? _editingProjectId;
@@ -113,23 +119,23 @@
     private string _formSynopsis = string.Empty;
     private bool _formIsPublic;
     private string _formError = string.Empty;
-
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadProjectsAsync();
-    }
+    private string? _error;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
 
-        var hadToken = Session.IsAuthenticated;
-        var restored = await Session.InitializeAsync();
-        if (restored && !hadToken)
+        await Session.InitializeAsync();
+        _sessionReady = true;
+        if (!Session.IsAuthenticated)
         {
-            await LoadProjectsAsync();
+            Navigation.NavigateTo($"/auth/login?returnUrl={Uri.EscapeDataString("/projects/my-projects")}");
             StateHasChanged();
+            return;
         }
+
+        await LoadProjectsAsync();
+        StateHasChanged();
     }
 
     private async Task LoadProjectsAsync()
@@ -144,6 +150,16 @@
             }
             var result = await ProjectService.GetMyProjectsAsync();
             _projects = result.ToList();
+            _error = null;
+            if (_projects.Count == 0)
+            {
+                _error = null;
+            }
+        }
+        catch (Exception)
+        {
+            _error = "No se pudieron cargar tus proyectos. Revisa la conexión con el servidor.";
+            _projects = new List<Project>();
         }
         finally
         {
@@ -153,11 +169,13 @@
 
     private void HandleCardClick(Guid projectId)
     {
-        Navigation.NavigateTo($"/projects/{projectId}", forceLoad: true);
+        Navigation.NavigateTo($"/projects/{projectId}");
     }
 
     private void OpenCreateModal()
     {
+        if (!Session.IsAuthenticated) return;
+
         _editingProjectId = null;
         _formTitle = string.Empty;
         _formGenre = string.Empty;
@@ -237,8 +255,13 @@
     private async Task DeleteProjectAsync(Project project)
     {
         if (project.UserRole != "OWNER") return;
+        var confirmed = await JS.InvokeAsync<bool>("confirm", $"Eliminar \"{project.Title}\"? Esta accion no se puede deshacer.");
+        if (!confirmed) return;
+
         var ok = await ProjectService.DeleteProjectAsync(project.Id);
         if (ok)
             await LoadProjectsAsync();
+        else
+            _formError = "No se pudo eliminar el proyecto.";
     }
 }

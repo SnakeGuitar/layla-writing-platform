@@ -9,14 +9,14 @@
         <div @onclick="CloseModal" class="absolute inset-0 bg-black/70"></div>
 
         <!-- Modal Container -->
-        <div class="cyber-panel w-full max-w-5xl h-[85vh] flex flex-col relative z-10 overflow-hidden p-0 bg-base-gray-1 border-base-gray-4">
+        <div class="nm-card w-full max-w-5xl h-[85vh] flex flex-col relative z-10 overflow-hidden p-0 bg-base-gray-1 border-base-gray-4">
             <!-- Header -->
-            <div class="cyber-panel-header px-6 py-4 shrink-0 pb-3 mb-0 border-b border-base-gray-4">
+            <div class="nm-card-header px-6 py-4 shrink-0 pb-3 mb-0 border-b border-base-gray-4">
                 <div>
-                    <h3 class="text-cyber-title text-sm tracking-wide uppercase">Historial de Versiones</h3>
-                    <p class="text-cyber-metadata text-[10px] uppercase tracking-wider font-semibold">Compara guardados y restaura tu manuscrito</p>
+                    <h3 class="nm-text-title text-sm tracking-wide uppercase">Historial de Versiones</h3>
+                    <p class="nm-text-label text-[10px] uppercase tracking-wider font-semibold">Compara guardados y restaura tu manuscrito</p>
                 </div>
-                <button @onclick="CloseModal" class="text-cyber-metadata hover:text-cyber-tech-mono p-1">
+                <button @onclick="CloseModal" class="nm-text-label hover:nm-text-label p-1">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                     </svg>
@@ -27,17 +27,17 @@
             <div class="flex-1 flex overflow-hidden">
                 <!-- Left Sidebar: Timeline -->
                 <div class="w-80 border-r border-base-gray-4 overflow-y-auto p-4 space-y-4 bg-base-gray-2">
-                    <h4 class="text-[10px] text-cyber-metadata font-semibold px-2">Línea de Tiempo</h4>
+                    <h4 class="text-[10px] nm-text-label font-semibold px-2">Línea de Tiempo</h4>
                     
                     @if (_loadingVersions)
                     {
                         <div class="flex flex-col items-center justify-center py-12 space-y-3">
-                            <span class="text-cyber-tech-mono animate-pulse text-xs">// LOADING_TIMELINE</span>
+                            <span class="nm-text-label animate-pulse text-xs">// LOADING_TIMELINE</span>
                         </div>
                     }
                     else if (_versions.Count == 0)
                     {
-                        <p class="text-cyber-metadata text-xs italic text-center py-8">No hay versiones registradas.</p>
+                        <p class="nm-text-label text-xs italic text-center py-8">No hay versiones registradas.</p>
                     }
                     else
                     {
@@ -47,24 +47,24 @@
                                 var isSelected = _selectedVersionId == v.Id;
                                 <button @onclick="() => SelectVersionAsync(v.Id)"
                                         class="w-full text-left p-3 border relative outline-none flex flex-col gap-1.5 transition-none
-                                               @(isSelected ? "bg-base-gray-3 border-[var(--accent-primary)] text-[var(--accent-primary)]" : "bg-base-gray-1 border-base-gray-4 hover:border-base-gray-5 text-cyber-caption")">
+                                               @(isSelected ? "bg-base-gray-3 border-[var(--nm-accent)] text-[var(--nm-accent)]" : "bg-base-gray-1 border-base-gray-4 hover:border-base-gray-5 nm-text-label")">
                                     
                                     <!-- Bullet indicator: square anchor -->
                                     <span class="absolute -left-[21px] top-4.5 w-2 h-2 border border-base-gray-1 
-                                                 @(isSelected ? "bg-[var(--accent-primary)]" : "bg-base-gray-5")"></span>
+                                                 @(isSelected ? "bg-[var(--nm-accent)]" : "bg-base-gray-5")"></span>
 
                                     <div class="flex justify-between items-center w-full">
                                         <span class="text-[10px] font-mono uppercase font-bold">
                                             @(v.IsMilestone ? "Hito" : "Autoguardado")
                                         </span>
-                                        <span class="text-[9px] text-cyber-metadata">
+                                        <span class="text-[9px] nm-text-label">
                                             @v.CreatedAt.ToString("HH:mm:ss")
                                         </span>
                                     </div>
                                     <div class="text-[11px] font-mono truncate">
                                         Por: @v.CreatedBy
                                     </div>
-                                    <div class="text-[9px] text-cyber-metadata">
+                                    <div class="text-[9px] nm-text-label">
                                         @v.CreatedAt.ToString("dd/MM/yyyy")
                                     </div>
                                 </button>
@@ -78,22 +78,22 @@
                     @if (string.IsNullOrEmpty(_selectedVersionId))
                     {
                         <div class="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-2">
-                            <span class="text-cyber-tech-mono text-xs uppercase text-cyber-metadata">// SELECT_A_SAVED_VERSION_TO_COMPARE</span>
+                            <span class="nm-text-label text-xs uppercase nm-text-label">// SELECT_A_SAVED_VERSION_TO_COMPARE</span>
                         </div>
                     }
                     else if (_loadingVersionContent)
                     {
                         <div class="flex-1 flex flex-col items-center justify-center space-y-3">
-                            <span class="text-cyber-tech-mono animate-pulse text-xs">// CALCULATING_DIFF...</span>
+                            <span class="nm-text-label animate-pulse text-xs">// CALCULATING_DIFF...</span>
                         </div>
                     }
                     else
                     {
                         <!-- Diff Content Area -->
-                        <div class="flex-1 overflow-y-auto p-8 font-mono leading-relaxed text-sm text-cyber-body whitespace-pre-wrap select-text">
+                        <div class="flex-1 overflow-y-auto p-8 font-mono leading-relaxed text-sm nm-text-body whitespace-pre-wrap select-text">
                             @if (_diffPieces.Count == 0)
                             {
-                                <span class="text-cyber-metadata">// No hay cambios o el documento está vacío.</span>
+                                <span class="nm-text-label">// No hay cambios o el documento está vacío.</span>
                             }
                             else
                             {
@@ -105,11 +105,11 @@
                                     }
                                     else if (piece.Type == DiffType.Inserted)
                                     {
-                                        <span class="bg-[var(--accent-glow)] text-[var(--accent-primary)] px-0.5 border border-[var(--accent-primary)]/20 font-bold">@piece.Text</span>
+                                        <span class="bg-[rgba(26,71,200,0.18)] text-[var(--nm-accent)] px-0.5 border border-[var(--nm-accent)]/20 font-bold">@piece.Text</span>
                                     }
                                     else if (piece.Type == DiffType.Deleted)
                                     {
-                                        <span class="bg-base-orange-1/5 text-[var(--accent-warning)] line-through px-0.5 border border-base-orange-1/20 opacity-70">@piece.Text</span>
+                                        <span class="bg-base-orange-1/5 text-[var(--nm-error)] line-through px-0.5 border border-base-orange-1/20 opacity-70">@piece.Text</span>
                                     }
                                 }
                             }
@@ -118,11 +118,11 @@
                         <!-- Footer Actions -->
                         <div class="h-16 px-8 border-t border-base-gray-4 flex items-center justify-between shrink-0 bg-base-gray-2">
                             <div class="flex items-center gap-4 text-xs">
-                                <div class="flex items-center gap-1.5 font-mono text-cyber-metadata">
-                                    <span class="w-2 h-2 bg-[var(--accent-glow)] border border-[var(--accent-primary)]/40"></span>
+                                <div class="flex items-center gap-1.5 font-mono nm-text-label">
+                                    <span class="w-2 h-2 bg-[rgba(26,71,200,0.18)] border border-[var(--nm-accent)]/40"></span>
                                     <span>Adición (Cyan)</span>
                                 </div>
-                                <div class="flex items-center gap-1.5 font-mono text-cyber-metadata">
+                                <div class="flex items-center gap-1.5 font-mono nm-text-label">
                                     <span class="w-2 h-2 bg-base-orange-1/5 border border-base-orange-1/30 line-through"></span>
                                     <span>Eliminación (Ámbar)</span>
                                 </div>
@@ -130,7 +130,7 @@
 
                             @if (!IsReadOnly)
                             {
-                                <button @onclick="RestoreVersionAsync" disabled="@_restoring" class="cyber-button text-xs py-2 px-5">
+                                <button @onclick="RestoreVersionAsync" disabled="@_restoring" class="nm-button text-xs py-2 px-5">
                                     @(_restoring ? "Restaurando..." : "Restaurar esta Versión")
                                 </button>
                             }

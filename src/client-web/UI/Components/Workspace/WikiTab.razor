@@ -4,21 +4,21 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 h-[700px]">
     <!-- Left Column: Search, Filter, and Entries list -->
-    <div class="lg:col-span-1 p-4 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex flex-col h-full overflow-hidden">
+    <div class="lg:col-span-1 p-4 bg-[var(--nm-surface)] border border-[var(--nm-shadow-dark)] flex flex-col h-full overflow-hidden">
         <!-- Search & Add Entry Button -->
         <div class="shrink-0 space-y-2 mb-4">
             <div class="flex items-center justify-between">
-                <h3 class="text-cyber-tech-mono text-xs text-[var(--text-secondary)] uppercase">Wiki Entries</h3>
+                <h3 class="nm-text-label text-xs text-[var(--nm-text-secondary)] uppercase">Wiki Entries</h3>
                 @if (!IsReadOnly)
                 {
-                    <button @onclick="ShowCreateForm" class="cyber-button text-[10px] py-0.5 px-2">
+                    <button @onclick="ShowCreateForm" class="nm-button text-[10px] py-0.5 px-2">
                         Nueva entrada
                     </button>
                 }
             </div>
             
             <input @bind="_searchText" @bind:event="oninput" placeholder="SEARCH ENTRIES..."
-                   class="cyber-input text-xs w-full" />
+                   class="nm-input text-xs w-full" />
             
             <!-- Type Filters -->
             <div class="flex flex-wrap gap-1">
@@ -27,7 +27,7 @@
                     var isSelected = _filterType == type;
                     <button @onclick="() => SetFilterType(type)"
                             class="px-2 py-1 text-[10px] font-mono uppercase border transition-all duration-100 steps-2
-                                   @(isSelected ? "bg-[var(--accent-glow)] border-[var(--accent-primary)] text-[var(--accent-primary)]" : "bg-transparent border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-active)]")">
+                                   @(isSelected ? "bg-[rgba(26,71,200,0.18)] border-[var(--nm-accent)] text-[var(--nm-accent)]" : "bg-transparent border-[var(--nm-shadow-dark)] text-[var(--nm-text-secondary)] hover:text-[var(--nm-text-primary)] hover:border-[var(--nm-shadow-light)]")">
                         @type
                     </button>
                 }
@@ -37,13 +37,13 @@
         <!-- Create Entry Inline Form -->
         @if (_showCreateForm && !IsReadOnly)
         {
-            <div class="p-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] mb-4 shrink-0 space-y-2 text-xs">
-                <h4 class="text-cyber-title text-xs uppercase mb-1">Create Lore Entry</h4>
+            <div class="p-3 bg-[var(--nm-bg-base)] border border-[var(--nm-shadow-dark)] mb-4 shrink-0 space-y-2 text-xs">
+                <h4 class="nm-text-title text-xs uppercase mb-1">Create Lore Entry</h4>
                 <input @bind="_newEntryName" placeholder="Entry Name (e.g. Elena Voss)" 
-                       class="cyber-input text-xs w-full bg-[var(--bg-secondary)]" />
+                       class="nm-input text-xs w-full bg-[var(--nm-surface)]" />
                 
                 <select @bind="_newEntryType" 
-                        class="cyber-input text-xs w-full bg-[var(--bg-secondary)]">
+                        class="nm-input text-xs w-full bg-[var(--nm-surface)]">
                     <option value="Character">Character</option>
                     <option value="Location">Location</option>
                     <option value="Event">Event</option>
@@ -52,14 +52,14 @@
                 </select>
 
                 <textarea @bind="_newEntryDescription" placeholder="Description..." rows="2"
-                          class="cyber-input text-xs w-full bg-[var(--bg-secondary)] resize-none"></textarea>
+                          class="nm-input text-xs w-full bg-[var(--nm-surface)] resize-none"></textarea>
 
                 <input @bind="_newEntryTags" placeholder="Tags (comma separated: pilot, rebel)" 
-                       class="cyber-input text-xs w-full bg-[var(--bg-secondary)]" />
+                       class="nm-input text-xs w-full bg-[var(--nm-surface)]" />
 
                 <div class="flex justify-end gap-2">
-                    <button @onclick="CancelCreateForm" class="text-cyber-caption hover:text-[var(--accent-primary)] text-[10px]">[ CANCEL ]</button>
-                    <button @onclick="CreateEntryAsync" class="cyber-button text-[10px] py-0.5 px-2">[ SAVE ]</button>
+                    <button @onclick="CancelCreateForm" class="nm-button-ghost text-[10px]">[ CANCEL ]</button>
+                    <button @onclick="CreateEntryAsync" class="nm-button text-[10px] py-0.5 px-2">[ SAVE ]</button>
                 </div>
             </div>
         }
@@ -68,14 +68,14 @@
         <div class="flex-1 overflow-y-auto pr-1 space-y-2">
             @if (_loading)
             {
-                <p class="text-cyber-tech-mono text-xs text-[var(--text-disabled)] animate-pulse">LOADING LORE ENTRIES...</p>
+                <p class="nm-text-label text-xs text-[var(--nm-text-secondary)] animate-pulse">LOADING LORE ENTRIES...</p>
             }
             else
             {
                 var filtered = GetFilteredEntries();
                 if (filtered.Count == 0)
                 {
-                    <p class="text-cyber-tech-mono text-xs text-[var(--text-disabled)] text-center py-4">NO ENTRIES FOUND.</p>
+                    <p class="nm-text-label text-xs text-[var(--nm-text-secondary)] text-center py-4">NO ENTRIES FOUND.</p>
                 }
                 else
                 {
@@ -83,29 +83,29 @@
                     {
                         var isSelected = _selectedEntry?.EntityId == entry.EntityId;
                         <div @onclick="() => SelectEntry(entry)"
-                             class="p-3 bg-[var(--bg-primary)] border cursor-pointer transition-all duration-100 steps-2 hover:bg-[var(--bg-secondary)] hover:border-[var(--border-active)]
-                                    @(isSelected ? "border-[var(--accent-primary)] bg-[var(--accent-glow)]" : "border-[var(--border-subtle)]")">
+                             class="p-3 bg-[var(--nm-bg-base)] border cursor-pointer transition-all duration-100 steps-2 hover:bg-[var(--nm-surface)] hover:border-[var(--nm-shadow-light)]
+                                    @(isSelected ? "border-[var(--nm-accent)] bg-[rgba(26,71,200,0.18)]" : "border-[var(--nm-shadow-dark)]")">
                             <div class="flex items-center justify-between">
                                 <span class="text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5
-                                             @(entry.EntityType == "Character" ? "border border-[var(--accent-primary)] text-[var(--accent-primary)]" :
-                                               entry.EntityType == "Location" ? "border border-[var(--border-active)] text-[var(--text-primary)]" :
-                                               entry.EntityType == "Event" ? "border border-[var(--accent-warning)] text-[var(--accent-warning)]" :
-                                               "border border-[var(--border-subtle)] text-[var(--text-disabled)]")">
+                                             @(entry.EntityType == "Character" ? "border border-[var(--nm-accent)] text-[var(--nm-accent)]" :
+                                               entry.EntityType == "Location" ? "border border-[var(--nm-shadow-light)] text-[var(--nm-text-primary)]" :
+                                               entry.EntityType == "Event" ? "border border-[var(--nm-error)] text-[var(--nm-error)]" :
+                                               "border border-[var(--nm-shadow-dark)] text-[var(--nm-text-secondary)]")">
                                     @entry.EntityType
                                 </span>
                                 @if (entry.Neo4jSynced)
                                 {
-                                    <span class="text-[9px] text-[var(--accent-primary)] font-mono uppercase">[ LINKED ]</span>
+                                    <span class="text-[9px] text-[var(--nm-accent)] font-mono uppercase">[ LINKED ]</span>
                                 }
                             </div>
-                            <h4 class="font-mono text-xs uppercase text-[var(--text-primary)] truncate mt-2 mb-1">@entry.Name</h4>
-                            <p class="text-cyber-body text-xs line-clamp-2">@entry.Description</p>
+                            <h4 class="font-mono text-xs uppercase text-[var(--nm-text-primary)] truncate mt-2 mb-1">@entry.Name</h4>
+                            <p class="nm-text-body text-xs line-clamp-2">@entry.Description</p>
                             @if (entry.Tags != null && entry.Tags.Count > 0)
                             {
                                 <div class="flex flex-wrap gap-1 mt-2">
                                     @foreach (var tag in entry.Tags)
                                     {
-                                        <span class="text-[9px] text-[var(--text-disabled)] font-mono border border-[var(--border-subtle)] px-1 bg-[var(--bg-secondary)]">#@tag</span>
+                                        <span class="text-[9px] text-[var(--nm-text-secondary)] font-mono border border-[var(--nm-shadow-dark)] px-1 bg-[var(--nm-surface)]">#@tag</span>
                                     }
                                 </div>
                             }
@@ -117,13 +117,13 @@
     </div>
 
     <!-- Right Column: Detail / Edit panel -->
-    <div class="lg:col-span-2 p-4 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex flex-col h-full overflow-hidden">
+    <div class="lg:col-span-2 p-4 bg-[var(--nm-surface)] border border-[var(--nm-shadow-dark)] flex flex-col h-full overflow-hidden">
         @if (_selectedEntry == null)
         {
             <div class="flex-1 flex flex-col items-center justify-center text-center">
-                <span class="text-cyber-tech-mono text-xs text-[var(--text-disabled)] mb-2">[ NO_SELECTION ]</span>
-                <h3 class="text-cyber-title text-[var(--text-disabled)] uppercase mb-2">No Lore Selected</h3>
-                <p class="text-cyber-body text-xs max-w-sm">
+                <span class="nm-text-label text-xs text-[var(--nm-text-secondary)] mb-2">[ NO_SELECTION ]</span>
+                <h3 class="nm-text-title text-[var(--nm-text-secondary)] uppercase mb-2">No Lore Selected</h3>
+                <p class="nm-text-body text-xs max-w-sm">
                     Select a lore card node from the directory to review its classifications, descriptions, and linked occurrences.
                 </p>
             </div>
@@ -132,15 +132,15 @@
         {
             <div class="flex-1 overflow-y-auto pr-2 space-y-4">
                 <!-- Header Block -->
-                <div class="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+                <div class="flex items-center justify-between border-b border-[var(--nm-shadow-dark)] pb-3">
                     <div>
-                        <span class="text-cyber-metadata">SYS_LORE_DETAIL</span>
-                        <h2 class="text-cyber-title uppercase mt-1">@_selectedEntry.Name</h2>
+                        <span class="nm-text-label">SYS_LORE_DETAIL</span>
+                        <h2 class="nm-text-title uppercase mt-1">@_selectedEntry.Name</h2>
                     </div>
                     @if (!IsReadOnly)
                     {
                         <button @onclick="DeleteEntryAsync" 
-                                class="cyber-button text-xs py-1 px-3 border-[var(--accent-warning)] text-[var(--accent-warning)] hover:bg-[var(--accent-warning)] hover:text-[var(--bg-primary)]">
+                                class="nm-button-danger text-xs py-1 px-3">
                             Eliminar
                         </button>
                     }
@@ -149,14 +149,14 @@
                 <!-- Fields Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="space-y-1">
-                        <label class="text-cyber-metadata text-[10px] block">Name / Key</label>
+                        <label class="nm-text-label text-[10px] block">Name / Key</label>
                         <input @bind="_selectedEntry.Name" disabled="@IsReadOnly"
-                               class="cyber-input text-xs w-full bg-[var(--bg-primary)]" />
+                               class="nm-input text-xs w-full bg-[var(--nm-bg-base)]" />
                     </div>
                     <div class="space-y-1">
-                        <label class="text-cyber-metadata text-[10px] block">Entity Classification</label>
+                        <label class="nm-text-label text-[10px] block">Entity Classification</label>
                         <select @bind="_selectedEntry.EntityType" disabled="@IsReadOnly"
-                                class="cyber-input text-xs w-full bg-[var(--bg-primary)]">
+                                class="nm-input text-xs w-full bg-[var(--nm-bg-base)]">
                             <option value="Character">Character</option>
                             <option value="Location">Location</option>
                             <option value="Event">Event</option>
@@ -167,15 +167,15 @@
                 </div>
 
                 <div class="space-y-1">
-                    <label class="text-cyber-metadata text-[10px] block">Tags (Comma separated)</label>
+                    <label class="nm-text-label text-[10px] block">Tags (Comma separated)</label>
                     <input @bind="_tagsCsv" disabled="@IsReadOnly"
-                           class="cyber-input text-xs w-full bg-[var(--bg-primary)]" />
+                           class="nm-input text-xs w-full bg-[var(--nm-bg-base)]" />
                 </div>
 
                 <div class="space-y-1">
-                    <label class="text-cyber-metadata text-[10px] block">Lore Description</label>
+                    <label class="nm-text-label text-[10px] block">Lore Description</label>
                     <textarea @bind="_selectedEntry.Description" rows="6" disabled="@IsReadOnly"
-                              class="cyber-input text-xs w-full bg-[var(--bg-primary)] font-mono resize-none"
+                              class="nm-input text-xs w-full bg-[var(--nm-bg-base)] font-mono resize-none"
                               placeholder="Write lore documentation..."></textarea>
                 </div>
 
@@ -183,31 +183,31 @@
                 @if (!IsReadOnly)
                 {
                     <div class="flex justify-end pt-2">
-                        <button @onclick="UpdateEntryAsync" class="cyber-button text-xs py-1.5 px-4">
+                        <button @onclick="UpdateEntryAsync" class="nm-button text-xs py-1.5 px-4">
                             Guardar cambios
                         </button>
                     </div>
                 }
 
                 <!-- Appearances section (Neo4j linkage) -->
-                <div class="border-t border-[var(--border-subtle)] pt-3">
-                    <h3 class="text-cyber-title text-xs uppercase tracking-wider mb-3">Chapter Appearances (Neo4j Linkages)</h3>
+                <div class="border-t border-[var(--nm-shadow-dark)] pt-3">
+                    <h3 class="nm-text-title text-xs uppercase tracking-wider mb-3">Chapter Appearances (Neo4j Linkages)</h3>
                     @if (_loadingAppearances)
                     {
-                        <p class="text-cyber-tech-mono text-xs text-[var(--text-disabled)] animate-pulse">Scanning manuscripts for mentions...</p>
+                        <p class="nm-text-label text-xs text-[var(--nm-text-secondary)] animate-pulse">Scanning manuscripts for mentions...</p>
                     }
                     else if (_appearances == null || _appearances.Count == 0)
                     {
-                        <p class="text-cyber-body text-xs italic text-[var(--text-disabled)]">This entity has no tracked mentions in manuscripts. Use the exact entity name in your chapters to establish an active relationship in the narrative graph.</p>
+                        <p class="nm-text-body text-xs italic text-[var(--nm-text-secondary)]">This entity has no tracked mentions in manuscripts. Use the exact entity name in your chapters to establish an active relationship in the narrative graph.</p>
                     }
                     else
                     {
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                             @foreach (var app in _appearances)
                             {
-                                <div class="p-2 bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex flex-col">
-                                    <span class="text-[9px] uppercase tracking-wider text-[var(--accent-primary)] font-mono mb-0.5">@app.ManuscriptTitle</span>
-                                    <span class="text-cyber-body text-xs truncate">@app.ChapterTitle</span>
+                                <div class="p-2 bg-[var(--nm-bg-base)] border border-[var(--nm-shadow-dark)] flex flex-col">
+                                    <span class="text-[9px] uppercase tracking-wider text-[var(--nm-accent)] font-mono mb-0.5">@app.ManuscriptTitle</span>
+                                    <span class="nm-text-body text-xs truncate">@app.ChapterTitle</span>
                                 </div>
                             }
                         </div>

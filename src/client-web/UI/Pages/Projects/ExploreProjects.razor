@@ -10,27 +10,27 @@
 
 <div class="max-w-5xl mx-auto space-y-6">
     <!-- Header -->
-    <header class="mb-8 border-b border-[var(--border-subtle)] pb-4">
-        <span class="text-cyber-metadata">SYS_CATALOG // EXPLORE</span>
-        <h1 class="text-cyber-display mt-1 uppercase">
+    <header class="mb-8 border-b border-[var(--nm-shadow-dark)] pb-4">
+        <span class="nm-text-label">SYS_CATALOG // EXPLORE</span>
+        <h1 class="nm-text-display mt-1 uppercase">
             Public Projects
         </h1>
-        <p class="text-cyber-body text-xs mt-2 max-w-2xl">
+        <p class="nm-text-body text-xs mt-2 max-w-2xl">
             Explore public manuscript registries established by operators. Connect your terminal as a reader or editor unit.
         </p>
     </header>
 
     <!-- Search and Controls -->
-    <div class="cyber-panel flex flex-col sm:flex-row gap-4 items-center justify-between p-4 bg-[var(--bg-secondary)]">
+    <div class="nm-card flex flex-col sm:flex-row gap-4 items-center justify-between p-4 bg-[var(--nm-surface)]">
         <div class="relative w-full sm:max-w-xs">
             <input type="text" @bind="_searchQuery" @bind:event="oninput" placeholder="SEARCH BY KEYWORD..."
                    id="search-explore-input"
-                   class="cyber-input w-full pr-10" />
-            <span class="absolute right-3 top-2.5 text-[var(--text-disabled)] font-mono text-xs">
+                   class="nm-input w-full pr-10" />
+            <span class="absolute right-3 top-2.5 text-[var(--nm-text-secondary)] font-mono text-xs">
                 [SRC]
             </span>
         </div>
-        <div class="text-cyber-metadata text-xs">
+        <div class="nm-text-label text-xs">
             SYS_MATCHED: @FilteredProjects.Count // TOTAL: @_publicProjects.Count
         </div>
     </div>
@@ -38,7 +38,7 @@
     <!-- Feedback Alerts -->
     @if (!string.IsNullOrEmpty(_error))
     {
-        <div class="p-3 bg-[var(--bg-primary)] border border-[var(--accent-warning)] text-[var(--accent-warning)] text-xs font-mono">
+        <div class="p-3 bg-[var(--nm-bg-base)] border border-[var(--nm-error)] text-[var(--nm-error)] text-xs font-mono">
             <span class="font-bold">[ ERROR ]</span> @_error
         </div>
     }
@@ -47,13 +47,13 @@
     @if (_loading)
     {
         <div class="flex flex-col items-center justify-center py-16 space-y-2">
-            <p class="text-cyber-tech-mono text-sm text-[var(--text-disabled)] animate-pulse">RETRIEVING PUBLIC CATALOG...</p>
+            <p class="nm-text-label text-sm text-[var(--nm-text-secondary)] animate-pulse">RETRIEVING PUBLIC CATALOG...</p>
         </div>
     }
     else if (!FilteredProjects.Any())
     {
-        <div class="cyber-panel text-center py-12">
-            <p class="text-cyber-tech-mono text-sm text-[var(--text-disabled)]">NO PUBLIC ARCHIVES FOUND.</p>
+        <div class="nm-card text-center py-12">
+            <p class="nm-text-label text-sm text-[var(--nm-text-secondary)]">NO PUBLIC ARCHIVES FOUND.</p>
         </div>
     }
     else
@@ -61,35 +61,35 @@
         <div class="grid md:grid-cols-2 gap-4">
             @foreach (var project in FilteredProjects)
             {
-                <div class="cyber-panel p-4 flex flex-col justify-between hover:border-[var(--accent-primary)] hover:shadow-[0_0_8px_var(--accent-glow)] transition-all duration-100 steps-2 group">
+                <div class="nm-card p-4 flex flex-col justify-between hover:border-[var(--nm-accent)] hover:shadow-[0_0_8px_rgba(26,71,200,0.24)] transition-all duration-100 steps-2 group">
                     
                     <div class="space-y-3">
                         <div class="flex items-center justify-between">
-                            <span class="px-2 py-0.5 bg-[var(--bg-secondary)] border border-[var(--border-active)] text-cyber-metadata text-[10px]">
+                            <span class="px-2 py-0.5 bg-[var(--nm-surface)] border border-[var(--nm-shadow-light)] nm-text-label text-[10px]">
                                 @project.LiteraryGenre
                             </span>
-                            <span class="text-[10px] text-cyber-metadata">
+                            <span class="text-[10px] nm-text-label">
                                 UPD: @project.UpdatedAt.ToString("yyyy-MM-dd")
                             </span>
                         </div>
 
                         <div>
-                            <h3 class="text-cyber-title uppercase truncate mt-1 group-hover:text-[var(--accent-primary)] transition-colors duration-100">
+                            <h3 class="nm-text-title uppercase truncate mt-1 group-hover:text-[var(--nm-accent)] transition-colors duration-100">
                                 @project.Title
                             </h3>
-                            <p class="text-cyber-body text-xs mt-1 line-clamp-3">
+                            <p class="nm-text-body text-xs mt-1 line-clamp-3">
                                 @project.Synopsis
                             </p>
                         </div>
                     </div>
 
-                    <div class="mt-4 pt-3 border-t border-[var(--border-subtle)] flex items-center justify-between">
-                        <span class="text-cyber-metadata text-[10px]">PUBLIC_STREAM</span>
+                    <div class="mt-4 pt-3 border-t border-[var(--nm-shadow-dark)] flex items-center justify-between">
+                        <span class="nm-text-label text-[10px]">PUBLIC_STREAM</span>
                         
                         <button @onclick="() => JoinProjectAsync(project.Id)"
                                 disabled="@_joining"
                                 id="join-btn-@project.Id"
-                                class="cyber-button text-xs py-1 px-3">
+                                class="nm-button text-xs py-1 px-3">
                             @if (_joining && _activeJoiningId == project.Id)
                             {
                                 <span>LINKING...</span>
@@ -189,7 +189,7 @@
             if (success)
             {
                 // Navigate directly to the newly joined project's workspace!
-                Navigation.NavigateTo($"/projects/{projectId}", forceLoad: true);
+                Navigation.NavigateTo($"/projects/{projectId}");
             }
             else
             {

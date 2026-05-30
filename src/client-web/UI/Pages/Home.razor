@@ -1,4 +1,3 @@
-@page "/"
 @page "/home"
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.SignalR.Client
@@ -9,15 +8,16 @@
 @inject IPresenceService PresenceService
 @inject IProjectService ProjectService
 @inject ISessionManager Session
+@inject NavigationManager Navigation
 @inject ILogger<Home> Logger
 @implements IAsyncDisposable
 
 <PageTitle>Home // Public Library</PageTitle>
 
 @* Header *@
-<header class="max-w-5xl mx-auto mb-8 border-b border-[var(--border-subtle)] pb-4">
-    <span class="text-cyber-metadata">SYS_ARCHIVE // DIRECTORY</span>
-    <h1 class="text-cyber-display mt-1 uppercase">
+<header class="max-w-5xl mx-auto mb-8 border-b border-[var(--nm-shadow-dark)] pb-4">
+    <span class="nm-text-label">SYS_ARCHIVE // DIRECTORY</span>
+    <h1 class="nm-text-display mt-1 uppercase">
         Public Library
     </h1>
 </header>
@@ -107,14 +107,17 @@ else
 
     private void HandleCardClick(Guid projectId)
     {
-        // TODO: NavigationManager.NavigateTo($"/projects/{projectId}");
         Logger.LogInformation("Clicked project: {ProjectId}", projectId);
+        var destination = $"/projects/{projectId}";
+        Navigation.NavigateTo(Session.IsAuthenticated
+            ? destination
+            : $"/auth/login?returnUrl={Uri.EscapeDataString(destination)}");
     }
 
     public async ValueTask DisposeAsync()
     {
         PresenceService.OnAuthorStatusChanged -= HandleAuthorStatusChanged;
-        await PresenceService.DisposeAsync();
+        await PresenceService.DisconnectAsync();
     }
 
     private class ProjectViewModel

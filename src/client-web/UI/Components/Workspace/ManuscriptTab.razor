@@ -17,12 +17,12 @@
 @inject IConfiguration Configuration
 
 <div class="grid grid-cols-1 xl:grid-cols-[300px_minmax(0,1fr)_260px] gap-4 h-[700px]">
-    <div class="p-4 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex flex-col h-full overflow-hidden">
-        <div class="flex items-center justify-between border-b border-[var(--border-subtle)] pb-2 mb-3 shrink-0">
-            <h3 class="text-cyber-tech-mono text-xs text-[var(--text-secondary)] uppercase">Manuscritos</h3>
+    <div class="p-4 bg-[var(--nm-surface)] border border-[var(--nm-shadow-dark)] flex flex-col h-full overflow-hidden">
+        <div class="flex items-center justify-between border-b border-[var(--nm-shadow-dark)] pb-2 mb-3 shrink-0">
+            <h3 class="nm-text-label text-xs text-[var(--nm-text-secondary)] uppercase">Manuscritos</h3>
             @if (!IsReadOnly)
             {
-                <button @onclick="ToggleAddManuscriptForm" class="cyber-button text-[10px] py-0.5 px-2">
+                <button @onclick="ToggleAddManuscriptForm" class="nm-button text-[10px] py-0.5 px-2">
                     Nuevo
                 </button>
             }
@@ -30,54 +30,54 @@
 
         @if (_showAddMsForm && !IsReadOnly)
         {
-            <div class="p-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] mb-3 shrink-0 space-y-2">
-                <input @bind="_newMsTitle" placeholder="Título del manuscrito" class="cyber-input text-xs w-full" />
+            <div class="p-3 bg-[var(--nm-bg-base)] border border-[var(--nm-shadow-dark)] mb-3 shrink-0 space-y-2">
+                <input @bind="_newMsTitle" placeholder="Título del manuscrito" class="nm-input text-xs w-full" />
                 <div class="flex justify-end gap-2 text-xs">
-                    <button @onclick="ToggleAddManuscriptForm" class="text-cyber-caption hover:text-[var(--accent-primary)] text-[10px]">Cancelar</button>
-                    <button @onclick="CreateManuscriptAsync" class="cyber-button text-[10px] py-0.5 px-2">Crear</button>
+                    <button @onclick="ToggleAddManuscriptForm" class="nm-button-ghost text-[10px]">Cancelar</button>
+                    <button @onclick="CreateManuscriptAsync" class="nm-button text-[10px] py-0.5 px-2">Crear</button>
                 </div>
             </div>
         }
 
-        <div class="flex-1 overflow-y-auto pr-1 space-y-2 text-sm text-[var(--text-secondary)]">
+        <div class="flex-1 overflow-y-auto pr-1 space-y-2 text-sm text-[var(--nm-text-secondary)]">
             @if (_loading)
             {
-                <p class="text-cyber-tech-mono text-xs text-[var(--text-disabled)] animate-pulse">Cargando manuscritos...</p>
+                <p class="nm-text-label text-xs text-[var(--nm-text-secondary)] animate-pulse">Cargando manuscritos...</p>
             }
             else if (_manuscripts == null || _manuscripts.Count == 0)
             {
-                <p class="text-cyber-tech-mono text-xs text-[var(--text-disabled)] py-4 text-center">No hay manuscritos.</p>
+                <p class="nm-text-label text-xs text-[var(--nm-text-secondary)] py-4 text-center">No hay manuscritos.</p>
             }
             else
             {
                 @foreach (var ms in _manuscripts)
                 {
                     var isExpanded = _expandedMs.Contains(ms.ManuscriptId);
-                    <div class="border border-[var(--border-subtle)] bg-[var(--bg-primary)] p-2 space-y-1">
+                    <div class="border border-[var(--nm-shadow-dark)] bg-[var(--nm-bg-base)] p-2 space-y-1">
                         <div class="flex items-center justify-between group">
                             <div class="flex items-center gap-2 cursor-pointer flex-1" @onclick="() => ToggleMsExpansion(ms.ManuscriptId)">
-                                <span class="text-[var(--text-disabled)] text-xs select-none">@(isExpanded ? "▼" : "▶")</span>
-                                <span class="font-mono text-xs uppercase text-[var(--text-primary)] truncate">@ms.Title</span>
+                                <span class="text-[var(--nm-text-secondary)] text-xs select-none">@(isExpanded ? "▼" : "▶")</span>
+                                <span class="font-mono text-xs uppercase text-[var(--nm-text-primary)] truncate">@ms.Title</span>
                             </div>
                             @if (!IsReadOnly)
                             {
                                 <div class="opacity-0 group-hover:opacity-100 flex gap-2 transition-all duration-100">
-                                    <button @onclick="() => ShowAddChapterForm(ms.ManuscriptId)" title="Añadir capítulo" class="text-[10px] text-[var(--accent-primary)] hover:underline">Capítulo</button>
-                                    <button @onclick="() => DeleteManuscriptAsync(ms.ManuscriptId)" title="Eliminar manuscrito" class="text-[10px] text-[var(--accent-warning)] hover:underline">Eliminar</button>
+                                    <button @onclick="() => ShowAddChapterForm(ms.ManuscriptId)" title="Añadir capítulo" class="text-[10px] text-[var(--nm-accent)] hover:underline">Capítulo</button>
+                                    <button @onclick="() => DeleteManuscriptAsync(ms.ManuscriptId)" title="Eliminar manuscrito" class="text-[10px] text-[var(--nm-error)] hover:underline">Eliminar</button>
                                 </div>
                             }
                         </div>
 
                         @if (isExpanded)
                         {
-                            <div class="pl-3 border-l border-[var(--border-subtle)] mt-1 space-y-1">
+                            <div class="pl-3 border-l border-[var(--nm-shadow-dark)] mt-1 space-y-1">
                                 @if (_addingChapterMsId == ms.ManuscriptId && !IsReadOnly)
                                 {
-                                    <div class="p-2 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] space-y-2 mt-1">
-                                        <input @bind="_newChapTitle" placeholder="Título del capítulo" class="cyber-input text-xs w-full" />
+                                    <div class="p-2 bg-[var(--nm-surface)] border border-[var(--nm-shadow-dark)] space-y-2 mt-1">
+                                        <input @bind="_newChapTitle" placeholder="Título del capítulo" class="nm-input text-xs w-full" />
                                         <div class="flex justify-end gap-1.5 text-[10px]">
-                                            <button @onclick="CancelAddChapter" class="text-cyber-caption hover:text-[var(--accent-primary)] text-[10px]">Cancelar</button>
-                                            <button @onclick="() => CreateChapterAsync(ms.ManuscriptId)" class="cyber-button text-[10px] py-0.5 px-2">Crear</button>
+                                            <button @onclick="CancelAddChapter" class="nm-button-ghost text-[10px]">Cancelar</button>
+                                            <button @onclick="() => CreateChapterAsync(ms.ManuscriptId)" class="nm-button text-[10px] py-0.5 px-2">Crear</button>
                                         </div>
                                     </div>
                                 }
@@ -85,13 +85,13 @@
                                 @foreach (var chap in ms.Chapters ?? new List<Chapter>())
                                 {
                                     var isSelected = _selectedChapter?.ChapterId == chap.ChapterId;
-                                    <div class="flex items-center justify-between group/chap p-1 hover:bg-[var(--bg-secondary)] cursor-pointer @(isSelected ? "bg-[var(--accent-glow)] border-l-2 border-[var(--accent-primary)] pl-1.5" : "")"
+                                    <div class="flex items-center justify-between group/chap p-1 hover:bg-[var(--nm-surface)] cursor-pointer @(isSelected ? "bg-[rgba(26,71,200,0.18)] border-l-2 border-[var(--nm-accent)] pl-1.5" : "")"
                                          @onclick="() => SelectChapterAsync(chap, ms.ManuscriptId)">
-                                        <span class="truncate flex-1 text-xs @(isSelected ? "text-[var(--accent-primary)] font-mono" : "text-[var(--text-secondary)]")">@chap.Title</span>
+                                        <span class="truncate flex-1 text-xs @(isSelected ? "text-[var(--nm-accent)] font-mono" : "text-[var(--nm-text-secondary)]")">@chap.Title</span>
                                         @if (!IsReadOnly)
                                         {
                                             <button @onclick="() => DeleteChapterAsync(ms.ManuscriptId, chap.ChapterId)" @onclick:stopPropagation="true"
-                                                    class="opacity-0 group-hover/chap:opacity-100 text-[10px] text-[var(--accent-warning)] hover:underline">
+                                                    class="opacity-0 group-hover/chap:opacity-100 text-[10px] text-[var(--nm-error)] hover:underline">
                                                 X
                                             </button>
                                         }
@@ -105,31 +105,31 @@
         </div>
     </div>
 
-    <div class="p-4 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex flex-col h-full min-w-0">
+    <div class="p-4 bg-[var(--nm-surface)] border border-[var(--nm-shadow-dark)] flex flex-col h-full min-w-0">
         @if (_selectedChapter == null)
         {
             <div class="flex-1 flex flex-col items-center justify-center text-center">
-                <span class="text-cyber-tech-mono text-xs text-[var(--text-disabled)] mb-2">Sin selección</span>
-                <h3 class="text-cyber-title text-[var(--text-disabled)] uppercase mb-2">Elige un capítulo</h3>
-                <p class="text-cyber-body text-xs max-w-sm">Selecciona un capítulo o crea uno nuevo para empezar a escribir.</p>
+                <span class="nm-text-label text-xs text-[var(--nm-text-secondary)] mb-2">Sin selección</span>
+                <h3 class="nm-text-title text-[var(--nm-text-secondary)] uppercase mb-2">Elige un capítulo</h3>
+                <p class="nm-text-body text-xs max-w-sm">Selecciona un capítulo o crea uno nuevo para empezar a escribir.</p>
             </div>
         }
         else
         {
-            <div class="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3 mb-3 shrink-0 gap-3">
+            <div class="flex items-center justify-between border-b border-[var(--nm-shadow-dark)] pb-3 mb-3 shrink-0 gap-3">
                 <div class="flex-1 max-w-lg">
                     <input @bind="_selectedChapter.Title" @oninput="TriggerAutoSave" disabled="@IsReadOnly"
-                           class="w-full bg-[var(--bg-primary)] text-cyber-title uppercase border border-[var(--border-subtle)] focus:border-[var(--accent-primary)] focus:outline-none px-3 py-1.5 disabled:opacity-70"
+                           class="w-full bg-[var(--nm-bg-base)] nm-text-title uppercase border border-[var(--nm-shadow-dark)] focus:border-[var(--nm-accent)] focus:outline-none px-3 py-1.5 disabled:opacity-70"
                            placeholder="Capítulo sin título" />
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
                     <span class="text-[10px] font-mono uppercase @SaveStatusClass">@_saveStatus</span>
                     @if (!IsReadOnly)
                     {
-                        <button @onclick="SaveNowAsync" class="cyber-button text-xs py-1 px-3">Guardar</button>
-                        <button @onclick="CreateMilestoneAsync" class="cyber-button text-xs py-1 px-3">Crear hito</button>
+                        <button @onclick="SaveNowAsync" class="nm-button text-xs py-1 px-3">Guardar</button>
+                        <button @onclick="CreateMilestoneAsync" class="nm-button text-xs py-1 px-3">Crear hito</button>
                     }
-                    <button @onclick="OpenVersionHistory" class="cyber-button text-xs py-1 px-3">Historial</button>
+                    <button @onclick="OpenVersionHistory" class="nm-button text-xs py-1 px-3">Historial</button>
                 </div>
             </div>
 
@@ -141,30 +141,30 @@
                                 CursorChanged="BroadcastCursorAsync" />
             </div>
 
-            <div class="pt-2 flex items-center justify-between text-[10px] font-mono text-[var(--text-disabled)] uppercase">
+            <div class="pt-2 flex items-center justify-between text-[10px] font-mono text-[var(--nm-text-secondary)] uppercase">
                 <span>@_wordCount palabras</span>
                 <span>@(_hubState == HubConnectionState.Connected ? "Colaboración activa" : "Colaboración desconectada")</span>
             </div>
         }
     </div>
 
-    <aside class="p-4 bg-[var(--bg-secondary)] border border-[var(--border-subtle)] flex flex-col h-full overflow-hidden">
-        <div class="border-b border-[var(--border-subtle)] pb-2 mb-3">
-            <h3 class="text-cyber-tech-mono text-xs text-[var(--text-secondary)] uppercase">Entidades del capítulo</h3>
+    <aside class="p-4 bg-[var(--nm-surface)] border border-[var(--nm-shadow-dark)] flex flex-col h-full overflow-hidden">
+        <div class="border-b border-[var(--nm-shadow-dark)] pb-2 mb-3">
+            <h3 class="nm-text-label text-xs text-[var(--nm-text-secondary)] uppercase">Entidades del capítulo</h3>
         </div>
 
         @if (_currentMentions.Count == 0)
         {
-            <p class="text-cyber-body text-xs text-[var(--text-disabled)]">Aún no se detectan entidades de la wiki en este capítulo.</p>
+            <p class="nm-text-body text-xs text-[var(--nm-text-secondary)]">Aún no se detectan entidades de la wiki en este capítulo.</p>
         }
         else
         {
             <div class="space-y-2 overflow-y-auto">
                 @foreach (var mention in _currentMentions)
                 {
-                    <div class="p-2 bg-[var(--bg-primary)] border border-[var(--border-subtle)]">
-                        <div class="text-xs text-[var(--text-primary)] font-mono uppercase truncate">@mention.Name</div>
-                        <div class="text-[10px] text-[var(--accent-primary)] uppercase">@mention.EntityType</div>
+                    <div class="p-2 bg-[var(--nm-bg-base)] border border-[var(--nm-shadow-dark)]">
+                        <div class="text-xs text-[var(--nm-text-primary)] font-mono uppercase truncate">@mention.Name</div>
+                        <div class="text-[10px] text-[var(--nm-accent)] uppercase">@mention.EntityType</div>
                     </div>
                 }
             </div>
@@ -209,9 +209,9 @@
 
     private string SaveStatusClass => _saveStatus switch
     {
-        "Guardando..." => "text-[var(--accent-warning)] animate-pulse",
-        "Error al guardar" => "text-[var(--accent-warning)]",
-        _ => "text-[var(--accent-primary)]"
+        "Guardando..." => "text-[var(--nm-error)] animate-pulse",
+        "Error al guardar" => "text-[var(--nm-error)]",
+        _ => "text-[var(--nm-accent)]"
     };
 
     protected override async Task OnInitializedAsync()

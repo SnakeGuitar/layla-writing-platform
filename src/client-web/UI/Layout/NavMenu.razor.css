@@ -3,28 +3,24 @@
   align-items: center;
   width: 100%;
   padding: 0.625rem 0.75rem;
-  border-radius: 0px;
-  font-family: var(--font-technical);
+  border-radius: 10px;
+  font-family: var(--nm-font);
   font-size: 0.875rem;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
-  background: none;
-  border: 1px solid transparent;
+  color: var(--nm-text-secondary);
+  background: transparent;
   text-decoration: none;
-  transition: none !important; /* Step-wise instant transition */
+  transition: background-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
 }
 
 .nav-item ::deep .nav-link:hover {
-  background-color: var(--accent-glow);
-  color: var(--accent-primary);
-  border-color: var(--accent-primary);
+  background-color: rgba(255, 255, 255, 0.06);
+  color: var(--nm-text-primary);
 }
 
 .nav-item ::deep a.active {
-  background-color: var(--accent-primary);
-  color: var(--bg-primary);
-  border-color: var(--accent-primary);
-  font-weight: bold;
+  background-color: var(--nm-surface);
+  color: var(--nm-text-primary);
+  box-shadow: inset 4px 4px 8px var(--nm-shadow-dark), inset -4px -4px 8px var(--nm-shadow-light);
+  font-weight: 600;
 }

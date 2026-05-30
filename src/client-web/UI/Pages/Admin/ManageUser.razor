@@ -1,52 +1,54 @@
 @page "/admin/manage-users"
 @rendermode InteractiveServer
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Components.Authorization
 @using client_web.Application.Services.Admin
 @using client_web.Application.Services.Session
 @inject IAdminService AdminService
 @inject ISessionManager Session
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
 @inject ILogger<ManageUser> Logger
 
-<PageTitle>User Management</PageTitle>
+<PageTitle>Gestion de usuarios</PageTitle>
 
 <header class="max-w-5xl mx-auto mb-12">
-    <h2 class="text-amber-500 text-xs font-bold tracking-[0.3em] uppercase mb-3">Administration</h2>
+    <h2 class="text-amber-500 text-xs font-bold tracking-[0.3em] uppercase mb-3">Administracion</h2>
     <h1 class="text-stone-100 font-serif text-4xl md:text-5xl font-light tracking-tight">
-        User Management
+        Gestion de usuarios
     </h1>
     <div class="mt-4 w-16 h-px bg-amber-500"></div>
 </header>
 
 <section class="max-w-5xl mx-auto mb-8">
     <div class="bg-base-gray-2 rounded-lg p-6 shadow">
-        <h3 class="text-stone-200 font-semibold mb-4">Filters</h3>
+        <h3 class="text-stone-200 font-semibold mb-4">Filtros</h3>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="md:col-span-2">
-                <label class="block text-xs text-stone-400 mb-1">Search by name, email or ID</label>
+                <label class="block text-xs text-stone-400 mb-1">Buscar por nombre, correo o ID</label>
                 <input type="search" @bind="_search" @bind:event="oninput"
-                       placeholder="Anything…"
+                       placeholder="Buscar..."
                        class="w-full px-4 py-2 rounded-md bg-stone-900 border border-stone-700 text-stone-200 placeholder-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-500 transition" />
             </div>
 
             <div>
-                <label class="block text-xs text-stone-400 mb-1">Status</label>
+                <label class="block text-xs text-stone-400 mb-1">Estado</label>
                 <select @bind="_status"
                         class="w-full px-3 py-2 rounded-md bg-stone-900 border border-stone-700 text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition">
-                    <option value="">All</option>
-                    <option value="active">Active</option>
-                    <option value="banned">Banned</option>
+                    <option value="">Todos</option>
+                    <option value="active">Activos</option>
+                    <option value="banned">Bloqueados</option>
                 </select>
             </div>
 
             <div class="md:col-span-2 flex gap-3">
                 <div class="flex-1">
-                    <label class="block text-xs text-stone-400 mb-1">Registered from</label>
+                    <label class="block text-xs text-stone-400 mb-1">Registrado desde</label>
                     <input type="date" @bind="_from"
                            class="w-full px-3 py-2 rounded-md bg-stone-900 border border-stone-700 text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition" />
                 </div>
                 <div class="flex-1">
-                    <label class="block text-xs text-stone-400 mb-1">To</label>
+                    <label class="block text-xs text-stone-400 mb-1">Hasta</label>
                     <input type="date" @bind="_to"
                            class="w-full px-3 py-2 rounded-md bg-stone-900 border border-stone-700 text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-500 transition" />
                 </div>
@@ -56,11 +58,12 @@
         <div class="mt-6 flex justify-end gap-3">
             <button @onclick="ClearFilters"
                     class="px-4 py-2 bg-stone-800 text-stone-300 rounded-md hover:bg-stone-700 transition">
-                Clear
+                Limpiar
             </button>
             <button @onclick="LoadAsync"
-                    class="px-4 py-2 bg-amber-500 text-stone-950 font-semibold rounded-md hover:bg-amber-400 transition">
-                Refresh
+                    disabled="@(!_isAuthorized)"
+                    class="px-4 py-2 bg-amber-500 text-stone-950 font-semibold rounded-md hover:bg-amber-400 transition disabled:opacity-50">
+                Actualizar
             </button>
         </div>
     </div>
@@ -68,9 +71,13 @@
 
 <main class="max-w-5xl mx-auto">
     <div class="bg-base-gray-2 rounded-lg overflow-hidden shadow">
-        @if (_loading)
+        @if (!_sessionReady || _loading)
         {
-            <div class="p-6 text-center text-stone-400">Loading users…</div>
+            <div class="p-6 text-center text-stone-400">Cargando usuarios...</div>
+        }
+        else if (!_isAuthorized)
+        {
+            <div class="p-6 text-center text-red-400">No tienes permisos de administracion para gestionar usuarios.</div>
         }
         else if (_error is not null)
         {
@@ -78,7 +85,7 @@
         }
         else if (Filtered.Count == 0)
         {
-            <div class="p-6 text-center text-stone-400">No users match the current filters.</div>
+            <div class="p-6 text-center text-stone-400">No hay usuarios que coincidan con los filtros.</div>
         }
         else
         {
@@ -87,11 +94,11 @@
                     <thead class="bg-stone-900 text-stone-400 uppercase text-xs tracking-wide">
                         <tr>
                             <th class="px-4 py-3">UID</th>
-                            <th class="px-4 py-3">Display Name</th>
-                            <th class="px-4 py-3">Email</th>
-                            <th class="px-4 py-3">Registered</th>
-                            <th class="px-4 py-3">Status</th>
-                            <th class="px-4 py-3 text-right">Actions</th>
+                            <th class="px-4 py-3">Nombre</th>
+                            <th class="px-4 py-3">Correo</th>
+                            <th class="px-4 py-3">Registro</th>
+                            <th class="px-4 py-3">Estado</th>
+                            <th class="px-4 py-3 text-right">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-stone-800">
@@ -105,11 +112,11 @@
                                 <td class="px-4 py-3">
                                     @if (user.IsBanned)
                                     {
-                                        <span class="px-2 py-0.5 rounded text-xs bg-red-900/50 text-red-200">Banned</span>
+                                        <span class="px-2 py-0.5 rounded text-xs bg-red-900/50 text-red-200">Bloqueado</span>
                                     }
                                     else
                                     {
-                                        <span class="px-2 py-0.5 rounded text-xs bg-stone-800 text-stone-300">Active</span>
+                                        <span class="px-2 py-0.5 rounded text-xs bg-stone-800 text-stone-300">Activo</span>
                                     }
                                 </td>
                                 <td class="px-4 py-3 text-right">
@@ -118,13 +125,13 @@
                                         <button @onclick="() => BanAsync(user)"
                                                 disabled="@(_busyId == user.Id)"
                                                 class="text-xs px-3 py-1 rounded border border-amber-500/40 text-amber-300 hover:bg-amber-500/10 transition disabled:opacity-50">
-                                            @(_busyId == user.Id ? "Banning…" : "Ban")
+                                            @(_busyId == user.Id ? "Bloqueando..." : "Bloquear")
                                         </button>
                                     }
                                     <button @onclick="() => DeleteAsync(user)"
                                             disabled="@(_busyId == user.Id)"
                                             class="ml-2 text-xs px-3 py-1 rounded border border-red-500/40 text-red-300 hover:bg-red-500/10 transition disabled:opacity-50">
-                                        Delete
+                                        Eliminar
                                     </button>
                                 </td>
                             </tr>
@@ -144,13 +151,14 @@
 @code {
     private List<AdminUser> _users = new();
     private bool _loading = true;
+    private bool _sessionReady;
+    private bool _isAuthorized;
     private string? _error;
     private string? _statusMessage;
     private Guid? _busyId;
 
-    // Filter state (server has no filter endpoints yet — we filter in memory).
     private string _search = string.Empty;
-    private string _status = string.Empty; // "", "active", "banned"
+    private string _status = string.Empty;
     private DateTime? _from;
     private DateTime? _to;
 
@@ -167,26 +175,36 @@
                 _ => true,
             })
             .Where(u => !_from.HasValue || u.CreatedAt >= _from.Value)
-            .Where(u => !_to.HasValue   || u.CreatedAt <  _to.Value.AddDays(1))
+            .Where(u => !_to.HasValue || u.CreatedAt < _to.Value.AddDays(1))
             .OrderByDescending(u => u.CreatedAt)
             .ToList();
-
-    protected override async Task OnInitializedAsync()
-    {
-        await Session.InitializeAsync();
-        await LoadAsync();
-    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
-        var hadToken = Session.IsAuthenticated;
+
         await Session.InitializeAsync();
-        if (!hadToken && Session.IsAuthenticated)
+        _sessionReady = true;
+
+        if (!Session.IsAuthenticated)
+        {
+            Navigation.NavigateTo($"/auth/login?returnUrl={Uri.EscapeDataString("/admin/manage-users")}");
+            StateHasChanged();
+            return;
+        }
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        _isAuthorized = authState.User.IsInRole("Admin");
+        if (_isAuthorized)
         {
             await LoadAsync();
-            StateHasChanged();
         }
+        else
+        {
+            _loading = false;
+        }
+
+        StateHasChanged();
     }
 
     private async Task LoadAsync()
@@ -202,7 +220,7 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to load users.");
-            _error = "Could not load the user list.";
+            _error = "No se pudo cargar la lista de usuarios.";
         }
         finally
         {
@@ -220,19 +238,16 @@
 
     private async Task BanAsync(AdminUser user)
     {
+        if (!_isAuthorized) return;
+
         _busyId = user.Id;
         try
         {
             var ok = await AdminService.BanUserAsync(user.Id);
-            if (ok)
-            {
-                user.IsBanned = true;
-                _statusMessage = $"{user.DisplayName} has been banned.";
-            }
-            else
-            {
-                _statusMessage = $"Could not ban {user.DisplayName}.";
-            }
+            _statusMessage = ok
+                ? $"{user.DisplayName} fue bloqueado."
+                : $"No se pudo bloquear a {user.DisplayName}.";
+            if (ok) user.IsBanned = true;
         }
         finally
         {
@@ -242,6 +257,8 @@
 
     private async Task DeleteAsync(AdminUser user)
     {
+        if (!_isAuthorized) return;
+
         _busyId = user.Id;
         try
         {
@@ -249,11 +266,11 @@
             if (ok)
             {
                 _users.Remove(user);
-                _statusMessage = $"{user.DisplayName} was deleted.";
+                _statusMessage = $"{user.DisplayName} fue eliminado.";
             }
             else
             {
-                _statusMessage = $"Could not delete {user.DisplayName}.";
+                _statusMessage = $"No se pudo eliminar a {user.DisplayName}.";
             }
         }
         finally

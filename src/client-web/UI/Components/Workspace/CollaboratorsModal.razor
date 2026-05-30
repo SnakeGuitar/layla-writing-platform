@@ -6,60 +6,60 @@
 {
     <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/70" @onclick="CloseAsync"></div>
-        <div class="cyber-panel relative z-10 w-full max-w-2xl max-h-[82vh] overflow-hidden flex flex-col bg-base-gray-1">
-            <div class="cyber-panel-header">
+        <div class="nm-card relative z-10 w-full max-w-2xl max-h-[82vh] overflow-hidden flex flex-col bg-base-gray-1">
+            <div class="nm-card-header">
                 <div>
-                    <h3 class="text-cyber-title text-sm uppercase">Colaboradores</h3>
-                    <p class="text-cyber-metadata text-[10px]">Invita autoras, cambia roles y retira accesos.</p>
+                    <h3 class="nm-text-title text-sm uppercase">Colaboradores</h3>
+                    <p class="nm-text-label text-[10px]">Invita autoras, cambia roles y retira accesos.</p>
                 </div>
-                <button @onclick="CloseAsync" class="text-cyber-metadata hover:text-cyber-tech-mono">Cerrar</button>
+                <button @onclick="CloseAsync" class="nm-text-label hover:nm-text-label">Cerrar</button>
             </div>
 
-            <div class="p-4 border-b border-[var(--border-subtle)]">
-                <label class="cyber-label">Correo electrónico</label>
+            <div class="p-4 border-b border-[var(--nm-shadow-dark)]">
+                <label class="nm-text-label">Correo electrónico</label>
                 <div class="flex gap-2">
-                    <input @bind="_inviteEmail" class="cyber-input flex-1" placeholder="autora@correo.com" />
-                    <select @bind="_inviteRole" class="cyber-input w-32">
+                    <input @bind="_inviteEmail" class="nm-input flex-1" placeholder="autora@correo.com" />
+                    <select @bind="_inviteRole" class="nm-input w-32">
                         <option value="READER">Lectora</option>
                         <option value="EDITOR">Editora</option>
                     </select>
-                    <button @onclick="InviteAsync" disabled="@_busy" class="cyber-button">Invitar</button>
+                    <button @onclick="InviteAsync" disabled="@_busy" class="nm-button">Invitar</button>
                 </div>
                 @if (!string.IsNullOrWhiteSpace(_status))
                 {
-                    <p class="mt-2 text-xs font-mono text-[var(--accent-warning)]">@_status</p>
+                    <p class="mt-2 text-xs font-mono text-[var(--nm-error)]">@_status</p>
                 }
             </div>
 
             <div class="flex-1 overflow-y-auto p-4 space-y-2">
                 @if (_loading)
                 {
-                    <p class="text-cyber-tech-mono text-xs text-[var(--text-disabled)]">Cargando colaboradores...</p>
+                    <p class="nm-text-label text-xs text-[var(--nm-text-secondary)]">Cargando colaboradores...</p>
                 }
                 else if (_collaborators.Count == 0)
                 {
-                    <p class="text-cyber-body text-xs text-[var(--text-disabled)]">No hay colaboradores todavía.</p>
+                    <p class="nm-text-body text-xs text-[var(--nm-text-secondary)]">No hay colaboradores todavía.</p>
                 }
                 else
                 {
                     @foreach (var collaborator in _collaborators)
                     {
-                        <div class="p-3 bg-[var(--bg-primary)] border border-[var(--border-subtle)] flex items-center gap-3">
+                        <div class="p-3 bg-[var(--nm-bg-base)] border border-[var(--nm-shadow-dark)] flex items-center gap-3">
                             <div class="flex-1 min-w-0">
-                                <div class="text-sm text-[var(--text-primary)] truncate">@DisplayName(collaborator)</div>
-                                <div class="text-[10px] text-[var(--text-disabled)] truncate">@collaborator.Email</div>
+                                <div class="text-sm text-[var(--nm-text-primary)] truncate">@DisplayName(collaborator)</div>
+                                <div class="text-[10px] text-[var(--nm-text-secondary)] truncate">@collaborator.Email</div>
                             </div>
                             @if (collaborator.Role == "OWNER")
                             {
-                                <span class="text-[10px] text-[var(--accent-primary)] font-mono">PROPIETARIA</span>
+                                <span class="text-[10px] text-[var(--nm-accent)] font-mono">PROPIETARIA</span>
                             }
                             else
                             {
-                                <select value="@collaborator.Role" @onchange="e => ChangeRoleAsync(collaborator, e.Value?.ToString() ?? collaborator.Role)" class="cyber-input w-32 text-xs">
+                                <select value="@collaborator.Role" @onchange="e => ChangeRoleAsync(collaborator, e.Value?.ToString() ?? collaborator.Role)" class="nm-input w-32 text-xs">
                                     <option value="READER">Lectora</option>
                                     <option value="EDITOR">Editora</option>
                                 </select>
-                                <button @onclick="() => RemoveAsync(collaborator)" class="text-xs text-[var(--accent-warning)] hover:underline">Retirar</button>
+                                <button @onclick="() => RemoveAsync(collaborator)" class="text-xs text-[var(--nm-error)] hover:underline">Retirar</button>
                             }
                         </div>
                     }

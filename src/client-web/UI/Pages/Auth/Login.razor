@@ -1,3 +1,4 @@
+@page "/"
 @page "/auth/login"
 @layout client_web.UI.Layout.LayoutEmpty
 @rendermode InteractiveServer
@@ -10,94 +11,108 @@
 
 <PageTitle>Login // System Access</PageTitle>
 
-<main class="flex items-center justify-center px-4 min-h-screen bg-[var(--bg-primary)]">
+<main class="min-h-screen w-full bg-[var(--nm-bg-base)] text-[var(--nm-text-primary)]">
+    <div class="grid min-h-screen w-full lg:grid-cols-[minmax(420px,0.95fr)_minmax(520px,1.05fr)]">
+        <aside class="login-accent-panel relative flex min-h-[42vh] overflow-hidden p-8 sm:p-12 lg:min-h-screen lg:p-16 xl:p-20">
+            <div class="relative z-10 flex w-full flex-col justify-between">
+                <div class="max-w-xl">
+                    <span class="nm-text-label text-white/75">LAYLA // CREATIVE CORE</span>
+                    <h1 class="mt-6 text-4xl font-light leading-tight text-white sm:text-5xl xl:text-6xl">
+                        Tu taller de novela compartida.
+                    </h1>
+                    <p class="mt-7 max-w-md text-base leading-7 text-white/75">
+                        Entra para continuar mundos, manuscritos y escenas con tu equipo de coautoras.
+                    </p>
+                </div>
 
-    <!-- Monolithic Technical Panel -->
-    <div class="cyber-panel w-full max-w-sm">
-        
-        <!-- Header -->
-        <header class="cyber-panel-header">
-            <div class="flex flex-col">
-                <span class="text-cyber-metadata">SECURE ACCESS</span>
-                <h1 class="text-cyber-title mt-1">OPERATOR SIGN IN</h1>
+                <div class="mt-12 max-w-md rounded-[22px] bg-white/10 p-6 backdrop-blur lg:mt-0">
+                    <p class="text-base leading-7 text-white/82">
+                        Escribir juntas se siente mejor cuando el espacio tambien respira contigo.
+                    </p>
+                </div>
             </div>
-            <span class="text-cyber-tech-mono text-[var(--accent-primary)]">SYS_OK</span>
-        </header>
+        </aside>
 
-        <!-- Form Elements -->
-        <div class="space-y-4">
+        <section class="flex min-h-[58vh] items-center justify-center px-6 py-10 sm:px-10 lg:min-h-screen lg:px-14 xl:px-20">
+            <div class="w-full max-w-xl">
+                <header class="mb-10 flex items-start justify-between gap-6">
+                    <div>
+                        <span class="nm-text-label">SECURE ACCESS</span>
+                        <h1 class="mt-2 text-3xl font-semibold text-[var(--nm-text-primary)]">Operator sign in</h1>
+                        <p class="nm-text-body mt-3 max-w-sm">
+                            Abre tu escritorio de escritura, mundos y colaboracion.
+                        </p>
+                    </div>
+                    <span class="nm-text-label text-[var(--nm-accent)]">SYS_OK</span>
+                </header>
 
-            <!-- Email -->
-            <div class="cyber-input-wrapper">
-                <label class="cyber-label">Operational Email</label>
-                <input
-                    type="email"
-                    @bind="_email"
-                    placeholder="operator@system.core"
-                    class="cyber-input w-full" />
-                @if (_fieldErrors.TryGetValue("Email", out var emailErrors))
-                {
-                    <p class="mt-1 text-cyber-tech-mono text-xs text-[var(--accent-warning)]">@string.Join(' ', emailErrors)</p>
-                }
-            </div>
+                <div class="space-y-6">
+                    <div class="nm-input-wrapper">
+                        <label class="nm-text-label">Operational Email</label>
+                        <input
+                            type="email"
+                            @bind="_email"
+                            @bind:event="oninput"
+                            placeholder="operator@system.core"
+                            class="nm-input w-full" />
+                        @if (_fieldErrors.TryGetValue("Email", out var emailErrors))
+                        {
+                            <p class="mt-1 nm-text-label text-xs text-[var(--nm-error)]">@string.Join(' ', emailErrors)</p>
+                        }
+                    </div>
 
-            <!-- Password -->
-            <div class="cyber-input-wrapper">
-                <div class="flex justify-between items-center">
-                    <label class="cyber-label">Security Key</label>
-                    <a href="#" class="text-cyber-caption hover:text-[var(--accent-primary)] text-xs">
-                        [ Recover Key ]
+                    <div class="nm-input-wrapper">
+                        <div class="flex justify-between items-center">
+                            <label class="nm-text-label">Security Key</label>
+                            <a href="#" class="nm-text-label hover:text-[var(--nm-accent)] text-xs">
+                                [ Recover Key ]
+                            </a>
+                        </div>
+                        <input
+                            type="password"
+                            @bind="_password"
+                            @bind:event="oninput"
+                            @onkeyup="@(e => { if (e.Key == "Enter") _ = HandleLogin(); })"
+                            placeholder="********"
+                            class="nm-input w-full" />
+                        @if (_fieldErrors.TryGetValue("Password", out var pwErrors))
+                        {
+                            <p class="mt-1 nm-text-label text-xs text-[var(--nm-error)]">@string.Join(' ', pwErrors)</p>
+                        }
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(_errorMessage))
+                    {
+                        <div class="rounded-[14px] p-4 bg-[var(--nm-bg-base)] text-[var(--nm-error)] text-xs font-mono shadow-[inset_4px_4px_8px_var(--nm-shadow-dark),inset_-4px_-4px_8px_var(--nm-shadow-light)]">
+                            <span class="font-bold">[ ERROR ]</span> @_errorMessage
+                        </div>
+                    }
+
+                    <button
+                        @onclick="HandleLogin"
+                        disabled="@_isLoading"
+                        class="nm-button w-full py-3">
+                        @if (_isLoading)
+                        {
+                            <span class="flex items-center justify-center gap-2">
+                                <span>Executing Handshake...</span>
+                            </span>
+                        }
+                        else
+                        {
+                            <span>Initialize Link -></span>
+                        }
+                    </button>
+                </div>
+
+                <footer class="mt-10 text-center text-xs">
+                    <span class="nm-text-body text-xs">No registered operator?</span>
+                    <a href="/auth/register" class="ml-1 nm-text-label text-[var(--nm-accent)] hover:underline">
+                        [ Register New Unit ]
                     </a>
-                </div>
-                <input
-                    type="password"
-                    @bind="_password"
-                    @onkeyup="@(e => { if (e.Key == "Enter") _ = HandleLogin(); })"
-                    placeholder="••••••••"
-                    class="cyber-input w-full" />
-                @if (_fieldErrors.TryGetValue("Password", out var pwErrors))
-                {
-                    <p class="mt-1 text-cyber-tech-mono text-xs text-[var(--accent-warning)]">@string.Join(' ', pwErrors)</p>
-                }
+                </footer>
             </div>
-
-            <!-- Error Notification Panel -->
-            @if (!string.IsNullOrEmpty(_errorMessage))
-            {
-                <div class="p-3 bg-[var(--bg-primary)] border border-[var(--accent-warning)] text-[var(--accent-warning)] text-xs font-mono">
-                    <span class="font-bold">[ ERROR ]</span> @_errorMessage
-                </div>
-            }
-
-            <!-- Confirm Button -->
-            <div class="pt-2">
-                <button
-                    @onclick="HandleLogin"
-                    disabled="@_isLoading"
-                    class="cyber-button w-full">
-                    @if (_isLoading)
-                    {
-                        <span class="flex items-center justify-center gap-2">
-                            <span>Executing Handshake...</span>
-                        </span>
-                    }
-                    else
-                    {
-                        <span>Initialize Link →</span>
-                    }
-                </button>
-            </div>
-
-        </div>
-
-        <!-- Footer options -->
-        <footer class="mt-6 pt-4 border-t border-[var(--border-subtle)] text-center text-xs">
-            <span class="text-cyber-body text-xs">No registered operator?</span>
-            <a href="/auth/register" class="ml-1 text-cyber-tech-mono text-[var(--accent-primary)] hover:underline">
-                [ Register New Unit ]
-            </a>
-        </footer>
-
+        </section>
     </div>
 </main>
 
@@ -107,6 +122,20 @@
     private string? _errorMessage;
     private bool _isLoading;
     private Dictionary<string, List<string>> _fieldErrors = new();
+
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        await Session.InitializeAsync();
+        if (Session.IsAuthenticated)
+        {
+            Navigation.NavigateTo(GetSafeReturnUrl());
+        }
+    }
 
     private async Task HandleLogin()
     {
@@ -122,7 +151,7 @@
             if (result.IsSuccess && result.Response is not null)
             {
                 await Session.SaveAsync(result.Response);
-                Navigation.NavigateTo("/home", forceLoad: true);
+                Navigation.NavigateTo(GetSafeReturnUrl());
                 return;
             }
 
@@ -137,5 +166,14 @@
         {
             _isLoading = false;
         }
+    }
+
+    private string GetSafeReturnUrl()
+    {
+        if (string.IsNullOrWhiteSpace(ReturnUrl)) return "/home";
+        if (ReturnUrl is "/" or "/auth/login") return "/home";
+        return Uri.TryCreate(ReturnUrl, UriKind.Relative, out _) && ReturnUrl.StartsWith("/")
+            ? ReturnUrl
+            : "/home";
     }
 }

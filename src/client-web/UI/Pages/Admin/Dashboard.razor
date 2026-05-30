@@ -1,26 +1,32 @@
 @page "/admin/dashboard"
 @rendermode InteractiveServer
-@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Components.Authorization
 @using client_web.Application.Services.Admin
 @using client_web.Application.Services.Session
 @inject IAdminService AdminService
 @inject ISessionManager Session
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
 @inject IJSRuntime JS
 @inject ILogger<Dashboard> Logger
 
-<PageTitle>Administration</PageTitle>
+<PageTitle>Administracion</PageTitle>
 
 <header class="max-w-5xl mx-auto mb-12">
-    <h2 class="text-amber-500 text-xs font-bold tracking-[0.3em] uppercase mb-3">Administration</h2>
+    <h2 class="text-amber-500 text-xs font-bold tracking-[0.3em] uppercase mb-3">Administracion</h2>
     <h1 class="text-stone-100 font-serif text-4xl md:text-5xl font-light tracking-tight">
-        Dashboard
+        Panel
     </h1>
     <div class="mt-4 w-16 h-px bg-amber-500"></div>
 </header>
 
-@if (_loading)
+@if (!_sessionReady || _loading)
 {
-    <p class="text-stone-500 text-sm">Loading…</p>
+    <p class="text-stone-500 text-sm">Cargando panel...</p>
+}
+else if (!_isAuthorized)
+{
+    <p class="text-red-400 text-sm">No tienes permisos de administracion para ver este panel.</p>
 }
 else if (_error is not null)
 {
@@ -29,17 +35,17 @@ else if (_error is not null)
 else if (_stats is not null)
 {
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 mb-8 max-w-5xl mx-auto">
-        <StatCard Label="Total Users"            Value="@_stats.TotalUsers" />
-        <StatCard Label="New Users This Month"   Value="@_stats.NewUsersThisMonth" />
-        <StatCard Label="Banned Users"           Value="@_stats.BannedUsers" />
-        <StatCard Label="Total Projects"         Value="@_stats.TotalProjects" />
-        <StatCard Label="Modified Today"         Value="@_stats.ProjectsModifiedToday" />
-        <StatCard Label="Public Projects"        Value="@_stats.PublicProjects" />
+        <StatCard Label="Usuarios totales" Value="@_stats.TotalUsers" />
+        <StatCard Label="Nuevos este mes" Value="@_stats.NewUsersThisMonth" />
+        <StatCard Label="Usuarios bloqueados" Value="@_stats.BannedUsers" />
+        <StatCard Label="Proyectos totales" Value="@_stats.TotalProjects" />
+        <StatCard Label="Modificados hoy" Value="@_stats.ProjectsModifiedToday" />
+        <StatCard Label="Proyectos publicos" Value="@_stats.PublicProjects" />
     </div>
 
     <div class="max-w-5xl mx-auto bg-base-gray-2 rounded-lg p-6 shadow">
         <h3 class="text-stone-200 text-sm font-semibold tracking-wide uppercase mb-4">
-            New users — last 12 months
+            Usuarios nuevos - ultimos 12 meses
         </h3>
         <canvas id="adminUsersChart" width="800" height="280"></canvas>
     </div>
@@ -48,33 +54,40 @@ else if (_stats is not null)
 @code {
     private DashboardStats? _stats;
     private bool _loading = true;
+    private bool _sessionReady;
+    private bool _isAuthorized;
     private string? _error;
     private bool _chartRendered;
-
-    protected override async Task OnInitializedAsync()
-    {
-        // Hydrate the session early so the JWT is on hand when LoadAsync hits
-        // /api/users (Authorize=Admin). InitializeAsync is no-op during the
-        // prerender pass and replays from OnAfterRenderAsync via StateHasChanged.
-        await Session.InitializeAsync();
-        await LoadAsync();
-    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            // ProtectedSessionStorage isn't available during prerender — retry.
-            var hadToken = Session.IsAuthenticated;
             await Session.InitializeAsync();
-            if (!hadToken && Session.IsAuthenticated)
+            _sessionReady = true;
+
+            if (!Session.IsAuthenticated)
+            {
+                Navigation.NavigateTo($"/auth/login?returnUrl={Uri.EscapeDataString("/admin/dashboard")}");
+                StateHasChanged();
+                return;
+            }
+
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            _isAuthorized = authState.User.IsInRole("Admin");
+            if (_isAuthorized)
             {
                 await LoadAsync();
-                StateHasChanged();
             }
+            else
+            {
+                _loading = false;
+            }
+
+            StateHasChanged();
         }
 
-        if (_stats is not null && !_chartRendered)
+        if (_isAuthorized && _stats is not null && !_chartRendered)
         {
             try
             {
@@ -99,12 +112,11 @@ else if (_stats is not null)
         catch (Exception ex)
         {
             Logger.LogError(ex, "Failed to load dashboard stats.");
-            _error = "Could not load dashboard data.";
+            _error = "No se pudo cargar el panel de administracion.";
         }
         finally
         {
             _loading = false;
         }
     }
-
 }

@@ -5,6 +5,7 @@
 @inject IVoiceService VoiceService
 @inject IJSRuntime JS
 @inject client_web.Application.Services.Session.ISessionManager SessionManager
+@inject NavigationManager Navigation
 @implements IAsyncDisposable
 
 <div class="max-w-2xl mx-auto p-6">
@@ -26,12 +27,6 @@
     @if (!VoiceService.IsConnected)
     {
         <div class="mb-6">
-            @if (string.IsNullOrEmpty(_token))
-            {
-                <label class="block text-sm text-gray-400 mb-2">Auth Token</label>
-                <input type="text" @bind="_token" placeholder="Paste your JWT token"
-                       class="w-full p-2 bg-gray-800 border border-gray-600 rounded text-white text-sm mb-3" />
-            }
             <button @onclick="ConnectAsync" disabled="@_isConnecting"
                     class="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white rounded-lg font-medium transition-colors">
                 @(_isConnecting ? "Connecting..." : "Join Voice Room")
@@ -86,7 +81,6 @@
 @code {
     [Parameter] public Guid ProjectId { get; set; }
 
-    private string _token = string.Empty;
     private bool _isConnecting = false;
     private bool _isSpeaking = false;
     private string? _error = string.Empty;
@@ -111,21 +105,25 @@
             );
 
             await SessionManager.InitializeAsync();
-            if (SessionManager.IsAuthenticated)
+            if (!SessionManager.IsAuthenticated)
             {
-                _token = SessionManager.CurrentToken ?? string.Empty;
+                Navigation.NavigateTo($"/auth/login?returnUrl={Uri.EscapeDataString($"/projects/{ProjectId}/voice")}");
                 StateHasChanged();
-                if (!string.IsNullOrEmpty(_token))
-                {
-                    await ConnectAsync();
-                }
+                return;
             }
+
+            await ConnectAsync();
         }
     }
 
     private async Task ConnectAsync()
     {
-        if (string.IsNullOrWhiteSpace(_token)) { _error = "JWT Token is required"; return; }
+        await SessionManager.InitializeAsync();
+        if (!SessionManager.IsAuthenticated)
+        {
+            Navigation.NavigateTo($"/auth/login?returnUrl={Uri.EscapeDataString($"/projects/{ProjectId}/voice")}");
+            return;
+        }
 
         _isConnecting = true;
         _error = null;
@@ -141,7 +139,7 @@
             VoiceService.OnAudioReceived += OnAudioReceived;
             VoiceService.OnConnectionChanged += OnConnectionChanged;
 
-            await VoiceService.ConnectAsync(_token);
+            await VoiceService.ConnectAsync(SessionManager.CurrentToken);
             await VoiceService.JoinRoomAsync(ProjectId);
 
             if (_jsModule != null)
