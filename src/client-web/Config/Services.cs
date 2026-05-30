@@ -3,6 +3,7 @@ using client_web.Application.Config.SignalR;
 using client_web.Application.Services.ActiveStatusAuthor;
 using client_web.Application.Services.Admin;
 using client_web.Application.Services.Auth;
+using client_web.Application.Services.Profile;
 using client_web.Application.Services.Projects;
 using client_web.Application.Services.Session;
 using client_web.Application.Services.Voice;
@@ -47,6 +48,7 @@ public static class Services
         // ── Domain services ──────────────────────────────────────────────────
         services.AddScoped<IPresenceService, PresenceService>();
         services.AddScoped<IProjectService, ProjectService>();
+        services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IAdminService, AdminService>();
         services.AddScoped<client_web.Application.Services.Manuscripts.IManuscriptService, client_web.Application.Services.Manuscripts.ManuscriptService>();
         services.AddScoped<client_web.Application.Services.Wikis.IWikiService, client_web.Application.Services.Wikis.WikiService>();
@@ -54,10 +56,10 @@ public static class Services
         services.AddScoped<ManuscriptHubClient>();
 
         // ── Voice (transient SignalR-based stack) ────────────────────────────
-        services.AddSingleton<ISignalRClient, SignalRClient>();
-        services.AddSingleton<IVoiceService, VoiceService>();
-        services.AddSingleton<Application.Services.Voice.IConnectionService>(sp => sp.GetRequiredService<IVoiceService>());
-        services.AddSingleton<IRoomService>(sp => sp.GetRequiredService<IVoiceService>());
-        services.AddSingleton<IAudioService>(sp => sp.GetRequiredService<IVoiceService>());
+        services.AddTransient<ISignalRClient, SignalRClient>();
+        services.AddScoped<IVoiceService, VoiceService>();
+        services.AddScoped<Application.Services.Voice.IConnectionService>(sp => sp.GetRequiredService<IVoiceService>());
+        services.AddScoped<IRoomService>(sp => sp.GetRequiredService<IVoiceService>());
+        services.AddScoped<IAudioService>(sp => sp.GetRequiredService<IVoiceService>());
     }
 }

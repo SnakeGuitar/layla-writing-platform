@@ -27,6 +27,8 @@ public class SessionManager : ISessionManager
     public string CurrentUserId { get; private set; } = string.Empty;
     public string CurrentEmail { get; private set; } = string.Empty;
     public string CurrentDisplayName { get; private set; } = string.Empty;
+    public string CurrentAvatarUrl { get; private set; } = string.Empty;
+    public string CurrentBio { get; private set; } = string.Empty;
     public DateTime? ExpiresAt { get; private set; }
 
     public bool IsAuthenticated =>
@@ -37,6 +39,9 @@ public class SessionManager : ISessionManager
 
     public async Task<bool> InitializeAsync()
     {
+        if (IsAuthenticated)
+            return true;
+
         try
         {
             var stored = await _storage.GetAsync<StoredSession>(StorageKey);
@@ -74,6 +79,8 @@ public class SessionManager : ISessionManager
             UserId = response.UserId,
             Email = response.Email,
             DisplayName = response.DisplayName,
+            AvatarUrl = response.AvatarUrl,
+            Bio = response.Bio,
             ExpiresAt = response.ExpiresAt == default ? null : response.ExpiresAt,
         };
         ApplyInMemory(snapshot);
@@ -92,12 +99,41 @@ public class SessionManager : ISessionManager
         SessionChanged?.Invoke();
     }
 
+    public async Task UpdateProfileAsync(string? displayName, string? avatarUrl, string? bio)
+    {
+        var snapshot = new StoredSession
+        {
+            Token = CurrentToken,
+            UserId = CurrentUserId,
+            Email = CurrentEmail,
+            DisplayName = displayName ?? CurrentDisplayName,
+            AvatarUrl = avatarUrl ?? CurrentAvatarUrl,
+            Bio = bio ?? CurrentBio,
+            ExpiresAt = ExpiresAt,
+        };
+
+        ApplyInMemory(snapshot);
+
+        try
+        {
+            await _storage.SetAsync(StorageKey, snapshot);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Could not persist profile changes to ProtectedSessionStorage.");
+        }
+
+        SessionChanged?.Invoke();
+    }
+
     public async Task ClearAsync()
     {
         CurrentToken = string.Empty;
         CurrentUserId = string.Empty;
         CurrentEmail = string.Empty;
         CurrentDisplayName = string.Empty;
+        CurrentAvatarUrl = string.Empty;
+        CurrentBio = string.Empty;
         ExpiresAt = null;
 
         try
@@ -118,6 +154,8 @@ public class SessionManager : ISessionManager
         CurrentUserId = snapshot.UserId ?? string.Empty;
         CurrentEmail = snapshot.Email ?? string.Empty;
         CurrentDisplayName = snapshot.DisplayName ?? string.Empty;
+        CurrentAvatarUrl = snapshot.AvatarUrl ?? string.Empty;
+        CurrentBio = snapshot.Bio ?? string.Empty;
         ExpiresAt = snapshot.ExpiresAt;
     }
 
@@ -128,6 +166,8 @@ public class SessionManager : ISessionManager
         public string? UserId { get; set; }
         public string? Email { get; set; }
         public string? DisplayName { get; set; }
+        public string? AvatarUrl { get; set; }
+        public string? Bio { get; set; }
         public DateTime? ExpiresAt { get; set; }
     }
 }

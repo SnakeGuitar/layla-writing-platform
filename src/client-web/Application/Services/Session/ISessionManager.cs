@@ -19,6 +19,8 @@ public interface ISessionManager
     string CurrentUserId { get; }
     string CurrentEmail { get; }
     string CurrentDisplayName { get; }
+    string CurrentAvatarUrl { get; }
+    string CurrentBio { get; }
     DateTime? ExpiresAt { get; }
 
     bool IsAuthenticated { get; }
@@ -33,6 +35,9 @@ public interface ISessionManager
 
     /// <summary>Persists the session to memory and browser storage.</summary>
     Task SaveAsync(LoginResponse response);
+
+    /// <summary>Updates profile fields already stored in the authenticated session.</summary>
+    Task UpdateProfileAsync(string? displayName, string? avatarUrl, string? bio);
 
     /// <summary>Drops the session from memory and removes it from browser storage.</summary>
     Task ClearAsync();

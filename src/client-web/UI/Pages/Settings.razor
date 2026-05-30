@@ -1,0 +1,296 @@
+@page "/settings"
+@rendermode InteractiveServer
+@using client_web.Application.Schemas.Profile
+@using client_web.Application.Services.Profile
+@using client_web.Application.Services.Session
+@inject IProfileService ProfileService
+@inject ISessionManager Session
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<PageTitle>Configuracion // Layla</PageTitle>
+
+<div class="max-w-6xl mx-auto space-y-8">
+    <header class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+            <span class="nm-text-label">LAYLA // PREFERENCIAS</span>
+            <h1 class="nm-text-display mt-1">Configuracion</h1>
+        </div>
+        <a href="/home" class="nm-button-ghost">Volver</a>
+    </header>
+
+    @if (!_ready)
+    {
+        <div class="nm-card">
+            <p class="nm-text-body">Cargando configuracion...</p>
+        </div>
+    }
+    else
+    {
+        <div class="grid gap-8 xl:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
+            <section class="nm-card p-7">
+                <div class="nm-card-header">
+                    <div>
+                        <span class="nm-text-label">Perfil publico</span>
+                        <h2 class="nm-text-title mt-1">Tu identidad de autora</h2>
+                    </div>
+                    <span class="nm-text-label text-[var(--nm-accent)]">@Session.CurrentEmail</span>
+                </div>
+
+                <div class="flex flex-col gap-6 md:flex-row md:items-start">
+                    <div class="flex flex-col items-start gap-4">
+                        <div class="nm-avatar">
+                            @if (!string.IsNullOrWhiteSpace(_avatarUrl))
+                            {
+                                <img src="@_avatarUrl" alt="Foto de perfil" />
+                            }
+                            else
+                            {
+                                <span>@Initials</span>
+                            }
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <label class="nm-button-ghost cursor-pointer">
+                                Cambiar foto
+                                <InputFile class="hidden" accept="image/png,image/jpeg,image/gif,image/webp" OnChange="PickAvatarAsync" />
+                            </label>
+                            @if (!string.IsNullOrWhiteSpace(_avatarUrl))
+                            {
+                                <button class="nm-button-ghost text-[var(--nm-error)]" @onclick="RemoveAvatar">Quitar</button>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="flex-1 space-y-5">
+                        <div class="nm-input-wrapper">
+                            <label class="nm-text-label" for="display-name">Nombre de usuario</label>
+                            <input id="display-name" class="nm-input w-full" maxlength="100" @bind="_displayName" />
+                        </div>
+
+                        <div class="nm-input-wrapper">
+                            <label class="nm-text-label" for="profile-bio">Descripcion</label>
+                            <textarea id="profile-bio" class="nm-input w-full min-h-32 resize-y" maxlength="500" @bind="_bio"></textarea>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(_profileStatus))
+                        {
+                            <p class="nm-text-label text-[var(--nm-success)]">@_profileStatus</p>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(_profileError))
+                        {
+                            <p class="nm-text-label text-[var(--nm-error)]">@_profileError</p>
+                        }
+
+                        <button class="nm-button" disabled="@_savingProfile" @onclick="SaveProfileAsync">
+                            @(_savingProfile ? "Guardando..." : "Guardar perfil")
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="space-y-8">
+                <section class="nm-card p-7">
+                    <div class="nm-card-header">
+                        <div>
+                            <span class="nm-text-label">Apariencia</span>
+                            <h2 class="nm-text-title mt-1">Tema y pantalla</h2>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <label class="nm-input-wrapper">
+                            <span class="nm-text-label">Tema</span>
+                            <select class="nm-select w-full" value="@_theme" @onchange="ChangeThemeAsync">
+                                <option value="dark">Oscuro neumorfico</option>
+                                <option value="light">Claro neumorfico</option>
+                            </select>
+                        </label>
+
+                        <div class="flex items-center justify-between gap-4">
+                            <div>
+                                <span class="nm-text-label">Pantalla completa</span>
+                                <p class="nm-text-body mt-1">Oculta el marco del navegador para escribir sin ruido.</p>
+                            </div>
+                            <button type="button"
+                                    class="nm-toggle shrink-0"
+                                    aria-label="Alternar pantalla completa"
+                                    aria-pressed="@_isFullscreen.ToString().ToLowerInvariant()"
+                                    @onclick="ToggleFullscreenAsync"></button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="nm-card p-7">
+                    <span class="nm-text-label">Sesion</span>
+                    <h2 class="nm-text-title mt-1">@DisplayNameOrFallback</h2>
+                    <p class="nm-text-body mt-3">@(!string.IsNullOrWhiteSpace(_bio) ? _bio : "Aun no hay descripcion para este perfil.")</p>
+                </section>
+            </aside>
+        </div>
+    }
+</div>
+
+@code {
+    private bool _ready;
+    private bool _savingProfile;
+    private bool _isFullscreen;
+    private string _theme = "dark";
+    private string _displayName = string.Empty;
+    private string _bio = string.Empty;
+    private string? _avatarUrl;
+    private string? _profileStatus;
+    private string? _profileError;
+
+    private string DisplayNameOrFallback => string.IsNullOrWhiteSpace(_displayName) ? "Autora Layla" : _displayName.Trim();
+
+    private string Initials
+    {
+        get
+        {
+            var name = DisplayNameOrFallback;
+            var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            return parts.Length >= 2
+                ? $"{parts[0][0]}{parts[1][0]}".ToUpperInvariant()
+                : name[..Math.Min(2, name.Length)].ToUpperInvariant();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        await EnsureSessionAsync();
+        if (!Session.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/auth/login?returnUrl=/settings", forceLoad: true);
+            return;
+        }
+
+        try
+        {
+            _displayName = Session.CurrentDisplayName;
+            _bio = Session.CurrentBio;
+            _avatarUrl = string.IsNullOrWhiteSpace(Session.CurrentAvatarUrl) ? null : Session.CurrentAvatarUrl;
+
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            var profile = await ProfileService.GetCurrentProfileAsync(cts.Token);
+            if (profile is not null)
+            {
+                _displayName = profile.DisplayName ?? _displayName;
+                _bio = profile.Bio ?? _bio;
+                _avatarUrl = string.IsNullOrWhiteSpace(profile.AvatarUrl) ? null : profile.AvatarUrl;
+                await Session.UpdateProfileAsync(_displayName, _avatarUrl, _bio);
+            }
+        }
+        catch
+        {
+            _profileError = "No se pudo sincronizar el perfil; puedes editar con los datos locales.";
+        }
+
+        try
+        {
+            var prefs = await JS.InvokeAsync<SettingsPreferences>("laylaSettingsInitialize");
+            _theme = prefs.Theme;
+            _isFullscreen = prefs.Fullscreen;
+        }
+        catch
+        {
+            _theme = "dark";
+            _isFullscreen = false;
+        }
+
+        _ready = true;
+        StateHasChanged();
+    }
+
+    private async Task PickAvatarAsync(InputFileChangeEventArgs args)
+    {
+        _profileError = null;
+        _profileStatus = null;
+
+        var file = args.File;
+        if (file.Size > 1_900_000)
+        {
+            _profileError = "La imagen debe pesar menos de 1.9 MB.";
+            return;
+        }
+
+        try
+        {
+            await using var stream = file.OpenReadStream(1_900_000);
+            using var memory = new MemoryStream();
+            await stream.CopyToAsync(memory);
+            _avatarUrl = $"data:{file.ContentType};base64,{Convert.ToBase64String(memory.ToArray())}";
+        }
+        catch (Exception ex)
+        {
+            _profileError = $"No se pudo cargar la imagen: {ex.Message}";
+        }
+    }
+
+    private void RemoveAvatar()
+    {
+        _avatarUrl = string.Empty;
+        _profileStatus = null;
+        _profileError = null;
+    }
+
+    private async Task SaveProfileAsync()
+    {
+        if (_savingProfile) return;
+
+        _savingProfile = true;
+        _profileStatus = null;
+        _profileError = null;
+
+        var request = new UpdateProfileRequest
+        {
+            DisplayName = string.IsNullOrWhiteSpace(_displayName) ? null : _displayName.Trim(),
+            Bio = _bio,
+            AvatarUrl = _avatarUrl,
+        };
+
+        var result = await ProfileService.UpdateProfileAsync(request);
+        if (result.Success && result.Profile is not null)
+        {
+            _displayName = result.Profile.DisplayName ?? _displayName;
+            _bio = result.Profile.Bio ?? string.Empty;
+            _avatarUrl = string.IsNullOrWhiteSpace(result.Profile.AvatarUrl) ? null : result.Profile.AvatarUrl;
+            _profileStatus = "Perfil actualizado.";
+        }
+        else
+        {
+            _profileError = result.Error ?? "No se pudo guardar el perfil.";
+        }
+
+        _savingProfile = false;
+    }
+
+    private async Task ChangeThemeAsync(ChangeEventArgs args)
+    {
+        _theme = args.Value?.ToString() == "light" ? "light" : "dark";
+        await JS.InvokeVoidAsync("laylaSettingsWrite", new { theme = _theme });
+    }
+
+    private async Task ToggleFullscreenAsync()
+    {
+        _isFullscreen = await JS.InvokeAsync<bool>("laylaSettingsSetFullscreen", !_isFullscreen);
+    }
+
+    private async Task EnsureSessionAsync()
+    {
+        for (var attempt = 0; attempt < 3 && !Session.IsAuthenticated; attempt++)
+        {
+            await Session.InitializeAsync();
+            if (!Session.IsAuthenticated)
+                await Task.Delay(100);
+        }
+    }
+
+    private sealed class SettingsPreferences
+    {
+        public string Theme { get; set; } = "dark";
+        public bool Fullscreen { get; set; }
+    }
+}

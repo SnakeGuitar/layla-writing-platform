@@ -3,43 +3,55 @@
 @inject ISessionManager Session
 @inject NavigationManager Navigation
 
-<div class="lg:flex lg:h-screen lg:overflow-hidden bg-[var(--bg-primary)] min-h-screen text-[var(--text-primary)]">
+<div class="lg:flex lg:h-screen lg:overflow-hidden bg-[var(--nm-bg-base)] min-h-screen text-[var(--nm-text-primary)]">
 
-    <aside class="lg:w-64 lg:shrink-0 lg:flex lg:flex-col lg:h-screen lg:overflow-y-auto lg:sticky lg:top-0 bg-[var(--bg-secondary)] border-r border-[var(--border-subtle)]">
+    <aside class="lg:w-64 lg:shrink-0 lg:flex lg:flex-col lg:h-screen lg:overflow-y-auto lg:sticky lg:top-0 bg-[var(--nm-surface)] border-r border-[var(--nm-shadow-dark)]">
         <NavMenu />
     </aside>
 
     <div class="flex-1 flex flex-col lg:overflow-y-auto lg:h-screen">
 
         <header class="lg:sticky lg:top-0 lg:z-30 px-6 sm:px-8 h-14 min-h-14
-                       bg-[var(--bg-secondary)] border-b border-[var(--border-subtle)]
+                       bg-[var(--nm-surface)] border-b border-[var(--nm-shadow-dark)]
                        flex items-center justify-end gap-6">
             <AuthorizeView>
                 <Authorized>
-                    <span class="text-xs font-mono text-[var(--text-secondary)] tracking-widest uppercase">
-                        Operator: <span class="text-[var(--text-primary)] font-bold">@(context.User.Identity?.Name ?? Session.CurrentDisplayName)</span>
-                    </span>
+                    <a href="/settings" class="flex items-center gap-3 no-underline">
+                        <span class="w-8 h-8 rounded-full overflow-hidden grid place-items-center bg-[var(--nm-accent)] text-white text-xs font-bold shadow-[7px_7px_14px_var(--nm-shadow-dark),-7px_-7px_14px_var(--nm-shadow-light)]">
+                            @if (!string.IsNullOrWhiteSpace(Session.CurrentAvatarUrl))
+                            {
+                                <img src="@Session.CurrentAvatarUrl" alt="" class="w-full h-full object-cover" />
+                            }
+                            else
+                            {
+                                @Initials(context.User.Identity?.Name ?? Session.CurrentDisplayName)
+                            }
+                        </span>
+                        <span class="text-xs font-mono text-[var(--nm-text-secondary)] tracking-widest uppercase">
+                            Operator: <span class="text-[var(--nm-text-primary)] font-bold">@(context.User.Identity?.Name ?? Session.CurrentDisplayName)</span>
+                        </span>
+                    </a>
                     <button @onclick="HandleLogoutAsync"
-                            class="text-[var(--accent-warning)] hover:text-amber-400 text-xs font-mono uppercase tracking-widest cursor-pointer">
+                            class="text-[var(--nm-error)] hover:text-[var(--nm-error)] text-xs font-mono uppercase tracking-widest cursor-pointer">
                         [ Terminate Session ]
                     </button>
                 </Authorized>
                 <NotAuthorized>
-                    <a href="/auth/login"
-                       class="text-[var(--accent-primary)] hover:underline text-xs font-mono uppercase tracking-widest">
+                    <a href="/"
+                       class="text-[var(--nm-accent)] hover:underline text-xs font-mono uppercase tracking-widest">
                         [ Access System ]
                     </a>
                 </NotAuthorized>
             </AuthorizeView>
 
             <a href="/about"
-               class="text-[var(--text-secondary)] text-xs font-mono uppercase tracking-widest hover:text-[var(--text-primary)]">
+               class="text-[var(--nm-text-secondary)] text-xs font-mono uppercase tracking-widest hover:text-[var(--nm-text-primary)]">
                 [ Info ]
             </a>
         </header>
 
         <main class="flex-1 min-h-[calc(100vh-3.5rem)]">
-            <article class="content bg-[var(--bg-primary)] px-6 py-6 min-h-full">
+            <article class="content bg-[var(--nm-bg-base)] px-6 py-6 min-h-full">
                 @Body
             </article>
         </main>
@@ -51,6 +63,16 @@
     private async Task HandleLogoutAsync()
     {
         await Session.ClearAsync();
-        Navigation.NavigateTo("/home", forceLoad: true);
+        Navigation.NavigateTo("/", forceLoad: true);
+    }
+
+    private static string Initials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "?";
+
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length >= 2
+            ? $"{parts[0][0]}{parts[1][0]}".ToUpperInvariant()
+            : name[..Math.Min(2, name.Length)].ToUpperInvariant();
     }
 }
