@@ -2,12 +2,18 @@ let mediaStream = null;
 let audioContext = null;
 let processor = null;
 let dotNetRef = null;
+let captureId = 0;
+
+const CAPTURE_BUFFER_SIZE = 1024;
 
 export async function startCapture(dotNetReference) {
+    stopCapture();
+    const currentCaptureId = ++captureId;
     dotNetRef = dotNetReference;
-    audioContext = new AudioContext({ sampleRate: 16000 });
+    const context = new AudioContext({ sampleRate: 16000 });
+    audioContext = context;
 
-    mediaStream = await navigator.mediaDevices.getUserMedia({
+    const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
             sampleRate: 16000,
             channelCount: 1,
@@ -16,11 +22,21 @@ export async function startCapture(dotNetReference) {
         }
     });
 
-    const source = audioContext.createMediaStreamSource(mediaStream);
+    if (currentCaptureId !== captureId || audioContext !== context) {
+        stream.getTracks().forEach(t => t.stop());
+        await context.close();
+        return;
+    }
+
+    mediaStream = stream;
+    const source = context.createMediaStreamSource(stream);
 
     // ScriptProcessorNode for broad compatibility
-    processor = audioContext.createScriptProcessor(640, 1, 1);
-    processor.onaudioprocess = (e) => {
+    const currentProcessor = context.createScriptProcessor(CAPTURE_BUFFER_SIZE, 1, 1);
+    processor = currentProcessor;
+    currentProcessor.onaudioprocess = (e) => {
+        if (currentCaptureId !== captureId || dotNetRef == null) return;
+
         const float32 = e.inputBuffer.getChannelData(0);
         const int16 = new Int16Array(float32.length);
         for (let i = 0; i < float32.length; i++) {
@@ -32,11 +48,12 @@ export async function startCapture(dotNetReference) {
         dotNetRef.invokeMethodAsync('OnAudioCaptured', base64);
     };
 
-    source.connect(processor);
-    processor.connect(audioContext.destination);
+    source.connect(currentProcessor);
+    currentProcessor.connect(context.destination);
 }
 
 export function stopCapture() {
+    captureId++;
     if (processor) {
         processor.disconnect();
         processor = null;

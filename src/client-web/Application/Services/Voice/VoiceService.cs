@@ -49,7 +49,7 @@ public class VoiceService : IVoiceService
     }
 
     // ISignalRClient -------------------------------------------------------------------
-    public HubConnectionState State => _client.Hub!.State;
+    public HubConnectionState State => _client.Hub?.State ?? HubConnectionState.Disconnected;
 
     public bool IsConnected => _client.IsConnected;
 
@@ -76,12 +76,15 @@ public class VoiceService : IVoiceService
 
     public async Task ConnectAsync(string token)
     {
-        RegisterHandlers();
         await _client.ConnectAsync(_baseUrl, token);
+        RegisterHandlers();
     }
 
-    public Task DisconnectAsync() =>
-        _client.DisconnectAsync();
+    public async Task DisconnectAsync()
+    {
+        await _client.DisconnectAsync();
+        _handlersRegistered = false;
+    }
 
     public async ValueTask DisposeAsync() =>
         await _client.DisposeAsync();

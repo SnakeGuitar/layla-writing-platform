@@ -63,15 +63,18 @@ public class PresenceService : IPresenceService
 
     public async Task ConnectAsync(string token)
     {
-        RegisterHandlers();
         await _client.ConnectAsync(_baseUrl, token);
+        RegisterHandlers();
     }
 
-    public Task DisconnectAsync() =>
-        _client.DisconnectAsync();
+    public async Task DisconnectAsync()
+    {
+        await _client.DisconnectAsync();
+        _handlersRegistered = false;
+    }
 
     public async ValueTask DisposeAsync() =>
-        await _client.DisposeAsync();
+        await _client.DisconnectAsync();
 
     // Status -------------------------------------------------------------------
     public event EventHandler<AuthorStatusChangedEventArgs>? OnAuthorStatusChanged;

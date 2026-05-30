@@ -29,18 +29,24 @@ public class SignalRClient : ISignalRClient
     public HubConnection? Hub { set; get; }
     public bool IsConnected => Hub?.State == HubConnectionState.Connected;
     private readonly SemaphoreSlim _connectionLock = new(1, 1);
+    private bool _disposed;
     public event EventHandler<HubConnectionState>? OnConnectionChanged;
 
     public async Task ConnectAsync(string url, string token)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         if (Hub != null && IsConnected) return;
 
         await _connectionLock.WaitAsync();
         try
         {
             if (IsConnected && Hub != null && Hub.State == HubConnectionState.Connected) return;
-            await Hub!.StopAsync();
-            await Hub!.DisposeAsync();
+
+            if (Hub != null)
+            {
+                await Hub.StopAsync();
+                await Hub.DisposeAsync();
+            }
 
             Hub = new HubConnectionBuilder()
                 .WithUrl(_baseUrl + url, options =>
@@ -89,6 +95,8 @@ public class SignalRClient : ISignalRClient
 
     public async Task DisconnectAsync()
     {
+        if (_disposed) return;
+
         await _connectionLock.WaitAsync();
         try
         {
@@ -110,8 +118,11 @@ public class SignalRClient : ISignalRClient
 
     public async ValueTask DisposeAsync()
     {
+        if (_disposed) return;
+
         _logger.LogInformation("Disposing SignalR client...");
         await DisconnectAsync();
+        _disposed = true;
         _connectionLock.Dispose();
     }
 
