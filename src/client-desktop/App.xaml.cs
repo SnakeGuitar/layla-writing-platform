@@ -29,6 +29,8 @@ public partial class App : Application
     private string ConfigPath => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Layla", "theme.txt");
     public string CurrentTheme { get; private set; } = "NeumorphismTheme";
 
+    private static readonly string[] AvailableThemes = { "LightTheme", "DarkTheme", "NeumorphismTheme" };
+
     protected override void OnStartup(StartupEventArgs e)
     {
         for (int i = 0; i < e.Args.Length; i++)
@@ -59,8 +61,9 @@ public partial class App : Application
             if (File.Exists(this.ConfigPath))
             {
                 string saved = File.ReadAllText(this.ConfigPath).Trim();
-                if (saved == "SpaceTheme" || saved == "CyberMinimalismTheme") saved = "NeumorphismTheme";
-                theme = saved;
+                // Only honor the saved value if it maps to a theme that still exists;
+                // otherwise keep the default so a stale or removed theme name can't crash startup.
+                if (AvailableThemes.Contains(saved)) theme = saved;
             }
         }
         catch { }

@@ -50,7 +50,7 @@
 ├── 📁 Themes
 │   ├── 📄 DarkTheme.xaml
 │   ├── 📄 LightTheme.xaml
-│   └── 📄 SpaceTheme.xaml
+│   └── 📄 NeumorphismTheme.xaml
 ├── 📁 ViewModels
 │   ├── 📄 LoginViewModel.cs
 │   ├── 📄 ManuscriptEditorViewModel.cs

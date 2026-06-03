@@ -75,13 +75,6 @@
         <Setter Property="Foreground" Value="{StaticResource NmTextSecondaryBrush}" />
     </Style>
 
-    <!-- Compatibility Typo Aliases -->
-    <Style x:Key="CyberDisplayText" TargetType="TextBlock" BasedOn="{StaticResource NmDisplayText}" />
-    <Style x:Key="CyberTitleText" TargetType="TextBlock" BasedOn="{StaticResource NmTitleText}" />
-    <Style x:Key="CyberBodyText" TargetType="TextBlock" BasedOn="{StaticResource NmBodyText}" />
-    <Style x:Key="CyberTechMonoText" TargetType="TextBlock" BasedOn="{StaticResource NmBodyText}" />
-    <Style x:Key="CyberLabel" TargetType="TextBlock" BasedOn="{StaticResource NmLabelText}" />
-
     <!-- ================================================================= -->
     <!-- BORDERS & CARDS                                                   -->
     <!-- ================================================================= -->
@@ -95,9 +88,6 @@
             </Setter.Value>
         </Setter>
     </Style>
-
-    <!-- Compatibility Border Alias -->
-    <Style x:Key="CyberPanelBorder" TargetType="Border" BasedOn="{StaticResource NmCardBorder}"/>
 
     <!-- Default Border style -->
     <Style TargetType="Border">
@@ -179,10 +169,6 @@
 
     <!-- Implicit PasswordBox picks up NmPasswordStyle -->
     <Style TargetType="PasswordBox" BasedOn="{StaticResource NmPasswordStyle}" />
-
-    <!-- Compatibility aliases -->
-    <Style x:Key="CyberTextBox" TargetType="TextBox" BasedOn="{StaticResource NmInputStyle}"/>
-    <Style x:Key="CyberPasswordBox" TargetType="PasswordBox" BasedOn="{StaticResource NmPasswordStyle}"/>
 
     <!-- ================================================================= -->
     <!-- BUTTON STYLES                                                     -->
@@ -346,10 +332,6 @@
 
     <!-- Implicit Button picks up NmButtonPrimary -->
     <Style TargetType="Button" BasedOn="{StaticResource NmButtonPrimary}" />
-
-    <!-- Compatibility aliases -->
-    <Style x:Key="CyberButton" TargetType="Button" BasedOn="{StaticResource NmButtonPrimary}"/>
-    <Style x:Key="CyberIconButton" TargetType="Button" BasedOn="{StaticResource NmButtonGhost}"/>
 
     <!-- ================================================================= -->
     <!-- OVERRIDES FOR OTHER BASIC CONTROLS                                -->
