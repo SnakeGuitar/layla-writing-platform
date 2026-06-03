@@ -55,7 +55,7 @@ data class ManuscriptDto(
 
 data class ChapterDto(
     val chapterId: String,
-    val manuscriptId: String,
+    val manuscriptId: String = "",
     val title: String,
     val content: String = "",
     val order: Int,

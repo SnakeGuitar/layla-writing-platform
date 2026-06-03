@@ -11,6 +11,9 @@ interface ManuscriptApiService {
     @GET("api/manuscripts/{projectId}")
     suspend fun getManuscripts(@Path("projectId") projectId: String): Response<List<ManuscriptDto>>
 
+    @GET("api/manuscripts/{projectId}/full-story")
+    suspend fun getFullStory(@Path("projectId") projectId: String): Response<List<ManuscriptDto>>
+
     @GET("api/manuscripts/{projectId}/{manuscriptId}")
     suspend fun getManuscript(
         @Path("projectId") projectId: String,
