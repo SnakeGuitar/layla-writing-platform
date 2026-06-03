@@ -103,23 +103,36 @@ public class AdminService : IAdminService
 
     public async Task<DashboardStats> GetDashboardStatsAsync(CancellationToken ct = default)
     {
-        // Server-core doesn't expose aggregated counters yet, so we derive
-        // them client-side from the two list endpoints. Cheap for the admin
-        // dashboard's expected scale and avoids a server change.
+        try
+        {
+            return await _client.SendAsync<DashboardStats>(new APIRequest
+            {
+                Endpoint = "/api/admin/reports/system",
+                Method = HttpMethod.Get,
+                Token = Token,
+            }, ct) ?? new DashboardStats();
+        }
+        catch (APIException ex)
+        {
+            _logger.LogWarning(ex, "GetDashboardStatsAsync failed (HTTP {Status}). Falling back to client-side aggregation.", ex.Status);
+            return await BuildDashboardStatsFallbackAsync(ct);
+        }
+    }
+
+    private async Task<DashboardStats> BuildDashboardStatsFallbackAsync(CancellationToken ct)
+    {
         var usersTask = GetUsersAsync(ct);
         var projectsTask = _projects.GetAllProjectsAsync();
         await Task.WhenAll(usersTask, projectsTask);
 
         var users = await usersTask;
         var projects = (await projectsTask).ToList();
-
         var now = DateTime.UtcNow;
         var startOfMonth = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc);
         var startOfDay = now.Date.ToUniversalTime();
-
-        // 12-month rolling window, oldest bucket first.
         var perMonth = new int[12];
         var windowStart = startOfMonth.AddMonths(-11);
+
         foreach (var u in users)
         {
             var created = DateTime.SpecifyKind(u.CreatedAt, DateTimeKind.Utc);
@@ -130,6 +143,7 @@ public class AdminService : IAdminService
 
         return new DashboardStats
         {
+            GeneratedAt = now,
             TotalUsers = users.Count,
             NewUsersThisMonth = users.Count(u => u.CreatedAt >= startOfMonth),
             BannedUsers = users.Count(u => u.IsBanned),

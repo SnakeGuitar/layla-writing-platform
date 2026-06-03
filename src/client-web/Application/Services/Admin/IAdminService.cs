@@ -29,6 +29,7 @@ public class AdminUser
 /// <summary>Aggregate counters derived client-side from the server-core lists.</summary>
 public class DashboardStats
 {
+    public DateTime GeneratedAt { get; set; }
     public int TotalUsers { get; set; }
     public int NewUsersThisMonth { get; set; }
     public int BannedUsers { get; set; }
