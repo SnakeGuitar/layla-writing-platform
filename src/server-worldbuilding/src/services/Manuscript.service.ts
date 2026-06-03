@@ -15,6 +15,22 @@ type ChapterMeta = Pick<
   IChapter,
   "chapterId" | "title" | "order" | "updatedAt" | "createdAt"
 >;
+type FullStoryChapter = Pick<
+  IChapter,
+  "chapterId" | "title" | "content" | "order" | "mentions" | "updatedAt" | "createdAt"
+>;
+
+type ManuscriptIndex = Pick<
+  IManuscript,
+  "manuscriptId" | "projectId" | "title" | "order" | "createdAt" | "updatedAt"
+> & {
+  chapters: ChapterMeta[];
+};
+
+type FullStoryManuscript = Omit<ManuscriptIndex, "chapters"> & {
+  chapters: FullStoryChapter[];
+};
+
 const toChapterMeta = ({
   chapterId,
   title,
@@ -29,12 +45,40 @@ const toChapterMeta = ({
   createdAt,
 });
 
-const toManuscriptIndex = (m: IManuscript) => ({
+const toManuscriptIndex = (m: IManuscript): ManuscriptIndex => ({
   manuscriptId: m.manuscriptId,
   projectId: m.projectId,
   title: m.title,
   order: m.order,
   chapters: m.chapters.map(toChapterMeta),
+  createdAt: m.createdAt,
+  updatedAt: m.updatedAt,
+});
+
+const toFullStoryChapter = ({
+  chapterId,
+  title,
+  content,
+  order,
+  mentions,
+  updatedAt,
+  createdAt,
+}: IChapter): FullStoryChapter => ({
+  chapterId,
+  title,
+  content,
+  order,
+  mentions,
+  updatedAt,
+  createdAt,
+});
+
+const toFullStoryManuscript = (m: IManuscript): FullStoryManuscript => ({
+  manuscriptId: m.manuscriptId,
+  projectId: m.projectId,
+  title: m.title,
+  order: m.order,
+  chapters: [...m.chapters].sort((a, b) => a.order - b.order).map(toFullStoryChapter),
   createdAt: m.createdAt,
   updatedAt: m.updatedAt,
 });
@@ -49,6 +93,21 @@ export const getManuscriptsByProject = async (
 ) => {
   const manuscripts = await repo.getManuscriptsByProject(projectId);
   return manuscripts.map(toManuscriptIndex);
+};
+
+/**
+ * Returns the whole readable story for a project in manuscript/chapter order.
+ * Unlike index endpoints, chapter content is included. The route that exposes
+ * this service is read-only, so READER project members can consume it.
+ */
+export const getFullStoryByProject = async (
+  projectId: string,
+  repo = container.manuscriptRepo,
+) => {
+  const manuscripts = await repo.getManuscriptsByProject(projectId);
+  return manuscripts
+    .sort((a, b) => a.order - b.order)
+    .map(toFullStoryManuscript);
 };
 
 /**

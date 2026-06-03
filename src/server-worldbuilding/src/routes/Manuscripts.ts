@@ -23,6 +23,11 @@ router.get(
   asyncHandler(ManuscriptsController.getManuscriptsByProject),
 );
 
+router.get(
+  "/:projectId/full-story",
+  asyncHandler(ManuscriptsController.getFullStoryByProject),
+);
+
 router.post(
   "/:projectId",
   requireWriteAccess(),

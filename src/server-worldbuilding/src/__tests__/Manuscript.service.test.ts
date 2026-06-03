@@ -18,6 +18,7 @@ vi.mock("@/models/ChapterVersion.model", () => ({
 
 import {
   createManuscript,
+  getFullStoryByProject,
   updateChapter,
   createChapter,
 } from "@/services/Manuscript.service";
@@ -125,6 +126,43 @@ describe("createManuscript", () => {
     it("does not expose chapter content field", () =>
       expect(Object.prototype.hasOwnProperty.call(result, "content")).toBe(false));
   });
+});
+
+describe("getFullStoryByProject", () => {
+  let result: any;
+
+  beforeAll(async () => {
+    const repo = makeRepo({
+      getManuscriptsByProject: vi.fn().mockResolvedValue([
+        makeManuscript({
+          manuscriptId: "m2",
+          title: "Book 2",
+          order: 1,
+          chapters: [makeChapter({ chapterId: "c3", title: "Chapter 3", content: "third", order: 0 })],
+        }),
+        makeManuscript({
+          manuscriptId: "m1",
+          title: "Book 1",
+          order: 0,
+          chapters: [
+            makeChapter({ chapterId: "c2", title: "Chapter 2", content: "second", order: 1 }),
+            makeChapter({ chapterId: "c1", title: "Chapter 1", content: "first", order: 0 }),
+          ],
+        }),
+      ]),
+    });
+
+    result = await getFullStoryByProject("p1", repo);
+  });
+
+  it("returns manuscripts in reading order", () =>
+    expect(result.map((m: any) => m.manuscriptId)).toEqual(["m1", "m2"]));
+
+  it("returns chapters in reading order", () =>
+    expect(result[0].chapters.map((c: any) => c.chapterId)).toEqual(["c1", "c2"]));
+
+  it("includes chapter content for full-story reading", () =>
+    expect(result[0].chapters[0].content).toBe("first"));
 });
 
 // ── updateChapter — Last-Write-Wins conflict detection ────────────────────────

@@ -26,6 +26,22 @@ export const getManuscriptsByProject = async (
 };
 
 /**
+ * GET /api/manuscripts/:projectId/full-story
+ *
+ * Returns every manuscript and chapter for the project, including chapter
+ * content, ordered for reader consumption.
+ */
+export const getFullStoryByProject = async (
+  req: Request,
+  res: Response,
+): Promise<void> => {
+  const manuscripts = await ManuscriptService.getFullStoryByProject(
+    req.params["projectId"] as string,
+  );
+  res.json(manuscripts);
+};
+
+/**
  * GET /api/manuscripts/:projectId/:manuscriptId
  *
  * Returns a single manuscript with its chapter index (no content).
