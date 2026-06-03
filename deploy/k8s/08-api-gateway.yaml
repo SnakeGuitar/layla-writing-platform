@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: layla-api-gateway
-          # Construye la imagen con: (desde src/infraestructure-api_gateway)
+          # Construye la imagen con: (desde src/api-gateway)
           #   docker build -t layla-api-gateway:latest .
           image: layla-api-gateway:latest
           imagePullPolicy: Never

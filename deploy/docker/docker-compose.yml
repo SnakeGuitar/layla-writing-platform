@@ -188,7 +188,7 @@ services:
   # --- 7. API Gateway (YARP) ---
   layla-api-gateway:
     build:
-      context: ../../src/infraestructure-api_gateway
+      context: ../../src/api-gateway
       dockerfile: Dockerfile
     container_name: layla-api-gateway
     ports:

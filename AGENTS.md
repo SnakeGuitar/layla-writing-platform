@@ -12,7 +12,7 @@ Collaborative creative-writing / worldbuilding platform. Two backend services, t
 src/
 ├── server-core/                     ASP.NET Core 10 — auth, users, projects, SignalR
 ├── server-worldbuilding/            Node.js 22 + Express 5 + TypeScript — manuscripts, wiki, graph
-├── infraestructure-api_gateway/     YARP reverse proxy (single entry on :5000)
+├── api-gateway/     YARP reverse proxy (single entry on :5000)
 ├── client-desktop/                  WPF .NET 9 — main writing workspace
 ├── client-web/                      Blazor Server .NET 9 — public reader + admin
 ├── client-android/                  Kotlin + Compose — mobile companion
@@ -36,7 +36,7 @@ cd src/server-worldbuilding && pnpm install && pnpm run dev
 cd src/client-web && dotnet run
 
 # api-gateway
-cd src/infraestructure-api_gateway && dotnet run
+cd src/api-gateway && dotnet run
 ```
 
 ### Run everything via Docker

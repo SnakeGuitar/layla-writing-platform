@@ -41,7 +41,7 @@ Los tres modos despliegan **la misma arquitectura** (8 servicios distribuidos en
 ├── src/                          Código fuente de Layla
 │   ├── server-core/              Backend .NET 10
 │   ├── server-worldbuilding/     Backend Node.js 22
-│   ├── infraestructure-api_gateway/  Gateway YARP
+│   ├── api-gateway/  Gateway YARP
 │   ├── client-web/               Cliente Blazor Server
 │   └── docker-compose.yml        Compose monolítico (para desarrollo)
 ├── deploy/                       Infraestructura para los 3 modos

@@ -3,7 +3,7 @@
 services:
   api-gateway:
     build:
-      context: /vagrant/src/infraestructure-api_gateway
+      context: /vagrant/src/api-gateway
       dockerfile: Dockerfile
     container_name: layla-api-gateway
     ports:

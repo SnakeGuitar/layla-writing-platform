@@ -27,7 +27,7 @@ if (-not $SkipBuild) {
     docker build -t layla-worldbuilding:latest "$SRC\server-worldbuilding"
 
     Write-Host "  [3/4] layla-api-gateway"
-    docker build -t layla-api-gateway:latest "$SRC\infraestructure-api_gateway"
+    docker build -t layla-api-gateway:latest "$SRC\api-gateway"
 
     Write-Host "  [4/4] layla-client-web  (contexto: src/ completo)"
     docker build -t layla-client-web:latest -f "$SRC\client-web\Dockerfile" "$SRC"

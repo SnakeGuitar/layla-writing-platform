@@ -143,7 +143,7 @@ dotnet publish src/client-web -c Release -o /opt/layla/web
 ### VM3 — layla-edge
 ```bash
 sudo apt install -y dotnet-sdk-10.0
-dotnet publish src/infraestructure-api_gateway -c Release -o /opt/layla/gateway
+dotnet publish src/api-gateway -c Release -o /opt/layla/gateway
 # systemd unit layla-gateway.service with appsettings overridden by env vars
 ```
 

@@ -160,7 +160,7 @@ Cosas que el modo 1 (manual) no nos había mostrado porque cada paso se hace "a 
 | `UseUrls("https://localhost:...")` | `src/server-core/Layla.Api/Config/Builder.cs` | Service no responde desde fuera del contenedor | Bind a `+` en Producción |
 | Idem | `src/client-web/Config/Builder.cs` | Idem | Mismo patrón |
 | `UseHttpsRedirection()` en producción | `src/server-core/Layla.Api/Program.cs` | Gateway recibe 307 y falla | Removido en producción (el gateway termina TLS) |
-| Gateway llama `UseAuthentication()` sin `AddAuthentication()` | `src/infraestructure-api_gateway/Program.cs` | Crash al startup | Removido (auth no implementada todavía) |
+| Gateway llama `UseAuthentication()` sin `AddAuthentication()` | `src/api-gateway/Program.cs` | Crash al startup | Removido (auth no implementada todavía) |
 | Worldbuilding lee `process.env["PORT"]` | `src/server-worldbuilding/src/config/env.ts` | Server arranca en puerto aleatorio | Agregar `PORT=...` al compose |
 | MongoDB 7 exit 132 (SIGILL) | imagen `mongo:7` | Contenedor crashea cada 30s | Bajar a `mongo:4.4` (sin AVX) |
 
