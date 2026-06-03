@@ -19,8 +19,8 @@ Real-time collaborative creative-writing and worldbuilding platform. Multiple au
 | CU-10 | Visualize narrative graph | Reader / Editor | worldbuilding | ✅ |
 | CU-11 | Voice session (speak)     | Writer          | server-core   | ✅ |
 | CU-12 | Join as listener          | Reader          | server-core   | ✅ |
-| CU-13 | Read full story           | Reader          | worldbuilding | ❌ |
-| CU-14 | System reports            | Admin           | server-core   | ❌ |
+| CU-13 | Read full story           | Reader          | worldbuilding | ✅ |
+| CU-14 | System reports            | Admin           | server-core   | ✅ |
 | CU-15 | Manage users (ban/roles)  | Admin           | server-core   | ✅ |
 
 ✅ Implemented · 🔧 Partial · ❌ Not started
