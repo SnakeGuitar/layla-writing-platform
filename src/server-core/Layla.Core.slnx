@@ -2,4 +2,6 @@
   <Project Path="Layla.Api/Layla.Api.csproj" />
   <Project Path="Layla.Core/Layla.Core.csproj" />
   <Project Path="Layla.Infrastructure/Layla.Infrastructure.csproj" />
+  <Project Path="Layla.Core.Tests/Layla.Core.Tests.csproj" />
+  <Project Path="Layla.Core.Benchmarks/Layla.Core.Benchmarks.csproj" />
 </Solution>
