@@ -106,7 +106,57 @@
     </div>
 
     <div class="p-4 bg-[var(--nm-surface)] border border-[var(--nm-shadow-dark)] flex flex-col h-full min-w-0">
-        @if (_selectedChapter == null)
+        @if (IsReadOnly)
+        {
+            <div class="flex items-center justify-between border-b border-[var(--nm-shadow-dark)] pb-3 mb-3 shrink-0 gap-3">
+                <div>
+                    <span class="nm-text-label text-xs text-[var(--nm-text-secondary)] uppercase">Lectura completa</span>
+                    <h3 class="nm-text-title text-[var(--nm-text-primary)] uppercase">Historia</h3>
+                </div>
+                <span class="text-[10px] font-mono uppercase text-[var(--nm-accent)]">Solo lectura</span>
+            </div>
+
+            <div class="flex-1 overflow-y-auto pr-3 space-y-8">
+                @if (_manuscripts == null || _manuscripts.Count == 0)
+                {
+                    <div class="h-full flex flex-col items-center justify-center text-center">
+                        <span class="nm-text-label text-xs text-[var(--nm-text-secondary)] mb-2">Sin manuscritos</span>
+                        <p class="nm-text-body text-xs max-w-sm">Este proyecto aun no tiene historia publicada para lectura.</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var manuscript in _manuscripts.OrderBy(m => m.Order))
+                    {
+                        <article class="space-y-4">
+                            <h2 class="nm-text-title text-[var(--nm-accent)] uppercase border-b border-[var(--nm-shadow-dark)] pb-2">
+                                @manuscript.Title
+                            </h2>
+
+                            @foreach (var chapter in manuscript.Chapters.OrderBy(c => c.Order))
+                            {
+                                <section class="space-y-3">
+                                    <h3 class="text-sm font-mono uppercase text-[var(--nm-text-primary)]">
+                                        @chapter.Title
+                                    </h3>
+                                    <div class="nm-text-body text-sm leading-7 text-[var(--nm-text-primary)] bg-[var(--nm-bg-base)] border border-[var(--nm-shadow-dark)] p-4 overflow-x-auto">
+                                        @if (string.IsNullOrWhiteSpace(chapter.Content))
+                                        {
+                                            <span class="text-[var(--nm-text-secondary)] italic">Capitulo vacio.</span>
+                                        }
+                                        else
+                                        {
+                                            @((MarkupString)chapter.Content)
+                                        }
+                                    </div>
+                                </section>
+                            }
+                        </article>
+                    }
+                }
+            </div>
+        }
+        else if (_selectedChapter == null)
         {
             <div class="flex-1 flex flex-col items-center justify-center text-center">
                 <span class="nm-text-label text-xs text-[var(--nm-text-secondary)] mb-2">Sin selección</span>
@@ -284,13 +334,15 @@
         _loading = true;
         try
         {
-            var list = await ManuscriptService.GetManuscriptsByProjectAsync(ProjectId);
+            var list = IsReadOnly
+                ? await ManuscriptService.GetFullStoryAsync(ProjectId)
+                : await ManuscriptService.GetManuscriptsByProjectAsync(ProjectId);
             _manuscripts = list ?? new List<Manuscript>();
             if (_manuscripts.Count > 0)
             {
                 _expandedMs.Add(_manuscripts[0].ManuscriptId);
                 var firstChapter = _manuscripts[0].Chapters?.OrderBy(c => c.Order).FirstOrDefault();
-                if (firstChapter != null)
+                if (firstChapter != null && !IsReadOnly)
                     await SelectChapterAsync(firstChapter, _manuscripts[0].ManuscriptId);
             }
         }

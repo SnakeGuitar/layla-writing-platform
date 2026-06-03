@@ -8,6 +8,7 @@ namespace client_web.Application.Services.Manuscripts;
 public interface IManuscriptService
 {
     Task<List<Manuscript>?> GetManuscriptsByProjectAsync(Guid projectId);
+    Task<List<Manuscript>?> GetFullStoryAsync(Guid projectId);
     Task<Manuscript?> GetManuscriptAsync(Guid projectId, string manuscriptId);
     Task<Manuscript?> CreateManuscriptAsync(Guid projectId, string title, int order);
     Task<Manuscript?> UpdateManuscriptAsync(Guid projectId, string manuscriptId, string? title, int? order);

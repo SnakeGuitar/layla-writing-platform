@@ -40,6 +40,24 @@ public class ManuscriptService : IManuscriptService
         }
     }
 
+    public async Task<List<Manuscript>?> GetFullStoryAsync(Guid projectId)
+    {
+        try
+        {
+            return await _client.SendAsync<List<Manuscript>>(new APIRequest
+            {
+                Endpoint = $"/api/manuscripts/{projectId}/full-story",
+                Method = HttpMethod.Get,
+                Token = Token
+            });
+        }
+        catch (APIException ex)
+        {
+            _logger.LogWarning(ex, "Failed to get full story for project {ProjectId}", projectId);
+            return null;
+        }
+    }
+
     public async Task<Manuscript?> GetManuscriptAsync(Guid projectId, string manuscriptId)
     {
         try
