@@ -304,8 +304,10 @@ dotnet run
 ```
 
 #### Desktop client (WPF)
-Open `src/client-desktop/Layla.Desktop.sln` in Visual Studio and run.
-
+```bash
+cd src/client-desktop
+dotnet run
+```
 ---
 
 ## Environment Variables Configuration
