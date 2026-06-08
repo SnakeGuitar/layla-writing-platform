@@ -16,7 +16,7 @@
 @inject ManuscriptHubClient HubClient
 @inject IConfiguration Configuration
 
-<div class="grid grid-cols-1 xl:grid-cols-[300px_minmax(0,1fr)_260px] gap-4 h-[700px]">
+<div class="grid grid-cols-1 xl:grid-cols-[320px_minmax(0,1fr)_360px] 2xl:grid-cols-[340px_minmax(0,1fr)_420px] gap-4 h-[760px]">
     <div class="p-4 bg-[var(--nm-surface)] border border-[var(--nm-shadow-dark)] flex flex-col h-full overflow-hidden">
         <div class="flex items-center justify-between border-b border-[var(--nm-shadow-dark)] pb-2 mb-3 shrink-0">
             <h3 class="nm-text-label text-xs text-[var(--nm-text-secondary)] uppercase">Manuscritos</h3>
@@ -292,6 +292,32 @@
                 StateHasChanged();
             });
             _suppressEditorBroadcast = false;
+        };
+        HubClient.ChapterSaved += async (projectId, chapterId) =>
+        {
+            if (projectId != ProjectId
+                || _selectedChapter == null
+                || _activeManuscriptId.Length == 0
+                || chapterId != _selectedChapter.ChapterId.ToString())
+            {
+                return;
+            }
+
+            await InvokeAsync(async () =>
+            {
+                var fresh = await ManuscriptService.GetChapterAsync(ProjectId, _activeManuscriptId, _selectedChapter.ChapterId);
+                if (fresh == null || _editor == null) return;
+
+                _suppressEditorBroadcast = true;
+                _selectedChapter = fresh;
+                _currentMentions.Clear();
+                _currentMentions.AddRange(fresh.Mentions ?? new List<Mention>());
+                await _editor.SetContentAsync(fresh.Content);
+                CountWords(await _editor.GetPlainTextAsync());
+                _saveStatus = "Actualizado";
+                _suppressEditorBroadcast = false;
+                StateHasChanged();
+            });
         };
         HubClient.CursorMoved += async (userId, displayName, offset) =>
         {

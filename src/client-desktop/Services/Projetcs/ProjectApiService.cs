@@ -16,7 +16,6 @@ public class ProjectApiService : IProjectApiService
 
     public event Action<Guid, bool>? AuthorStatusChanged;
     public event Action<Guid, IEnumerable<ParticipantPresence>>? ParticipantsUpdated;
-    public event Action<Guid, IEnumerable<VoiceParticipant>>? VoiceParticipantsUpdated;
     public event Action? SessionDisplaced;
 
     public ProjectApiService()

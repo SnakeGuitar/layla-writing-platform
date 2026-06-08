@@ -28,25 +28,25 @@
                             }
                         </span>
                         <span class="text-xs font-mono text-[var(--nm-text-secondary)] tracking-widest uppercase">
-                            Operator: <span class="text-[var(--nm-text-primary)] font-bold">@(context.User.Identity?.Name ?? Session.CurrentDisplayName)</span>
+                            Cuenta: <span class="text-[var(--nm-text-primary)] font-bold">@(context.User.Identity?.Name ?? Session.CurrentDisplayName)</span>
                         </span>
                     </a>
                     <button @onclick="HandleLogoutAsync"
                             class="text-[var(--nm-error)] hover:text-[var(--nm-error)] text-xs font-mono uppercase tracking-widest cursor-pointer">
-                        [ Terminate Session ]
+                        Salir
                     </button>
                 </Authorized>
                 <NotAuthorized>
                     <a href="/"
                        class="text-[var(--nm-accent)] hover:underline text-xs font-mono uppercase tracking-widest">
-                        [ Access System ]
+                        Entrar
                     </a>
                 </NotAuthorized>
             </AuthorizeView>
 
             <a href="/about"
                class="text-[var(--nm-text-secondary)] text-xs font-mono uppercase tracking-widest hover:text-[var(--nm-text-primary)]">
-                [ Info ]
+                Info
             </a>
         </header>
 

@@ -121,10 +121,10 @@
         @if (_selectedEntry == null)
         {
             <div class="flex-1 flex flex-col items-center justify-center text-center">
-                <span class="nm-text-label text-xs text-[var(--nm-text-secondary)] mb-2">[ NO_SELECTION ]</span>
-                <h3 class="nm-text-title text-[var(--nm-text-secondary)] uppercase mb-2">No Lore Selected</h3>
+                <span class="nm-text-label text-xs text-[var(--nm-text-secondary)] mb-2">Sin seleccion</span>
+                <h3 class="nm-text-title text-[var(--nm-text-secondary)] uppercase mb-2">Elige una entrada</h3>
                 <p class="nm-text-body text-xs max-w-sm">
-                    Select a lore card node from the directory to review its classifications, descriptions, and linked occurrences.
+                    Selecciona una entrada de la wiki para revisar detalles, etiquetas y apariciones.
                 </p>
             </div>
         }
@@ -134,7 +134,7 @@
                 <!-- Header Block -->
                 <div class="flex items-center justify-between border-b border-[var(--nm-shadow-dark)] pb-3">
                     <div>
-                        <span class="nm-text-label">SYS_LORE_DETAIL</span>
+                        <span class="nm-text-label">Detalle de wiki</span>
                         <h2 class="nm-text-title uppercase mt-1">@_selectedEntry.Name</h2>
                     </div>
                     @if (!IsReadOnly)
@@ -149,12 +149,12 @@
                 <!-- Fields Grid -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="space-y-1">
-                        <label class="nm-text-label text-[10px] block">Name / Key</label>
+                        <label class="nm-text-label text-[10px] block">Nombre</label>
                         <input @bind="_selectedEntry.Name" disabled="@IsReadOnly"
                                class="nm-input text-xs w-full bg-[var(--nm-bg-base)]" />
                     </div>
                     <div class="space-y-1">
-                        <label class="nm-text-label text-[10px] block">Entity Classification</label>
+                        <label class="nm-text-label text-[10px] block">Tipo de entidad</label>
                         <select @bind="_selectedEntry.EntityType" disabled="@IsReadOnly"
                                 class="nm-input text-xs w-full bg-[var(--nm-bg-base)]">
                             <option value="Character">Character</option>
@@ -167,16 +167,16 @@
                 </div>
 
                 <div class="space-y-1">
-                    <label class="nm-text-label text-[10px] block">Tags (Comma separated)</label>
+                    <label class="nm-text-label text-[10px] block">Etiquetas separadas por comas</label>
                     <input @bind="_tagsCsv" disabled="@IsReadOnly"
                            class="nm-input text-xs w-full bg-[var(--nm-bg-base)]" />
                 </div>
 
                 <div class="space-y-1">
-                    <label class="nm-text-label text-[10px] block">Lore Description</label>
+                    <label class="nm-text-label text-[10px] block">Descripcion</label>
                     <textarea @bind="_selectedEntry.Description" rows="6" disabled="@IsReadOnly"
                               class="nm-input text-xs w-full bg-[var(--nm-bg-base)] font-mono resize-none"
-                              placeholder="Write lore documentation..."></textarea>
+                              placeholder="Describe esta parte del mundo..."></textarea>
                 </div>
 
                 <!-- Update Button -->
@@ -191,14 +191,14 @@
 
                 <!-- Appearances section (Neo4j linkage) -->
                 <div class="border-t border-[var(--nm-shadow-dark)] pt-3">
-                    <h3 class="nm-text-title text-xs uppercase tracking-wider mb-3">Chapter Appearances (Neo4j Linkages)</h3>
+                    <h3 class="nm-text-title text-xs uppercase tracking-wider mb-3">Apariciones en capitulos</h3>
                     @if (_loadingAppearances)
                     {
-                        <p class="nm-text-label text-xs text-[var(--nm-text-secondary)] animate-pulse">Scanning manuscripts for mentions...</p>
+                        <p class="nm-text-label text-xs text-[var(--nm-text-secondary)] animate-pulse">Buscando menciones en manuscritos...</p>
                     }
                     else if (_appearances == null || _appearances.Count == 0)
                     {
-                        <p class="nm-text-body text-xs italic text-[var(--nm-text-secondary)]">This entity has no tracked mentions in manuscripts. Use the exact entity name in your chapters to establish an active relationship in the narrative graph.</p>
+                        <p class="nm-text-body text-xs italic text-[var(--nm-text-secondary)]">Esta entidad aun no aparece en los manuscritos. Usa su nombre exacto en un capitulo para vincularla al grafo narrativo.</p>
                     }
                     else
                     {

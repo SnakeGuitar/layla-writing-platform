@@ -6,32 +6,32 @@
 @inject ISessionManager Session
 @inject NavigationManager Navigation
 
-<PageTitle>Explore // Secure Catalog</PageTitle>
+<PageTitle>Explorar proyectos</PageTitle>
 
 <div class="max-w-5xl mx-auto space-y-6">
     <!-- Header -->
     <header class="mb-8 border-b border-[var(--nm-shadow-dark)] pb-4">
-        <span class="nm-text-label">SYS_CATALOG // EXPLORE</span>
+        <span class="nm-text-label">Biblioteca publica</span>
         <h1 class="nm-text-display mt-1 uppercase">
-            Public Projects
+            Proyectos publicos
         </h1>
         <p class="nm-text-body text-xs mt-2 max-w-2xl">
-            Explore public manuscript registries established by operators. Connect your terminal as a reader or editor unit.
+            Descubre historias compartidas y unete como lector o colaborador.
         </p>
     </header>
 
     <!-- Search and Controls -->
     <div class="nm-card flex flex-col sm:flex-row gap-4 items-center justify-between p-4 bg-[var(--nm-surface)]">
         <div class="relative w-full sm:max-w-xs">
-            <input type="text" @bind="_searchQuery" @bind:event="oninput" placeholder="SEARCH BY KEYWORD..."
+            <input type="text" @bind="_searchQuery" @bind:event="oninput" placeholder="Buscar por titulo, genero o sinopsis..."
                    id="search-explore-input"
                    class="nm-input w-full pr-10" />
             <span class="absolute right-3 top-2.5 text-[var(--nm-text-secondary)] font-mono text-xs">
-                [SRC]
+                Buscar
             </span>
         </div>
         <div class="nm-text-label text-xs">
-            SYS_MATCHED: @FilteredProjects.Count // TOTAL: @_publicProjects.Count
+            @FilteredProjects.Count de @_publicProjects.Count proyectos
         </div>
     </div>
 
@@ -39,7 +39,7 @@
     @if (!string.IsNullOrEmpty(_error))
     {
         <div class="p-3 bg-[var(--nm-bg-base)] border border-[var(--nm-error)] text-[var(--nm-error)] text-xs font-mono">
-            <span class="font-bold">[ ERROR ]</span> @_error
+            <span class="font-bold">Error:</span> @_error
         </div>
     }
 
@@ -47,13 +47,13 @@
     @if (_loading)
     {
         <div class="flex flex-col items-center justify-center py-16 space-y-2">
-            <p class="nm-text-label text-sm text-[var(--nm-text-secondary)] animate-pulse">RETRIEVING PUBLIC CATALOG...</p>
+            <p class="nm-text-label text-sm text-[var(--nm-text-secondary)] animate-pulse">Cargando proyectos publicos...</p>
         </div>
     }
     else if (!FilteredProjects.Any())
     {
         <div class="nm-card text-center py-12">
-            <p class="nm-text-label text-sm text-[var(--nm-text-secondary)]">NO PUBLIC ARCHIVES FOUND.</p>
+            <p class="nm-text-label text-sm text-[var(--nm-text-secondary)]">No encontramos proyectos publicos.</p>
         </div>
     }
     else
@@ -69,7 +69,7 @@
                                 @project.LiteraryGenre
                             </span>
                             <span class="text-[10px] nm-text-label">
-                                UPD: @project.UpdatedAt.ToString("yyyy-MM-dd")
+                                Actualizado: @project.UpdatedAt.ToString("yyyy-MM-dd")
                             </span>
                         </div>
 
@@ -84,7 +84,7 @@
                     </div>
 
                     <div class="mt-4 pt-3 border-t border-[var(--nm-shadow-dark)] flex items-center justify-between">
-                        <span class="nm-text-label text-[10px]">PUBLIC_STREAM</span>
+                        <span class="nm-text-label text-[10px]">Publico</span>
                         
                         <button @onclick="() => JoinProjectAsync(project.Id)"
                                 disabled="@_joining"
@@ -92,11 +92,11 @@
                                 class="nm-button text-xs py-1 px-3">
                             @if (_joining && _activeJoiningId == project.Id)
                             {
-                                <span>LINKING...</span>
+                                <span>Uniendo...</span>
                             }
                             else
                             {
-                                <span>CONNECT LINK</span>
+                                <span>Unirme</span>
                             }
                         </button>
                     </div>

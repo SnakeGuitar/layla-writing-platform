@@ -9,14 +9,14 @@
 @inject ISessionManager Session
 @inject NavigationManager Navigation
 
-<PageTitle>Login // System Access</PageTitle>
+<PageTitle>Entrar a Layla</PageTitle>
 
 <main class="min-h-screen w-full bg-[var(--nm-bg-base)] text-[var(--nm-text-primary)]">
     <div class="grid min-h-screen w-full lg:grid-cols-[minmax(420px,0.95fr)_minmax(520px,1.05fr)]">
         <aside class="login-accent-panel relative flex min-h-[42vh] overflow-hidden p-8 sm:p-12 lg:min-h-screen lg:p-16 xl:p-20">
             <div class="relative z-10 flex w-full flex-col justify-between">
                 <div class="max-w-xl">
-                    <span class="nm-text-label text-white/75">LAYLA // CREATIVE CORE</span>
+                    <span class="nm-text-label text-white/75">LAYLA // ESCRITURA COMPARTIDA</span>
                     <h1 class="mt-6 text-4xl font-light leading-tight text-white sm:text-5xl xl:text-6xl">
                         Tu taller de novela compartida.
                     </h1>
@@ -37,23 +37,23 @@
             <div class="w-full max-w-xl">
                 <header class="mb-10 flex items-start justify-between gap-6">
                     <div>
-                        <span class="nm-text-label">SECURE ACCESS</span>
-                        <h1 class="mt-2 text-3xl font-semibold text-[var(--nm-text-primary)]">Operator sign in</h1>
+                        <span class="nm-text-label">Bienvenida</span>
+                        <h1 class="mt-2 text-3xl font-semibold text-[var(--nm-text-primary)]">Entra a tu cuenta</h1>
                         <p class="nm-text-body mt-3 max-w-sm">
                             Abre tu escritorio de escritura, mundos y colaboracion.
                         </p>
                     </div>
-                    <span class="nm-text-label text-[var(--nm-accent)]">SYS_OK</span>
+                    <span class="nm-text-label text-[var(--nm-accent)]">Lista</span>
                 </header>
 
                 <div class="space-y-6">
                     <div class="nm-input-wrapper">
-                        <label class="nm-text-label">Operational Email</label>
+                        <label class="nm-text-label">Correo</label>
                         <input
                             type="email"
                             @bind="_email"
                             @bind:event="oninput"
-                            placeholder="operator@system.core"
+                            placeholder="tu@email.com"
                             class="nm-input w-full" />
                         @if (_fieldErrors.TryGetValue("Email", out var emailErrors))
                         {
@@ -63,9 +63,9 @@
 
                     <div class="nm-input-wrapper">
                         <div class="flex justify-between items-center">
-                            <label class="nm-text-label">Security Key</label>
+                            <label class="nm-text-label">Contrasena</label>
                             <a href="#" class="nm-text-label hover:text-[var(--nm-accent)] text-xs">
-                                [ Recover Key ]
+                                Recuperar
                             </a>
                         </div>
                         <input
@@ -84,7 +84,7 @@
                     @if (!string.IsNullOrEmpty(_errorMessage))
                     {
                         <div class="rounded-[14px] p-4 bg-[var(--nm-bg-base)] text-[var(--nm-error)] text-xs font-mono shadow-[inset_4px_4px_8px_var(--nm-shadow-dark),inset_-4px_-4px_8px_var(--nm-shadow-light)]">
-                            <span class="font-bold">[ ERROR ]</span> @_errorMessage
+                            <span class="font-bold">Error:</span> @_errorMessage
                         </div>
                     }
 
@@ -95,20 +95,20 @@
                         @if (_isLoading)
                         {
                             <span class="flex items-center justify-center gap-2">
-                                <span>Executing Handshake...</span>
+                                <span>Entrando...</span>
                             </span>
                         }
                         else
                         {
-                            <span>Initialize Link -></span>
+                            <span>Entrar</span>
                         }
                     </button>
                 </div>
 
                 <footer class="mt-10 text-center text-xs">
-                    <span class="nm-text-body text-xs">No registered operator?</span>
+                    <span class="nm-text-body text-xs">No tienes cuenta?</span>
                     <a href="/auth/register" class="ml-1 nm-text-label text-[var(--nm-accent)] hover:underline">
-                        [ Register New Unit ]
+                        Crear cuenta
                     </a>
                 </footer>
             </div>
@@ -155,12 +155,12 @@
                 return;
             }
 
-            _errorMessage = result.ErrorMessage ?? "Handshake rejected.";
+            _errorMessage = result.ErrorMessage ?? "No pudimos iniciar sesion.";
             _fieldErrors = result.ValidationErrors;
         }
         catch (Exception)
         {
-            _errorMessage = "Link failure: service offline.";
+            _errorMessage = "No pudimos conectar con el servicio.";
         }
         finally
         {

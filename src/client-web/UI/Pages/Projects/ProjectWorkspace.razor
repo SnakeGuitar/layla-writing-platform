@@ -7,22 +7,22 @@
 @inject ISessionManager Session
 @inject NavigationManager Navigation
 
-<PageTitle>@(_project?.Title ?? "Workspace") // System Core</PageTitle>
+<PageTitle>@(_project?.Title ?? "Proyecto") - Layla</PageTitle>
 
 <div class="max-w-7xl mx-auto space-y-4">
     @if (!_sessionReady || _loading)
     {
         <div class="flex items-center justify-center py-16">
-            <p class="nm-text-label text-sm text-[var(--nm-text-secondary)] animate-pulse">ESTABLISHING WORKSPACE STREAMS...</p>
+            <p class="nm-text-label text-sm text-[var(--nm-text-secondary)] animate-pulse">Abriendo el proyecto...</p>
         </div>
     }
     else if (_project == null)
     {
         <div class="nm-card p-6 max-w-lg mx-auto text-center mt-12 border-[var(--nm-error)] bg-[var(--nm-bg-base)]">
-            <h3 class="nm-text-title text-[var(--nm-error)] mb-2 uppercase">Access Refused</h3>
+            <h3 class="nm-text-title text-[var(--nm-error)] mb-2 uppercase">No se pudo abrir</h3>
             <p class="nm-text-body text-xs mb-4">@(_error ?? "El proyecto solicitado no existe o tu rol no permite leerlo.")</p>
             <a href="/projects/my-projects" class="nm-button text-xs inline-flex">
-                [ Return to List ]
+                Volver a proyectos
             </a>
         </div>
     }
@@ -33,7 +33,7 @@
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div class="space-y-1">
                     <div class="flex items-center gap-2">
-                        <span class="nm-text-label">SYS_WORKSPACE</span>
+                        <span class="nm-text-label">Espacio de escritura</span>
                         <span class="px-2 py-0.5 bg-[var(--nm-bg-base)] border border-[var(--nm-shadow-dark)] nm-text-label text-[10px]">
                             @_project.LiteraryGenre
                         </span>
@@ -65,7 +65,7 @@
                         Voz
                     </button>
                     <a href="/projects/my-projects" class="nm-button text-xs py-1 px-3">
-                        [ BACK ]
+                        Volver
                     </a>
                 </div>
             </div>
@@ -137,9 +137,9 @@
 
     private readonly List<(string Id, string Label)> _tabs = new()
     {
-        ("manuscript", "Manuscripts"),
-        ("wiki", "Wiki Lorebook"),
-        ("graph", "Relational Graph")
+        ("manuscript", "Manuscritos"),
+        ("wiki", "Wiki"),
+        ("graph", "Grafo narrativo")
     };
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

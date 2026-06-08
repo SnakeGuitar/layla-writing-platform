@@ -44,9 +44,12 @@ public class ApiClient
         // and deserialize the body straight into T.
         if (!response.IsSuccessStatusCode)
         {
-            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+            if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized
+                && !string.IsNullOrWhiteSpace(request.Token))
             {
-                // Trigger auto-logout on 401
+                // Trigger auto-logout only when an authenticated request is rejected.
+                // Login/register failures also return 401, but they should not clear
+                // an existing browser session while the user is retrying credentials.
                 await _session.ClearAsync();
             }
 

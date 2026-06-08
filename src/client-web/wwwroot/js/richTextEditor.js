@@ -246,9 +246,36 @@ function rangeFromTextOffset(root, offset) {
 function normalizeInitialContent(value) {
   if (!value) return "<p></p>";
   if (value.trimStart().startsWith("{\\rtf")) {
-    return `<p>${escapeHtml(value.replace(/[{\\}]/g, " ").replace(/\s+/g, " ").trim())}</p>`;
+    return textToHtml(rtfToPlainText(value));
   }
   return value.includes("<") ? value : `<p>${escapeHtml(value).replace(/\n/g, "<br>")}</p>`;
+}
+
+function textToHtml(value) {
+  const paragraphs = (value || "").split(/\n{2,}/).map(x => x.trim()).filter(Boolean);
+  if (paragraphs.length === 0) return "<p></p>";
+  return paragraphs.map(x => `<p>${escapeHtml(x).replace(/\n/g, "<br>")}</p>`).join("");
+}
+
+function rtfToPlainText(value) {
+  return value
+    .replace(/\r\n/g, "\n")
+    .replace(/\\par[d]?/g, "\n")
+    .replace(/\\line/g, "\n")
+    .replace(/\\'[0-9a-fA-F]{2}/g, match => {
+      const code = parseInt(match.slice(2), 16);
+      return Number.isNaN(code) ? "" : String.fromCharCode(code);
+    })
+    .replace(/\\u(-?\d+)\??/g, (_, code) => {
+      const numeric = Number(code);
+      return Number.isNaN(numeric) ? "" : String.fromCharCode(numeric < 0 ? numeric + 65536 : numeric);
+    })
+    .replace(/\\[a-zA-Z]+\d* ?/g, "")
+    .replace(/[{}]/g, "")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .trim();
 }
 
 function escapeHtml(value) {

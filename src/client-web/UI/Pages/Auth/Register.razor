@@ -8,7 +8,7 @@
 @inject ISessionManager Session
 @inject NavigationManager Navigation
 
-<PageTitle>Register // System Enlistment</PageTitle>
+<PageTitle>Crear cuenta</PageTitle>
 
 <main class="flex items-center justify-center px-4 min-h-screen bg-[var(--nm-bg-base)]">
 
@@ -20,17 +20,17 @@
             <!-- ─── STAGE 1 — collect credentials ─────────────────────────────── -->
             <header class="nm-card-header">
                 <div class="flex flex-col">
-                    <span class="nm-text-label">SYSTEM ENLISTMENT</span>
-                    <h1 class="nm-text-title mt-1">NEW OPERATOR REGISTRATION</h1>
+                    <span class="nm-text-label">Crear cuenta</span>
+                    <h1 class="nm-text-title mt-1">Nueva autora</h1>
                 </div>
-                <span class="nm-text-label text-[var(--nm-accent)]">NEW_UNIT</span>
+                <span class="nm-text-label text-[var(--nm-accent)]">Lista</span>
             </header>
 
             <div class="space-y-4">
 
                 <!-- Display Name -->
                 <div class="nm-input-wrapper">
-                    <label class="nm-text-label">Callsign / Display Name</label>
+                    <label class="nm-text-label">Nombre visible</label>
                     <input type="text"
                            @bind="_displayName"
                            placeholder="Jane Author"
@@ -43,10 +43,10 @@
 
                 <!-- Email -->
                 <div class="nm-input-wrapper">
-                    <label class="nm-text-label">Operational Email</label>
+                    <label class="nm-text-label">Correo</label>
                     <input type="email"
                            @bind="_email"
-                           placeholder="operator@system.core"
+                           placeholder="tu@email.com"
                            class="nm-input w-full" />
                     @if (_fieldErrors.TryGetValue("Email", out var emailErrors))
                     {
@@ -56,7 +56,7 @@
 
                 <!-- Password -->
                 <div class="nm-input-wrapper">
-                    <label class="nm-text-label">Security Key / Password</label>
+                    <label class="nm-text-label">Contrasena</label>
                     <input type="password"
                            @bind="_password"
                            @onkeyup="@(e => { if (e.Key == "Enter") _ = HandleRegister(); })"
@@ -87,7 +87,7 @@
                             class="nm-button w-full">
                         @if (_isLoading)
                         {
-                            <span>Registering Unit...</span>
+                            <span>Creando cuenta...</span>
                         }
                         else
                         {
@@ -99,9 +99,9 @@
 
             <!-- Footer options -->
             <footer class="mt-6 pt-4 border-t border-[var(--nm-shadow-dark)] text-center text-xs">
-                <span class="nm-text-body text-xs">Already registered?</span>
+                <span class="nm-text-body text-xs">Ya tienes cuenta?</span>
                 <a href="/auth/login" class="ml-1 nm-text-label text-[var(--nm-accent)] hover:underline">
-                    [ Operator Login ]
+                    Entrar
                 </a>
             </footer>
         }
@@ -110,10 +110,10 @@
             <!-- ─── STAGE 2 — submit the email PIN ───────────────────────────── -->
             <header class="nm-card-header">
                 <div class="flex flex-col">
-                    <span class="nm-text-label">IDENTITY VERIFICATION</span>
-                    <h1 class="nm-text-title mt-1">VERIFY EMAIL PIN</h1>
+                    <span class="nm-text-label">Verifica tu correo</span>
+                    <h1 class="nm-text-title mt-1">Codigo de verificacion</h1>
                 </div>
-                <span class="nm-text-label text-[var(--nm-error)]">PENDING_PIN</span>
+                <span class="nm-text-label text-[var(--nm-error)]">Pendiente</span>
             </header>
 
             <div class="space-y-4">
@@ -123,7 +123,7 @@
 
                 <!-- PIN Input -->
                 <div class="nm-input-wrapper">
-                    <label class="nm-text-label">Verification PIN</label>
+                    <label class="nm-text-label">Codigo</label>
                     <input type="text"
                            inputmode="numeric"
                            autocomplete="one-time-code"
@@ -155,11 +155,11 @@
                             class="nm-button w-full">
                         @if (_isLoading)
                         {
-                            <span>Verifying...</span>
+                            <span>Verificando...</span>
                         }
                         else
                         {
-                            <span>Verify and Enlist →</span>
+                            <span>Verificar y entrar</span>
                         }
                     </button>
                 </div>
@@ -168,7 +168,7 @@
                 <div class="pt-1 text-center">
                     <button @onclick="BackToForm"
                             class="nm-text-label hover:text-[var(--nm-accent)] text-xs">
-                        [ ← Change Operational Email ]
+                        Cambiar correo
                     </button>
                 </div>
             </div>

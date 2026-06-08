@@ -12,13 +12,13 @@
 @inject ILogger<Home> Logger
 @implements IAsyncDisposable
 
-<PageTitle>Home // Public Library</PageTitle>
+<PageTitle>Biblioteca publica</PageTitle>
 
 @* Header *@
 <header class="max-w-5xl mx-auto mb-8 border-b border-[var(--nm-shadow-dark)] pb-4">
-    <span class="nm-text-label">SYS_ARCHIVE // DIRECTORY</span>
+    <span class="nm-text-label">Biblioteca publica</span>
     <h1 class="nm-text-display mt-1 uppercase">
-        Public Library
+        Historias para leer
     </h1>
 </header>
 
@@ -29,7 +29,7 @@
 }
 else if (_projects.Count == 0)
 {
-    <p class="text-stone-500 text-sm">No projects available.</p>
+    <p class="text-stone-500 text-sm">No hay proyectos disponibles.</p>
 }
 else
 {
@@ -75,21 +75,16 @@ else
         if (!firstRender) return;
 
         // Hydrate the session from browser storage now that JS interop is
-        // available. Connect the presence hub with the resolved token (or
-        // anonymously if there isn't one).
+        // available. Presence is connected only for authenticated users; the
+        // public catalog does not watch project groups because those require
+        // project membership on the server.
         await Session.InitializeAsync();
 
-        if (_presenceConnected) return;
+        if (_presenceConnected || !Session.IsAuthenticated) return;
         try
         {
-            await PresenceService.ConnectAsync(Session.CurrentToken ?? string.Empty);
+            await PresenceService.ConnectAsync(Session.CurrentToken);
             _presenceConnected = PresenceService.IsConnected;
-
-            if (_presenceConnected && _projects is not null)
-            {
-                foreach (var p in _projects)
-                    await PresenceService.WatchProjectAsync(p.Id);
-            }
         }
         catch (Exception ex)
         {
@@ -105,13 +100,18 @@ else
         InvokeAsync(StateHasChanged);
     }
 
-    private void HandleCardClick(Guid projectId)
+    private async Task HandleCardClick(Guid projectId)
     {
         Logger.LogInformation("Clicked project: {ProjectId}", projectId);
         var destination = $"/projects/{projectId}";
-        Navigation.NavigateTo(Session.IsAuthenticated
-            ? destination
-            : $"/auth/login?returnUrl={Uri.EscapeDataString(destination)}");
+        if (!Session.IsAuthenticated)
+        {
+            Navigation.NavigateTo($"/auth/login?returnUrl={Uri.EscapeDataString(destination)}");
+            return;
+        }
+
+        await ProjectService.JoinPublicProjectAsync(projectId);
+        Navigation.NavigateTo(destination);
     }
 
     public async ValueTask DisposeAsync()

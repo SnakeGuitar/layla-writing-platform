@@ -454,13 +454,7 @@ public partial class ManuscriptEditorView : Page
             _suppressToolbarSync = true;
             try
             {
-                EditorRichTextBox.Document.Blocks.Clear();
-                TextRange textRange = new(
-                    EditorRichTextBox.Document.ContentStart,
-                    EditorRichTextBox.Document.ContentEnd);
-                using MemoryStream ms = new(Encoding.UTF8.GetBytes(rtfContent));
-                textRange.Load(ms, DataFormats.Rtf);
-                SanitizeDocumentColors(EditorRichTextBox.Document);
+                LoadEditorContent(rtfContent);
 
                 // Restore caret — best-effort; offset may no longer be valid.
                 try
@@ -514,11 +508,7 @@ public partial class ManuscriptEditorView : Page
         {
             if (_viewModel.CurrentChapter != null && !string.IsNullOrEmpty(_viewModel.CurrentChapter.Content))
             {
-                EditorRichTextBox.Document.Blocks.Clear();
-                TextRange textRange = new(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
-                using MemoryStream ms = new(Encoding.UTF8.GetBytes(_viewModel.CurrentChapter.Content));
-                textRange.Load(ms, DataFormats.Rtf);
-                SanitizeDocumentColors(EditorRichTextBox.Document);
+                LoadEditorContent(_viewModel.CurrentChapter.Content);
             }
             else
             {
@@ -540,6 +530,51 @@ public partial class ManuscriptEditorView : Page
         {
             _suppressToolbarSync = false;
         }
+    }
+
+    private void LoadEditorContent(string content)
+    {
+        EditorRichTextBox.Document.Blocks.Clear();
+
+        if (content.TrimStart().StartsWith(@"{\rtf", StringComparison.Ordinal))
+        {
+            TextRange textRange = new(EditorRichTextBox.Document.ContentStart, EditorRichTextBox.Document.ContentEnd);
+            using MemoryStream ms = new(Encoding.UTF8.GetBytes(content));
+            textRange.Load(ms, DataFormats.Rtf);
+            SanitizeDocumentColors(EditorRichTextBox.Document);
+            return;
+        }
+
+        var plainText = HtmlToPlainText(content);
+        if (string.IsNullOrWhiteSpace(plainText))
+        {
+            EditorRichTextBox.Document.Blocks.Add(new Paragraph(new Run("")));
+            return;
+        }
+
+        foreach (var paragraph in plainText.Split(new[] { "\r\n\r\n", "\n\n" }, StringSplitOptions.None))
+        {
+            EditorRichTextBox.Document.Blocks.Add(new Paragraph(new Run(paragraph.Trim())));
+        }
+    }
+
+    private static string HtmlToPlainText(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+
+        var text = value
+            .Replace("<br>", "\n", StringComparison.OrdinalIgnoreCase)
+            .Replace("<br/>", "\n", StringComparison.OrdinalIgnoreCase)
+            .Replace("<br />", "\n", StringComparison.OrdinalIgnoreCase)
+            .Replace("</p>", "\n\n", StringComparison.OrdinalIgnoreCase)
+            .Replace("</div>", "\n", StringComparison.OrdinalIgnoreCase)
+            .Replace("</li>", "\n", StringComparison.OrdinalIgnoreCase);
+
+        text = System.Text.RegularExpressions.Regex.Replace(text, "<[^>]+>", string.Empty);
+        text = System.Net.WebUtility.HtmlDecode(text);
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"[ \t]+\n", "\n");
+        text = System.Text.RegularExpressions.Regex.Replace(text, @"\n{3,}", "\n\n");
+        return text.Trim();
     }
 
     /// <summary>
