@@ -52,9 +52,9 @@ Collaborative creative-writing and worldbuilding platform. Multiple authors can 
 
 | Client | Tech | Role |
 |---|---|---|
-| Desktop | WPF .NET 9 | Main writing workspace — editor, wiki, graph, voice |
-| Web | Blazor .NET 9 | Public reader + admin panel |
-| Android | Kotlin + Compose | Mobile companion — project list, voice PTT, wiki reference |
+| Desktop | WPF .NET 9 | Main writing workspace: manuscripts, wiki, graph, voice, collaborators |
+| Web | Blazor Server .NET 9 | Main writing workspace plus public reader/admin surfaces |
+| Android | Kotlin + Compose | Mobile admin console: project management and system statistics only |
 
 ---
 

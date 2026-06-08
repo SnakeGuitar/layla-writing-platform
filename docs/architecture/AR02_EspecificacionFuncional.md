@@ -34,7 +34,7 @@ La especificación cubre el sistema Layla **end-to-end** en su estado actual al 
 - Dos servicios de *backend*:
     - `server-core` (ASP.NET Core 10) — autenticación, usuarios, proyectos, roles, mensajería de tiempo real.
     - `server-worldbuilding` (Node.js + Express 5) — manuscritos, wiki, grafo narrativo.
-- Tres clientes: escritorio (WPF .NET 9), web (Blazor .NET 9) y móvil (Android — Kotlin + Jetpack Compose).
+- Tres clientes: escritorio (WPF .NET 9), web (Blazor .NET 9) y móvil (Android — Kotlin + Jetpack Compose). Escritorio y web comparten el workspace principal de escritura; Android queda limitado a administración de proyectos y estadísticas del sistema.
 - Tres almacenes de datos: SQL Server (relacional), MongoDB (documentos) y Neo4j (grafo).
 - Un *broker* de mensajería: RabbitMQ para eventos de dominio entre servicios.
 
@@ -73,7 +73,7 @@ La especificación cubre el sistema Layla **end-to-end** en su estado actual al 
 
 **Documentación interna del proyecto**
 - [`README.md`](../README.md) — arquitectura y referencia de API actual.
-- [`REFACTORING_SUMMARY.md`](../REFACTORING_SUMMARY.md) — cambios estructurales recientes (2026-03-23).
+- [`desktop-web-compatibility.md`](desktop-web-compatibility.md) — análisis de compatibilidad actual entre cliente de escritorio y web, y alcance reducido de Android.
 - `docs/Layla (Documento de Proyecto).pdf` — versión inicial del documento de proyecto (parcialmente vigente).
 
 **Documentación técnica externa**
@@ -137,7 +137,7 @@ Actores externos: **Escritor**, **Lector**, **Administrador**, tres sistemas de 
 | Clase | Descripción | Pericia técnica | Frecuencia de uso | Necesidades principales |
 |---|---|---|---|---|
 | **Lector invitado** | Visitante sin cuenta que explora proyectos públicos. | Baja. | Ocasional. | Descubrir y previsualizar historias. |
-| **Lector registrado** | Usuario autenticado que sigue proyectos, se une como *Reader* y escucha sesiones de voz. | Baja–Media. | Semanal. | Leer capítulos completos, recibir actualizaciones, unirse a salas de voz. |
+| **Lector registrado** | Usuario autenticado que se une como *Reader* y consume proyectos en escritorio o web. | Baja–Media. | Semanal. | Leer capítulos completos y recibir actualizaciones. |
 | **Escritor** | Autor con cuenta que crea proyectos (*Owner*) o colabora en los de otros (*Editor*). | Media–Alta — familiarizado con procesadores de texto y herramientas colaborativas. | Diaria durante fases activas. | Editar capítulos, gestionar wiki, mapear relaciones, coordinarse por voz. |
 | **Administrador** | Operador de la plataforma con permisos elevados. | Alta. | Según incidencia. | Gestionar usuarios, banear cuentas, generar reportes. |
 
@@ -150,7 +150,7 @@ La siguiente tabla lista los 15 casos de uso identificados, agrupados por módul
 | **Descubrimiento público** |||||
 | CU-01 | Explorar catálogo público | Cualquiera | server-core | ✅ |
 | CU-02 | Previsualizar sinopsis | Cualquiera | server-core | ✅ |
-| CU-13 | Leer historia completa | Lector | worldbuilding | ❌ |
+| CU-13 | Leer historia completa | Lector | worldbuilding | ✅ |
 | **Cuenta de usuario** |||||
 | CU-03 | Login / Registro | Usuario | server-core | ✅ |
 | CU-04 | Gestionar perfil | Usuario | server-core | ✅ |
@@ -165,7 +165,7 @@ La siguiente tabla lista los 15 casos de uso identificados, agrupados por módul
 | CU-10 | Visualizar grafo narrativo | Lector / Editor | worldbuilding | ✅ |
 | CU-11 | Sesión de voz (hablar) | Escritor | server-core | ✅ |
 | CU-12 | Unirse como oyente | Lector | server-core | ✅ |
-| CU-14 | Reportes del sistema | Administrador | server-core | ❌ |
+| CU-14 | Reportes del sistema | Administrador | server-core | ✅ |
 
 *Leyenda*: ✅ implementado · 🔧 parcial · ❌ pendiente.
 
@@ -191,7 +191,7 @@ A modo de muestra se detallan los cinco CU más representativos. El resto sigue 
 - **Precondiciones**: el usuario tiene rol `Owner` o `Editor` en el proyecto.
 - **Flujo básico**: (1) el cliente obtiene el capítulo con `GET /api/manuscripts/{p}/{m}/chapters/{c}`. (2) El usuario edita el contenido RTF. (3) El cliente envía `PUT` con el contenido actualizado. (4) El servidor aplica estrategia *Last-Write-Wins*.
 - **Flujo alternativo**: rol insuficiente → 403 `Forbidden`.
-- **Postcondiciones**: capítulo actualizado; versiones anteriores sobrescritas (sin historial en esta versión del producto).
+- **Postcondiciones**: capítulo actualizado; el sistema conserva historial de versiones y permite revisar/restaurar snapshots según el cliente.
 
 **CU-11 / CU-12 · Sesión de voz**
 - **Actores**: Escritor (habla) / Lector (escucha).
@@ -248,20 +248,20 @@ Los requisitos funcionales se listan **por módulo**, con detalle fino en los m�
 | RF-D01 | El sistema permitirá crear, listar, renombrar/reordenar y eliminar manuscritos dentro de un proyecto. | CU-08 | Alta |
 | RF-D02 | El sistema permitirá crear, consultar, editar y eliminar capítulos con contenido RTF dentro de un manuscrito. | CU-08 | Alta |
 | RF-D03 | Al consultar un manuscrito sin especificar capítulo, el sistema devolverá un **índice** (sin contenido) para reducir transferencia. | CU-08 | Alta |
-| RF-D04 | La edición de capítulos aplicará la estrategia *Last-Write-Wins*. | CU-08 | Alta |
+| RF-D04 | La edición de capítulos aplicará la estrategia *Last-Write-Wins* y registrará versiones/autoguardados consultables desde los clientes de escritorio y web. | CU-08 | Alta |
 
 #### Módulo E — Wiki del universo (Prioridad: Alta)
 
 | ID | Descripción | CU | Prioridad |
 |---|---|---|---|
 | RF-E01 | El sistema permitirá CRUD completo de entradas de wiki (`/api/wiki/{projectId}`), con campos de tipo (personaje, lugar, objeto, evento), descripción y atributos. | CU-09 | Alta |
-| RF-E02 | El cliente de escritorio permitirá adjuntar imágenes y referencias cruzadas a capítulos dentro de una entrada. | CU-09 | Alta |
+| RF-E02 | Los clientes de escritorio y web permitirán crear, editar, filtrar y consultar entradas de wiki, incluyendo etiquetas y apariciones en capítulos. | CU-09 | Alta |
 
 #### Módulo F — Grafo narrativo (Prioridad: Media)
 
 | ID | Descripción | CU | Prioridad |
 |---|---|---|---|
-| RF-F01 | El sistema permitirá consultar el grafo del proyecto (nodos + aristas) y crear/eliminar nodos y aristas tipadas mediante `/api/graph/{projectId}`. La visualización está disponible en el cliente de escritorio. | CU-10 | Media |
+| RF-F01 | El sistema permitirá consultar el grafo del proyecto (nodos + aristas) y crear/eliminar relaciones tipadas mediante `/api/graph/{projectId}`. La visualización está disponible en escritorio y web. | CU-10 | Media |
 
 #### Módulo G — Voz y presencia en tiempo real (Prioridad: Media)
 
@@ -275,7 +275,7 @@ Los requisitos funcionales se listan **por módulo**, con detalle fino en los m�
 | ID | Descripción | CU | Prioridad |
 |---|---|---|---|
 | RF-H01 | El sistema permitirá a un administrador listar usuarios y banear cuentas (bloquea el acceso e invalida sesiones). | CU-15 | Media |
-| RF-H02 | El sistema proporcionará reportes agregados (usuarios activos, proyectos creados, capítulos modificados por semana) accesibles por administradores. *(Pendiente — CU-14)* | CU-14 | Baja |
+| RF-H02 | El sistema proporcionará reportes agregados de usuarios y proyectos (`/api/admin/reports/system`) accesibles por administradores desde web y Android. | CU-14 | Baja |
 
 ### 6.6 Requisitos no funcionales
 
@@ -305,7 +305,7 @@ Clasificados según **ISO/IEC 25010**.
 
 #### Métricas para medir éxito
 
-Las métricas principales — que se instrumentarán en el servicio de reportes (CU-14) y en *Application Insights* — son:
+Las métricas principales combinan los reportes ya implementados en CU-14 con métricas de producto que se instrumentarán conforme evolucione worldbuilding:
 
 - **DAU de escritores** y **WAU de lectores**.
 - **Capítulos editados por semana** y **palabras escritas por sesión**.
@@ -326,7 +326,7 @@ Las métricas principales — que se instrumentarán en el servicio de reportes 
 
 #### Restricciones académicas (impuestas por el curso)
 
-- Se requieren **3 clientes** diferenciados: escritorio, web y móvil.
+- Se requieren **3 clientes** diferenciados: escritorio, web y móvil. La diferenciación actual es de superficie: escritorio y web cubren autoría completa; Android cubre administración y estadísticas.
 - Se requieren **3 bases de datos** con modelos diferentes: relacional, documental y grafo.
 - Se requieren **≥ 2 backends**, uno en .NET y otro en un *stack* distinto, comunicados por un *broker*.
 - La documentación de entrega se produce sobre la plantilla oficial del equipo.

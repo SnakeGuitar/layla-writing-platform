@@ -318,7 +318,7 @@ Pages that are pure read-only static markup (like an "About" page if it existed)
 ```
 
 - `BackendURL` — the .NET server-core API. **Used as the base address of `ApiClient`.**
-- `WorldbuildingURL` — the Node.js worldbuilding API. Reserved for the manuscripts/wiki/graph client (not yet wired in).
+- `WorldbuildingURL` — the Node.js worldbuilding API used by the manuscripts, wiki, and graph workspace services.
 - `SignalRHubURL.*` — relative paths appended to `BackendURL` by `PresenceService` and `VoiceService`.
 
 ### `client-web.csproj`

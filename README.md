@@ -28,6 +28,8 @@ Real-time collaborative creative-writing and worldbuilding platform. Multiple au
 ## Available navigation on each client
 ![Navigation on clients](./docs/assets/Navigation_diagram.png)
 
+Current client scope is documented in [desktop-web-compatibility.md](./docs/architecture/desktop-web-compatibility.md). Desktop and web now share the core writing workspace capabilities; Android is intentionally reduced to project administration and system statistics.
+
 ---
 
 # Services and components description
@@ -36,8 +38,9 @@ Real-time collaborative creative-writing and worldbuilding platform. Multiple au
 ```mermaid
 graph TB
     subgraph Clientes ["Capa de Presentación (Clientes)"]
-        WPF["Cliente Escritorio (WPF/Avalonia)"]
+        WPF["Cliente Escritorio (WPF)"]
         Blazor["Cliente Web (Blazor Server)"]
+        Android["Cliente Android (Kotlin Compose)<br/>admin + estadisticas"]
     end
 
     subgraph Entrada ["Capa de Entrada (Ingress / Routing)"]
@@ -62,6 +65,7 @@ graph TB
     %% Relaciones de clientes al Gateway
     WPF -->|HTTP / WebSockets| YARP
     Blazor -->|HTTP / WebSockets| YARP
+    Android -->|HTTP| YARP
 
     %% Enrutamiento del Gateway a microservicios
     YARP -->|HTTP/gRPC/WS| Core
@@ -144,9 +148,9 @@ graph TD
 ## Clients
 | Client  | Tech | Role |
 |---------|------|------|
-| Desktop | WPF .NET 9 | Main writing workspace — editor, wiki, graph, voice |
-| Web     | Blazor .NET 9 | Public reader + admin panel (`5233` HTTP / `7126` HTTPS) |
-| Android | Kotlin + Compose | Mobile companion — project list, voice PTT, wiki reference |
+| Desktop | WPF .NET 9 | Main writing workspace: manuscripts, wiki, graph, voice, collaborators |
+| Web     | Blazor Server .NET 9 | Main writing workspace plus public reader/admin surfaces (`5233` HTTP / `7126` HTTPS) |
+| Android | Kotlin + Compose | Mobile admin console: project management and system statistics only |
 
 ---
 

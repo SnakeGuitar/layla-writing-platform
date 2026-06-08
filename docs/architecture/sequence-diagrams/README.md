@@ -16,6 +16,7 @@ Diagramas de Layla en Mermaid. Cada uno tiene su fuente `.mmd` y su render `.png
 
 | # | Diagrama | Fuente | Imagen |
 |---|----------|--------|--------|
+| 00 | Diagrama de contexto (actores, canales cliente, backends, datos y bus) | [00_diagrama_contexto.mmd](00_diagrama_contexto.mmd) | [PNG](00_diagrama_contexto.png) |
 | 06 | Arquitectura lógica (clientes · gateway · 2 backends · 3 BD · bus) | [06_arquitectura_logica.mmd](06_arquitectura_logica.mmd) | [PNG](06_arquitectura_logica.png) |
 | 07 | Despliegue Vagrant (3 VMs: data · apps · edge) | [07_despliegue_vagrant.mmd](07_despliegue_vagrant.mmd) | [PNG](07_despliegue_vagrant.png) |
 | 08 | Casos de uso (15 CU · Lector / Autor / Administrador) | [08_casos_de_uso.mmd](08_casos_de_uso.mmd) | [PNG](08_casos_de_uso.png) |
@@ -29,6 +30,12 @@ Diagramas de Layla en Mermaid. Cada uno tiene su fuente `.mmd` y su render `.png
 | 11 | Capítulo en el editor (Cargando → Sincronizado ↔ Editando → Guardando · debounces · RTF remoto) | [11_estado_editor_capitulo.mmd](11_estado_editor_capitulo.mmd) | [PNG](11_estado_editor_capitulo.png) |
 | 12 | Participante en sala de voz (FueraDeSala → Uniéndose → EnSala: Escuchando/Hablando) | [12_estado_participante_voz.mmd](12_estado_participante_voz.mmd) | [PNG](12_estado_participante_voz.png) |
 | 13 | Ciclo de vida del proyecto (Creando → Persistido → Bootstrapping → Listo: Privado/Público) | [13_estado_proyecto.mmd](13_estado_proyecto.mmd) | [PNG](13_estado_proyecto.png) |
+
+## Flujos de vistas
+
+| # | Diagrama | Fuente | Imagen |
+|---|----------|--------|--------|
+| 14 | Flujo de vistas por cliente (Desktop WPF, Web Blazor Server y Android Compose) | [14_flujo_vistas_clientes.mmd](14_flujo_vistas_clientes.mmd) | [PNG](14_flujo_vistas_clientes.png) |
 
 ## Regenerar las imágenes
 
