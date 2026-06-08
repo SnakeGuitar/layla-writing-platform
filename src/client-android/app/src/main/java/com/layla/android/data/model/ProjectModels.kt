@@ -1,7 +1,5 @@
 package com.layla.android.data.model
 
-// ─── Project ────────────────────────────────────────────────────────────────
-
 data class ProjectDto(
     val id: String,
     val title: String,
@@ -28,8 +26,6 @@ data class UpdateProjectRequest(
     val isPublic: Boolean
 )
 
-// ─── Collaborators ──────────────────────────────────────────────────────────
-
 data class CollaboratorDto(
     val userId: String,
     val displayName: String?,
@@ -43,61 +39,19 @@ data class InviteCollaboratorRequest(
     val role: String = "READER"
 )
 
-// ─── Manuscripts & Chapters ─────────────────────────────────────────────────
-
-data class ManuscriptDto(
-    val manuscriptId: String,
-    val projectId: String,
-    val title: String,
-    val order: Int,
-    val chapters: List<ChapterDto> = emptyList()
-)
-
-data class ChapterDto(
-    val chapterId: String,
-    val manuscriptId: String = "",
-    val title: String,
-    val content: String = "",
-    val order: Int,
-    val updatedAt: String? = null,
-    val mentions: List<MentionDto> = emptyList()
-)
-
-data class MentionDto(
-    val entityId: String,
-    val entityName: String,
-    val entityType: String
-)
-
-// ─── Wiki ────────────────────────────────────────────────────────────────────
-
-data class WikiEntryDto(
-    val entityId: String,
-    val projectId: String,
-    val name: String,
-    val entityType: String,
-    val description: String = "",
-    val tags: List<String> = emptyList()
-)
-
-data class CreateWikiEntryRequest(
-    val name: String,
-    val entityType: String,
-    val description: String?,
-    val tags: List<String>?
-)
-
-data class UpdateWikiEntryRequest(
-    val name: String?,
-    val entityType: String?,
-    val description: String?,
-    val tags: List<String>?
-)
-
-data class AppearanceRecordDto(
-    val manuscriptId: String,
-    val manuscriptTitle: String,
-    val chapterId: String,
-    val chapterTitle: String,
-    val chapterOrder: Int
+/**
+ * Mirrors `Layla.Core.Contracts.Admin.SystemReportDto`.
+ *
+ * Used by Android's mobile administration dashboard. Worldbuilding-specific
+ * writing metrics are intentionally absent from Android.
+ */
+data class SystemReportDto(
+    val generatedAt: String = "",
+    val totalUsers: Int = 0,
+    val newUsersThisMonth: Int = 0,
+    val bannedUsers: Int = 0,
+    val totalProjects: Int = 0,
+    val projectsModifiedToday: Int = 0,
+    val publicProjects: Int = 0,
+    val newUsersPerMonth: List<Int> = emptyList()
 )

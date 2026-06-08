@@ -9,25 +9,26 @@ import java.util.concurrent.atomic.AtomicReference
 
 object NetworkConfig {
     private const val SCHEME = BuildConfig.BACKEND_SCHEME
-    private const val HOST   = BuildConfig.BACKEND_HOST
+    private const val HOST = BuildConfig.BACKEND_HOST
 
     const val BASE_URL_CORE = "$SCHEME://$HOST:${BuildConfig.PORT_CORE}/"
-    const val BASE_URL_WB   = "$SCHEME://$HOST:${BuildConfig.PORT_WB}/"
-
-    // Hub roots (no trailing slash — SignalR builds the full URL itself).
-    const val VOICE_HUB_BASE_URL    = "$SCHEME://$HOST:${BuildConfig.PORT_CORE}"
-    const val PRESENCE_HUB_BASE_URL = "$SCHEME://$HOST:${BuildConfig.PORT_CORE}"
 }
 
+/**
+ * Shared Retrofit entry point for Android's reduced surface.
+ *
+ * This client talks only to server-core because Android no longer owns
+ * manuscripts, wiki, graph, reader, or voice workflows.
+ */
 object RetrofitClient {
     private val logging = HttpLoggingInterceptor().apply {
-        // Keep network logs out of release builds — token-bearing URLs leak via logcat otherwise.
-        level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC
-                else HttpLoggingInterceptor.Level.NONE
+        level = if (BuildConfig.DEBUG) {
+            HttpLoggingInterceptor.Level.BASIC
+        } else {
+            HttpLoggingInterceptor.Level.NONE
+        }
     }
 
-    // AtomicReference instead of a plain mutable field: the interceptor runs on
-    // OkHttp dispatcher threads while setToken() is called from the UI thread.
     private val tokenRef = AtomicReference<String?>(null)
 
     fun setToken(token: String?) {
@@ -66,19 +67,7 @@ object RetrofitClient {
         retrofit.create(ProjectApiService::class.java)
     }
 
-    private val retrofitWb by lazy {
-        Retrofit.Builder()
-            .baseUrl(NetworkConfig.BASE_URL_WB)
-            .client(okHttpClient)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-    }
-
-    val manuscriptApiService: ManuscriptApiService by lazy {
-        retrofitWb.create(ManuscriptApiService::class.java)
-    }
-
-    val wikiApiService: WikiApiService by lazy {
-        retrofitWb.create(WikiApiService::class.java)
+    val adminApiService: AdminApiService by lazy {
+        retrofit.create(AdminApiService::class.java)
     }
 }

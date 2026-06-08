@@ -23,7 +23,6 @@ android {
         buildConfigField("String", "BACKEND_HOST", "\"$backendHost\"")
         buildConfigField("String", "BACKEND_SCHEME", "\"http\"")
         buildConfigField("int",    "PORT_CORE", "5287")
-        buildConfigField("int",    "PORT_WB",   "3000")
     }
 
     buildTypes {
@@ -69,9 +68,6 @@ dependencies {
 
     // Navigation
     implementation(libs.androidx.navigation.compose)
-
-    // SignalR for voice communication
-    implementation("com.microsoft.signalr:signalr:8.0.0")
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

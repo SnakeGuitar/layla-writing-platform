@@ -21,11 +21,11 @@ import com.layla.android.data.model.ProjectDto
 @Composable
 fun MyProjectsScreen(
     viewModel: MyProjectsViewModel,
-    onOpenProject: (ProjectDto) -> Unit,
-    onLogout: () -> Unit,
-    onNavigateToPublicFeed: () -> Unit
+    onLogout: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
+    val stats by viewModel.stats.collectAsState()
+    val statsError by viewModel.statsError.collectAsState()
     val showCreate by viewModel.showCreateDialog.collectAsState()
     val showEdit by viewModel.showEditDialog.collectAsState()
     val createForm by viewModel.createForm.collectAsState()
@@ -76,9 +76,6 @@ fun MyProjectsScreen(
                     )
                 },
                 actions = {
-                    TextButton(onClick = onNavigateToPublicFeed) {
-                        Text("Explore", color = Color(0xFFF59E0B))
-                    }
                     TextButton(onClick = onLogout) {
                         Text("Logout", color = MaterialTheme.colorScheme.error)
                     }
@@ -130,33 +127,27 @@ fun MyProjectsScreen(
                 is MyProjectsState.Success -> {
                     val projects = (state as MyProjectsState.Success).projects
 
-                    if (projects.isEmpty()) {
-                        Column(
-                            modifier = Modifier.align(Alignment.Center),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                "No projects yet.",
-                                color = Color(0xFF78716C),
-                                fontSize = 16.sp
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                "Tap + to create your first project.",
-                                color = Color(0xFF57534E),
-                                fontSize = 13.sp
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize(),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        item {
+                            StatsPanel(
+                                stats = stats,
+                                statsError = statsError,
+                                onRetry = viewModel::loadStats
                             )
                         }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
+
+                        if (projects.isEmpty()) {
+                            item {
+                                EmptyProjects()
+                            }
+                        } else {
                             items(projects) { project ->
                                 MyProjectCard(
                                     project = project,
-                                    onOpen = { onOpenProject(project) },
                                     onEdit = { viewModel.openEditDialog(project) },
                                     onDelete = { viewModel.deleteProject(project) }
                                 )
@@ -174,7 +165,6 @@ fun MyProjectsScreen(
 @Composable
 private fun MyProjectCard(
     project: ProjectDto,
-    onOpen: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -200,7 +190,6 @@ private fun MyProjectCard(
     }
 
     Card(
-        onClick = onOpen,
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = Color(0xFF0C0A09)),
         shape = MaterialTheme.shapes.extraSmall
@@ -288,6 +277,98 @@ private fun MyProjectCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun StatsPanel(
+    stats: com.layla.android.data.model.SystemReportDto?,
+    statsError: String?,
+    onRetry: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color(0xFF0C0A09)),
+        shape = MaterialTheme.shapes.extraSmall
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    "System Statistics",
+                    color = Color(0xFFF5F5F4),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+                TextButton(onClick = onRetry) {
+                    Text("Refresh", color = Color(0xFFF59E0B))
+                }
+            }
+
+            if (statsError != null) {
+                Text(statsError, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+            } else if (stats == null) {
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Color(0xFFF59E0B)
+                )
+            } else {
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    StatTile("Users", stats.totalUsers.toString(), Modifier.weight(1f))
+                    StatTile("Projects", stats.totalProjects.toString(), Modifier.weight(1f))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    StatTile("New / month", stats.newUsersThisMonth.toString(), Modifier.weight(1f))
+                    StatTile("Public", stats.publicProjects.toString(), Modifier.weight(1f))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    StatTile("Blocked", stats.bannedUsers.toString(), Modifier.weight(1f))
+                    StatTile("Updated today", stats.projectsModifiedToday.toString(), Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun StatTile(label: String, value: String, modifier: Modifier = Modifier) {
+    Surface(
+        modifier = modifier,
+        color = Color(0xFF1C1917),
+        shape = MaterialTheme.shapes.extraSmall
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Text(value, color = Color(0xFFF5F5F4), fontWeight = FontWeight.Bold, fontSize = 20.sp)
+            Text(label, color = Color(0xFF78716C), fontSize = 11.sp)
+        }
+    }
+}
+
+@Composable
+private fun EmptyProjects() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 40.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            "No projects yet.",
+            color = Color(0xFF78716C),
+            fontSize = 16.sp
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            "Tap + to create your first project.",
+            color = Color(0xFF57534E),
+            fontSize = 13.sp
+        )
     }
 }
 
