@@ -1,4 +1,4 @@
-# Define que copia un compose y un .env a /srv/layla y los levanta con docker compose
+# Copies a compose file and env file to /srv/layla, then reconciles the stack.
 define laylacommon::stack (
   String $compose_source,
   String $env_source,
@@ -26,7 +26,7 @@ define laylacommon::stack (
   }
 
   exec { "layla-compose-up-${name}":
-    command     => '/usr/bin/docker compose -f /srv/layla/compose.yml --env-file /srv/layla/.env up -d',
+    command     => '/usr/bin/docker compose -f /srv/layla/compose.yml --env-file /srv/layla/.env up -d --build --remove-orphans',
     cwd         => '/srv/layla',
     require     => [
       File['/srv/layla/compose.yml'],
@@ -34,7 +34,6 @@ define laylacommon::stack (
       Class['laylacommon::docker_install'],
     ],
     refreshonly => false,
-    unless      => '/usr/bin/docker compose -f /srv/layla/compose.yml ps --status running --quiet | /bin/grep -q .',
     timeout     => 1800,
     logoutput   => true,
   }

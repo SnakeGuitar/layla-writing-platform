@@ -58,6 +58,18 @@ vagrant up edge
 
 > **Recommended order**: `data` → `apps` → `edge` (apps wait for databases; the gateway waits for apps).
 
+## Jenkins CI/CD
+
+The root `Jenkinsfile` can reprovision this environment after unit tests and Docker image builds:
+
+```powershell
+# Jenkins runs this from the repo workspace
+cd deploy/vagrant
+vagrant up data apps edge --provision
+```
+
+`deploy/vagrant/files/env/.env.shared` may be provided as a Jenkins Secret File credential. If it is missing, the pipeline generates local demo values for the VM deployment. See [`../jenkins/README.md`](../jenkins/README.md).
+
 ## Directory Structure
 
 ```

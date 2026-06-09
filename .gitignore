@@ -8,6 +8,8 @@
 **/.env.development
 **/.env.local
 deploy/files/env/.env.shared
+deploy/vagrant/files/env/.env.shared
+deploy/k8s/.generated-secret.yaml
 
 # ----- Build artefacts -----
 build.log
@@ -15,6 +17,7 @@ build_error*.log
 build_output*.txt
 **/build_errors*.txt
 **/build_output*.txt
+TestResults/
 **/obj/
 **/bin/
 

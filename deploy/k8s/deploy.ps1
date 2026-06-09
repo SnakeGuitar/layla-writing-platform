@@ -10,7 +10,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$SRC = Join-Path $PSScriptRoot "..\src"
+$SRC = Join-Path $PSScriptRoot "..\..\src"
 $K8S = $PSScriptRoot
 
 Write-Host "==> Contexto de kubectl actual:" -ForegroundColor Cyan
