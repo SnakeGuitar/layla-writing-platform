@@ -62,7 +62,7 @@ describe("getGraph", () => {
 
     beforeAll(async () => {
       const graph: IGraphResult = {
-        nodes: [{ id: "n1", label: "Hero", entityType: "Character", projectId: "p1" }],
+        nodes: [{ entityId: "n1", name: "Hero", entityType: "Character" }],
         edges: [],
       };
       const repo = makeRepo({ getGraph: vi.fn().mockResolvedValue(graph) });
@@ -70,7 +70,7 @@ describe("getGraph", () => {
     });
 
     it("returns the correct node count", () => expect(result.nodes).toHaveLength(1));
-    it("returns the correct node id", () => expect(result.nodes[0]?.id).toBe("n1"));
+    it("returns the correct node id", () => expect(result.nodes[0]?.entityId).toBe("n1"));
   });
 });
 

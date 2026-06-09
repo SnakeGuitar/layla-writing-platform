@@ -9,6 +9,8 @@ internal sealed class FakeSessionManager : ISessionManager
     public string CurrentUserId { get; set; } = string.Empty;
     public string CurrentEmail { get; set; } = string.Empty;
     public string CurrentDisplayName { get; set; } = string.Empty;
+    public string CurrentAvatarUrl { get; set; } = string.Empty;
+    public string CurrentBio { get; set; } = string.Empty;
     public DateTime? ExpiresAt { get; set; }
     public bool IsAuthenticated => !string.IsNullOrEmpty(CurrentToken) && (ExpiresAt is null || ExpiresAt > DateTime.UtcNow);
     public bool WasCleared { get; private set; }
@@ -23,7 +25,18 @@ internal sealed class FakeSessionManager : ISessionManager
         CurrentUserId = response.UserId;
         CurrentEmail = response.Email;
         CurrentDisplayName = response.DisplayName;
+        CurrentAvatarUrl = response.AvatarUrl ?? string.Empty;
+        CurrentBio = response.Bio ?? string.Empty;
         ExpiresAt = response.ExpiresAt;
+        SessionChanged?.Invoke();
+        return Task.CompletedTask;
+    }
+
+    public Task UpdateProfileAsync(string? displayName, string? avatarUrl, string? bio)
+    {
+        CurrentDisplayName = displayName ?? CurrentDisplayName;
+        CurrentAvatarUrl = avatarUrl ?? CurrentAvatarUrl;
+        CurrentBio = bio ?? CurrentBio;
         SessionChanged?.Invoke();
         return Task.CompletedTask;
     }
@@ -35,6 +48,8 @@ internal sealed class FakeSessionManager : ISessionManager
         CurrentUserId = string.Empty;
         CurrentEmail = string.Empty;
         CurrentDisplayName = string.Empty;
+        CurrentAvatarUrl = string.Empty;
+        CurrentBio = string.Empty;
         ExpiresAt = null;
         SessionChanged?.Invoke();
         return Task.CompletedTask;
