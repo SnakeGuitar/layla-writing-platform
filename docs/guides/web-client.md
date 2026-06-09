@@ -66,6 +66,7 @@ src/client-web/
 ```
 
 The **`Application/` vs `UI/` vs `Models/` vs `Helpers/`** split is intentional:
+
 - `Application/` is plain C# — could be moved to a class library tomorrow.
 - `UI/` is Blazor-specific (`.razor`, `@inject`, `@page`).
 - `Models/` is the public surface that crosses the `Application/UI` boundary.
@@ -135,18 +136,18 @@ services.AddSingleton<IAudioService>(sp => sp.GetRequiredService<IVoiceService>(
 
 **Lifetimes — and why:**
 
-| Service | Lifetime | Why |
-|---|---|---|
-| `ApiClient` | `Scoped` | Holds a request-bound `HttpClient`; one per circuit avoids cross-user header bleed. |
-| `ProtectedSessionStorage` | `Scoped` | Bound to the current user's circuit. |
-| `ISessionManager` | `Scoped` | **Per-user state.** A `static` would leak Alice's token into Bob's circuit. |
-| `IAuthService` | `Scoped` | Reads/writes through `ApiClient` + `ISessionManager`. |
-| `AuthenticationStateProvider` | `Scoped` | Built into Blazor's auth model; identity is per-circuit. |
-| `IProjectService` | `Scoped` | Pulls token from `ISessionManager`. |
-| `PresenceService` | `Scoped` | Holds a SignalR connection bound to the user's token. |
-| `ISignalRClient`, `IVoiceService` | `Singleton` | Voice room state is process-wide (multiple users join the same room). |
+| Service                           | Lifetime    | Why                                                                                 |
+| --------------------------------- | ----------- | ----------------------------------------------------------------------------------- |
+| `ApiClient`                       | `Scoped`    | Holds a request-bound `HttpClient`; one per circuit avoids cross-user header bleed. |
+| `ProtectedSessionStorage`         | `Scoped`    | Bound to the current user's circuit.                                                |
+| `ISessionManager`                 | `Scoped`    | **Per-user state.** A `static` would leak Alice's token into Bob's circuit.         |
+| `IAuthService`                    | `Scoped`    | Reads/writes through `ApiClient` + `ISessionManager`.                               |
+| `AuthenticationStateProvider`     | `Scoped`    | Built into Blazor's auth model; identity is per-circuit.                            |
+| `IProjectService`                 | `Scoped`    | Pulls token from `ISessionManager`.                                                 |
+| `PresenceService`                 | `Scoped`    | Holds a SignalR connection bound to the user's token.                               |
+| `ISignalRClient`, `IVoiceService` | `Singleton` | Voice room state is process-wide (multiple users join the same room).               |
 
-**Rule of thumb:** anything that *holds the user's identity* is `Scoped`. Anything that *holds room/process-wide state* is `Singleton`.
+**Rule of thumb:** anything that _holds the user's identity_ is `Scoped`. Anything that _holds room/process-wide state_ is `Singleton`.
 
 `AddCascadingAuthenticationState()` is the Blazor 9 way to make the current `AuthenticationState` available to every component without wrapping `<Routes>` in `<CascadingAuthenticationState>` manually.
 
@@ -196,6 +197,7 @@ If the token is missing, expired, or malformed, the provider returns the static 
 ### 3.3 What survives a page reload
 
 `SessionManager` persists the snapshot to `ProtectedSessionStorage`, which is:
+
 - **Encrypted** with the server's data-protection keys (the cookie payload is opaque).
 - **Tab-scoped** — closing the tab discards it.
 
@@ -247,6 +249,7 @@ Caller catches APIException → log → degrade (return [], null, false).
 ```
 
 **Why a typed `ApiClient`** rather than calling `HttpClient` directly:
+
 - One place to enforce JSON conventions.
 - One place to map errors.
 - One place to attach the retry policy (it's bound to the typed client at registration, so every call gets it for free).
@@ -281,10 +284,10 @@ Caller catches APIException → log → degrade (return [], null, false).
 
 ### 5.2 Layouts
 
-| Layout | When | What it includes |
-|---|---|---|
-| `MainLayout` | Default for every authenticated page | Header, sidebar, theme |
-| `LayoutEmpty` | Login + Register | No chrome — just the centred card on the gradient background |
+| Layout        | When                                 | What it includes                                             |
+| ------------- | ------------------------------------ | ------------------------------------------------------------ |
+| `MainLayout`  | Default for every authenticated page | Header, sidebar, theme                                       |
+| `LayoutEmpty` | Login + Register                     | No chrome — just the centred card on the gradient background |
 
 Per-page selection: `@layout client_web.UI.Layout.LayoutEmpty` at the top of the file.
 
@@ -307,10 +310,10 @@ Pages that are pure read-only static markup (like an "About" page if it existed)
 ```json
 {
   "ApiUrls": {
-    "BackendURL":      "https://localhost:5288",
+    "BackendURL": "https://localhost:5288",
     "WorldbuildingURL": "http://localhost:3000",
     "SignalRHubURL": {
-      "VoiceServiceHub":    "/hubs/voice",
+      "VoiceServiceHub": "/hubs/voice",
       "PresenceServiceHub": "/hubs/presence"
     }
   }
@@ -325,13 +328,13 @@ Pages that are pure read-only static markup (like an "About" page if it existed)
 
 The packages that matter:
 
-| Package | Role |
-|---|---|
+| Package                                         | Role                                                                     |
+| ----------------------------------------------- | ------------------------------------------------------------------------ |
 | `Microsoft.AspNetCore.Components.Authorization` | `<AuthorizeRouteView>`, `<AuthorizeView>`, `AuthenticationStateProvider` |
-| `Microsoft.AspNetCore.Authorization` | `[Authorize]` attribute |
-| `Microsoft.AspNetCore.SignalR.Client` | Presence + voice hubs |
-| `Microsoft.Extensions.Http.Polly` + `Polly` | Retry policy on the HTTP client |
-| `System.IdentityModel.Tokens.Jwt` | JWT decoding inside `LaylaAuthenticationStateProvider` |
+| `Microsoft.AspNetCore.Authorization`            | `[Authorize]` attribute                                                  |
+| `Microsoft.AspNetCore.SignalR.Client`           | Presence + voice hubs                                                    |
+| `Microsoft.Extensions.Http.Polly` + `Polly`     | Retry policy on the HTTP client                                          |
+| `System.IdentityModel.Tokens.Jwt`               | JWT decoding inside `LaylaAuthenticationStateProvider`                   |
 
 ---
 
@@ -387,35 +390,35 @@ Every link in that chain is replaceable in isolation: swap `ApiClient` for a fak
 
 ## 9. Where to add things
 
-| You want to… | Touch this |
-|---|---|
-| Add a new authenticated page | New `.razor` under `UI/Pages/`, decorate with `@page` + `@attribute [Authorize]` + `@rendermode InteractiveServer` |
-| Add a new server-core endpoint call | New method on `IProjectService` (or a new service alongside it); call `_client.SendAsync<T>(new APIRequest{...})` |
-| Add a new field to the user session | Extend `LoginResponse` + `StoredSession` (in `SessionManager`) + `ISessionManager` |
-| Add a global validation rule | Extend `ValidationService` (mirror it on the desktop too) |
-| Add a worldbuilding API call | First, create a second typed `HttpClient` (`AddHttpClient<WorldbuildingClient>`) bound to `ApiUrls:WorldbuildingURL`, then build a service like `ProjectService` against it |
-| Add a logout button | Inject `ISessionManager` into `MainLayout.razor`, call `Session.ClearAsync()` on click — `AuthorizeRouteView` redirects to login automatically |
-| Add a 401 auto-logout | New `DelegatingHandler` on the typed `ApiClient` registration: on 401, call `Session.ClearAsync()` and bubble the failure |
-| Inspect what the user sees | `Session.CurrentEmail`, `.CurrentDisplayName`, `.CurrentUserId`, `.CurrentToken` (don't log the token) |
+| You want to…                        | Touch this                                                                                                                                                                  |
+| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add a new authenticated page        | New `.razor` under `UI/Pages/`, decorate with `@page` + `@attribute [Authorize]` + `@rendermode InteractiveServer`                                                          |
+| Add a new server-core endpoint call | New method on `IProjectService` (or a new service alongside it); call `_client.SendAsync<T>(new APIRequest{...})`                                                           |
+| Add a new field to the user session | Extend `LoginResponse` + `StoredSession` (in `SessionManager`) + `ISessionManager`                                                                                          |
+| Add a global validation rule        | Extend `ValidationService` (mirror it on the desktop too)                                                                                                                   |
+| Add a worldbuilding API call        | First, create a second typed `HttpClient` (`AddHttpClient<WorldbuildingClient>`) bound to `ApiUrls:WorldbuildingURL`, then build a service like `ProjectService` against it |
+| Add a logout button                 | Inject `ISessionManager` into `MainLayout.razor`, call `Session.ClearAsync()` on click — `AuthorizeRouteView` redirects to login automatically                              |
+| Add a 401 auto-logout               | New `DelegatingHandler` on the typed `ApiClient` registration: on 401, call `Session.ClearAsync()` and bubble the failure                                                   |
+| Inspect what the user sees          | `Session.CurrentEmail`, `.CurrentDisplayName`, `.CurrentUserId`, `.CurrentToken` (don't log the token)                                                                      |
 
 ---
 
 ## 10. Quick reference: services at a glance
 
-| Service | Lives in | Lifetime | What it does |
-|---|---|---|---|
-| `ApiClient` | `Application/Config/Http` | Scoped | Typed HTTP wrapper with retry + JSON conventions |
-| `ISessionManager` | `Application/Services/Session` | Scoped | In-memory + ProtectedSessionStorage session cache |
-| `IAuthService` | `Application/Services/Auth` | Scoped | `LoginAsync` / `RegisterAsync` ↦ `AuthResult` |
-| `AuthenticationStateProvider` | (built-in slot) | Scoped | `LaylaAuthenticationStateProvider` decodes the JWT into a `ClaimsPrincipal` |
-| `IProjectService` | `Application/Services/Projects` | Scoped | Project CRUD against server-core |
-| `PresenceService` | `Application/Services/ActiveStatusAuthor` | Scoped | SignalR presence hub client |
-| Admin services | `Application/Services/Admin` | Scoped | User management (list, ban) |
-| Manuscript services | `Application/Services/Manuscripts` | Scoped | Manuscript and chapter CRUD against server-worldbuilding |
-| Wiki services | `Application/Services/Wikis` | Scoped | Wiki entry CRUD against server-worldbuilding |
-| Graph services | `Application/Services/Graph` | Scoped | Narrative graph queries against server-worldbuilding |
-| `IVoiceService` | `Application/Services/Voice` | Singleton | SignalR voice hub client (process-wide) |
-| `ISignalRClient` | `Application/Config/SignalR` | Singleton | Low-level SignalR plumbing shared by Voice + Presence |
+| Service                       | Lives in                                  | Lifetime  | What it does                                                                |
+| ----------------------------- | ----------------------------------------- | --------- | --------------------------------------------------------------------------- |
+| `ApiClient`                   | `Application/Config/Http`                 | Scoped    | Typed HTTP wrapper with retry + JSON conventions                            |
+| `ISessionManager`             | `Application/Services/Session`            | Scoped    | In-memory + ProtectedSessionStorage session cache                           |
+| `IAuthService`                | `Application/Services/Auth`               | Scoped    | `LoginAsync` / `RegisterAsync` ↦ `AuthResult`                               |
+| `AuthenticationStateProvider` | (built-in slot)                           | Scoped    | `LaylaAuthenticationStateProvider` decodes the JWT into a `ClaimsPrincipal` |
+| `IProjectService`             | `Application/Services/Projects`           | Scoped    | Project CRUD against server-core                                            |
+| `PresenceService`             | `Application/Services/ActiveStatusAuthor` | Scoped    | SignalR presence hub client                                                 |
+| Admin services                | `Application/Services/Admin`              | Scoped    | User management (list, ban)                                                 |
+| Manuscript services           | `Application/Services/Manuscripts`        | Scoped    | Manuscript and chapter CRUD against server-worldbuilding                    |
+| Wiki services                 | `Application/Services/Wikis`              | Scoped    | Wiki entry CRUD against server-worldbuilding                                |
+| Graph services                | `Application/Services/Graph`              | Scoped    | Narrative graph queries against server-worldbuilding                        |
+| `IVoiceService`               | `Application/Services/Voice`              | Singleton | SignalR voice hub client (process-wide)                                     |
+| `ISignalRClient`              | `Application/Config/SignalR`              | Singleton | Low-level SignalR plumbing shared by Voice + Presence                       |
 
 ---
 

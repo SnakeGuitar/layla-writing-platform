@@ -1,7 +1,7 @@
 # Auditoria de documentacion - Layla v3.1
 
-Fecha de auditoria: 2026-06-07  
-Documento auditado: `C:\Users\snake\Desktop\Cosas\Escuela\Sexto_Semestre\Desarrollo de Sistemas en Red\Layla (Documento de Proyecto) v3.1.docx`  
+Fecha de auditoria: 2026-06-07
+Documento auditado: `C:\Users\snake\Desktop\Cosas\Escuela\Sexto_Semestre\Desarrollo de Sistemas en Red\Layla (Documento de Proyecto) v3.1.docx`
 Repositorio revisado: `C:\Users\snake\Desktop\Layla`
 
 ## Resultado ejecutivo
@@ -37,16 +37,16 @@ Accion recomendada:
 
 Usar este formato para los 15 casos en analisis, con contenido de alto nivel:
 
-| Campo | Nivel esperado en analisis |
-|---|---|
-| ID y nombre | Igual que en diseno. |
-| Actor principal | Rol funcional, no componente tecnico. |
-| Objetivo | Una frase sobre valor de usuario. |
-| Precondicion | Estado de negocio necesario. |
-| Flujo basico | 3-5 pasos conceptuales, sin endpoints ni clases. |
-| Flujos alternativos | Solo escenarios principales. |
-| Postcondicion | Resultado observable por el usuario/sistema. |
-| Casos relacionados | Include/extend si aplica. |
+| Campo               | Nivel esperado en analisis                       |
+| ------------------- | ------------------------------------------------ |
+| ID y nombre         | Igual que en diseno.                             |
+| Actor principal     | Rol funcional, no componente tecnico.            |
+| Objetivo            | Una frase sobre valor de usuario.                |
+| Precondicion        | Estado de negocio necesario.                     |
+| Flujo basico        | 3-5 pasos conceptuales, sin endpoints ni clases. |
+| Flujos alternativos | Solo escenarios principales.                     |
+| Postcondicion       | Resultado observable por el usuario/sistema.     |
+| Casos relacionados  | Include/extend si aplica.                        |
 
 Ejemplo de tono para analisis:
 
@@ -58,24 +58,24 @@ La matriz del documento menciona clases/pantallas que ya no existen en Android: 
 
 Matriz recomendada:
 
-| Funcionalidad | Desktop WPF | Web Blazor Server | Android Compose |
-|---|---|---|---|
-| Login / registro | Completo | Completo | Completo |
-| Proyectos propios | Completo | Completo | Completo |
-| Crear / editar / eliminar proyecto | Completo | Completo | Completo |
-| Configurar privacidad | Completo | Completo | Parcial, desde formulario de proyecto |
-| Catalogo publico | Completo | Completo | No implementado como pantalla dedicada |
-| Gestion de colaboradores | Completo | Completo | No implementado |
-| Manuscritos / capitulos | Completo | Completo | No implementado |
-| Edicion colaborativa | Completo | Completo | No implementado |
-| Historial / restauracion | Completo | Completo | No implementado |
-| Wiki | Completo | Completo | No implementado |
-| Grafo narrativo | Completo | Completo | No implementado |
-| Voz PTT | Completo | Completo | No implementado |
-| Lectura de historia publicada | Completo | Completo | No implementado |
-| Panel admin / usuarios | No implementado | Completo | No implementado |
-| Reportes del sistema | No implementado | Completo | Parcial, consulta metricas si el usuario es admin |
-| Perfil/configuracion | Completo | Completo | No implementado o minimo no documentado |
+| Funcionalidad                      | Desktop WPF     | Web Blazor Server | Android Compose                                   |
+| ---------------------------------- | --------------- | ----------------- | ------------------------------------------------- |
+| Login / registro                   | Completo        | Completo          | Completo                                          |
+| Proyectos propios                  | Completo        | Completo          | Completo                                          |
+| Crear / editar / eliminar proyecto | Completo        | Completo          | Completo                                          |
+| Configurar privacidad              | Completo        | Completo          | Parcial, desde formulario de proyecto             |
+| Catalogo publico                   | Completo        | Completo          | No implementado como pantalla dedicada            |
+| Gestion de colaboradores           | Completo        | Completo          | No implementado                                   |
+| Manuscritos / capitulos            | Completo        | Completo          | No implementado                                   |
+| Edicion colaborativa               | Completo        | Completo          | No implementado                                   |
+| Historial / restauracion           | Completo        | Completo          | No implementado                                   |
+| Wiki                               | Completo        | Completo          | No implementado                                   |
+| Grafo narrativo                    | Completo        | Completo          | No implementado                                   |
+| Voz PTT                            | Completo        | Completo          | No implementado                                   |
+| Lectura de historia publicada      | Completo        | Completo          | No implementado                                   |
+| Panel admin / usuarios             | No implementado | Completo          | No implementado                                   |
+| Reportes del sistema               | No implementado | Completo          | Parcial, consulta metricas si el usuario es admin |
+| Perfil/configuracion               | Completo        | Completo          | No implementado o minimo no documentado           |
 
 Tambien hay que corregir los textos que dicen que Android es "Companion App" de voz/lectura o que centraliza comunicacion en tiempo real. El estado real defendible es: Android es una consola movil reducida para autenticacion, administracion de proyectos propios y metricas.
 

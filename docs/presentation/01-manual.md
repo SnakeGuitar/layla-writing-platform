@@ -23,6 +23,7 @@ Para cada VM (`layla-data`, `layla-apps`, `layla-edge`):
 7. Iniciar e instalar Ubuntu (proceso interactivo, ~10 min cada una).
 
 **Durante la instalación de Ubuntu**:
+
 - Idioma/teclado: a elección.
 - Network: dejar DHCP por ahora.
 - Storage: "Use entire disk", **sin LVM**.
@@ -60,12 +61,14 @@ Verificar desde el host con Bitvise: SSH a `192.168.56.10` (y `.11`, `.12`).
 ## Paso 3 — Provisionar `layla-data` (192.168.56.10)
 
 ### 3.1 Actualizar e instalar dependencias base
+
 ```bash
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y curl wget gnupg lsb-release ca-certificates
 ```
 
 ### 3.2 SQL Server 2022
+
 ```bash
 curl -fsSL https://packages.microsoft.com/keys/microsoft.asc | sudo gpg --dearmor -o /usr/share/keyrings/microsoft.gpg
 curl -fsSL https://packages.microsoft.com/config/ubuntu/22.04/mssql-server-2022.list | sudo tee /etc/apt/sources.list.d/mssql.list
@@ -83,6 +86,7 @@ sqlcmd -S localhost -U sa -P 'CHANGE_ME' -C -Q "CREATE DATABASE LaylaCore"
 ```
 
 ### 3.3 MongoDB 4.4
+
 > Nota: se usa 4.4 (no 7+) porque MongoDB 5+ requiere instrucciones AVX que VirtualBox no expone por defecto.
 
 ```bash
@@ -104,6 +108,7 @@ sudo systemctl restart mongod
 ```
 
 ### 3.4 Neo4j 5
+
 ```bash
 wget -qO- https://debian.neo4j.com/neotechnology.gpg.key | sudo gpg --dearmor -o /usr/share/keyrings/neo4j.gpg
 echo "deb [signed-by=/usr/share/keyrings/neo4j.gpg] https://debian.neo4j.com stable 5" | sudo tee /etc/apt/sources.list.d/neo4j.list
@@ -116,6 +121,7 @@ cypher-shell -u neo4j -p neo4j "ALTER CURRENT USER SET PASSWORD FROM 'neo4j' TO 
 ```
 
 ### 3.5 RabbitMQ
+
 ```bash
 sudo apt install -y rabbitmq-server
 sudo rabbitmq-plugins enable rabbitmq_management
@@ -128,6 +134,7 @@ sudo rabbitmqctl set_permissions -p / layla ".*" ".*" ".*"
 ```
 
 ### 3.6 Firewall
+
 ```bash
 sudo ufw allow from 192.168.56.0/24 to any port 1433  # SQL
 sudo ufw allow from 192.168.56.0/24 to any port 27017 # Mongo
@@ -140,6 +147,7 @@ sudo ufw --force enable
 ## Paso 4 — Provisionar `layla-apps` (192.168.56.11)
 
 ### 4.1 Instalar runtimes
+
 ```bash
 sudo apt update
 # .NET 10 SDK
@@ -154,14 +162,18 @@ sudo npm install -g pnpm
 ```
 
 ### 4.2 Publicar y desplegar `server-core`
+
 Desde el host (Windows con Visual Studio o `dotnet` instalado):
+
 ```bash
 cd src/server-core
 dotnet publish Layla.Api -c Release -o ./publish
 ```
+
 Subir `publish/` a la VM con Bitvise SFTP a `/opt/layla/core/`.
 
 ### 4.3 Crear servicio systemd `/etc/systemd/system/layla-core.service`
+
 ```ini
 [Unit]
 Description=Layla Core API
@@ -190,9 +202,11 @@ sudo journalctl -u layla-core -f
 ```
 
 ### 4.4 Repetir para `server-worldbuilding` y `layla-web`
+
 Mismo patrón: publish/build → SFTP → systemd unit + EnvironmentFile.
 
 Para `server-worldbuilding`:
+
 ```bash
 cd /opt/layla/worldbuilding
 pnpm install --prod
@@ -201,6 +215,7 @@ pnpm run build
 ```
 
 ### 4.5 Firewall
+
 ```bash
 sudo ufw allow from 192.168.56.0/24 to any port 5287
 sudo ufw allow from 192.168.56.0/24 to any port 3001
@@ -220,6 +235,7 @@ sudo apt install -y dotnet-sdk-10.0
 ## Paso 6 — Verificación
 
 Desde el host Windows:
+
 ```bash
 curl http://192.168.56.12:5000/health             # gateway responde
 curl http://192.168.56.12:5000/api/projects/public # round-trip completo
@@ -229,12 +245,12 @@ curl http://192.168.56.12:5000/api/projects/public # round-trip completo
 
 ## Problemas comunes
 
-| Síntoma | Causa | Solución |
-|---------|-------|----------|
-| `mssql-server` no arranca | RAM insuficiente | Subir VM a 3+ GB |
-| MongoDB exit 132 (SIGILL) | Falta AVX en CPU | Usar MongoDB 4.4 |
-| server-core no responde desde fuera | Bind a `localhost` | Patch `Builder.cs` para usar `+` en producción |
-| Gateway devuelve 502 al proxy | server-core fuerza HTTPS redirect | Quitar `UseHttpsRedirection` en producción |
+| Síntoma                             | Causa                             | Solución                                       |
+| ----------------------------------- | --------------------------------- | ---------------------------------------------- |
+| `mssql-server` no arranca           | RAM insuficiente                  | Subir VM a 3+ GB                               |
+| MongoDB exit 132 (SIGILL)           | Falta AVX en CPU                  | Usar MongoDB 4.4                               |
+| server-core no responde desde fuera | Bind a `localhost`                | Patch `Builder.cs` para usar `+` en producción |
+| Gateway devuelve 502 al proxy       | server-core fuerza HTTPS redirect | Quitar `UseHttpsRedirection` en producción     |
 
 ## Resumen del esfuerzo
 

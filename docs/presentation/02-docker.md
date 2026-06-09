@@ -19,6 +19,7 @@ Tener **las 3 VMs ya creadas** con Ubuntu 22.04 + SSH + IP fija (igual que en el
 ## Paso 1 — Instalar Docker en cada VM (`data`, `apps`, `edge`)
 
 Por SSH en cada una:
+
 ```bash
 curl -fsSL https://get.docker.com | sudo sh
 sudo usermod -aG docker $USER
@@ -30,12 +31,12 @@ docker --version
 
 Desde el host (Windows con Bitvise SFTP), subir:
 
-| VM | Archivo origen | Destino |
-|----|----------------|---------|
+| VM           | Archivo origen                          | Destino         |
+| ------------ | --------------------------------------- | --------------- |
 | `layla-data` | `deploy/files/compose/compose.data.yml` | `~/compose.yml` |
 | `layla-apps` | `deploy/files/compose/compose.apps.yml` | `~/compose.yml` |
 | `layla-edge` | `deploy/files/compose/compose.edge.yml` | `~/compose.yml` |
-| (las 3) | `deploy/files/env/.env.shared` | `~/.env` |
+| (las 3)      | `deploy/files/env/.env.shared`          | `~/.env`        |
 
 Para que `layla-apps` y `layla-edge` puedan **buildear las imágenes**, también hay que subir `src/` a un path conocido (por ej. `/home/layla/repo/src/`) o ajustar los `build.context` en los compose para que apunten a una ruta que exista en la VM.
 
@@ -44,28 +45,35 @@ Para que `layla-apps` y `layla-edge` puedan **buildear las imágenes**, también
 ## Paso 3 — Levantar cada stack
 
 **En `layla-data`** (primero — las apps dependen de las DBs):
+
 ```bash
 docker compose -f ~/compose.yml --env-file ~/.env up -d
 ```
+
 Resultado: 4 contenedores corriendo (SQL Server, MongoDB, Neo4j, RabbitMQ).
 Verificar: `docker ps` — todos en `(healthy)` tras ~30-60 seg.
 
 **En `layla-apps`**:
+
 ```bash
 docker compose -f ~/compose.yml --env-file ~/.env up -d
 ```
+
 La primera vez **buildea 3 imágenes** desde `src/` (.NET multi-stage + Node TypeScript). Tarda 10-15 min. Luego usa cache.
 Resultado: `server-core`, `layla-worldbuilding`, `layla-web`.
 
 **En `layla-edge`**:
+
 ```bash
 docker compose -f ~/compose.yml --env-file ~/.env up -d
 ```
+
 Resultado: `layla-api-gateway` (YARP) escuchando en `:5000`.
 
 ## Paso 4 — Verificación end-to-end
 
 Desde el host Windows:
+
 ```powershell
 curl http://192.168.56.12:5000/health
 curl http://192.168.56.12:5000/api/projects/public
@@ -78,6 +86,7 @@ Esperado: `HTTP 200`, body `[]`.
 ## Archivos clave
 
 ### `compose.data.yml` (extracto)
+
 ```yaml
 services:
   sqlserver:
@@ -104,12 +113,14 @@ services:
 ```
 
 **Lo que Docker resuelve aquí**:
+
 - No hay que añadir repos APT de Microsoft, MongoDB Inc., Neo4j ni RabbitMQ.
 - No hay configuración interactiva (`mssql-conf setup`, cambio de password de Neo4j, etc.).
 - `restart: unless-stopped` da self-healing **gratis** (el contenedor se reinicia solo si crashea).
 - Las versiones quedan **fijas en el archivo**: `mongo:4.4`, `neo4j:5`. Reproducible en cualquier máquina con Docker.
 
 ### `compose.apps.yml` (extracto)
+
 ```yaml
 services:
   server-core:
@@ -129,14 +140,14 @@ services:
 
 ## Comparativa rápida con Modo 1
 
-| Aspecto | Modo 1 (manual) | Modo 2 (Docker) |
-|---------|-----------------|-----------------|
-| Comandos para instalar SQL Server | 6 (apt-key, repo, install, conf setup, systemctl, sqlcmd) | 0 (la imagen ya viene preparada) |
-| Tiempo de provisión por VM | ~2 h | ~5 min |
-| Self-healing | systemd unit con `Restart=always` (manual) | `restart: unless-stopped` (declarativo) |
-| Versiones fijas | depende de qué versión esté en el repo APT al momento | fijas en `image: mongo:4.4` |
-| Configuración interactiva | sí (mssql-conf, neo4j password) | no (env vars + ACCEPT_EULA=Y) |
-| Si tu compañero quiere replicar | manual de 60 pasos | copiar 3 archivos + `docker compose up` |
+| Aspecto                           | Modo 1 (manual)                                           | Modo 2 (Docker)                         |
+| --------------------------------- | --------------------------------------------------------- | --------------------------------------- |
+| Comandos para instalar SQL Server | 6 (apt-key, repo, install, conf setup, systemctl, sqlcmd) | 0 (la imagen ya viene preparada)        |
+| Tiempo de provisión por VM        | ~2 h                                                      | ~5 min                                  |
+| Self-healing                      | systemd unit con `Restart=always` (manual)                | `restart: unless-stopped` (declarativo) |
+| Versiones fijas                   | depende de qué versión esté en el repo APT al momento     | fijas en `image: mongo:4.4`             |
+| Configuración interactiva         | sí (mssql-conf, neo4j password)                           | no (env vars + ACCEPT_EULA=Y)           |
+| Si tu compañero quiere replicar   | manual de 60 pasos                                        | copiar 3 archivos + `docker compose up` |
 
 ---
 
