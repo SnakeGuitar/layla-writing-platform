@@ -1,0 +1,12 @@
+﻿# Layla Jenkins evidence: 05-dotnet-and-ts-builds
+# Started: 2026-06-09T21:34:56.0996486-06:00
+# Workdir: C:\Users\snake\Desktop\Layla
+# Command: dotnet build src\api-gateway\api-gateway.sln --configuration Release && dotnet build src\client-web\client-web.sln --configuration Release && cd src\server-worldbuilding && corepack pnpm run build
+
+
+> server-worldbuilding@1.0.0 build C:\Users\snake\Desktop\Layla\src\server-worldbuilding
+> tsc
+
+
+# Finished: 2026-06-09T21:35:08.1928256-06:00
+# ExitCode: 0

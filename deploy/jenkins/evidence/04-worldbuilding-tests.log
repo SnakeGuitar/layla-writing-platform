@@ -1,0 +1,73 @@
+﻿# Layla Jenkins evidence: 04-worldbuilding-tests
+# Started: 2026-06-09T21:34:53.9550764-06:00
+# Workdir: C:\Users\snake\Desktop\Layla\src\server-worldbuilding
+# Command: corepack pnpm test
+
+
+> server-worldbuilding@1.0.0 test C:\Users\snake\Desktop\Layla\src\server-worldbuilding
+> vitest run
+
+[33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
+
+[1m[7m[36m RUN [39m[27m[22m [36mv2.1.9 [39m[90mC:/Users/snake/Desktop/Layla/src/server-worldbuilding[39m
+
+ [32m✓[39m src/__tests__/ProjectGuard.test.ts [2m([22m[2m14 tests[22m[2m)[22m[90m 9[2mms[22m[39m
+ [32m✓[39m src/__tests__/Mention.service.test.ts [2m([22m[2m28 tests[22m[2m)[22m[90m 19[2mms[22m[39m
+ [32m✓[39m src/__tests__/Graph.service.test.ts [2m([22m[2m18 tests[22m[2m)[22m[90m 20[2mms[22m[39m
+[90mstderr[2m | src/__tests__/WikiEntry.service.test.ts[2m > [22m[2mcreateEntry[2m > [22m[2mwhen Neo4j sync fails
+[22m[39m[WikiEntry.service] Neo4j sync failed for entry e1; will retry. Error: Neo4j down
+    at [90mC:\Users\snake\Desktop\Layla\src\server-worldbuilding\[39msrc\__tests__\WikiEntry.service.test.ts:85:61
+    at runWithTimeout [90m(file:///C:/Users/snake/Desktop/Layla/src/server-worldbuilding/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@2.1.9/node_modules/[4m@vitest/runner[24m/dist/index.js:39:7[90m)[39m
+    at callSuiteHook [90m(file:///C:/Users/snake/Desktop/Layla/src/server-worldbuilding/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@2.1.9/node_modules/[4m@vitest/runner[24m/dist/index.js:964:28[90m)[39m
+    at runSuite [90m(file:///C:/Users/snake/Desktop/Layla/src/server-worldbuilding/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@2.1.9/node_modules/[4m@vitest/runner[24m/dist/index.js:1175:35[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+
+ [32m✓[39m src/__tests__/Manuscript.service.test.ts [2m([22m[2m19 tests[22m[2m)[22m[90m 18[2mms[22m[39m
+[90mstderr[2m | src/__tests__/WikiEntry.service.test.ts[2m > [22m[2mupdateEntry[2m > [22m[2mwhen Neo4j sync fails on update
+[22m[39m[WikiEntry.service] Neo4j sync failed on update for e1. Error: Neo4j down
+    at [90mC:\Users\snake\Desktop\Layla\src\server-worldbuilding\[39msrc\__tests__\WikiEntry.service.test.ts:139:61
+    at runWithTimeout [90m(file:///C:/Users/snake/Desktop/Layla/src/server-worldbuilding/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@2.1.9/node_modules/[4m@vitest/runner[24m/dist/index.js:39:7[90m)[39m
+    at callSuiteHook [90m(file:///C:/Users/snake/Desktop/Layla/src/server-worldbuilding/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@2.1.9/node_modules/[4m@vitest/runner[24m/dist/index.js:964:28[90m)[39m
+    at runSuite [90m(file:///C:/Users/snake/Desktop/Layla/src/server-worldbuilding/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@2.1.9/node_modules/[4m@vitest/runner[24m/dist/index.js:1175:35[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+
+[90mstderr[2m | src/__tests__/WikiEntry.service.test.ts[2m > [22m[2mdeleteEntry[2m > [22m[2mwhen Neo4j delete fails on all three retries
+[22m[39m[WikiEntry.service] Neo4j delete attempt 1/3 failed for entity e1. Error: Neo4j unavailable
+    at [90mC:\Users\snake\Desktop\Layla\src\server-worldbuilding\[39msrc\__tests__\WikiEntry.service.test.ts:193:51
+    at runWithTimeout [90m(file:///C:/Users/snake/Desktop/Layla/src/server-worldbuilding/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@2.1.9/node_modules/[4m@vitest/runner[24m/dist/index.js:39:7[90m)[39m
+    at callSuiteHook [90m(file:///C:/Users/snake/Desktop/Layla/src/server-worldbuilding/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@2.1.9/node_modules/[4m@vitest/runner[24m/dist/index.js:964:28[90m)[39m
+    at runSuite [90m(file:///C:/Users/snake/Desktop/Layla/src/server-worldbuilding/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@2.1.9/node_modules/[4m@vitest/runner[24m/dist/index.js:1175:35[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+[WikiEntry.service] Neo4j delete attempt 2/3 failed for entity e1. Error: Neo4j unavailable
+    at [90mC:\Users\snake\Desktop\Layla\src\server-worldbuilding\[39msrc\__tests__\WikiEntry.service.test.ts:193:51
+    at runWithTimeout [90m(file:///C:/Users/snake/Desktop/Layla/src/server-worldbuilding/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@2.1.9/node_modules/[4m@vitest/runner[24m/dist/index.js:39:7[90m)[39m
+    at callSuiteHook [90m(file:///C:/Users/snake/Desktop/Layla/src/server-worldbuilding/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@2.1.9/node_modules/[4m@vitest/runner[24m/dist/index.js:964:28[90m)[39m
+    at runSuite [90m(file:///C:/Users/snake/Desktop/Layla/src/server-worldbuilding/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@2.1.9/node_modules/[4m@vitest/runner[24m/dist/index.js:1175:35[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+[WikiEntry.service] Neo4j delete attempt 3/3 failed for entity e1. Error: Neo4j unavailable
+    at [90mC:\Users\snake\Desktop\Layla\src\server-worldbuilding\[39msrc\__tests__\WikiEntry.service.test.ts:193:51
+    at runWithTimeout [90m(file:///C:/Users/snake/Desktop/Layla/src/server-worldbuilding/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@2.1.9/node_modules/[4m@vitest/runner[24m/dist/index.js:39:7[90m)[39m
+    at callSuiteHook [90m(file:///C:/Users/snake/Desktop/Layla/src/server-worldbuilding/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@2.1.9/node_modules/[4m@vitest/runner[24m/dist/index.js:964:28[90m)[39m
+    at runSuite [90m(file:///C:/Users/snake/Desktop/Layla/src/server-worldbuilding/[39mnode_modules/[4m.pnpm[24m/@vitest+runner@2.1.9/node_modules/[4m@vitest/runner[24m/dist/index.js:1175:35[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:103:5)[39m
+[WikiEntry.service] All Neo4j delete retries exhausted for entity e1. Orphaned node may remain.
+
+[90mstderr[2m | src/__tests__/WikiEntry.service.test.ts[2m > [22m[2mdeleteEntry[2m > [22m[2mwhen Neo4j delete succeeds on the second attempt
+[22m[39m[WikiEntry.service] Neo4j delete attempt 1/3 failed for entity e1. Error: transient
+    at Object.<anonymous> [90m(C:\Users\snake\Desktop\Layla\src\server-worldbuilding\[39msrc\__tests__\WikiEntry.service.test.ts:221:32[90m)[39m
+    at Object.mockCall [90m(file:///C:/Users/snake/Desktop/Layla/src/server-worldbuilding/[39mnode_modules/[4m.pnpm[24m/@vitest+spy@2.1.9/node_modules/[4m@vitest/spy[24m/dist/index.js:61:17[90m)[39m
+    at Object.spy [as deleteEntity] [90m(file:///C:/Users/snake/Desktop/Layla/src/server-worldbuilding/[39mnode_modules/[4m.pnpm[24m/tinyspy@3.0.2/node_modules/[4mtinyspy[24m/dist/index.js:45:80[90m)[39m
+    at Module.deleteEntry [90m(C:\Users\snake\Desktop\Layla\src\server-worldbuilding\[39msrc\services\WikiEntry.service.ts:133:28[90m)[39m
+
+ [32m✓[39m src/__tests__/WikiEntry.service.test.ts [2m([22m[2m17 tests[22m[2m)[22m[90m 35[2mms[22m[39m
+ [32m✓[39m src/__tests__/ManageJWT.test.ts [2m([22m[2m8 tests[22m[2m)[22m[90m 15[2mms[22m[39m
+ [32m✓[39m src/__tests__/Auth.test.ts [2m([22m[2m27 tests[22m[2m)[22m[90m 18[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+[2m      Tests [22m [1m[32m131 passed[39m[22m[90m (131)[39m
+[2m   Start at [22m 21:34:54
+[2m   Duration [22m 993ms[2m (transform 906ms, setup 0ms, collect 1.69s, tests 134ms, environment 2ms, prepare 1.53s)[22m
+
+
+# Finished: 2026-06-09T21:34:56.0840762-06:00
+# ExitCode: 0

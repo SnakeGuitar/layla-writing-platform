@@ -1,0 +1,10 @@
+# Jenkins availability check
+
+Command:
+Invoke-WebRequest http://localhost:8080/login -UseBasicParsing
+
+Result:
+No es posible conectar con el servidor remoto.
+
+Interpretation:
+Jenkins was not running locally on http://localhost:8080 when this evidence was generated. The remaining logs execute the same verification stages expected in the Jenkins pipeline: tool preflight, .NET tests, Node/TypeScript tests, builds, Vagrant validation, Docker Compose validation, and kubectl client validation.

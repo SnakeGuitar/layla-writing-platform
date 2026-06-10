@@ -1,0 +1,10 @@
+﻿# Layla Jenkins evidence: 06-infra-validation
+# Started: 2026-06-09T21:35:08.2010422-06:00
+# Workdir: C:\Users\snake\Desktop\Layla
+# Command: cd deploy\vagrant && vagrant validate && vagrant status && cd ..\.. && docker compose -f deploy\vagrant\files\compose\compose.data.yml --env-file deploy\vagrant\files\env\.env.shared.example config --quiet && docker compose -f deploy\vagrant\files\compose\compose.apps.yml --env-file deploy\vagrant\files\env\.env.shared.example config --quiet && docker compose -f deploy\vagrant\files\compose\compose.edge.yml --env-file deploy\vagrant\files\env\.env.shared.example config --quiet && kubectl version --client=true
+
+Client Version: v1.34.1
+Kustomize Version: v5.7.1
+
+# Finished: 2026-06-09T21:35:31.5790804-06:00
+# ExitCode: 0
