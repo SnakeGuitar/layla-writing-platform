@@ -1,0 +1,108 @@
+# Continuous Deployment — the GitHub Actions equivalent of the Jenkins
+# `vagrant-docker` deploy stage. It runs on a SELF-HOSTED runner installed on
+# a local Linux server, builds the full Docker Compose stack on that machine
+# and smoke-tests the API gateway. The runner host IS the "local Linux server".
+#
+# Setup instructions: deploy/github-actions/README.md
+name: Deploy (local Linux server)
+
+on:
+  # Auto-deploy after code lands on master.
+  push:
+    branches: [master]
+  # Manual run with the same knobs as the Jenkins parameters.
+  workflow_dispatch:
+    inputs:
+      gateway_url:
+        description: "Base URL used for the smoke test (default http://localhost:5000)."
+        required: false
+        default: ""
+      rebuild:
+        description: "Rebuild images from source before starting (docker compose build)."
+        type: boolean
+        required: false
+        default: true
+
+# Never deploy two commits to the same server at once (mirrors
+# disableConcurrentBuilds() in the Jenkinsfile).
+concurrency:
+  group: deploy-local-linux
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build + deploy on local Linux server
+    # The runner registered on the local Linux server must carry these labels.
+    runs-on: [self-hosted, linux, layla]
+
+    env:
+      COMPOSE_FILE: deploy/docker/docker-compose.yml
+      ENV_FILE: deploy/docker/.env
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Preflight (docker available)
+        run: |
+          docker --version
+          docker compose version
+
+      - name: Render deployment .env
+        # Secrets injected here; the script generates strong demo values for
+        # anything left unset, so the workflow works even before secrets exist.
+        env:
+          SQL_PASSWORD: ${{ secrets.SQL_PASSWORD }}
+          MONGO_INITDB_ROOT_PASSWORD: ${{ secrets.MONGO_INITDB_ROOT_PASSWORD }}
+          NEO4J_PASSWORD: ${{ secrets.NEO4J_PASSWORD }}
+          RABBIT_PASSWORD: ${{ secrets.RABBIT_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_SECRET_REFRESH: ${{ secrets.JWT_SECRET_REFRESH }}
+          EMAIL_HOST: ${{ secrets.EMAIL_HOST }}
+          EMAIL_PORT: ${{ secrets.EMAIL_PORT }}
+          EMAIL_USERNAME: ${{ secrets.EMAIL_USERNAME }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+          EMAIL_FROM_NAME: ${{ secrets.EMAIL_FROM_NAME }}
+          EMAIL_FROM_EMAIL: ${{ secrets.EMAIL_FROM_EMAIL }}
+        run: |
+          chmod +x deploy/github-actions/generate-env.sh
+          deploy/github-actions/generate-env.sh "$ENV_FILE"
+
+      - name: Build images
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.rebuild }}
+        run: docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" build --pull
+
+      - name: Deploy (compose up)
+        run: |
+          docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --remove-orphans
+
+      - name: Smoke test — API gateway health
+        env:
+          GATEWAY_URL: ${{ inputs.gateway_url }}
+        run: |
+          url="${GATEWAY_URL:-http://localhost:5000}"
+          case "$url" in */health) ;; *) url="$url/health" ;; esac
+          echo "Probing $url"
+          for attempt in $(seq 1 30); do
+            if curl -fsS "$url" >/dev/null 2>&1; then
+              echo "Gateway healthy after ${attempt} attempt(s)."
+              curl -fsS "$url"; echo
+              exit 0
+            fi
+            echo "Attempt ${attempt}: gateway not ready yet, waiting 10s..."
+            sleep 10
+          done
+          echo "Gateway did not become healthy in time." >&2
+          exit 1
+
+      - name: Show running containers
+        if: always()
+        run: docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" ps
+
+      - name: Dump logs on failure
+        if: failure()
+        run: docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" logs --tail=120
+
+      - name: Remove rendered secrets
+        if: always()
+        run: rm -f "$ENV_FILE"

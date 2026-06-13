@@ -1,0 +1,3 @@
+# The runner executes this script on Linux — force LF so the shebang works
+# regardless of the committer's core.autocrlf setting.
+*.sh text eol=lf

@@ -1,0 +1,148 @@
+# Continuous Integration — mirrors the Restore / Unit Tests / Build / Docker
+# stages of deploy/jenkins/Jenkinsfile, but on GitHub-hosted Linux runners.
+# The Deploy stage lives in deploy.yml (self-hosted local Linux server).
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+# Only keep the latest run per branch/PR.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
+  DOTNET_NOLOGO: "1"
+  CI: "true"
+
+jobs:
+  # ---------- server-core (.NET 10) ----------
+  server-core:
+    name: server-core · test + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            9.0.x
+            10.0.x
+      - name: Restore
+        run: dotnet restore src/server-core/Layla.Core.slnx
+      - name: Test
+        run: >
+          dotnet test src/server-core/Layla.Core.Tests/Layla.Core.Tests.csproj
+          --configuration Release
+          --logger "trx;LogFileName=server-core.trx"
+          --results-directory TestResults/server-core
+      - name: Build
+        run: dotnet build src/server-core/Layla.Core.slnx --configuration Release --no-restore
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testresults-server-core
+          path: TestResults/server-core
+          if-no-files-found: ignore
+
+  # ---------- api-gateway (.NET 9) ----------
+  api-gateway:
+    name: api-gateway · build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            9.0.x
+            10.0.x
+      - name: Restore
+        run: dotnet restore src/api-gateway/api-gateway.sln
+      - name: Build
+        run: dotnet build src/api-gateway/api-gateway.sln --configuration Release --no-restore
+
+  # ---------- client-web (.NET 9 + Tailwind/TS frontend) ----------
+  client-web:
+    name: client-web · test + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            9.0.x
+            10.0.x
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Restore (web + tests)
+        run: |
+          dotnet restore src/client-web/client-web.sln
+          dotnet restore src/client-web.Tests/client-web.Tests.csproj
+      - name: Install frontend packages
+        working-directory: src/client-web
+        run: corepack pnpm install --frozen-lockfile
+      - name: Build frontend (Tailwind + TS)
+        working-directory: src/client-web
+        run: corepack pnpm run build:frontend
+      - name: Test
+        run: >
+          dotnet test src/client-web.Tests/client-web.Tests.csproj
+          --configuration Release
+          --logger "trx;LogFileName=client-web.trx"
+          --results-directory TestResults/client-web
+      - name: Build
+        run: dotnet build src/client-web/client-web.sln --configuration Release --no-restore
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: testresults-client-web
+          path: TestResults/client-web
+          if-no-files-found: ignore
+
+  # ---------- server-worldbuilding (Node 22 + TypeScript) ----------
+  worldbuilding:
+    name: server-worldbuilding · test + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Enable Corepack
+        run: corepack enable
+      - name: Install packages
+        working-directory: src/server-worldbuilding
+        run: corepack pnpm install --frozen-lockfile
+      - name: Test
+        working-directory: src/server-worldbuilding
+        run: corepack pnpm test
+      - name: Build
+        working-directory: src/server-worldbuilding
+        run: corepack pnpm run build
+
+  # ---------- Docker images (validates every Dockerfile builds) ----------
+  docker-images:
+    name: docker images · build
+    runs-on: ubuntu-latest
+    needs: [server-core, api-gateway, client-web, worldbuilding]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build server-core image
+        run: docker build -t layla-server-core:ci -f src/server-core/Layla.Api/Dockerfile src/server-core
+      - name: Build worldbuilding image
+        run: docker build -t layla-worldbuilding:ci src/server-worldbuilding
+      - name: Build api-gateway image
+        run: docker build -t layla-api-gateway:ci src/api-gateway
+      - name: Build client-web image
+        run: docker build -t layla-client-web:ci -f src/client-web/Dockerfile src
