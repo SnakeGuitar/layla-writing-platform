@@ -6,6 +6,30 @@ let captureId = 0;
 
 const CAPTURE_BUFFER_SIZE = 1024;
 
+function closeAudioContext(context) {
+    if (!context || context.state === "closed") return;
+
+    context.close().catch(error => {
+        if (error?.name !== "InvalidStateError") {
+            console.error("Failed to close AudioContext.", error);
+        }
+    });
+}
+
+function disconnectProcessor() {
+    if (!processor) return;
+
+    try {
+        processor.disconnect();
+    } catch (error) {
+        if (error?.name !== "InvalidStateError") {
+            console.error("Failed to disconnect audio processor.", error);
+        }
+    } finally {
+        processor = null;
+    }
+}
+
 export async function startCapture(dotNetReference) {
     stopCapture();
     const currentCaptureId = ++captureId;
@@ -24,7 +48,7 @@ export async function startCapture(dotNetReference) {
 
     if (currentCaptureId !== captureId || audioContext !== context) {
         stream.getTracks().forEach(t => t.stop());
-        await context.close();
+        closeAudioContext(context);
         return;
     }
 
@@ -54,31 +78,31 @@ export async function startCapture(dotNetReference) {
 
 export function stopCapture() {
     captureId++;
-    if (processor) {
-        processor.disconnect();
-        processor = null;
-    }
+    disconnectProcessor();
+
     if (mediaStream) {
         mediaStream.getTracks().forEach(t => t.stop());
         mediaStream = null;
     }
+
     if (audioContext) {
-        audioContext.close();
+        closeAudioContext(audioContext);
         audioContext = null;
     }
+
     dotNetRef = null;
 }
 
 let playbackContext = null;
 
 export function initPlayback() {
-    if (!playbackContext) {
+    if (!playbackContext || playbackContext.state === "closed") {
         playbackContext = new AudioContext({ sampleRate: 16000 });
     }
 }
 
 export function playAudio(base64Data) {
-    if (!playbackContext) return;
+    if (!playbackContext || playbackContext.state === "closed") return;
 
     const binary = atob(base64Data);
     const bytes = new Uint8Array(binary.length);
@@ -102,7 +126,7 @@ export function playAudio(base64Data) {
 
 export function disposePlayback() {
     if (playbackContext) {
-        playbackContext.close();
+        closeAudioContext(playbackContext);
         playbackContext = null;
     }
 }
