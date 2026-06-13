@@ -125,6 +125,12 @@ docker compose -f deploy/docker/docker-compose.yml ps
 curl -fsS http://localhost:5000/health
 ```
 
+## Evidencia
+
+La carpeta [`evidence/`](evidence/) contiene logs y capturas que demuestran que
+las etapas del pipeline se ejecutan correctamente (preflight, pruebas, builds y
+validacion del Compose y los workflows). Ver [evidence/README.md](evidence/README.md).
+
 ## Troubleshooting
 
 - **El job de deploy queda en cola ("Waiting for a runner"):** el runner no está

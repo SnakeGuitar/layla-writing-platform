@@ -1,0 +1,79 @@
+# Layla GitHub Actions evidence: 05-builds
+# Title: Release builds: api-gateway, client-web (frontend+.NET), worldbuilding
+# Started: 2026-06-12T20:35:12-06:00
+# Workdir: C:/Users/snake/Desktop/Layla
+# Command: bash -c 
+set -e
+echo "=== api-gateway build ==="
+dotnet build src/api-gateway/api-gateway.sln --configuration Release
+echo "=== client-web frontend (Tailwind + TS) ==="
+( cd src/client-web && corepack pnpm install --frozen-lockfile && corepack pnpm run build:frontend )
+echo "=== client-web .NET build ==="
+dotnet build src/client-web/client-web.sln --configuration Release
+echo "=== server-worldbuilding build (tsc) ==="
+( cd src/server-worldbuilding && corepack pnpm run build )
+echo "ALL BUILDS OK"
+
+=== api-gateway build ===
+  Determinando los proyectos que se van a restaurar...
+  Se ha restaurado C:\Users\snake\Desktop\Layla\src\api-gateway\api-gateway.csproj (en 324 ms).
+  api-gateway -> C:\Users\snake\Desktop\Layla\src\api-gateway\bin\Release\net9.0\api-gateway.dll
+
+Compilación correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:02.49
+=== client-web frontend (Tailwind + TS) ===
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 1, reused 0, downloaded 0, added 0
+Packages: +30
+++++++++++++++++++++++++++++++
+Progress: resolved 30, reused 11, downloaded 11, added 21
+Progress: resolved 30, reused 11, downloaded 18, added 29
+Progress: resolved 30, reused 11, downloaded 19, added 29
+Progress: resolved 30, reused 11, downloaded 19, added 30, done
+
+dependencies:
++ chart.js 4.5.1
+
+devDependencies:
++ @tailwindcss/cli 4.2.1
++ tailwindcss 4.2.1
++ typescript 5.9.3
+
+╭ Warning ─────────────────────────────────────────────────────────────────────╮
+│                                                                              │
+│   Ignored build scripts: @parcel/watcher@2.5.6.                              │
+│   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+│   to run scripts.                                                            │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Done in 3.5s using pnpm v10.31.0
+
+> client-web@1.0.0 build:frontend C:\Users\snake\Desktop\Layla\src\client-web
+> tailwindcss -i ./UI/Styles/Styles.css -o ./wwwroot/styles/styles.css && tsc
+
+[3m[1m[34m≈[39m[22m[23m tailwindcss [34mv4.2.1[39m
+
+Done in [34m132ms[39m
+=== client-web .NET build ===
+  Determinando los proyectos que se van a restaurar...
+  Todos los proyectos están actualizados para la restauración.
+  client-shared -> C:\Users\snake\Desktop\Layla\src\client-shared\bin\Debug\net9.0\Layla.Client.Shared.dll
+  client-web -> C:\Users\snake\Desktop\Layla\src\client-web\bin\Release\net9.0\client-web.dll
+
+Compilación correcta.
+    0 Advertencia(s)
+    0 Errores
+
+Tiempo transcurrido 00:00:04.78
+=== server-worldbuilding build (tsc) ===
+
+> server-worldbuilding@1.0.0 build C:\Users\snake\Desktop\Layla\src\server-worldbuilding
+> tsc
+
+ALL BUILDS OK
+
+# Finished: 2026-06-12T20:35:31-06:00
+# ExitCode: 0

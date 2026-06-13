@@ -1,0 +1,39 @@
+# Layla GitHub Actions evidence: 02-server-core-tests
+# Title: server-core unit tests (xUnit)
+# Started: 2026-06-12T20:34:25-06:00
+# Workdir: C:/Users/snake/Desktop/Layla
+# Command: bash -c 
+dotnet test src/server-core/Layla.Core.Tests/Layla.Core.Tests.csproj --configuration Release --logger "trx;LogFileName=server-core.trx" --results-directory TestResults/server-core
+
+  Determinando los proyectos que se van a restaurar...
+C:\Users\snake\Desktop\Layla\src\server-core\Layla.Infrastructure\Layla.Infrastructure.csproj : warning NU1902: El paquete "SharpCompress" 0.30.1 tiene una vulnerabilidad de gravedad moderada conocida, https://github.com/advisories/GHSA-6c8g-7p36-r338 [C:\Users\snake\Desktop\Layla\src\server-core\Layla.Core.Tests\Layla.Core.Tests.csproj]
+C:\Users\snake\Desktop\Layla\src\server-core\Layla.Api\Layla.Api.csproj : warning NU1510: PackageReference Microsoft.Extensions.Diagnostics.HealthChecks no se eliminará. Considere la posibilidad de quitar este paquete de las dependencias, ya que es probable que no sea necesario. [C:\Users\snake\Desktop\Layla\src\server-core\Layla.Core.Tests\Layla.Core.Tests.csproj]
+C:\Users\snake\Desktop\Layla\src\server-core\Layla.Api\Layla.Api.csproj : warning NU1902: El paquete "SharpCompress" 0.30.1 tiene una vulnerabilidad de gravedad moderada conocida, https://github.com/advisories/GHSA-6c8g-7p36-r338 [C:\Users\snake\Desktop\Layla\src\server-core\Layla.Core.Tests\Layla.Core.Tests.csproj]
+C:\Users\snake\Desktop\Layla\src\server-core\Layla.Infrastructure\Layla.Infrastructure.csproj : warning NU1903: El paquete "Snappier" 1.0.0 tiene una vulnerabilidad de gravedad alta conocida, https://github.com/advisories/GHSA-pggp-6c3x-2xmx [C:\Users\snake\Desktop\Layla\src\server-core\Layla.Core.Tests\Layla.Core.Tests.csproj]
+C:\Users\snake\Desktop\Layla\src\server-core\Layla.Api\Layla.Api.csproj : warning NU1903: El paquete "Snappier" 1.0.0 tiene una vulnerabilidad de gravedad alta conocida, https://github.com/advisories/GHSA-pggp-6c3x-2xmx [C:\Users\snake\Desktop\Layla\src\server-core\Layla.Core.Tests\Layla.Core.Tests.csproj]
+C:\Users\snake\Desktop\Layla\src\server-core\Layla.Core.Tests\Layla.Core.Tests.csproj : warning NU1902: El paquete "SharpCompress" 0.30.1 tiene una vulnerabilidad de gravedad moderada conocida, https://github.com/advisories/GHSA-6c8g-7p36-r338
+C:\Users\snake\Desktop\Layla\src\server-core\Layla.Core.Tests\Layla.Core.Tests.csproj : warning NU1903: El paquete "Snappier" 1.0.0 tiene una vulnerabilidad de gravedad alta conocida, https://github.com/advisories/GHSA-pggp-6c3x-2xmx
+  Todos los proyectos están actualizados para la restauración.
+C:\Users\snake\Desktop\Layla\src\server-core\Layla.Core.Tests\Layla.Core.Tests.csproj : warning NU1902: El paquete "SharpCompress" 0.30.1 tiene una vulnerabilidad de gravedad moderada conocida, https://github.com/advisories/GHSA-6c8g-7p36-r338
+C:\Users\snake\Desktop\Layla\src\server-core\Layla.Core.Tests\Layla.Core.Tests.csproj : warning NU1903: El paquete "Snappier" 1.0.0 tiene una vulnerabilidad de gravedad alta conocida, https://github.com/advisories/GHSA-pggp-6c3x-2xmx
+C:\Users\snake\Desktop\Layla\src\server-core\Layla.Infrastructure\Layla.Infrastructure.csproj : warning NU1902: El paquete "SharpCompress" 0.30.1 tiene una vulnerabilidad de gravedad moderada conocida, https://github.com/advisories/GHSA-6c8g-7p36-r338
+C:\Users\snake\Desktop\Layla\src\server-core\Layla.Infrastructure\Layla.Infrastructure.csproj : warning NU1903: El paquete "Snappier" 1.0.0 tiene una vulnerabilidad de gravedad alta conocida, https://github.com/advisories/GHSA-pggp-6c3x-2xmx
+C:\Users\snake\Desktop\Layla\src\server-core\Layla.Api\Layla.Api.csproj : warning NU1510: PackageReference Microsoft.Extensions.Diagnostics.HealthChecks no se eliminará. Considere la posibilidad de quitar este paquete de las dependencias, ya que es probable que no sea necesario.
+C:\Users\snake\Desktop\Layla\src\server-core\Layla.Api\Layla.Api.csproj : warning NU1902: El paquete "SharpCompress" 0.30.1 tiene una vulnerabilidad de gravedad moderada conocida, https://github.com/advisories/GHSA-6c8g-7p36-r338
+C:\Users\snake\Desktop\Layla\src\server-core\Layla.Api\Layla.Api.csproj : warning NU1903: El paquete "Snappier" 1.0.0 tiene una vulnerabilidad de gravedad alta conocida, https://github.com/advisories/GHSA-pggp-6c3x-2xmx
+  Layla.Core -> C:\Users\snake\Desktop\Layla\src\server-core\Layla.Core\bin\Release\net10.0\Layla.Core.dll
+  Layla.Infrastructure -> C:\Users\snake\Desktop\Layla\src\server-core\Layla.Infrastructure\bin\Release\net10.0\Layla.Infrastructure.dll
+  Layla.Api -> C:\Users\snake\Desktop\Layla\src\server-core\Layla.Api\bin\Release\net10.0\Layla.Api.dll
+  Layla.Core.Tests -> C:\Users\snake\Desktop\Layla\src\server-core\Layla.Core.Tests\bin\Release\net10.0\Layla.Core.Tests.dll
+Serie de pruebas para C:\Users\snake\Desktop\Layla\src\server-core\Layla.Core.Tests\bin\Release\net10.0\Layla.Core.Tests.dll (.NETCoreApp,Version=v10.0)
+Versión 18.0.2 (x64) de VSTest
+
+Iniciando la ejecución de pruebas, espere...
+1 archivos de prueba en total coincidieron con el patrón especificado.
+ADVERTENCIA: Se sobrescribirá el archivo de resultados: C:\Users\snake\Desktop\Layla\TestResults\server-core\server-core.trx
+Archivo de resultados: C:\Users\snake\Desktop\Layla\TestResults\server-core\server-core.trx
+
+Correctas! - Con error:     0, Superado:   187, Omitido:     0, Total:   187, Duración: 1 s - Layla.Core.Tests.dll (net10.0)
+
+# Finished: 2026-06-12T20:34:41-06:00
+# ExitCode: 0

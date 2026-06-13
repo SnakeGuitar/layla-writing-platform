@@ -1,0 +1,11 @@
+# Layla GitHub Actions evidence: 00-actions-runner-check
+# Title: GitHub Actions runner note
+# Note:
+# GitHub Actions CI (ci.yml) runs on GitHub-hosted runners (ubuntu-latest).
+# The deploy (deploy.yml) runs on a SELF-HOSTED runner installed on the local
+# Linux server, selected by: runs-on: [self-hosted, linux, layla].
+#
+# No live cloud/self-hosted run was triggered while capturing this evidence.
+# The logs in this folder reproduce the exact workflow steps locally, using the
+# same commands the workflows define, to demonstrate they succeed.
+# ExitCode: 0

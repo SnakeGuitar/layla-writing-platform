@@ -1,0 +1,25 @@
+# Layla GitHub Actions evidence: 03-client-web-tests
+# Title: client-web unit tests (xUnit)
+# Started: 2026-06-12T20:34:42-06:00
+# Workdir: C:/Users/snake/Desktop/Layla
+# Command: bash -c 
+dotnet test src/client-web.Tests/client-web.Tests.csproj --configuration Release --logger "trx;LogFileName=client-web.trx" --results-directory TestResults/client-web
+
+  Determinando los proyectos que se van a restaurar...
+  Se ha restaurado C:\Users\snake\Desktop\Layla\src\client-web.Tests\client-web.Tests.csproj (en 495 ms).
+  2 de 3 proyectos están actualizados para la restauración.
+  client-shared -> C:\Users\snake\Desktop\Layla\src\client-shared\bin\Release\net9.0\Layla.Client.Shared.dll
+  client-web -> C:\Users\snake\Desktop\Layla\src\client-web\bin\Release\net9.0\client-web.dll
+  client-web.Tests -> C:\Users\snake\Desktop\Layla\src\client-web.Tests\bin\Release\net9.0\client-web.Tests.dll
+Serie de pruebas para C:\Users\snake\Desktop\Layla\src\client-web.Tests\bin\Release\net9.0\client-web.Tests.dll (.NETCoreApp,Version=v9.0)
+Versión 18.0.2 (x64) de VSTest
+
+Iniciando la ejecución de pruebas, espere...
+1 archivos de prueba en total coincidieron con el patrón especificado.
+ADVERTENCIA: Se sobrescribirá el archivo de resultados: C:\Users\snake\Desktop\Layla\TestResults\client-web\client-web.trx
+Archivo de resultados: C:\Users\snake\Desktop\Layla\TestResults\client-web\client-web.trx
+
+Correctas! - Con error:     0, Superado:     5, Omitido:     0, Total:     5, Duración: 315 ms - client-web.Tests.dll (net9.0)
+
+# Finished: 2026-06-12T20:34:55-06:00
+# ExitCode: 0

@@ -1,0 +1,49 @@
+# Layla GitHub Actions evidence: 06-deploy-validation
+# Title: Deploy config validation: .env render + compose config + workflow YAML
+# Started: 2026-06-12T20:35:44-06:00
+# Workdir: C:/Users/snake/Desktop/Layla
+# Command: bash -c 
+set -e
+echo "=== generate-env.sh (single-host .env) ==="
+SQL_PASSWORD="***REDACTED***" bash deploy/github-actions/generate-env.sh deploy/docker/.env
+echo "variables rendered: $(grep -cE "^[A-Z]" deploy/docker/.env)"
+echo ""
+echo "=== docker compose config (validate interpolation of 8 services) ==="
+docker compose --env-file deploy/docker/.env -f deploy/docker/docker-compose.yml config --quiet && echo "compose config: VALID"
+echo "services:"
+docker compose --env-file deploy/docker/.env -f deploy/docker/docker-compose.yml config --services | sort
+echo ""
+echo "=== workflow YAML validation ==="
+python -c "import yaml; [print(f, \"OK\") for f in [\".github/workflows/ci.yml\",\".github/workflows/deploy.yml\"] if yaml.safe_load(open(f, encoding=\"utf-8\")) is not None]"
+echo ""
+echo "=== runner selector in deploy.yml ==="
+grep -n "runs-on" .github/workflows/deploy.yml
+rm -f deploy/docker/.env
+echo "cleaned rendered .env"
+
+=== generate-env.sh (single-host .env) ===
+Wrote deploy/docker/.env
+variables rendered: 40
+
+=== docker compose config (validate interpolation of 8 services) ===
+compose config: VALID
+services:
+layla-api-gateway
+layla-web
+layla-worldbuilding
+mongodb
+neo4j
+rabbitmq
+server-core
+sqlserver
+
+=== workflow YAML validation ===
+.github/workflows/ci.yml OK
+.github/workflows/deploy.yml OK
+
+=== runner selector in deploy.yml ===
+36:    runs-on: [self-hosted, linux, layla]
+cleaned rendered .env
+
+# Finished: 2026-06-12T20:35:46-06:00
+# ExitCode: 0
