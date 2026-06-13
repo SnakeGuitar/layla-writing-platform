@@ -99,7 +99,10 @@ public static class Builder
         });
 
         builder.Services.AddInfrastructureServices(builder.Configuration);
-        builder.Services.AddSignalR()
+        builder.Services.AddSignalR(options =>
+            {
+                options.EnableDetailedErrors = builder.Environment.IsDevelopment();
+            })
             .AddHubOptions<ManuscriptHub>(opts =>
             {
                 // Detect abrupt client disconnects in ~10 s instead of the default 30 s.

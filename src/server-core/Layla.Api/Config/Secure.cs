@@ -50,7 +50,8 @@ public static class Secure
                         var path = context.HttpContext.Request.Path;
                         if (!string.IsNullOrEmpty(accessToken) &&
                             (path.StartsWithSegments("/hubs/voice") ||
-                            path.StartsWithSegments("/hubs/presence")))
+                            path.StartsWithSegments("/hubs/presence") ||
+                            path.StartsWithSegments("/hubs/manuscript")))
                         {
                             context.Token = accessToken;
                         }
