@@ -4,7 +4,7 @@ enum AudioState
 {
     StartSpeaking,
     StopSpeaking,
-    SendingAudio
+    SendAudio
 }
 
 /// <summary>

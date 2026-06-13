@@ -141,7 +141,7 @@ public class SignalRClient : ISignalRClient
     public async Task InvokeSafeAsync(string method, params object[] args)
     {
         if (!IsConnected || Hub == null) return;
-        await Hub.InvokeAsync(method, args);
+        await Hub.InvokeCoreAsync(method, args);
     }
 
     public void On<T>(string methodName, Action<T> handler)

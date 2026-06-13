@@ -12,6 +12,7 @@ public class VoiceService : IVoiceService
     private readonly ISignalRClient _client;
     private readonly string _baseUrl;
     private readonly ILogger<VoiceService> _logger;
+    private Guid? _joinedProjectId;
 
     public VoiceService(ISignalRClient client, IConfiguration configuration, ILogger<VoiceService> logger)
     {
@@ -68,7 +69,20 @@ public class VoiceService : IVoiceService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error calling {Method}", method);
+            throw;
         }
+    }
+
+    private static void ThrowIfEmptyProjectId(Guid projectId)
+    {
+        if (projectId == Guid.Empty)
+            throw new InvalidOperationException("A valid project ID is required to use the voice room.");
+    }
+
+    private void ThrowIfNotInRoom(Guid projectId)
+    {
+        if (_joinedProjectId != projectId)
+            throw new InvalidOperationException("Join the voice room before sending voice events.");
     }
 
     // IVoiceConnectionService ----------------------------------------------------------
@@ -82,6 +96,7 @@ public class VoiceService : IVoiceService
 
     public async Task DisconnectAsync()
     {
+        _joinedProjectId = null;
         await _client.DisconnectAsync();
         _handlersRegistered = false;
     }
@@ -98,21 +113,42 @@ public class VoiceService : IVoiceService
 
     public async Task JoinRoomAsync(Guid projectId)
     {
+        ThrowIfEmptyProjectId(projectId);
         await InvokeSafeAsync(RoomAccessState.JoinRoom, projectId);
+        _joinedProjectId = projectId;
     }
 
-    public async Task LeaveRoomAsync(Guid projectId) =>
+    public async Task LeaveRoomAsync(Guid projectId)
+    {
+        ThrowIfEmptyProjectId(projectId);
+        if (_joinedProjectId != projectId)
+            return;
+
         await InvokeSafeAsync(RoomAccessState.LeaveRoom, projectId);
+        _joinedProjectId = null;
+    }
 
     // IVoiceAudioService -----------------------------------------------------------
     public event EventHandler<(string senderId, byte[] audio)>? OnAudioReceived;
 
-    public async Task StartSpeakingAsync(Guid projectId) =>
+    public async Task StartSpeakingAsync(Guid projectId)
+    {
+        ThrowIfEmptyProjectId(projectId);
+        ThrowIfNotInRoom(projectId);
         await InvokeSafeAsync(AudioState.StartSpeaking, projectId);
+    }
 
-    public async Task StopSpeakingAsync(Guid projectId) =>
+    public async Task StopSpeakingAsync(Guid projectId)
+    {
+        ThrowIfEmptyProjectId(projectId);
+        ThrowIfNotInRoom(projectId);
         await InvokeSafeAsync(AudioState.StopSpeaking, projectId);
+    }
 
-    public async Task SendAudioAsync(Guid projectId, byte[] audioData) =>
-        await InvokeSafeAsync(AudioState.SendingAudio, projectId, audioData);
+    public async Task SendAudioAsync(Guid projectId, byte[] audioData)
+    {
+        ThrowIfEmptyProjectId(projectId);
+        ThrowIfNotInRoom(projectId);
+        await InvokeSafeAsync(AudioState.SendAudio, projectId, audioData);
+    }
 }
