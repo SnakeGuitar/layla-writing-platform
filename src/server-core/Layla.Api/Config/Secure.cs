@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 
 namespace Layla.Api.Config;
 
@@ -38,7 +40,7 @@ public static class Secure
                     ValidIssuer = builder.Configuration["JwtSettings:Issuer"],
                     ValidAudience = builder.Configuration["JwtSettings:Audience"],
                     NameClaimType = ClaimNames.Name,
-                    RoleClaimType = ClaimNames.Role,
+                    RoleClaimType = ClaimTypes.Role,
                     IssuerSigningKey = new SymmetricSecurityKey(new UTF8Encoding().GetBytes(jwtSecret))
                 };
                 options.Events = new JwtBearerEvents
@@ -61,6 +63,7 @@ public static class Secure
                     {
                         var validator = context.HttpContext.RequestServices.GetRequiredService<TokenVersionValidator>();
                         await validator.ValidateAsync(context);
+                        ExpandRoleArrayClaims(context.Principal);
                     }
                 };
             });
@@ -90,5 +93,35 @@ public static class Secure
             });
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
         });
+    }
+
+    private static void ExpandRoleArrayClaims(ClaimsPrincipal? principal)
+    {
+        if (principal?.Identity is not ClaimsIdentity identity)
+            return;
+
+        foreach (var roleClaim in principal.FindAll(ClaimNames.Role).ToList())
+        {
+            var value = roleClaim.Value.Trim();
+            if (!value.StartsWith("[", StringComparison.Ordinal))
+                continue;
+
+            try
+            {
+                var roles = JsonSerializer.Deserialize<string[]>(value) ?? [];
+                foreach (var role in roles)
+                {
+                    if (!string.IsNullOrWhiteSpace(role) &&
+                        !principal.HasClaim(ClaimTypes.Role, role))
+                    {
+                        identity.AddClaim(new Claim(ClaimTypes.Role, role));
+                    }
+                }
+            }
+            catch (JsonException)
+            {
+                // Leave malformed role claims untouched; normal authorization will reject them.
+            }
+        }
     }
 }

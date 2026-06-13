@@ -28,7 +28,14 @@
   --nm-accent-hover: #2E5CE6;
   --nm-error: #FF7675;
   --nm-success: #55EFC4;
+  --nm-graph-edge: rgba(255, 255, 255, 0.1);
+  --nm-graph-edge-solid: #3A3A40;
   --nm-font: 'Inter', system-ui, sans-serif;
+  --color-base-gray-1: #1E1E2E;
+  --color-base-gray-2: #252538;
+  --color-base-gray-3: #2A2A3E;
+  --color-base-gray-4: #141420;
+  --color-base-gray-5: #2A2A3E;
 }
 
 :root[data-theme="light"] {
@@ -42,6 +49,13 @@
   --nm-accent-hover: #2E5CE6;
   --nm-error: #D94F4F;
   --nm-success: #168F73;
+  --nm-graph-edge: rgba(37, 40, 58, 0.24);
+  --nm-graph-edge-solid: #9AA1B4;
+  --color-base-gray-1: #E7E9F0;
+  --color-base-gray-2: #DDE1EA;
+  --color-base-gray-3: #D1D6E2;
+  --color-base-gray-4: #B8BDCC;
+  --color-base-gray-5: #9AA1B4;
 }
 
 html,

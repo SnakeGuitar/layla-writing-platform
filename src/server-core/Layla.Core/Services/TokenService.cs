@@ -41,6 +41,7 @@ namespace Layla.Core.Services
             foreach (var role in roles)
             {
                 claims.Add(new Claim(ClaimNames.Role, role));
+                claims.Add(new Claim(ClaimTypes.Role, role));
             }
 
             var credentials = new SigningCredentials(_key, SecurityAlgorithms.HmacSha512Signature);
