@@ -1,0 +1,116 @@
+@using client_web.Application.Services.Donations
+@using client_web.Models.Donations
+@inject IDonationService DonationService
+
+@if (IsOpen)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/70" @onclick="CloseAsync"></div>
+        <div class="nm-card relative z-10 w-full max-w-3xl bg-base-gray-1">
+            <div class="nm-card-header">
+                <h3 class="nm-text-title text-sm uppercase">Donaciones de @ProjectTitle</h3>
+                <button @onclick="CloseAsync" class="nm-text-label hover:nm-text-label">Cerrar</button>
+            </div>
+
+            @if (_loading)
+            {
+                <p class="nm-text-label text-sm text-[var(--nm-text-secondary)]">Cargando donaciones...</p>
+            }
+            else
+            {
+                <div class="grid sm:grid-cols-3 gap-3 mb-5">
+                    <div class="nm-card p-3">
+                        <span class="nm-text-label">Total</span>
+                        <p class="nm-text-title text-sm">@((_summary?.TotalAmount ?? 0).ToString("0.00")) @ReportCurrency</p>
+                    </div>
+                    <div class="nm-card p-3">
+                        <span class="nm-text-label">Donativos</span>
+                        <p class="nm-text-title text-sm">@(_summary?.DonationCount ?? 0)</p>
+                    </div>
+                    <div class="nm-card p-3">
+                        <span class="nm-text-label">Ultimo</span>
+                        <p class="nm-text-title text-sm">@FormatDate(_summary?.LastDonationAt)</p>
+                    </div>
+                </div>
+
+                @if (_donations.Count == 0)
+                {
+                    <p class="nm-text-label text-sm text-[var(--nm-text-secondary)]">Este proyecto aun no tiene donaciones capturadas.</p>
+                }
+                else
+                {
+                    <div class="overflow-x-auto border border-[var(--nm-shadow-dark)]">
+                        <table class="w-full text-xs font-mono">
+                            <thead class="bg-[var(--nm-surface)] nm-text-label">
+                                <tr>
+                                    <th class="text-left p-2">Fecha</th>
+                                    <th class="text-left p-2">Donante</th>
+                                    <th class="text-right p-2">Monto</th>
+                                    <th class="text-left p-2">Estado</th>
+                                    <th class="text-left p-2">PayPal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var donation in _donations)
+                                {
+                                    <tr class="border-t border-[var(--nm-shadow-dark)]">
+                                        <td class="p-2">@FormatDate(donation.CapturedAt ?? donation.CreatedAt)</td>
+                                        <td class="p-2">@donation.DonorDisplayName</td>
+                                        <td class="p-2 text-right">@donation.Amount.ToString("0.00") @donation.Currency</td>
+                                        <td class="p-2">@donation.Status</td>
+                                        <td class="p-2">@ShortPayPalId(donation)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public Guid ProjectId { get; set; }
+    [Parameter] public string ProjectTitle { get; set; } = string.Empty;
+
+    private bool _loading;
+    private Guid _loadedProjectId;
+    private DonationSummary? _summary;
+    private List<Donation> _donations = new();
+
+    private string ReportCurrency => _summary?.Currency ?? _donations.FirstOrDefault()?.Currency ?? "MXN";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!IsOpen || ProjectId == Guid.Empty || _loadedProjectId == ProjectId) return;
+
+        _loadedProjectId = ProjectId;
+        _loading = true;
+        try
+        {
+            _summary = await DonationService.GetProjectDonationSummaryAsync(ProjectId);
+            _donations = (await DonationService.GetProjectDonationsAsync(ProjectId)).ToList();
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task CloseAsync()
+    {
+        await IsOpenChanged.InvokeAsync(false);
+    }
+
+    private static string FormatDate(DateTime? value) =>
+        value.HasValue ? value.Value.ToString("yyyy-MM-dd HH:mm") : "-";
+
+    private static string ShortPayPalId(Donation donation)
+    {
+        var value = donation.PayPalCaptureId ?? donation.PayPalOrderId;
+        return value.Length > 12 ? $"{value[..12]}..." : value;
+    }
+}

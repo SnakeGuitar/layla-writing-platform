@@ -3,6 +3,7 @@
 @using client_web.Application.Services.Session
 @using client_web.Models
 @using client_web.UI.Components
+@using client_web.UI.Components.Donations
 @inject IProjectService ProjectService
 @inject ISessionManager Session
 @inject NavigationManager Navigation
@@ -57,6 +58,7 @@ else
                 <div class="flex justify-end gap-2 mt-2">
                     @if (project.UserRole == "OWNER")
                     {
+                        <button @onclick="() => OpenDonationReport(project)" class="nm-button-ghost text-[10px] py-1 px-2">Donaciones</button>
                         <button @onclick="() => OpenEditModal(project)" class="nm-button text-[10px] py-1 px-2">Editar</button>
                         <button @onclick="() => DeleteProjectAsync(project)" class="nm-button-danger text-[10px] py-1 px-2">Eliminar</button>
                     }
@@ -65,6 +67,11 @@ else
         }
     </div>
 }
+
+<DonationReportModal IsOpen="@_donationReportOpen"
+                     IsOpenChanged="@(value => _donationReportOpen = value)"
+                     ProjectId="@_donationReportProjectId"
+                     ProjectTitle="@_donationReportProjectTitle" />
 
 @if (_projectModalOpen)
 {
@@ -120,6 +127,9 @@ else
     private bool _formIsPublic;
     private string _formError = string.Empty;
     private string? _error;
+    private bool _donationReportOpen;
+    private Guid _donationReportProjectId;
+    private string _donationReportProjectTitle = string.Empty;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -194,6 +204,15 @@ else
         _formIsPublic = project.IsPublic;
         _formError = string.Empty;
         _projectModalOpen = true;
+    }
+
+    private void OpenDonationReport(Project project)
+    {
+        if (project.UserRole != "OWNER") return;
+
+        _donationReportProjectId = project.Id;
+        _donationReportProjectTitle = project.Title;
+        _donationReportOpen = true;
     }
 
     private void CloseProjectModal()
