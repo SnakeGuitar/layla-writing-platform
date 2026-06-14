@@ -61,6 +61,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IProjectRepository, ProjectRepository>();
         services.AddScoped<IAppUserRepository, AppUserRepository>();
         services.AddScoped<IOutboxRepository, OutboxRepository>();
+        services.AddScoped<IDonationRepository, DonationRepository>();
+        services.AddHttpClient<IPayPalClient, PayPalClient>(client =>
+        {
+            var baseUrl = configuration.GetValue<string>("PayPal:BaseUrl")
+                ?? throw new InvalidOperationException("Missing required PayPal:BaseUrl configuration.");
+            client.BaseAddress = new Uri(baseUrl);
+        });
 
         // RabbitMQ infrastructure:
         // - Connection: low-level RabbitMQ connection wrapper (singleton, auto-reconnect)
