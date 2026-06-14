@@ -1,0 +1,34 @@
+sequenceDiagram
+    autonumber
+    actor Donor as Usuario donante
+    participant Web as client-web (Blazor)
+    participant PayPalJS as PayPal JS SDK
+    participant GW as API Gateway (YARP)
+    participant Core as server-core
+    participant SQL as SQL Server
+    participant PayPal as PayPal Sandbox
+
+    Note over Donor,PayPal: Donativo electronico - aprobar y capturar pago
+
+    Donor->>PayPalJS: Aprueba el pago en Sandbox
+    PayPalJS-->>Web: onApprove(orderID)
+    Web->>GW: POST /api/projects/{id}/donations/paypal/capture (orderId, Bearer JWT)
+    GW->>Core: Proxy a server-core
+    Core->>SQL: SELECT Donation por PayPalOrderId
+    Core->>Core: Valida proyecto y usuario donante
+    Core->>PayPal: POST /v1/oauth2/token
+    PayPal-->>Core: access_token sandbox
+    Core->>PayPal: POST /v2/checkout/orders/{orderId}/capture
+    alt Captura completada
+        PayPal-->>Core: status COMPLETED, captureId
+        Core->>SQL: UPDATE Donation status=Captured, captureId, capturedAt
+        Core-->>GW: 200 donation capturada
+        GW-->>Web: 200 donation capturada
+        Web-->>Donor: Muestra confirmacion del donativo
+    else Captura cancelada o fallida
+        PayPal-->>Core: status distinto de COMPLETED o error HTTP
+        Core->>SQL: UPDATE Donation status=Failed cuando hay respuesta valida
+        Core-->>GW: 400/500 error tipado
+        GW-->>Web: error
+        Web-->>Donor: Muestra mensaje de cancelacion o fallo
+    end

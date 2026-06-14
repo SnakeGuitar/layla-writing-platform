@@ -1,0 +1,41 @@
+sequenceDiagram
+    autonumber
+    actor Author as Autor owner
+    participant Web as client-web (Blazor)
+    participant GW as API Gateway (YARP)
+    participant Core as server-core
+    participant SQL as SQL Server
+
+    Note over Author,SQL: Reporte de donaciones por proyecto
+
+    Author->>Web: Abre Mis proyectos
+    Web->>GW: GET /api/projects (Bearer JWT)
+    GW->>Core: Proxy a server-core
+    Core->>SQL: SELECT Projects + ProjectRoles del usuario
+    Core-->>GW: 200 proyectos con UserRole
+    GW-->>Web: 200 proyectos
+    Web-->>Author: Muestra boton Donaciones solo si UserRole=OWNER
+
+    Author->>Web: Clic en Donaciones
+    par Resumen
+        Web->>GW: GET /api/projects/{id}/donations/summary
+        GW->>Core: Proxy a server-core
+        Core->>SQL: Verifica ProjectRole OWNER
+        Core->>SQL: SUM/COUNT donations Captured
+        Core-->>GW: 200 total, count, currency, lastDonationAt
+        GW-->>Web: 200 resumen
+    and Detalle
+        Web->>GW: GET /api/projects/{id}/donations
+        GW->>Core: Proxy a server-core
+        Core->>SQL: Verifica ProjectRole OWNER
+        Core->>SQL: SELECT Donations + DonorUser
+        Core-->>GW: 200 lista de donaciones
+        GW-->>Web: 200 detalle
+    end
+    Web-->>Author: Muestra total, numero de donativos, donante, estado y referencia PayPal
+
+    alt Usuario no OWNER
+        Core-->>GW: 403 Forbidden
+        GW-->>Web: 403
+        Web-->>Author: No muestra reporte o muestra acceso denegado
+    end
