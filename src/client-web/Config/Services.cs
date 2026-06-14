@@ -3,6 +3,7 @@ using client_web.Application.Config.SignalR;
 using client_web.Application.Services.ActiveStatusAuthor;
 using client_web.Application.Services.Admin;
 using client_web.Application.Services.Auth;
+using client_web.Application.Services.Donations;
 using client_web.Application.Services.Profile;
 using client_web.Application.Services.Projects;
 using client_web.Application.Services.Session;
@@ -48,6 +49,7 @@ public static class Services
         // ── Domain services ──────────────────────────────────────────────────
         services.AddScoped<IPresenceService, PresenceService>();
         services.AddScoped<IProjectService, ProjectService>();
+        services.AddScoped<IDonationService, DonationService>();
         services.AddScoped<IProfileService, ProfileService>();
         services.AddScoped<IAdminService, AdminService>();
         services.AddScoped<client_web.Application.Services.Manuscripts.IManuscriptService, client_web.Application.Services.Manuscripts.ManuscriptService>();

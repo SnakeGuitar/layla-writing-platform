@@ -1,0 +1,157 @@
+@using client_web.Application.Services.Donations
+@using client_web.Application.Services.Session
+@using client_web.Models.Donations
+@implements IAsyncDisposable
+@inject IDonationService DonationService
+@inject ISessionManager Session
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+@if (IsOpen)
+{
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/70" @onclick="CloseAsync"></div>
+        <div class="nm-card relative z-10 w-full max-w-lg bg-base-gray-1">
+            <div class="nm-card-header">
+                <h3 class="nm-text-title text-sm uppercase">Donar a @ProjectTitle</h3>
+                <button @onclick="CloseAsync" class="nm-text-label hover:nm-text-label">Cerrar</button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="nm-input-wrapper">
+                    <label class="nm-text-label">Monto</label>
+                    <input type="number" min="1" step="1" @bind="_amount" class="nm-input w-full" />
+                </div>
+
+                <button @onclick="CreateOrderAsync" class="nm-button text-xs" disabled="@_busy">
+                    @(_busy ? "Preparando PayPal..." : "Continuar con PayPal Sandbox")
+                </button>
+
+                @if (_order is not null)
+                {
+                    <p class="nm-text-label text-[10px]">
+                        Orden @ShortOrderId: @_order.Amount.ToString("0.00") @_order.Currency
+                    </p>
+                    <div id="paypal-donation-buttons" class="min-h-12"></div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(_message))
+                {
+                    <p class="text-xs font-mono @(_success ? "text-[var(--nm-success)]" : "text-[var(--nm-error)]")">@_message</p>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback<bool> IsOpenChanged { get; set; }
+    [Parameter] public Guid ProjectId { get; set; }
+    [Parameter] public string ProjectTitle { get; set; } = string.Empty;
+    [Parameter] public EventCallback OnDonationCompleted { get; set; }
+
+    private decimal _amount = 50;
+    private bool _busy;
+    private bool _success;
+    private bool _shouldRenderPayPal;
+    private string? _message;
+    private PayPalDonationOrder? _order;
+    private DotNetObjectReference<PayPalDonationModal>? _dotNetRef;
+
+    private string ShortOrderId => _order?.OrderId.Length > 10 == true ? $"{_order.OrderId[..10]}..." : _order?.OrderId ?? string.Empty;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_shouldRenderPayPal || _order is null) return;
+
+        _shouldRenderPayPal = false;
+        _dotNetRef ??= DotNetObjectReference.Create(this);
+        await JS.InvokeVoidAsync(
+            "laylaPayPalDonations.renderButton",
+            "paypal-donation-buttons",
+            _order.ClientId,
+            _order.Currency,
+            _order.OrderId,
+            _dotNetRef);
+    }
+
+    private async Task CreateOrderAsync()
+    {
+        if (!Session.IsAuthenticated)
+        {
+            Navigation.NavigateTo($"/auth/login?returnUrl={Uri.EscapeDataString("/projects/explore")}");
+            return;
+        }
+
+        if (_amount <= 0)
+        {
+            _success = false;
+            _message = "Ingresa un monto mayor a cero.";
+            return;
+        }
+
+        _busy = true;
+        _message = null;
+        _order = null;
+        try
+        {
+            var result = await DonationService.CreatePayPalOrderAsync(ProjectId, _amount);
+            if (!result.IsSuccess || result.Data is null)
+            {
+                _success = false;
+                _message = result.Error ?? "No se pudo crear la orden PayPal.";
+                return;
+            }
+
+            _order = result.Data;
+            _shouldRenderPayPal = true;
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    [JSInvokable]
+    public async Task CaptureDonationFromPayPal(string orderId)
+    {
+        _busy = true;
+        _message = "Capturando donativo...";
+        await InvokeAsync(StateHasChanged);
+
+        var result = await DonationService.CapturePayPalOrderAsync(ProjectId, orderId);
+        _busy = false;
+        _success = result.IsSuccess;
+        _message = result.IsSuccess
+            ? "Donativo registrado. Gracias por apoyar este proyecto."
+            : result.Error ?? "PayPal no pudo capturar el donativo.";
+
+        if (result.IsSuccess && OnDonationCompleted.HasDelegate)
+            await OnDonationCompleted.InvokeAsync();
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public Task HandlePayPalError(string message)
+    {
+        _busy = false;
+        _success = false;
+        _message = message;
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private async Task CloseAsync()
+    {
+        _order = null;
+        _message = null;
+        await IsOpenChanged.InvokeAsync(false);
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _dotNetRef?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}

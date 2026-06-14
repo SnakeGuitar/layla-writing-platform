@@ -2,6 +2,7 @@
 @using client_web.Application.Services.Projects
 @using client_web.Application.Services.Session
 @using client_web.Models
+@using client_web.UI.Components.Donations
 @inject IProjectService ProjectService
 @inject ISessionManager Session
 @inject NavigationManager Navigation
@@ -86,25 +87,36 @@
                     <div class="mt-4 pt-3 border-t border-[var(--nm-shadow-dark)] flex items-center justify-between">
                         <span class="nm-text-label text-[10px]">Publico</span>
                         
-                        <button @onclick="() => JoinProjectAsync(project.Id)"
-                                disabled="@_joining"
-                                id="join-btn-@project.Id"
-                                class="nm-button text-xs py-1 px-3">
-                            @if (_joining && _activeJoiningId == project.Id)
-                            {
-                                <span>Uniendo...</span>
-                            }
-                            else
-                            {
-                                <span>Unirme</span>
-                            }
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <button @onclick="() => OpenDonationModal(project)"
+                                    class="nm-button-ghost text-xs py-1 px-3">
+                                Donar
+                            </button>
+                            <button @onclick="() => JoinProjectAsync(project.Id)"
+                                    disabled="@_joining"
+                                    id="join-btn-@project.Id"
+                                    class="nm-button text-xs py-1 px-3">
+                                @if (_joining && _activeJoiningId == project.Id)
+                                {
+                                    <span>Uniendo...</span>
+                                }
+                                else
+                                {
+                                    <span>Unirme</span>
+                                }
+                            </button>
+                        </div>
                     </div>
                 </div>
             }
         </div>
     }
 </div>
+
+<PayPalDonationModal IsOpen="@_donationModalOpen"
+                     IsOpenChanged="@(value => _donationModalOpen = value)"
+                     ProjectId="@_donationProjectId"
+                     ProjectTitle="@_donationProjectTitle" />
 
 @code {
     private List<PublicProjectDto> _publicProjects = new();
@@ -114,6 +126,9 @@
     private Guid? _activeJoiningId;
     private string _searchQuery = string.Empty;
     private string? _error;
+    private bool _donationModalOpen;
+    private Guid _donationProjectId;
+    private string _donationProjectTitle = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -206,5 +221,18 @@
             _activeJoiningId = null;
             StateHasChanged();
         }
+    }
+
+    private void OpenDonationModal(PublicProjectDto project)
+    {
+        if (!Session.IsAuthenticated)
+        {
+            Navigation.NavigateTo($"/auth/login?returnUrl={Uri.EscapeDataString("/projects/explore")}");
+            return;
+        }
+
+        _donationProjectId = project.Id;
+        _donationProjectTitle = project.Title;
+        _donationModalOpen = true;
     }
 }
