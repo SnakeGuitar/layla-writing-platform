@@ -127,6 +127,10 @@ services:
       - RabbitMQ__Password=${RABBIT_PASSWORD}
       - RabbitMQ__VirtualHost=/
       - RabbitMQ__Exchange=worldbuilding.events
+      - PayPal__ClientId=${PAYPAL_CLIENT_ID}
+      - PayPal__ClientSecret=${PAYPAL_CLIENT_SECRET}
+      - PayPal__BaseUrl=${PAYPAL_BASE_URL}
+      - PayPal__Currency=${PAYPAL_CURRENCY}
       - EmailConfigs__Host=${EMAIL_HOST}
       - EmailConfigs__Port=${EMAIL_PORT}
       - EmailConfigs__Username=${EMAIL_USERNAME}
