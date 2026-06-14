@@ -1,5 +1,6 @@
 using Layla.Core.Common;
 using Layla.Core.Constants;
+using Layla.Core.Contracts.Donation;
 using Layla.Core.Contracts.Project;
 using Layla.Core.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -16,11 +17,13 @@ namespace Layla.Api.Controllers;
 public class ProjectsController : ApiControllerBase
 {
     private readonly IProjectService _projectService;
+    private readonly IDonationService _donationService;
 
     /// <summary>Initialises the controller with the project service.</summary>
-    public ProjectsController(IProjectService projectService)
+    public ProjectsController(IProjectService projectService, IDonationService donationService)
     {
         _projectService = projectService;
+        _donationService = donationService;
     }
 
     /// <summary>
@@ -213,6 +216,96 @@ public class ProjectsController : ApiControllerBase
     {
         var result = await _projectService.JoinPublicProjectAsync(id, CurrentUserId, cancellationToken);
 
+        if (!result.IsSuccess)
+            return RespondWithError(result.ErrorCode);
+
+        return Ok(result.Data);
+    }
+
+    /// <summary>
+    /// Create a PayPal Sandbox order for donating to a public project.
+    /// </summary>
+    /// <param name="id">Project ID.</param>
+    /// <param name="request">Donation amount.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">PayPal order metadata for the checkout button.</response>
+    /// <response code="400">Invalid amount or project is not public.</response>
+    /// <response code="401">Missing or invalid JWT.</response>
+    /// <response code="404">Project not found.</response>
+    [HttpPost("{id:guid}/donations/paypal/order")]
+    [ProducesResponseType(typeof(PayPalDonationOrderResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CreateDonationOrder(Guid id, [FromBody] CreatePayPalDonationOrderRequestDto request, CancellationToken cancellationToken)
+    {
+        var result = await _donationService.CreatePayPalOrderAsync(id, request, CurrentUserId, cancellationToken);
+        if (!result.IsSuccess)
+            return RespondWithError(result.ErrorCode);
+
+        return Ok(result.Data);
+    }
+
+    /// <summary>
+    /// Capture an approved PayPal Sandbox donation order.
+    /// </summary>
+    /// <param name="id">Project ID.</param>
+    /// <param name="request">PayPal order ID to capture.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Captured donation.</response>
+    /// <response code="400">PayPal did not complete the capture.</response>
+    /// <response code="401">Missing or invalid JWT.</response>
+    /// <response code="404">Donation order not found.</response>
+    [HttpPost("{id:guid}/donations/paypal/capture")]
+    [ProducesResponseType(typeof(DonationResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CaptureDonationOrder(Guid id, [FromBody] CapturePayPalDonationRequestDto request, CancellationToken cancellationToken)
+    {
+        var result = await _donationService.CapturePayPalOrderAsync(id, request, CurrentUserId, cancellationToken);
+        if (!result.IsSuccess)
+            return RespondWithError(result.ErrorCode);
+
+        return Ok(result.Data);
+    }
+
+    /// <summary>
+    /// List donation records for a project (OWNER only).
+    /// </summary>
+    /// <param name="id">Project ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Project donation records.</response>
+    /// <response code="401">Missing or invalid JWT.</response>
+    /// <response code="403">Caller is not the project owner.</response>
+    [HttpGet("{id:guid}/donations")]
+    [ProducesResponseType(typeof(IEnumerable<DonationResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetProjectDonations(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _donationService.GetProjectDonationsAsync(id, CurrentUserId, cancellationToken);
+        if (!result.IsSuccess)
+            return RespondWithError(result.ErrorCode);
+
+        return Ok(result.Data);
+    }
+
+    /// <summary>
+    /// Get donation totals for a project (OWNER only).
+    /// </summary>
+    /// <param name="id">Project ID.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Project donation summary.</response>
+    /// <response code="401">Missing or invalid JWT.</response>
+    /// <response code="403">Caller is not the project owner.</response>
+    [HttpGet("{id:guid}/donations/summary")]
+    [ProducesResponseType(typeof(DonationSummaryResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetProjectDonationSummary(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _donationService.GetProjectDonationSummaryAsync(id, CurrentUserId, cancellationToken);
         if (!result.IsSuccess)
             return RespondWithError(result.ErrorCode);
 
