@@ -85,20 +85,24 @@
                     </div>
 
                     <div class="mt-4 pt-3 border-t border-[var(--nm-shadow-dark)] flex items-center justify-between">
-                        <span class="nm-text-label text-[10px]">Publico</span>
+                        <span class="nm-text-label text-[10px]">@(IsMember(project.Id) ? "En tu biblioteca" : "Publico")</span>
                         
                         <div class="flex items-center gap-2">
                             <button @onclick="() => OpenDonationModal(project)"
                                     class="nm-button-ghost text-xs py-1 px-3">
                                 Donar
                             </button>
-                            <button @onclick="() => JoinProjectAsync(project.Id)"
+                            <button @onclick="() => HandleProjectActionAsync(project.Id)"
                                     disabled="@_joining"
                                     id="join-btn-@project.Id"
                                     class="nm-button text-xs py-1 px-3">
                                 @if (_joining && _activeJoiningId == project.Id)
                                 {
                                     <span>Uniendo...</span>
+                                }
+                                else if (IsMember(project.Id))
+                                {
+                                    <span>Abrir</span>
                                 }
                                 else
                                 {
@@ -162,10 +166,7 @@
                 _myProjects = myResult.ToList();
             }
 
-            // Filter out projects that the user is already a member of
-            _publicProjects = publicResult
-                .Where(p => !_myProjects.Any(mp => mp.Id == p.Id))
-                .ToList();
+            _publicProjects = publicResult.ToList();
         }
         catch (Exception)
         {
@@ -184,6 +185,19 @@
                 p.Title.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
                 p.Synopsis.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase) ||
                 p.LiteraryGenre.Contains(_searchQuery, StringComparison.OrdinalIgnoreCase)).ToList();
+
+    private bool IsMember(Guid projectId) => _myProjects.Any(project => project.Id == projectId);
+
+    private async Task HandleProjectActionAsync(Guid projectId)
+    {
+        if (IsMember(projectId))
+        {
+            Navigation.NavigateTo($"/projects/{projectId}");
+            return;
+        }
+
+        await JoinProjectAsync(projectId);
+    }
 
     private async Task JoinProjectAsync(Guid projectId)
     {
