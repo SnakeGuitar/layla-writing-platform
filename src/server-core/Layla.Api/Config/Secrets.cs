@@ -31,6 +31,11 @@ public static class Secrets
         _ = RequireConfig("EmailConfigs:Password");
         _ = RequireConfig("EmailConfigs:FromName");
         _ = RequireConfig("EmailConfigs:FromEmail");
+
+        _ = RequireConfig("PayPal:ClientId");
+        _ = RequireConfig("PayPal:ClientSecret");
+        _ = RequireConfig("PayPal:BaseUrl");
+        _ = RequireConfig("PayPal:Currency");
     }
 
     public static string RequireConfig(string key)
